@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+# TODO: Read repos and sections from config file
+# TODO: Get it in JSON format so I can style it any way I want
+# gh pr list --json "title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt" --author @me | jq | less -r
+# status | title | repo | headRefName | pr # | ci | meargable | changes | author | updated | url
+
+repos=("wix-private/wix-code-code-editor") #, "wix-incubator/corvid-types", "wix-private/wix-code-devex")
+fields="title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt" 
+
+printf "\n"
+figlet -f digital "My Pull Requests"
+for repo in "${repos[@]}"
+do
+   gh pr --repo $repo list --author @me --json $fields |
+      jq -cr '.[] |
+         [
+            if .reviewDecision == "" then "WAITING_FOR_REVIEW" else .reviewDecision end,
+            .title,
+            .headRepository.name,
+            .author.login,
+            .updatedAt
+         ]' |
+      sed 's/^\[//g' | sed 's/\]$//g' |
+      column -s "," -t |
+      awk '{print $0, "\n---------------------------------"}'
+   # for pr in "${repo_prs[@]}"
+   # do
+   #    printf "$pr\n"
+   # done
+done
+
+printf "\n"
+figlet -f digital "Review Requested"
+for i in "${arr[@]}"
+do
+   gh pr --repo $i list --assignee @me
+done
+
