@@ -9,27 +9,40 @@ set -e
 
 repos=("wix-private/wix-code-code-editor") #, "wix-incubator/corvid-types", "wix-private/wix-code-devex")
 fields="title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt" 
+title_max_len=35
 
 printf "\n"
 figlet -f digital "My Pull Requests"
+pr_lines=""
 for repo in "${repos[@]}"
-do
-   gh pr --repo $repo list --author @me --json $fields |
-      jq -cr '.[] |
-         [
-            if .reviewDecision == "" then "WAITING_FOR_REVIEW" else .reviewDecision end,
-            .title,
-            .headRepository.name,
-            .author.login,
-            .updatedAt
-         ]' |
-      sed 's/^\[//g' | sed 's/\]$//g' |
-      column -s "," -t |
-      awk '{print $0, "\n---------------------------------"}'
+	 do
+		  while read pr_response; do
+				pr_title=`echo $pr_response | jq -r '.title' | cut -c -${title_max_len}`
+				pr_review_decision=`echo $pr_response |
+						jq -r 'if .reviewDecision == ""
+						 then "WAITING_FOR_REVIEW"
+						 else .reviewDecision
+						 end'`
+				# pr_line=`printf "%s **| %s\n" "${pr_review_decision}" "${pr_title}"`
+				pr_line=`echo "${pr_review_decision} **| ${pr_title}\n"`
+				# echo $pr_line
+				pr_lines="${pr_lines}${pr_line}"
+				# echo "$pr_review_decision |  $pr_title" | column -s "| " -t
+				#  echo $pr_response |
+				# 		jq -cr '
+				# 			 [
+				# 					.headRepository.name,
+				# 					.author.login,
+				# 					.updatedAt
+				# 			 ]' |
+				# 		sed 's/^\[//g' | sed 's/\]$//g' |
+				# 		column -s "," -t
+			done < <(gh pr --repo $repo list --author @me --json $fields | jq -c '.[]')
    # for pr in "${repo_prs[@]}"
    # do
    #    printf "$pr\n"
    # done
+	 echo $pr_lines | sed 's/\\n/\n/g' | column -s "**" -t
 done
 
 printf "\n"
