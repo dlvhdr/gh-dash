@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#set -e
-# TODO: find out how to turn this flag while catching errors
+set -eo pipefail
 
 POSITIONAL=()
 REPOS=()
@@ -12,12 +11,12 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -r|--repo)
       REPOS+=($2)
-      shift # past argument
-      shift # past value
+      shift
+      shift
       ;;
-    *)    # unknown option
-      POSITIONAL+=("$1") # save it in an array for later
-      shift # past argument
+    *)
+      POSITIONAL+=("$1")
+      shift
       ;;
   esac
 done
@@ -28,97 +27,31 @@ if [ ${#@} -ne 0 ] && [ "${@#"--help"}" = "" ]; then
   exit 0
 fi
 
-_=$(command -v jq);
-if [ "$?" != "0" ]; then
-  printf -- "You don\'t seem to have jq installed.\n"
-  printf -- "Install it with brew:\n\tbrew install jq\n"
-  printf -- 'Exiting...\n'
-  exit 127
-fi
-
 fields="title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt" 
 title_max_len=35
-bold=$(tput bold)
-normal=$(tput sgr0)
-
-time_ago() {
-  if (( $# < 1 )); then
-    local u=$(tput smul)
-    local n=$(tput rmul)
-    echo "usage: time_ago ${u}timestamp_ago${n} [${u}timestamp_now${n}]"
-    exit 1
-  fi
-  local minutes=60
-  local hours=$(( 60 * minutes ))
-  local days=$(( 24 * hours ))
-  local diff=$(( ${2:-$(date +%s)} - $1 ))
-  local human
-  if (( diff < 30 )); then
-    human="${diff} seconds"
-  elif (( diff < 90 )); then
-    human="1 minute"
-  elif (( diff < 1 * hours )); then
-    human="$(( (diff + minutes / 2) / minutes )) minutes"
-  elif (( diff < 1 * hours + 30 * minutes )); then
-    human="about 1 hour"
-  elif (( diff < 1 * days )); then
-    human="about $(( (diff + hours / 2) / hours )) hours"
-  elif (( diff < 2 * days)); then
-    human="1 day"
-  else
-    human="$(( (diff + days / 2) / days)) days"
-  fi
-
-  echo "$human ago"
-}
+bold=$(echo -e "\033[1m")
+normal=$(echo -e "\033[0m")
 
 fetch_filtered_prs() {
   printf "\n${bold}$1${normal}\n\n"
   pr_lines=""
   for repo in "${REPOS[@]}"
   do
-    while read pr_response; do
-      echo $pr_response | jq &> /dev/null
-      if [[ $? -gt 0 ]]; then
-        continue
-      fi
-      pr_title=`echo $pr_response | jq -r '.title' | cut -c -${title_max_len}`
-      pr_url=`echo $pr_response | jq -r '.url'`
-      pr_review_decision=`echo $pr_response |
-        jq -r 'if .reviewDecision == "" or .reviewDecision == "REVIEW_REQUIRED"
-            then "Waiting for review"
-            elif .reviewDecision == "APPROVED"
-            then "Approved"
-            elif .reviewDecision == "CHANGES_REQUESTED"
-            then "Changes requested"
-            else ""
-            end'`
-      pr_head_repo=`echo $pr_response | jq -r '.headRepository.name'`
-      pr_author=`echo $pr_response | jq -r '.author.login'`
-      pr_updated_date=`echo $pr_response | jq -r '.updatedAt'`
-
-      pr_time=`date -jf "%Y-%m-%dT%H:%M:%SZ" ${pr_updated_date} +%s`
-      pr_time_ago=$(time_ago ${pr_time})
-      pr_line=`echo "${pr_review_decision}**| \
-        ${pr_title}**| \
-        ${pr_head_repo}**| \
-        ${pr_author}**| \
-        ${pr_time_ago}**|
-        ${pr_url}\n"`
-      pr_lines="${pr_lines}${pr_line}"
-    done < <(gh pr --repo $repo list --search "$2 sort:updated-desc" --json $fields --limit 5 | jq -c '.[]')
+    lines_to_add=$(gh pr list --limit 10 --repo "${repo}" --search "$2 sort:updated-desc" --json "${fields}" --template "$(cat template.txt | tr '\n' ' ' | xargs)")
+    pr_lines=$pr_lines$lines_to_add
   done
 
-  if [ -z "$pr_lines" ]
+  trimmed=$(echo $pr_lines | tr -s " ")
+  if [ -z "$trimmed" ]
   then
     echo "No PRs matching the given filters..."
   else
-    pr_lines="Status**| Title**| Repo**| Author**| Last Updated**| URL\n${pr_lines}"
-    echo $pr_lines | sed 's/\\n/\n/g' | column -s "**" -t
+    header=$(printf "Status | Title | Repo | Author | Last Updated | URL\n")
+    echo -e "$header\n$pr_lines" | column -s '|' -t
   fi
 }
 
-fetch_filtered_prs "My Pull Requests" "author:@me"
+fetch_filtered_prs "My Pull Requests" author:@me
 fetch_filtered_prs "Needs My Review" assignee:@me
 fetch_filtered_prs "Subscribed" -author:@me
 
