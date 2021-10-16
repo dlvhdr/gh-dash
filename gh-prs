@@ -106,7 +106,7 @@ fetch_filtered_prs() {
         ${pr_time_ago}**|
         ${pr_url}\n"`
       pr_lines="${pr_lines}${pr_line}"
-    done < <(gh pr --repo $repo list $2 --json $fields --limit 5 | jq -c '.[]')
+    done < <(gh pr --repo $repo list --search "$2 sort:updated-desc" --json $fields --limit 5 | jq -c '.[]')
   done
 
   if [ -z "$pr_lines" ]
@@ -118,7 +118,7 @@ fetch_filtered_prs() {
   fi
 }
 
-fetch_filtered_prs "My Pull Requests" "--author @me"
-fetch_filtered_prs "Needs My Review" "--assignee @me"
-fetch_filtered_prs "Subscribed" 
+fetch_filtered_prs "My Pull Requests" "author:@me"
+fetch_filtered_prs "Needs My Review" assignee:@me
+fetch_filtered_prs "Subscribed" -author:@me
 
