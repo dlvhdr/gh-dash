@@ -31,14 +31,22 @@ fields="title,mergeable,author,url,additions,headRefName,headRepository,isDraft,
 title_max_len=35
 bold=$(echo -e "\033[1m")
 normal=$(echo -e "\033[0m")
+underline=$(echo -e "\033[4m")
 
 fetch_filtered_prs() {
   printf "\n${bold}$1${normal}\n\n"
   pr_lines=""
   for repo in "${REPOS[@]}"
   do
-    lines_to_add=$(gh pr list --limit 10 --repo "${repo}" --search "$2 sort:updated-desc" --json "${fields}" --template "$(cat template.txt | tr '\n' ' ' | xargs)")
-    pr_lines=$pr_lines$lines_to_add
+    lines_to_add=$(
+      gh pr list \
+        --limit 10 \
+        --repo "${repo}" \
+        --search "$2 sort:updated-desc" \
+        --json "${fields}" \
+        --template "$(cat template.txt | xargs)" \
+    )
+    pr_lines=$(echo -e "${pr_lines}${lines_to_add}" | sed 's/^[[:blank:]]*//')
   done
 
   trimmed=$(echo $pr_lines | tr -s " ")
@@ -46,7 +54,7 @@ fetch_filtered_prs() {
   then
     echo "No PRs matching the given filters..."
   else
-    header=$(printf "Status | Title | Repo | Author | Last Updated | URL\n")
+    header=$(echo "${normal}${normal}${normal}${underline}Status |  Title |  Repo |  Author |  Last Updated |  URL${normal}")
     echo -e "$header\n$pr_lines" | column -s '|' -t
   fi
 }

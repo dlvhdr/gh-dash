@@ -1,11 +1,6 @@
+{{ println }}
 {{ range . }}
-	{{ if eq .reviewDecision \"APPROVED\" }}
-		Approved
-	{{ else if eq .reviewDecision \"CHANGES_REQUESTED\" }}
-		Changes requested
-	{{else}}
-		Waiting for review
-	{{end}}|
+	{{ if eq .reviewDecision \"APPROVED\" }}{{ color \"green+b\" \"Approved\" }}{{ else if eq .reviewDecision \"CHANGES_REQUESTED\" }}{{ color \"red+b\" \"Changes requested\" }}{{else}}{{ color \"yellow+d\" \"Waiting for review\" }}{{end}}|
 	{{truncate 35 .title}}|
 	{{.headRepository.name}}|
 	{{.author.login}}|
