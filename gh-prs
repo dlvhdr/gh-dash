@@ -33,6 +33,8 @@ bold=$(echo -e "\033[1m")
 normal=$(echo -e "\033[0m")
 underline=$(echo -e "\033[4m")
 
+script_path=$(dirname ${BASH_SOURCE[0]})
+
 fetch_filtered_prs() {
   printf "\n${bold}$1${normal}\n\n"
   pr_lines=""
@@ -44,7 +46,7 @@ fetch_filtered_prs() {
         --repo "${repo}" \
         --search "$2 sort:updated-desc" \
         --json "${fields}" \
-        --template "$(cat template.txt | xargs)" \
+        --template "$(cat $script_path/template.txt | xargs)" \
     )
     pr_lines=$(echo -e "${pr_lines}${lines_to_add}" | sed 's/^[[:blank:]]*//')
   done
