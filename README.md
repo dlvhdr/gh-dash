@@ -2,7 +2,7 @@
 
 `gh` cli extension to display a "dashboard" of prs by filters you care about.
 
-<img src="https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif" />
+![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
 
 Supports 3 sections:
 * My Pull Requests
@@ -35,3 +35,6 @@ OPTIONS
 EXAMPLE
   gh prs -r dlvhdr/gh-prs -r cli/cli
 ```
+
+### Author
+Dolev Hadar dolevc2@gmail.com
