@@ -1,6 +1,8 @@
 # gh-prs
 
-`gh` cli extension to display a "dashboard" or prs by filters you care about.
+`gh` cli extension to display a "dashboard" of prs by filters you care about.
+
+<img src="https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif" />
 
 Supports 3 sections:
 * My Pull Requests
