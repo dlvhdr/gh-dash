@@ -2,13 +2,34 @@
 
 set -eo pipefail
 
+source './spinner.sh'
+
 POSITIONAL=()
 REPOS=()
+
+programname="gh prs";
+function usage {
+    echo "";
+    echo "Usage:"
+    echo "  $programname [repos...]"
+    echo ""
+    echo "OPTIONS"
+    echo "    -h, --help             display help"
+    echo "    -r, --repo repo-name   specify a repo to fetch PRs for"
+    echo ""
+    echo "EXAMPLE"
+    echo "  $programname -r dlvhdr/gh-prs -r cli/cli"
+    echo "";
+    exit 0
+}
 
 while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+    -h|--help)
+      usage
+      ;;
     -r|--repo)
       REPOS+=($2)
       shift
@@ -21,10 +42,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ ${#@} -ne 0 ] && [ "${@#"--help"}" = "" ]; then
-  printf -- 'Help:\n'
-  printf -- 'Coming soon...\n'
-  exit 0
+if [ ${#@} -ne 0 ] && [ "${@#"--help|"}" = "" ]; then
+  usage
 fi
 
 fields="title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt" 
@@ -40,6 +59,7 @@ fetch_filtered_prs() {
   pr_lines=""
   for repo in "${REPOS[@]}"
   do
+    start_spinner "Fetching PRs from ${repo}..."
     lines_to_add=$(
       gh pr list \
         --limit 10 \
@@ -49,17 +69,21 @@ fetch_filtered_prs() {
         --template "$(cat $script_path/template.txt | xargs)" \
     )
     pr_lines=$(echo -e "${pr_lines}${lines_to_add}" | sed 's/^[[:blank:]]*//')
+    stop_spinner 0
   done
 
   trimmed=$(echo $pr_lines | tr -s " ")
   if [ -z "$trimmed" ]
   then
-    echo "No PRs matching the given filters..."
+    echo -e "No PRs matching the given filters...\c"
+    echo ""
   else
     header=$(echo "${normal}${normal}${normal}${underline}Status |  Title |  Repo |  Author |  Last Updated |  URL${normal}")
     echo -e "$header\n$pr_lines" | column -s '|' -t
   fi
 }
+
+trap "stop_spinner 0; exit" SIGHUP SIGINT SIGTERM
 
 fetch_filtered_prs "My Pull Requests" author:@me
 fetch_filtered_prs "Needs My Review" assignee:@me
