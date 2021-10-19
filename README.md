@@ -33,3 +33,5 @@ OPTIONS
 EXAMPLE
   gh prs -r dlvhdr/gh-prs -r cli/cli
 ```
+
+Approved PR example
