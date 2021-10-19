@@ -2,7 +2,9 @@
 
 set -eo pipefail
 
-source './spinner.sh'
+script_path=$(dirname ${BASH_SOURCE[0]})
+
+source "${script_path}/spinner.sh"
 
 POSITIONAL=()
 REPOS=()
@@ -51,8 +53,6 @@ title_max_len=35
 bold=$(echo -e "\033[1m")
 normal=$(echo -e "\033[0m")
 underline=$(echo -e "\033[4m")
-
-script_path=$(dirname ${BASH_SOURCE[0]})
 
 fetch_filtered_prs() {
   printf "\n${bold}$1${normal}\n\n"
