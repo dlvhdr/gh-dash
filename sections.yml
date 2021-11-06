@@ -1,4 +1,15 @@
 - title: My Pull Requests
-  filters: --author @me
+  repos:
+    - wix-private/wix-code-code-editor
+    - wix-private/wix-code-devex
+  filters: author:@me
 - title: Needs My Review
-  filters: --reviewer @me"
+  repos:
+    - wix-private/wix-code-code-editor
+    - wix-private/wix-code-devex
+  filters: assignee:@me
+- title: Subscribed
+  repos:
+    - wix-private/wix-code-code-editor
+    - wix-private/wix-code-devex
+  filters: -author:@me
