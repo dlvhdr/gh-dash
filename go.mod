@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/charmbracelet/bubbles v0.9.0 // indirect
 	github.com/containerd/console v1.0.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect

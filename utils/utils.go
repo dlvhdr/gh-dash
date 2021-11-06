@@ -57,31 +57,31 @@ func TimeElapsed(then time.Time) string {
 	week := math.Floor(day / 7)
 
 	if year > 0 {
-		parts = append(parts, strconv.Itoa(int(year))+" year"+s(year))
+		parts = append(parts, strconv.Itoa(int(year))+"y")
 	}
 
 	if month > 0 {
-		parts = append(parts, strconv.Itoa(int(month))+" month"+s(month))
+		parts = append(parts, strconv.Itoa(int(month))+"mo")
 	}
 
 	if week > 0 {
-		parts = append(parts, strconv.Itoa(int(week))+" week"+s(week))
+		parts = append(parts, strconv.Itoa(int(week))+"w")
 	}
 
 	if day > 0 {
-		parts = append(parts, strconv.Itoa(int(day))+" day"+s(day))
+		parts = append(parts, strconv.Itoa(int(day))+"d")
 	}
 
 	if hour > 0 {
-		parts = append(parts, strconv.Itoa(int(hour))+" hour"+s(hour))
+		parts = append(parts, strconv.Itoa(int(hour))+"h")
 	}
 
 	if minute > 0 {
-		parts = append(parts, strconv.Itoa(int(minute))+" minute"+s(minute))
+		parts = append(parts, strconv.Itoa(int(minute))+"m")
 	}
 
 	if second > 0 {
-		parts = append(parts, strconv.Itoa(int(second))+" second"+s(second))
+		parts = append(parts, strconv.Itoa(int(second))+"s")
 	}
 
 	if now.After(then) {
