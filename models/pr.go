@@ -23,6 +23,7 @@ type PullRequest struct {
 	Mergeable         string
 	ReviewDecision    string
 	Additions         int
+	Deletions         int
 	HeadRefName       string
 	HeadRepository    Repository
 	IsDraft           bool
@@ -51,7 +52,7 @@ type StatusCheck struct {
 	TargetUrl   string
 }
 
-const JsonFields = "title,mergeable,author,url,additions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt"
+const JsonFields = "title,mergeable,author,url,additions,deletions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt"
 
 func FetchRepoPullRequests(repo string, search string) ([]PullRequest, error) {
 	out, err := exec.Command(

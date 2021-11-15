@@ -2,14 +2,12 @@
   repos:
     - wix-private/wix-code-code-editor
     - wix-private/wix-code-devex
-    - cli/cli
-    - charmbracelet/glamour
-  filters: -author:@me
+  filters: author:@me
 - title: Needs My Review
   repos:
     - wix-private/wix-code-code-editor
     - wix-private/wix-code-devex
-  filters: -author:@me
+  filters: assignee:@me
 - title: Subscribed
   repos:
     - wix-private/wix-code-code-editor

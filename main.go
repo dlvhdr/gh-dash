@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"sort"
 	"strings"
 
@@ -50,9 +51,16 @@ type model struct {
 	help            help.Model
 	cursor          cursor
 	ready           bool
+	logger          *os.File
 }
 
 func main() {
+	f, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		fmt.Println("Error setting up logger")
+	}
+	defer f.Close()
+
 	p := tea.NewProgram(
 		model{
 			keys: utils.Keys,
@@ -61,6 +69,7 @@ func main() {
 				currSectionId: 0,
 				currPrId:      0,
 			},
+			logger: f,
 		},
 		tea.WithAltScreen(),
 	)
@@ -274,21 +283,101 @@ func renderEmptyState() string {
 	return fmt.Sprintf(emptyState + "\n")
 }
 
-func (m model) renderPullRequest(sectionId int, prId int, pr *models.PullRequest) string {
-	var style lipgloss.Style
-	if m.cursor.currSectionId == sectionId && m.cursor.currPrId == prId {
-		style = selectedPullRequestStyle
-	} else {
-		style = pullRequestStyle
+func renderReviewStatus(pr models.PullRequest) string {
+	if pr.ReviewDecision == "APPROVED" {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("")
 	}
 
-	prNumberCell := cellStyle.Render(fmt.Sprintf("#%-5d", pr.Number))
-	prTitleCell := cellStyle.Render(fmt.Sprintf("%-50s", utils.TruncateString(pr.Title, 50)))
+	if pr.ReviewDecision == "REJECTED" {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("")
+	}
+
+	return lipgloss.NewStyle().Faint(true).Render("")
+}
+
+func renderMergeableStatus(pr models.PullRequest) string {
+	if pr.Mergeable == "MERGEABLE" {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("")
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("")
+}
+
+func renderCiStatus(pr models.PullRequest) string {
+	accStatus := "SUCCESS"
+	for _, statusCheck := range pr.StatusCheckRollup {
+		if statusCheck.State == "FAILURE" {
+			accStatus = "FAILURE"
+			break
+		}
+
+		if statusCheck.State == "PENDING" {
+			accStatus = "PENDING"
+		}
+	}
+	if accStatus == "SUCCESS" {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("")
+	}
+
+	if accStatus == "PENDING" {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Render("")
+	}
+
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("")
+}
+
+func renderLines(pr models.PullRequest) string {
+	separator := lipgloss.NewStyle().Faint(true).MarginLeft(1).MarginRight(1).Render("/")
+	added := lipgloss.NewStyle().Render(fmt.Sprintf("%5d", pr.Additions))
+	removed := lipgloss.NewStyle().Render(
+		fmt.Sprintf("-%-5d", pr.Deletions),
+	)
+
+	return lipgloss.JoinHorizontal(lipgloss.Center, added, separator, removed)
+
+}
+
+func (m model) renderPullRequest(sectionId int, prId int, pr *models.PullRequest) string {
+	log.SetOutput(m.logger)
+	log.Printf("%+v", *pr)
+	isSelected := m.cursor.currSectionId == sectionId && m.cursor.currPrId == prId
+	selectedCell := cellStyle.Render(func() string {
+		if isSelected {
+			return ""
+		} else {
+			return " "
+		}
+	}())
+	//
+	// 
+	// 
+	// 
+	// 
+	// 
+
+	// 
+	// 
+	// 
+	// 
+
+	reviewCell := cellStyle.Render(renderReviewStatus(*pr))
+	mergeableCell := cellStyle.Render(renderMergeableStatus(*pr))
+	ciCell := cellStyle.Render(renderCiStatus(*pr))
+	linesCell := cellStyle.Render(renderLines(*pr))
+	prTitleCell := cellStyle.Render(
+		fmt.Sprintf(
+			"%-65s",
+			utils.TruncateString(pr.Title, 50)+
+				lipgloss.NewStyle().Faint(true).Render(
+					fmt.Sprintf("#%-6s", fmt.Sprintf("%d", pr.Number)),
+				),
+		),
+	)
 	prAuthorCell := cellStyle.Render(fmt.Sprintf("%-15s", utils.TruncateString(pr.Author.Login, 15)))
 	prRepoCell := cellStyle.Render(fmt.Sprintf("%-20s", utils.TruncateString(pr.HeadRepository.Name, 20)))
 	updatedAtCell := cellStyle.Render(utils.TimeElapsed(pr.UpdatedAt))
 
-	return style.Render(lipgloss.JoinHorizontal(lipgloss.Left, prNumberCell, prTitleCell, prAuthorCell, prRepoCell, updatedAtCell))
+	return pullRequestStyle.Render(lipgloss.JoinHorizontal(lipgloss.Left, selectedCell, reviewCell, prTitleCell, mergeableCell, ciCell, linesCell, prAuthorCell, prRepoCell, updatedAtCell))
 }
 
 func (m model) View() string {
