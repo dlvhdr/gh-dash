@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Section struct {
+type SectionConfig struct {
 	Title   string
 	Filters string
 	Repos   []string
@@ -16,7 +16,7 @@ type Section struct {
 
 const SectionsFileName = "sections.yml"
 
-func ParseSectionsConfig() ([]Section, error) {
+func ParseSectionsConfig() ([]SectionConfig, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -25,7 +25,7 @@ func ParseSectionsConfig() ([]Section, error) {
 	if err != nil {
 		panic(err)
 	}
-	var sections []Section
+	var sections []SectionConfig
 	err = yaml.Unmarshal([]byte(data), &sections)
 	if err != nil {
 		log.Fatalf("error: %v", err)

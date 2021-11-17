@@ -10,8 +10,9 @@
   filters: assignee:@me
 - title: Subscribed
   repos:
-    - wix-private/wix-code-code-editor
+    # - wix-private/wix-code-code-editor
     - wix-private/wix-code-devex
-    - cli/cli
-    - charmbracelet/glamour
+    # - cli/cli
+    # - charmbracelet/glamour
+    # - gitpod-io/openvscode-server
   filters: -author:@me
