@@ -9,14 +9,11 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-)
-
-const (
-	headerHeight = 6
-	footerHeight = 1
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
@@ -24,11 +21,11 @@ type Model struct {
 	err      error
 	configs  []config.SectionConfig
 	data     *[]section
+	viewport viewport.Model
 	cursor   cursor
 	help     help.Model
 	ready    bool
 	logger   *os.File
-	viewport viewport.Model
 }
 
 type cursor struct {
@@ -54,7 +51,8 @@ type pullRequestsRenderedMsg struct {
 func NewModel(logFile *os.File) Model {
 	return Model{
 		keys: utils.Keys,
-		help: help.NewModel(), cursor: cursor{
+		help: help.NewModel(),
+		cursor: cursor{
 			currSectionId: 0,
 			currPrId:      0,
 		},
@@ -84,11 +82,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c", "esc":
-			return m, tea.Quit
-
-		case "h":
+		switch {
+		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			newCursor := cursor{
 				currSectionId: prevSection.Id,
@@ -98,7 +93,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent(m.renderPullRequestList())
 			return m, nil
 
-		case "l":
+		case key.Matches(msg, m.keys.NextSection):
 			nextSection := m.getSectionAt(m.getNextSectionId())
 			newCursor := cursor{
 				currSectionId: nextSection.Id,
@@ -108,17 +103,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent(m.renderPullRequestList())
 			return m, nil
 
-		case "j":
+		case key.Matches(msg, m.keys.Down):
 			m.nextPr()
 			m.viewport.SetContent(m.renderPullRequestList())
 			return m, nil
 
-		case "k":
+		case key.Matches(msg, m.keys.Up):
 			m.prevPr()
 			m.viewport.SetContent(m.renderPullRequestList())
 			return m, nil
 
-		case "o":
+		case key.Matches(msg, m.keys.Open):
 			currPR := func() PullRequest {
 				var prs []PullRequest
 				for _, section := range *m.data {
@@ -128,6 +123,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}()
 			utils.OpenBrowser(currPR.Url)
 			return m, nil
+
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+			return m, nil
+
+		case key.Matches(msg, m.keys.Quit):
+			return m, tea.Quit
 		}
 
 	case initMsg:
@@ -170,16 +172,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, section.Tick(internalCmd)
 
 	case tea.WindowSizeMsg:
+		m.help.Width = msg.Width
 		verticalMargins := headerHeight + footerHeight
 
 		if !m.ready {
-			m.viewport = viewport.Model{Width: msg.Width, Height: msg.Height - verticalMargins}
+			m.viewport = viewport.Model{
+				Width:  msg.Width - 2*mainContentPadding,
+				Height: msg.Height - verticalMargins,
+			}
 			m.ready = true
 
 			// Render the viewport one line below the header.
 			m.viewport.YPosition = headerHeight + 1
 		} else {
-			m.viewport.Width = msg.Width
+			m.viewport.Width = msg.Width - 2*mainContentPadding
 			m.viewport.Height = msg.Height - verticalMargins
 		}
 
@@ -202,12 +208,18 @@ func (m Model) View() string {
 		return "Error!\n"
 	}
 
+	paddedContentStyle := lipgloss.NewStyle().
+		PaddingLeft(mainContentPadding).
+		PaddingRight(mainContentPadding)
+
 	s := strings.Builder{}
 	s.WriteString(m.renderTabs())
-	s.WriteString(renderTableHeader())
-	s.WriteString(m.viewport.View())
 	s.WriteString("\n")
-	s.WriteString(m.help.View(m.keys))
+	s.WriteString(paddedContentStyle.Render(m.renderTableHeader()))
+	s.WriteString("\n")
+	s.WriteString(paddedContentStyle.Render(m.viewport.View()))
+	s.WriteString("\n")
+	s.WriteString(lipgloss.PlaceVertical(2, lipgloss.Bottom, m.help.View(m.keys)))
 	return s.String()
 }
 

@@ -82,42 +82,53 @@ func (section *section) renderLoadingState() string {
 }
 
 func (section *section) renderTitle() string {
-	sectionTitle := TitleStyle.Render(section.Config.Title)
+	sectionTitle := titleStyle.Render(section.Config.Title)
 	return fmt.Sprintf(sectionTitle + "\n")
 }
 
 func renderEmptyState() string {
-	emptyState := EmptyStateStyle.Render("No PRs were found that match the given filters...")
+	emptyState := emptyStateStyle.Render("No PRs were found that match the given filters...")
 	return fmt.Sprintf(emptyState + "\n")
 }
 
-func renderTableHeader() string {
-	emptyCell := SingleRuneCellStyle.Render(" ")
-	reviewCell := SingleRuneCellStyle.Render("")
-	mergeableCell := SingleRuneCellStyle.Render("")
-	ciCell := CellStyle.Render("CI")
-	linesCell := CellStyle.Render("Lines")
-	prTitleCell := CellStyle.Render(
-		fmt.Sprintf(
-			"%-56s",
-			"Title",
-		),
-	)
-	prAuthorCell := CellStyle.Render(fmt.Sprintf("%-15s", "Author"))
-	prRepoCell := CellStyle.Render(fmt.Sprintf("%-20s", "Repo"))
-	updatedAtCell := CellStyle.Render("Updated At")
+func getTitleWidth(viewportWidth int) int {
+	return viewportWidth - usedWidth - cellPadding - 5
+}
 
-	return lipgloss.JoinHorizontal(lipgloss.Left,
-		emptyCell,
-		reviewCell,
-		prTitleCell,
-		mergeableCell,
-		ciCell,
-		linesCell,
-		prAuthorCell,
-		prRepoCell,
-		updatedAtCell,
-	) + "\n"
+func (m Model) renderTableHeader() string {
+	emptyCell := singleRuneCellStyle.Copy().Bold(true).Width(emptyCellWidth).Render(" ")
+	reviewCell := singleRuneCellStyle.Copy().Bold(true).Width(reviewCellWidth).Render("")
+	mergeableCell := singleRuneCellStyle.Copy().Bold(true).Width(mergeableCellWidth).Render("")
+	ciCell := cellStyle.Copy().Bold(true).Width(ciCellWidth + 1).Render("CI")
+	linesCell := cellStyle.Copy().Bold(true).Width(linesCellWidth).Render("Lines")
+	prAuthorCell := cellStyle.Copy().Bold(true).Width(prAuthorCellWidth).Render("Author")
+	prRepoCell := cellStyle.Copy().Bold(true).Width(prRepoCellWidth).Render("Repo")
+	updatedAtCell := cellStyle.Copy().Bold(true).Width(updatedAtCellWidth).Render("Updated At")
+
+	prTitleCell := cellStyle.
+		Copy().
+		Bold(true).
+		Width(getTitleWidth(m.viewport.Width)).
+		MaxWidth(getTitleWidth(m.viewport.Width)).
+		Render("Title")
+
+	return headerStyle.
+		Width(m.viewport.Width - mainContentPadding).
+		MaxWidth(m.viewport.Width - mainContentPadding).
+		Render(
+			lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				emptyCell,
+				reviewCell,
+				prTitleCell,
+				mergeableCell,
+				ciCell,
+				linesCell,
+				prAuthorCell,
+				prRepoCell,
+				updatedAtCell,
+			),
+		)
 }
 
 func (m Model) renderPullRequestList() string {
@@ -135,13 +146,13 @@ func (m Model) renderPullRequestList() string {
 	var renderedPRs []string
 	for prId, pr := range section.Prs {
 		isSelected := m.cursor.currSectionId == section.Id && m.cursor.currPrId == prId
-		renderedPRs = append(renderedPRs, pr.render(isSelected))
+		renderedPRs = append(renderedPRs, pr.render(isSelected, m.viewport.Width))
 	}
 
 	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...))
 	return s.String()
 }
 
-func (section *section) numPrs() int {
+func (section section) numPrs() int {
 	return len(section.Prs)
 }

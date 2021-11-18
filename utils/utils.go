@@ -48,7 +48,7 @@ func TruncateString(str string, num int) string {
 		if num > 3 {
 			num -= 3
 		}
-		truncated = str[0:num] + "..."
+		truncated = str[0:num] + "…"
 	}
 	return truncated
 }

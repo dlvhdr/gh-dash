@@ -2,30 +2,31 @@ package ui
 
 import "github.com/charmbracelet/lipgloss"
 
-type ColorPair struct {
-	Dark  string
-	Light string
-}
-
-func NewColorPair(dark, light string) ColorPair {
-	return ColorPair{dark, light}
-}
-
 var (
-	Indigo       = NewColorPair("#7571F9", "#5A56E0")
-	SubtleIndigo = NewColorPair("#514DC1", "#7D79F6")
-	Cream        = NewColorPair("#FFFDF5", "#FFFDF5")
-	YellowGreen  = NewColorPair("#ECFD65", "#04B575")
-	Fuschia      = NewColorPair("#EE6FF8", "#EE6FF8")
-	Green        = NewColorPair("#04B575", "#04B575")
-	Red          = NewColorPair("#ED567A", "#FF4672")
-	FaintRed     = NewColorPair("#C74665", "#FF6F91")
-	SpinnerColor = NewColorPair("#747373", "#8E8E8E")
-	NoColor      = NewColorPair("", "")
+	headerHeight       = 6
+	footerHeight       = 2
+	singleRuneWidth    = 4
+	mainContentPadding = 0
+	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
 
-	subtle    = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
-	highlight = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
-	special   = lipgloss.AdaptiveColor{Light: "#43BF6D", Dark: "#73F59F"}
+	emptyCellWidth     = lipgloss.Width(cellStyle.Render(""))
+	reviewCellWidth    = emptyCellWidth
+	mergeableCellWidth = emptyCellWidth
+	ciCellWidth        = lipgloss.Width(cellStyle.Render("CI"))
+	linesCellWidth     = lipgloss.Width(cellStyle.Render("+12345 / -12345"))
+	prAuthorCellWidth  = 15 + cellPadding
+	prRepoCellWidth    = 20 + cellPadding
+	updatedAtCellWidth = lipgloss.Width("Updated At") + cellPadding
+	usedWidth          = emptyCellWidth + reviewCellWidth + mergeableCellWidth +
+		ciCellWidth + linesCellWidth + prAuthorCellWidth + prRepoCellWidth + updatedAtCellWidth
+
+	indigo       = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
+	subtleIndigo = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
+	selected     = lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: subtleIndigo.Dark}
+	border       = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
+	subtleBorder = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
+	highlight    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
+	special      = lipgloss.AdaptiveColor{Light: "#43BF6D", Dark: "#73F59F"}
 
 	activeTabBorder = lipgloss.Border{
 		Top:         "─",
@@ -49,44 +50,74 @@ var (
 		BottomRight: "┴",
 	}
 
-	singleRuneWidth = 4
-
-	TitleStyle = lipgloss.NewStyle().
+	titleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color(Indigo.Dark))
+			Foreground(lipgloss.Color(indigo.Dark))
 
-	Tab = lipgloss.NewStyle().
+	tab = lipgloss.NewStyle().
 		Border(tabBorder, true).
 		BorderForeground(highlight).
 		Faint(true).
 		Padding(0, 1)
 
-	ActiveTab = Tab.Copy().Faint(false).Bold(true).Border(activeTabBorder, true)
+	activeTab = tab.
+			Copy().
+			Faint(false).
+			Bold(true).
+			Border(activeTabBorder, true)
 
-	TabGap = Tab.Copy().
+	tabGap = tab.Copy().
 		BorderTop(false).
 		BorderLeft(false).
 		BorderRight(false)
 
-	EmptyStateStyle = lipgloss.NewStyle().
+	emptyStateStyle = lipgloss.NewStyle().
 			Faint(true).
 			PaddingLeft(2).
 			MarginBottom(1)
 
-	PullRequestStyle = lipgloss.NewStyle().
+	headerStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.DoubleBorder()).
+			BorderForeground(border).
+			BorderBottom(true)
+
+	pullRequestStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.NormalBorder()).
-				BorderForeground(lipgloss.Color("235")).
+				BorderForeground(subtleBorder).
 				BorderBottom(true)
 
-	SelectedPullRequestStyle = lipgloss.NewStyle().
-					Background(lipgloss.Color(NoColor.Light)).
-					Foreground(lipgloss.Color(SubtleIndigo.Light)).
-					Inherit(PullRequestStyle)
+	selectedPullRequestStyle = lipgloss.NewStyle().
+					Background(lipgloss.Color(subtleIndigo.Dark)).
+					Foreground(lipgloss.Color(subtleIndigo.Light)).
+					BorderForeground(subtleBorder).
+					Inherit(pullRequestStyle)
 
-	CellStyle = lipgloss.NewStyle().
+	cellStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).
 			MaxHeight(1)
 
-	SingleRuneCellStyle = CellStyle.Copy().MarginRight(1).Width(singleRuneWidth)
+	selectedCellStyle = cellStyle.Copy().Background(selected)
+
+	singleRuneCellStyle = cellStyle.Copy().PaddingRight(1).Width(singleRuneWidth)
+
+	selectedRuneCellStyle = singleRuneCellStyle.Copy().Background(selected)
+
+	selectionPointerStyle = lipgloss.NewStyle()
 )
+
+func makeCellStyle(isSelected bool) lipgloss.Style {
+	if isSelected {
+		return selectedCellStyle.Copy()
+	}
+
+	return cellStyle.Copy()
+}
+
+func makeRuneCellStyle(isSelected bool) lipgloss.Style {
+	if isSelected {
+		return selectedRuneCellStyle.Copy()
+	}
+
+	return singleRuneCellStyle.Copy()
+}

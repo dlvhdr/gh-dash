@@ -48,7 +48,7 @@ func (m Model) getSectionAt(id int) *section {
 func (m Model) getPrevSectionId() int {
 	m.cursor.currSectionId = (m.cursor.currSectionId - 1) % len(m.configs)
 	if m.cursor.currSectionId < 0 {
-		m.cursor.currSectionId *= -1
+		m.cursor.currSectionId += len(m.configs)
 	}
 
 	return m.cursor.currSectionId

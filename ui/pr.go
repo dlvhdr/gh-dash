@@ -89,28 +89,36 @@ func fetchRepoPullRequests(repo string, search string) ([]PullRequest, error) {
 	return prs, nil
 }
 
-func (pr PullRequest) renderReviewStatus() string {
+func (pr PullRequest) renderReviewStatus(isSelected bool) string {
+	reviewCellStyle := makeRuneCellStyle(isSelected)
 	if pr.ReviewDecision == "APPROVED" {
-		return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("42")).Render("")
+		return reviewCellStyle.Foreground(lipgloss.Color("42")).Render("")
 	}
 
 	if pr.ReviewDecision == "CHANGES_REQUESTED" {
-		return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("196")).Render("")
+		return reviewCellStyle.Foreground(lipgloss.Color("196")).Render("")
 	}
 
-	return SingleRuneCellStyle.Copy().Faint(true).Render("")
+	return reviewCellStyle.Faint(true).Render("")
 }
 
-func (pr PullRequest) renderMergeableStatus() string {
-	if pr.Mergeable == "MERGEABLE" {
-		return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("42")).Render("")
+func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
+	mergeCellStyle := makeRuneCellStyle(isSelected)
+	switch pr.Mergeable {
+	case "MERGEABLE":
+		return mergeCellStyle.Foreground(lipgloss.Color("42")).Render("")
+	case "CONFLICTING":
+		return mergeCellStyle.Foreground(lipgloss.Color("196")).Render("")
+	case "UNKNOWN":
+		fallthrough
+	default:
+		return mergeCellStyle.Faint(true).Render("")
 	}
-
-	return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("196")).Render("")
 }
 
-func (pr PullRequest) renderCiStatus() string {
+func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	accStatus := "SUCCESS"
+	ciCellStyle := makeRuneCellStyle(isSelected).Width(ciCellWidth)
 	for _, statusCheck := range pr.StatusCheckRollup {
 		if statusCheck.State == "FAILURE" {
 			accStatus = "FAILURE"
@@ -122,78 +130,99 @@ func (pr PullRequest) renderCiStatus() string {
 		}
 	}
 	if accStatus == "SUCCESS" {
-		return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("42")).Render("")
+		return ciCellStyle.Foreground(lipgloss.Color("42")).Render("")
 	}
 
 	if accStatus == "PENDING" {
-		return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("214")).Render("")
+		return ciCellStyle.Foreground(lipgloss.Color("214")).Render("")
 	}
 
-	return SingleRuneCellStyle.Copy().Foreground(lipgloss.Color("196")).Render("")
+	return ciCellStyle.Foreground(lipgloss.Color("196")).Render("")
 }
 
-func (pr PullRequest) renderLines() string {
-	separator := lipgloss.NewStyle().Faint(true).MarginLeft(1).MarginRight(1).Render("/")
-	added := lipgloss.NewStyle().Render(fmt.Sprintf("%5d", pr.Additions))
-	removed := lipgloss.NewStyle().Render(
-		fmt.Sprintf("-%-5d", pr.Deletions),
+func (pr PullRequest) renderLines(isSelected bool) string {
+	separator := makeCellStyle(isSelected).Faint(true).PaddingLeft(1).PaddingRight(1).Render("/")
+	added := makeCellStyle(isSelected).Render(fmt.Sprintf("%d", pr.Additions))
+	deletions := 0
+	if pr.Deletions > 0 {
+		deletions = pr.Deletions
+	}
+	removed := makeCellStyle(isSelected).Render(
+		fmt.Sprintf("-%d", deletions),
 	)
 
-	return CellStyle.Copy().Width(13).Render(lipgloss.JoinHorizontal(lipgloss.Center, added, separator, removed))
+	return makeCellStyle(isSelected).
+		Width(linesCellWidth).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left, added, separator, removed))
 }
 
-func (pr PullRequest) renderTitle() string {
-	title := lipgloss.NewStyle().Width(44).MaxWidth(44).Render(pr.Title)
+func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 	number := lipgloss.NewStyle().Width(6).Faint(true).Render(
 		fmt.Sprintf("#%s", fmt.Sprintf("%d", pr.Number)),
 	)
 
-	return CellStyle.Copy().Width(50).MaxWidth(50).Render(lipgloss.JoinHorizontal(lipgloss.Left, title, number))
+	totalWidth := getTitleWidth(viewportWidth)
+	title := lipgloss.NewStyle().Render(pr.Title)
+
+	return makeCellStyle(isSelected).
+		Width(totalWidth - 1).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left, title, number))
 }
 
-func (pr PullRequest) renderAuthor() string {
-	return CellStyle.Render(fmt.Sprintf("%-15s", utils.TruncateString(pr.Author.Login, 15)))
+func (pr PullRequest) renderAuthor(isSelected bool) string {
+	return makeCellStyle(isSelected).Width(prAuthorCellWidth).Render(
+		utils.TruncateString(pr.Author.Login, prAuthorCellWidth-cellPadding),
+	)
 }
 
-func (pr PullRequest) renderRepoName() string {
-	return CellStyle.Render(fmt.Sprintf("%-20s", utils.TruncateString(pr.HeadRepository.Name, 20)))
+func (pr PullRequest) renderRepoName(isSelected bool) string {
+	return makeCellStyle(isSelected).
+		Width(prRepoCellWidth).
+		Render(fmt.Sprintf("%-20s", utils.TruncateString(pr.HeadRepository.Name, 20)))
 }
 
-func (pr PullRequest) renderUpdateAt() string {
-	return CellStyle.Render(utils.TimeElapsed(pr.UpdatedAt))
+func (pr PullRequest) renderUpdateAt(isSelected bool) string {
+	return makeCellStyle(isSelected).
+		Width(updatedAtCellWidth).
+		Render(utils.TimeElapsed(pr.UpdatedAt))
 }
 
 func renderSelectionPointer(isSelected bool) string {
-	return SingleRuneCellStyle.Render(func() string {
-		if isSelected {
-			return lipgloss.NewStyle().Foreground(lipgloss.Color("230")).Render("")
-		} else {
-			return " "
-		}
-	}())
-
+	return makeRuneCellStyle(isSelected).
+		Width(emptyCellWidth).
+		Render(func() string {
+			if isSelected {
+				return selectionPointerStyle.Render("")
+			} else {
+				return " "
+			}
+		}())
 }
 
-func (pr PullRequest) render(isSelected bool) string {
+func (pr PullRequest) render(isSelected bool, viewPortWidth int) string {
 	selectionPointerCell := renderSelectionPointer(isSelected)
-	reviewCell := pr.renderReviewStatus()
-	mergeableCell := pr.renderMergeableStatus()
-	ciCell := pr.renderCiStatus()
-	linesCell := pr.renderLines()
-	prTitleCell := pr.renderTitle()
-	prAuthorCell := pr.renderAuthor()
-	prRepoCell := pr.renderRepoName()
-	updatedAtCell := pr.renderUpdateAt()
+	reviewCell := pr.renderReviewStatus(isSelected)
+	mergeableCell := pr.renderMergeableStatus(isSelected)
+	ciCell := pr.renderCiStatus(isSelected)
+	linesCell := pr.renderLines(isSelected)
+	prTitleCell := pr.renderTitle(viewPortWidth, isSelected)
+	prAuthorCell := pr.renderAuthor(isSelected)
+	prRepoCell := pr.renderRepoName(isSelected)
+	updatedAtCell := pr.renderUpdateAt(isSelected)
 
-	return PullRequestStyle.Render(lipgloss.JoinHorizontal(lipgloss.Left,
-		selectionPointerCell,
-		reviewCell,
-		prTitleCell,
-		mergeableCell,
-		ciCell,
-		linesCell,
-		prAuthorCell,
-		prRepoCell,
-		updatedAtCell,
-	))
+	rowStyle := pullRequestStyle.Copy()
+	return rowStyle.
+		Width(viewPortWidth).
+		MaxWidth(viewPortWidth).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left,
+			selectionPointerCell,
+			reviewCell,
+			prTitleCell,
+			mergeableCell,
+			ciCell,
+			linesCell,
+			prAuthorCell,
+			prRepoCell,
+			updatedAtCell,
+		))
 }
