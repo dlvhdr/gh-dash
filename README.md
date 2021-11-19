@@ -2,6 +2,8 @@
 
 `gh` cli extension to display a "dashboard" or pull requests by filters you care about.
 
+![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
+
 Comes with 3 default sections:
 * My Pull Requests
 * Needs My Review
@@ -48,17 +50,6 @@ Example `sections.yml` file:
 
 Run
 ```
-gh prs
-```
 
-### Keybindings
-
- -	Next Pull Request: <kbd>↑</kbd>, <kbd>k</kbd>
- -	Previous Pull Request: <kbd>↓/kbd>, <kbd>j</kbd>
- -	Previous Section: <kbd></kbd>, <kbd>h</kbd>
- -	Next Section: <kbd><kbd>, <kbd>l</kbd>
- -	Page Up: <kbd>Ctrl+u</kbd>
- -	Page Down: <kbd>Ctrl+d</kbd>
- -	Open in GitHub: <kbd>o</kbd>
- -	Help: <kbd>h</kbd>
- -	Quit: <kbd>q</kbd>, <kbd>Ctrl+c</kbd>, <kbd>esc</kbd>
+### Author
+Dolev Hadar dolevc2@gmail.com
