@@ -1,8 +1,8 @@
 # gh-prs
 
-`gh` cli extension to display a "dashboard" or prs by filters you care about.
+`gh` cli extension to display a "dashboard" or pull requests by filters you care about.
 
-Supports 3 sections:
+Comes with 3 default sections:
 * My Pull Requests
 * Needs My Review
 * Subscribed
@@ -21,15 +21,44 @@ brew install gh
 gh extension install dlvhdr/gh-prs
 ```
 
+## Configuring
+
+Configuration is done in the `sections.yml` file under the extension's directory.
+
+Example `sections.yml` file: 
+
+```yml
+- title: My Pull Requests
+  repos:
+    - dlvhdr/gh-prs
+  filters: author:@me
+- title: Needs My Review
+  repos:
+    - dlvhdr/gh-prs
+  filters: assignee:@me
+- title: Subscribed
+  repos:
+    - cli/cli
+    - charmbracelet/glamour
+    - charmbracelet/lipgloss
+  filters: -author:@me
+```
+
 ## Usage
 
+Run
 ```
-gh prs [repos...]
-
-OPTIONS
-    -h, --help             display help
-    -r, --repo repo-name   specify a repo to fetch PRs for
-
-EXAMPLE
-  gh prs -r dlvhdr/gh-prs -r cli/cli
+gh prs
 ```
+
+### Keybindings
+
+ -	Next Pull Request: <kbd>↑</kbd>, <kbd>k</kbd>
+ -	Previous Pull Request: <kbd>↓/kbd>, <kbd>j</kbd>
+ -	Previous Section: <kbd></kbd>, <kbd>h</kbd>
+ -	Next Section: <kbd><kbd>, <kbd>l</kbd>
+ -	Page Up: <kbd>Ctrl+u</kbd>
+ -	Page Down: <kbd>Ctrl+d</kbd>
+ -	Open in GitHub: <kbd>o</kbd>
+ -	Help: <kbd>h</kbd>
+ -	Quit: <kbd>q</kbd>, <kbd>Ctrl+c</kbd>, <kbd>esc</kbd>

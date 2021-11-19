@@ -17,11 +17,12 @@ type SectionConfig struct {
 const SectionsFileName = "sections.yml"
 
 func ParseSectionsConfig() ([]SectionConfig, error) {
-	pwd, err := os.Getwd()
+	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
-	data, err := os.ReadFile(filepath.Join(pwd, SectionsFileName))
+	exPath := filepath.Dir(ex)
+	data, err := os.ReadFile(filepath.Join(exPath, SectionsFileName))
 	if err != nil {
 		panic(err)
 	}
