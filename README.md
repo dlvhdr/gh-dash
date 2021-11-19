@@ -1,10 +1,10 @@
 # gh-prs
 
-`gh` cli extension to display a "dashboard" of prs by filters you care about.
+`gh` cli extension to display a "dashboard" or pull requests by filters you care about.
 
 ![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
 
-Supports 3 sections:
+Comes with 3 default sections:
 * My Pull Requests
 * Needs My Review
 * Subscribed
@@ -23,17 +23,32 @@ brew install gh
 gh extension install dlvhdr/gh-prs
 ```
 
+## Configuring
+
+Configuration is done in the `sections.yml` file under the extension's directory.
+
+Example `sections.yml` file: 
+
+```yml
+- title: My Pull Requests
+  repos:
+    - dlvhdr/gh-prs
+  filters: author:@me
+- title: Needs My Review
+  repos:
+    - dlvhdr/gh-prs
+  filters: assignee:@me
+- title: Subscribed
+  repos:
+    - cli/cli
+    - charmbracelet/glamour
+    - charmbracelet/lipgloss
+  filters: -author:@me
+```
+
 ## Usage
 
-```
-gh prs [repos...]
-
-OPTIONS
-    -h, --help             display help
-    -r, --repo repo-name   specify a repo to fetch PRs for
-
-EXAMPLE
-  gh prs -r dlvhdr/gh-prs -r cli/cli
+Run
 ```
 
 ### Author
