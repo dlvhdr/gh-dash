@@ -1,0 +1,11 @@
+{{ println }}
+{{ range . }}
+	{{ if eq .reviewDecision \"APPROVED\" }}{{ color \"green+b\" \"Approved\" }}{{ else if eq .reviewDecision \"CHANGES_REQUESTED\" }}{{ color \"red+b\" \"Changes requested\" }}{{else}}{{ color \"yellow+d\" \"Waiting for review\" }}{{end}}|
+	{{truncate 35 .title}}|
+	{{.headRepository.name}}|
+	{{.author.login}}|
+	{{timeago .updatedAt}}|
+	{{.url}}
+	{{ println }}
+{{ end }}
+{{ println }}
