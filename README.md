@@ -2,7 +2,7 @@
 
 `gh` cli extension to display a "dashboard" or pull requests by filters you care about.
 
-![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
+![demo](https://github.com/dlvhdr/gh-prs/blob/8621183574c573e4077360b5027ffea70999b921/demo.gif)
 
 Comes with 3 default sections:
 * My Pull Requests
