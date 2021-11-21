@@ -3,7 +3,6 @@ package ui
 import (
 	"dlvhdr/gh-prs/config"
 	"dlvhdr/gh-prs/utils"
-	"log"
 	"os"
 	"sort"
 	"strings"
@@ -63,8 +62,7 @@ func NewModel(logFile *os.File) Model {
 func initScreen() tea.Msg {
 	sections, err := config.ParseSectionsConfig()
 	if err != nil {
-		log.Fatal(err)
-		panic(err)
+		return errMsg{err}
 	}
 
 	return initMsg{Config: sections}
@@ -200,12 +198,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.configs == nil {
-		return "Reading config...\n"
+	if m.err != nil {
+		return m.err.Error()
 	}
 
-	if m.err != nil {
-		return "Error!\n"
+	if m.configs == nil {
+		return "Reading config...\n"
 	}
 
 	paddedContentStyle := lipgloss.NewStyle().
