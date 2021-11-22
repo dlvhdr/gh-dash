@@ -112,13 +112,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keys.Open):
-			currPR := func() PullRequest {
-				var prs []PullRequest
-				for _, section := range *m.data {
-					prs = append(prs, section.Prs...)
-				}
-				return prs[m.cursor.currPrId]
-			}()
+			currSection := m.getCurrSection()
+			if currSection.numPrs() == 0 {
+				return m, nil
+			}
+			currPR := m.getCurrSection().Prs[m.cursor.currPrId]
 			utils.OpenBrowser(currPR.Url)
 			return m, nil
 
