@@ -31,7 +31,7 @@ Example `sections.yml` file:
 - title: Needs My Review
   repos:
     - dlvhdr/gh-prs
-  filters: assignee:@me
+  filters: review-requested:@me
 - title: Subscribed
   repos:
     - cli/cli
