@@ -2,14 +2,6 @@ package ui
 
 import "dlvhdr/gh-prs/utils"
 
-func (m Model) getNumberOfPRs() int {
-	sum := 0
-	for _, section := range *m.data {
-		sum += len(section.Prs)
-	}
-	return sum
-}
-
 func (m Model) getCurrSection() *section {
 	if m.data == nil || len(*m.data) == 0 {
 		return nil
@@ -35,10 +27,6 @@ func (m *Model) nextPr() {
 
 	newPrId := utils.Min(m.cursor.currPrId+1, currSection.numPrs()-1)
 	m.cursor.currPrId = newPrId
-}
-
-func (m Model) numSections() int {
-	return len(m.configs)
 }
 
 func (m Model) getSectionAt(id int) *section {
