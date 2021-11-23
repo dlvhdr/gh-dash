@@ -1,0 +1,8 @@
+[codespell]
+quiet-level = 3
+count =
+check-hidden =
+check-filenames =
+enable-colors =
+builtin = clear,rare,informal,code,names
+ignore-words-list = pullrequest
