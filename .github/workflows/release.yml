@@ -9,6 +9,7 @@ on:
 
 env:
   RELEASE: ${{ github.event.inputs.release }}
+  GITHUB_TOKEN: ${{ github.token }}
 
 permissions:
   contents: write
@@ -27,6 +28,5 @@ jobs:
 
       - name: Release
         run: |
-          echo ${{ github.token }} | gh auth login --with-token
           sudo chmod 755 ./release.sh
           ./release.sh ${{ env.RELEASE }}
