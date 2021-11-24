@@ -18,7 +18,7 @@ gh extension install dlvhdr/gh-prs
 
 ## Configuring
 
-Configuration is provided within a `sections.yml` file under the extension's directory. If the configuration file is missing, a prompt to create it will be displayed to when running `gh prs`.
+Configuration is provided within a `sections.yml` file under the extension's directory. If the configuration file is missing, a prompt to create it will be displayed when running `gh prs`.
 
 Each section is defined by a top level array item and has the following properties:
 
