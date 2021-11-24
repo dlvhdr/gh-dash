@@ -16,6 +16,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
 
@@ -26,8 +27,6 @@ jobs:
 
       - name: Release
         run: |
+          echo ${{ secrets.ACCESS_TOKEN }} | gh auth login --with-token
           sudo chmod 755 ./release.sh
           ./release.sh ${{ env.RELEASE }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-
