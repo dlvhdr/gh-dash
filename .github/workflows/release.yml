@@ -26,5 +26,6 @@ jobs:
 
       - name: Release
         run: |
+          gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
           sudo chmod 755 ./release.sh
           ./release.sh ${{ env.RELEASE }}
