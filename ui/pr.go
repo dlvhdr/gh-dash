@@ -43,7 +43,6 @@ type Repository struct {
 }
 
 type StatusCheck struct {
-	__typename  string
 	Name        string
 	Context     string
 	State       string

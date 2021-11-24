@@ -65,13 +65,6 @@ func TruncateStringTrailing(str string, num int) string {
 	return truncated
 }
 
-func s(x float64) string {
-	if int(x) == 1 {
-		return ""
-	}
-	return "s"
-}
-
 func TimeElapsed(then time.Time) string {
 	var parts []string
 	var text string

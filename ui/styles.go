@@ -26,7 +26,6 @@ var (
 	border       = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
 	subtleBorder = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
 	highlight    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
-	special      = lipgloss.AdaptiveColor{Light: "#43BF6D", Dark: "#73F59F"}
 
 	activeTabBorder = lipgloss.Border{
 		Top:         "─",
@@ -49,10 +48,6 @@ var (
 		BottomLeft:  "┴",
 		BottomRight: "┴",
 	}
-
-	titleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color(indigo.Dark))
 
 	tab = lipgloss.NewStyle().
 		Border(tabBorder, true).
@@ -85,12 +80,6 @@ var (
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderForeground(subtleBorder).
 				BorderBottom(true)
-
-	selectedPullRequestStyle = lipgloss.NewStyle().
-					Background(lipgloss.Color(subtleIndigo.Dark)).
-					Foreground(lipgloss.Color(subtleIndigo.Light)).
-					BorderForeground(subtleBorder).
-					Inherit(pullRequestStyle)
 
 	cellStyle = lipgloss.NewStyle().
 			PaddingLeft(1).

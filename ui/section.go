@@ -81,11 +81,6 @@ func (section *section) renderLoadingState() string {
 	)
 }
 
-func (section *section) renderTitle() string {
-	sectionTitle := titleStyle.Render(section.Config.Title)
-	return fmt.Sprintf(sectionTitle + "\n")
-}
-
 func renderEmptyState() string {
 	emptyState := emptyStateStyle.Render("No PRs were found that match the given filters...")
 	return fmt.Sprintf(emptyState + "\n")
