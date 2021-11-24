@@ -8,7 +8,7 @@ A `gh` cli extension to display a dashboard with pull requests by filters you ca
 
 Installation requires a minimum version (2.0.0) of the the Github CLI to support extensions.
 
-1. Install the `gh cli`- see the [installation/upgrade instructions](https://github.com/cli/cli#installation)
+1. Install the `gh cli` - see the [installation/upgrade instructions](https://github.com/cli/cli#installation)
 
 2. Install this extension:
 
