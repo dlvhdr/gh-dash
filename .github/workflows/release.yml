@@ -19,10 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set
+      - name: Setup Go
         uses: actions/setup-go@v2.1.4
-        with:
-          go-version: 17
 
       - name: Release
         run: ./release.sh ${{ env.RELEASE }}
