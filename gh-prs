@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-repo="abdfnx/gh-prs"
-tag="v0.1.2"
+repo="dlvhdr/gh-prs"
+tag="v0.1.1"
 
 extensionPath="$(dirname "$0")"
 arch="$(uname -m)"
