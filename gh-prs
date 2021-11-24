@@ -51,7 +51,7 @@ else
   if [[ ! -x "${extensionPath}/bin/${exe}" ]]; then
     mkdir -p bin
     rm -f "${extensionPath}/bin/*"
-    gh release -R"${repo}" download "${tag}" -p "${exe}" --dir="${extensionPath}/bin"
+    gh release -R"${repo}" download -p "${exe}" --dir="${extensionPath}/bin"
     chmod +x "${extensionPath}/bin/${exe}"
   fi
 fi
