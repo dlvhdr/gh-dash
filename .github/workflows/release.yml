@@ -21,6 +21,8 @@ jobs:
 
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
+        with:
+          go-verison: "1.17.3"
 
       - name: Release
         run: |
