@@ -20,6 +20,8 @@ if uname -a | grep Msys > /dev/null; then
 elif uname -a | grep Darwin > /dev/null; then
   if [ $arch = "x86_64" ]; then
     exe="darwin-x86_64"
+  elif [ $arch = "arm64" ]; then
+    exe="darwin-arm64"
   fi
 elif uname -a | grep Linux > /dev/null; then
   if [ $arch = "x86_64" ]; then
