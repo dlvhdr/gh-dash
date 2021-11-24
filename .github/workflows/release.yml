@@ -23,4 +23,6 @@ jobs:
         uses: actions/setup-go@v2.1.4
 
       - name: Release
-        run: ./release.sh ${{ env.RELEASE }}
+        run: |
+          sudo chmod 755 ./release.sh
+          ./release.sh ${{ env.RELEASE }}
