@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
+# https://github.com/dlvhdr/gh-prs/pull/11#discussion_r756341767
+LATEST_VERSION=$(curl --silent "https://api.github.com/repos/dlvhdr/gh-prs/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
 repo="dlvhdr/gh-prs"
-tag="v0.1.1"
+tag=$LATEST_VERSION
 
 extensionPath="$(dirname "$0")"
 arch="$(uname -m)"
