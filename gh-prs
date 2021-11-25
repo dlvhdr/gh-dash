@@ -24,7 +24,7 @@ elif uname -a | grep Darwin > /dev/null; then
   fi
 elif uname -a | grep Linux > /dev/null; then
   if [ $arch = "x86_64" ]; then
-    exe="linux-x86_64"
+    exe="linux-amd64"
   elif [ $arch = "i686" ]; then
     exe="linux-i386"
   elif [ $arch = "i386" ]; then
