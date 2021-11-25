@@ -1,9 +1,15 @@
-name: release
+name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "The New Release"
+        required: true
+
+env:
+  RELEASE: ${{ github.event.inputs.release }}
+  GITHUB_TOKEN: ${{ github.token }}
 
 permissions:
   contents: write
@@ -11,6 +17,16 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
-      - uses: cli/gh-extension-precompile@v1
+
+      - name: Setup Go
+        uses: actions/setup-go@v2.1.4
+        with:
+          go-version: "1.17.3"
+
+      - name: Release
+        run: |
+          sudo chmod 755 ./release.sh
+          ./release.sh ${{ env.RELEASE }}
