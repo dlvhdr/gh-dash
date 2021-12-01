@@ -16,6 +16,8 @@ Installation requires a minimum version (2.0.0) of the the Github CLI to support
 gh extension install dlvhdr/gh-prs
 ```
 
+#### Troubleshooting
+
 > if you get an error when execute `gh prs`, do these steps:
 
 1. clone this repo
