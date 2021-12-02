@@ -16,6 +16,30 @@ Installation requires a minimum version (2.0.0) of the the Github CLI to support
 gh extension install dlvhdr/gh-prs
 ```
 
+### Installing Manually
+
+> if you want to install this extension **manually**, do these steps:
+
+1. clone repo
+    ```bash
+    # git
+    git clone https://github.com/dlvhdr/gh-prs
+    
+    # github cli
+    gh repo clone dlvhdr/gh-prs
+    ```
+
+2. cd to it
+    ```bash
+    cd gh-prs
+    ```
+
+3. install it locally
+    ```bash
+    gh extension install .
+    ```
+
+
 ## Configuring
 
 Configuration is provided within a `sections.yml` file under the extension's directory. If the configuration file is missing, a prompt to create it will be displayed when running `gh prs`.
