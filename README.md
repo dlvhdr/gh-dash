@@ -79,6 +79,10 @@ gh prs
 
 Then press <kbd>?</kbd> for help.
 
+## Icons
+
+To get the icons to render properly you should download and install a Nerd font from https://www.nerdfonts.com/ . Then, select that font as your font for the terminal.
+
 ## Author
 
 Dolev Hadar dolevc2@gmail.com
