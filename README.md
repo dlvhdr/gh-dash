@@ -16,7 +16,11 @@ Installation requires a minimum version (2.0.0) of the the Github CLI to support
 gh extension install dlvhdr/gh-prs
 ```
 
-### Installing Manually
+3. To get the icons to render properly you should download and install a Nerd font from https://www.nerdfonts.com/.
+Then, select that font as your font for the terminal.
+
+<details>
+    <summary><strong>Installing Manually</strong></summary>
 
 > if you want to install this extension **manually**, do these steps:
 
@@ -38,7 +42,7 @@ gh extension install dlvhdr/gh-prs
     ```bash
     gh extension install .
     ```
-
+</details>
 
 ## Configuring
 
@@ -78,10 +82,6 @@ gh prs
 ```
 
 Then press <kbd>?</kbd> for help.
-
-## Icons
-
-To get the icons to render properly you should download and install a Nerd font from https://www.nerdfonts.com/ . Then, select that font as your font for the terminal.
 
 ## Author
 
