@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -37,6 +38,23 @@ func OpenBrowser(url string) {
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func CheckoutPR(id int) {
+	checkoutCmd := exec.Command("gh", "pr", "checkout", strconv.Itoa(id))
+	checkoutCmd.Stdin = os.Stdin
+	checkoutCmd.Stdout = os.Stdout
+	checkoutCmd.Stderr = os.Stderr
+
+	err := checkoutCmd.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = checkoutCmd.Wait()
 	if err != nil {
 		log.Fatal(err)
 	}

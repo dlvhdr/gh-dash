@@ -6,6 +6,7 @@ type KeyMap struct {
 	Up          key.Binding
 	Down        key.Binding
 	Open        key.Binding
+	Checkout    key.Binding
 	PageDown    key.Binding
 	PageUp      key.Binding
 	NextSection key.Binding
@@ -23,7 +24,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		{k.Up, k.Down},
 		{k.PrevSection, k.NextSection},
 		{k.PageDown, k.PageUp},
-		{k.Open},
+		{k.Open, k.Checkout},
 		{k.Help, k.Quit},
 	}
 }
@@ -56,6 +57,10 @@ var Keys = KeyMap{
 	Open: key.NewBinding(
 		key.WithKeys("o"),
 		key.WithHelp("o", "open in GitHub"),
+	),
+	Checkout: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "checkout"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),

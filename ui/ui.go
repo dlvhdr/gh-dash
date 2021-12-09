@@ -77,7 +77,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -119,6 +118,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			currPR := m.getCurrSection().Prs[m.cursor.currPrId]
 			utils.OpenBrowser(currPR.Url)
 			return m, nil
+
+		case key.Matches(msg, m.keys.Checkout):
+			currSection := m.getCurrSection()
+			if currSection.numPrs() == 0 {
+				return m, nil
+			}
+			currPR := m.getCurrSection().Prs[m.cursor.currPrId]
+			utils.CheckoutPR(currPR.Number)
+			return m, tea.Quit
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
