@@ -93,6 +93,8 @@ var (
 	selectedRuneCellStyle = singleRuneCellStyle.Copy().Background(selected)
 
 	selectionPointerStyle = lipgloss.NewStyle()
+
+	spinnerStyle = lipgloss.NewStyle().PaddingLeft(2)
 )
 
 func makeCellStyle(isSelected bool) lipgloss.Style {
