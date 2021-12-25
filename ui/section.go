@@ -1,10 +1,11 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/config"
-	"dlvhdr/gh-prs/data"
 	"fmt"
 	"strings"
+
+	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/data"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/spinner"

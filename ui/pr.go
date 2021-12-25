@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/data"
-	"dlvhdr/gh-prs/utils"
 	"fmt"
+
+	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/utils"
 
 	"github.com/charmbracelet/lipgloss"
 )

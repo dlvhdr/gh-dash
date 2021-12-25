@@ -1,11 +1,12 @@
 package main
 
 import (
-	"dlvhdr/gh-prs/ui"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/dlvhdr/gh-prs/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

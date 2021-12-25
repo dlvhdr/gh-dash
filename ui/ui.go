@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/config"
-	"dlvhdr/gh-prs/utils"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/utils"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
