@@ -12,11 +12,10 @@ import (
 type SectionConfig struct {
 	Title   string
 	Filters string
-	Repos   []string
 }
 
 const PrsDir = "prs"
-const SectionsFileName = "sections.yml"
+const ConfigFileName = "config.yml"
 
 type configError struct {
 	configDir string
@@ -25,38 +24,30 @@ type configError struct {
 
 func (e configError) Error() string {
 	return fmt.Sprintf(
-		`Couldn't find a sections.yml configuration file.
+		`Couldn't find a config.yml configuration file.
 Create one under: %s
 
-Example of a sections.yml file:
+Example of a config.yml file:
   - title: My Pull Requests
-    repos:
-      - dlvhdr/gh-prs
     filters: author:@me
   - title: Needs My Review
-    repos:
-      - dlvhdr/gh-prs
-    filters: assignee:@me
-  - title: Subscribed
-    repos:
-      - cli/cli
-      - charmbracelet/glamour
-      - charmbracelet/lipgloss
-    filters: -author:@me
+    filters: review-requested:@me
+	- title: Subscribed
+		filters: -author:@me repo:cli/cli repo:charmbracelet/glamour repo:charmbracelet/lipgloss
 
 For more info, go to https://github.com/dlvhdr/gh-prs
 press q to exit.
 
 Original error: %v`,
-		path.Join(e.configDir, PrsDir, SectionsFileName),
+		path.Join(e.configDir, PrsDir, ConfigFileName),
 		e.err,
 	)
 }
 
 func ParseSectionsConfig() ([]SectionConfig, error) {
+	var err error
 	var sections []SectionConfig
 	configDir := os.Getenv("XDG_CONFIG_HOME")
-	var err error
 	if configDir == "" {
 		configDir, err = os.UserConfigDir()
 		if err != nil {
@@ -64,14 +55,14 @@ func ParseSectionsConfig() ([]SectionConfig, error) {
 		}
 	}
 
-	data, err := os.ReadFile(filepath.Join(configDir, PrsDir, SectionsFileName))
+	data, err := os.ReadFile(filepath.Join(configDir, PrsDir, ConfigFileName))
 	if err != nil {
 		return sections, configError{configDir: configDir, err: err}
 	}
 
 	err = yaml.Unmarshal([]byte(data), &sections)
 	if err != nil {
-		return sections, fmt.Errorf("Failed parsing sections.yml: %w", err)
+		return sections, fmt.Errorf("failed parsing config.yml: %w", err)
 	}
 
 	return sections, nil

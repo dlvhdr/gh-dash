@@ -1,100 +1,29 @@
 package ui
 
 import (
+	"dlvhdr/gh-prs/data"
 	"dlvhdr/gh-prs/utils"
-	"encoding/json"
 	"fmt"
-	"log"
-	"os/exec"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
-const (
-	JsonFields = "title,mergeable,author,url,additions,deletions,headRefName,headRepository,isDraft,number,reviewDecision,state,statusCheckRollup,updatedAt"
-	Limit      = "20"
-)
-
 type PullRequest struct {
-	Number            int
-	Title             string
-	Author            Author
-	UpdatedAt         time.Time
-	Url               string
-	State             string
-	Mergeable         string
-	ReviewDecision    string
-	Additions         int
-	Deletions         int
-	HeadRefName       string
-	HeadRepository    Repository
-	IsDraft           bool
-	StatusCheckRollup []StatusCheck
-}
-
-type Author struct {
-	Login string
-}
-
-type Repository struct {
-	Id   string
-	Name string
-}
-
-type StatusCheck struct {
-	Name        string
-	Context     string
-	State       string
-	Status      string
-	Conclusion  string
-	StartedAt   string
-	CompletedAt string
-	DetailsUrl  string
-	TargetUrl   string
+	Data data.PullRequestData
 }
 
 type repoPullRequestsFetchedMsg struct {
 	SectionId int
-	RepoName  string
 	Prs       []PullRequest
-}
-
-func fetchRepoPullRequests(repo string, search string) ([]PullRequest, error) {
-	out, err := exec.Command(
-		"gh",
-		"pr",
-		"list",
-		"--repo",
-		repo,
-		"--json",
-		JsonFields,
-		"--search",
-		search,
-		"--limit",
-		Limit,
-	).Output()
-
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	prs := []PullRequest{}
-	if err := json.Unmarshal(out, &prs); err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	return prs, nil
 }
 
 func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 	reviewCellStyle := makeRuneCellStyle(isSelected)
-	if pr.ReviewDecision == "APPROVED" {
+	if pr.Data.ReviewDecision == "APPROVED" {
 		return reviewCellStyle.Foreground(lipgloss.Color("42")).Render("")
 	}
 
-	if pr.ReviewDecision == "CHANGES_REQUESTED" {
+	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
 		return reviewCellStyle.Foreground(lipgloss.Color("196")).Render("")
 	}
 
@@ -103,7 +32,7 @@ func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 
 func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 	mergeCellStyle := makeRuneCellStyle(isSelected)
-	switch pr.Mergeable {
+	switch pr.Data.Mergeable {
 	case "MERGEABLE":
 		return mergeCellStyle.Foreground(lipgloss.Color("42")).Render("")
 	case "CONFLICTING":
@@ -117,17 +46,24 @@ func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 
 func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	accStatus := "SUCCESS"
-	ciCellStyle := makeRuneCellStyle(isSelected).Width(ciCellWidth)
-	for _, statusCheck := range pr.StatusCheckRollup {
-		if statusCheck.State == "FAILURE" {
+	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
+	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
+		conclusion := statusCheck.CheckRun.Conclusion
+		if conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE" {
 			accStatus = "FAILURE"
 			break
 		}
 
-		if statusCheck.State == "PENDING" {
+		status := statusCheck.CheckRun.Status
+		if status == "PENDING" ||
+			status == "QUEUED" ||
+			status == "IN_PROGRESS" ||
+			status == "WAITING" {
 			accStatus = "PENDING"
 		}
 	}
+
+	ciCellStyle := makeRuneCellStyle(isSelected).Width(ciCellWidth)
 	if accStatus == "SUCCESS" {
 		return ciCellStyle.Foreground(lipgloss.Color("42")).Render("")
 	}
@@ -141,10 +77,10 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 
 func (pr PullRequest) renderLines(isSelected bool) string {
 	separator := makeCellStyle(isSelected).Faint(true).PaddingLeft(1).PaddingRight(1).Render("/")
-	added := makeCellStyle(isSelected).Render(fmt.Sprintf("%d", pr.Additions))
+	added := makeCellStyle(isSelected).Render(fmt.Sprintf("%d", pr.Data.Additions))
 	deletions := 0
-	if pr.Deletions > 0 {
-		deletions = pr.Deletions
+	if pr.Data.Deletions > 0 {
+		deletions = pr.Data.Deletions
 	}
 	removed := makeCellStyle(isSelected).Render(
 		fmt.Sprintf("-%d", deletions),
@@ -157,11 +93,11 @@ func (pr PullRequest) renderLines(isSelected bool) string {
 
 func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 	number := lipgloss.NewStyle().Width(6).Faint(true).Render(
-		fmt.Sprintf("#%s", fmt.Sprintf("%d", pr.Number)),
+		fmt.Sprintf("#%s", fmt.Sprintf("%d", pr.Data.Number)),
 	)
 
 	totalWidth := getTitleWidth(viewportWidth)
-	title := lipgloss.NewStyle().Render(pr.Title)
+	title := lipgloss.NewStyle().Render(pr.Data.Title)
 
 	return makeCellStyle(isSelected).
 		Width(totalWidth - 1).
@@ -170,20 +106,20 @@ func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 
 func (pr PullRequest) renderAuthor(isSelected bool) string {
 	return makeCellStyle(isSelected).Width(prAuthorCellWidth).Render(
-		utils.TruncateString(pr.Author.Login, prAuthorCellWidth-cellPadding),
+		utils.TruncateString(pr.Data.Author.Login, prAuthorCellWidth-cellPadding),
 	)
 }
 
 func (pr PullRequest) renderRepoName(isSelected bool) string {
 	return makeCellStyle(isSelected).
 		Width(prRepoCellWidth).
-		Render(fmt.Sprintf("%-20s", utils.TruncateString(pr.HeadRepository.Name, 20)))
+		Render(fmt.Sprintf("%-20s", utils.TruncateString(pr.Data.HeadRepository.Name, 20)))
 }
 
 func (pr PullRequest) renderUpdateAt(isSelected bool) string {
 	return makeCellStyle(isSelected).
 		Width(updatedAtCellWidth).
-		Render(utils.TimeElapsed(pr.UpdatedAt))
+		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
 
 func renderSelectionPointer(isSelected bool) string {

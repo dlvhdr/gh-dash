@@ -2,6 +2,7 @@ package ui
 
 import (
 	"dlvhdr/gh-prs/config"
+	"dlvhdr/gh-prs/data"
 	"fmt"
 	"strings"
 
@@ -15,13 +16,9 @@ type section struct {
 	Id        int
 	Config    config.SectionConfig
 	Prs       []PullRequest
-	Spinner   sectionSpinner
+	Spinner   spinner.Model
+	IsLoading bool
 	Paginator paginator.Model
-}
-
-type sectionSpinner struct {
-	Model           spinner.Model
-	NumReposFetched int
 }
 
 type tickMsg struct {
@@ -38,29 +35,28 @@ func (section *section) Tick(spinnerTickCmd tea.Cmd) func() tea.Msg {
 	}
 }
 
-func (section *section) fetchSectionPullRequests() []tea.Cmd {
-	var cmds []tea.Cmd
-	for _, repo := range section.Config.Repos {
-		repo := repo
-		cmds = append(cmds, func() tea.Msg {
-			fetched, err := fetchRepoPullRequests(repo, section.Config.Filters)
-			if err != nil {
-				return repoPullRequestsFetchedMsg{
-					SectionId: section.Id,
-					RepoName:  repo,
-					Prs:       []PullRequest{},
-				}
-			}
-
+func (section *section) fetchSectionPullRequests() tea.Cmd {
+	return func() tea.Msg {
+		fetched, err := data.FetchRepoPullRequests(section.Config.Filters)
+		if err != nil {
 			return repoPullRequestsFetchedMsg{
 				SectionId: section.Id,
-				RepoName:  repo,
-				Prs:       fetched,
+				Prs:       []PullRequest{},
 			}
-		})
-	}
+		}
 
-	return cmds
+		prs := make([]PullRequest, 0, len(fetched))
+		for _, prData := range fetched {
+			prs = append(prs, PullRequest{
+				Data: prData,
+			})
+		}
+
+		return repoPullRequestsFetchedMsg{
+			SectionId: section.Id,
+			Prs:       prs,
+		}
+	}
 }
 
 func (m Model) makeRenderPullRequestCmd(sectionId int) tea.Cmd {
@@ -73,12 +69,10 @@ func (m Model) makeRenderPullRequestCmd(sectionId int) tea.Cmd {
 }
 
 func (section *section) renderLoadingState() string {
-	return fmt.Sprintf(
-		"%s %d/%d fetched...\n",
-		section.Spinner.Model.View(),
-		section.Spinner.NumReposFetched,
-		len(section.Config.Repos),
-	)
+	if !section.IsLoading {
+		return ""
+	}
+	return spinnerStyle.Render(fmt.Sprintf("%s Fetching Pull Requests...", section.Spinner.View()))
 }
 
 func renderEmptyState() string {
@@ -128,13 +122,8 @@ func (m Model) renderTableHeader() string {
 
 func (m Model) renderPullRequestList() string {
 	section := m.getCurrSection()
-	isLoading := section.Spinner.NumReposFetched < len(section.Config.Repos)
-	if isLoading {
-		return section.renderLoadingState() + "\n"
-	}
-
 	if len(section.Prs) == 0 {
-		return renderEmptyState() + "\n"
+		return fmt.Sprintf("%s\n", renderEmptyState())
 	}
 
 	s := strings.Builder{}
@@ -146,6 +135,20 @@ func (m Model) renderPullRequestList() string {
 
 	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...))
 	return s.String()
+}
+
+func (m Model) renderCurrentSection() string {
+	section := m.getCurrSection()
+	if section.IsLoading {
+		return lipgloss.NewStyle().
+			Height(m.viewport.Height).
+			Render(section.renderLoadingState())
+	}
+
+	return lipgloss.NewStyle().
+		PaddingLeft(mainContentPadding).
+		PaddingRight(mainContentPadding).
+		Render(m.viewport.View())
 }
 
 func (section section) numPrs() int {

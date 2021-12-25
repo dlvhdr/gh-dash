@@ -117,7 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			currPR := m.getCurrSection().Prs[m.cursor.currPrId]
-			utils.OpenBrowser(currPR.Url)
+			utils.OpenBrowser(currPR.Data.Url)
 			return m, nil
 
 		case key.Matches(msg, m.keys.Help):
@@ -134,38 +134,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i, sectionConfig := range m.configs {
 			s := spinner.Model{Spinner: spinner.Dot}
 			data = append(data, section{
-				Id:      i,
-				Config:  sectionConfig,
-				Spinner: sectionSpinner{Model: s, NumReposFetched: 0},
+				Id:        i,
+				Config:    sectionConfig,
+				Spinner:   s,
+				IsLoading: true,
 			})
 		}
 		m.data = &data
 		return m, m.startFetchingSectionsData()
 
+	case tickMsg:
+		var internalCmd tea.Cmd
+		section := (*m.data)[msg.SectionId]
+		section.Spinner, internalCmd = section.Spinner.Update(msg.InternalTickMsg)
+		(*m.data)[msg.SectionId] = section
+		return m, section.Tick(internalCmd)
+
 	case repoPullRequestsFetchedMsg:
 		section := (*m.data)[msg.SectionId]
-		section.Prs = append(section.Prs, msg.Prs...)
+		section.Prs = msg.Prs
 		sort.Slice(section.Prs, func(i, j int) bool {
-			return section.Prs[i].UpdatedAt.After(section.Prs[j].UpdatedAt)
+			return section.Prs[i].Data.UpdatedAt.After(section.Prs[j].Data.UpdatedAt)
 		})
-
-		section.Spinner.NumReposFetched += 1
 		(*m.data)[msg.SectionId] = section
 		return m, m.makeRenderPullRequestCmd(msg.SectionId)
 
 	case pullRequestsRenderedMsg:
 		section := (*m.data)[msg.sectionId]
-		section.Spinner.Model.Finish()
+		section.Spinner.Finish()
+		section.IsLoading = false
 		(*m.data)[msg.sectionId] = section
 		m.viewport.SetContent(msg.content)
 		return m, nil
-
-	case tickMsg:
-		var internalCmd tea.Cmd
-		section := (*m.data)[msg.SectionId]
-		section.Spinner.Model, internalCmd = section.Spinner.Model.Update(msg.InternalTickMsg)
-		(*m.data)[msg.SectionId] = section
-		return m, section.Tick(internalCmd)
 
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
@@ -213,7 +213,7 @@ func (m Model) View() string {
 	s.WriteString("\n")
 	s.WriteString(paddedContentStyle.Render(m.renderTableHeader()))
 	s.WriteString("\n")
-	s.WriteString(paddedContentStyle.Render(m.viewport.View()))
+	s.WriteString(m.renderCurrentSection())
 	s.WriteString("\n")
 	s.WriteString(lipgloss.PlaceVertical(2, lipgloss.Bottom, m.help.View(m.keys)))
 	return s.String()
@@ -223,7 +223,7 @@ func (m Model) startFetchingSectionsData() tea.Cmd {
 	var cmds []tea.Cmd
 	for _, section := range *m.data {
 		section := section
-		cmds = append(cmds, section.fetchSectionPullRequests()...)
+		cmds = append(cmds, section.fetchSectionPullRequests())
 		cmds = append(cmds, section.Tick(spinner.Tick))
 	}
 	return tea.Batch(cmds...)

@@ -10,7 +10,11 @@ require (
 )
 
 require (
+	github.com/cli/go-gh v0.0.1 // indirect
+	github.com/cli/safeexec v1.0.0 // indirect
+	github.com/cli/shurcooL-graphql v0.0.1 // indirect
 	github.com/containerd/console v1.0.2 // indirect
+	github.com/henvic/httpretty v0.0.6 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
@@ -19,6 +23,8 @@ require (
 	github.com/muesli/termenv v0.9.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 	golang.org/x/term v0.0.0-20210422114643-f5beecf764ed // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
