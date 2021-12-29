@@ -1,13 +1,13 @@
 package main
 
 import (
-	"dlvhdr/gh-prs/ui"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dlvhdr/gh-prs/ui"
 )
 
 func createModel(debug bool) (ui.Model, *os.File) {

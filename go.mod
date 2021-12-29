@@ -6,13 +6,13 @@ require (
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.0
 	github.com/charmbracelet/lipgloss v0.4.0
+	github.com/cli/go-gh v0.0.1
+	github.com/cli/shurcooL-graphql v0.0.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/cli/go-gh v0.0.1 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
-	github.com/cli/shurcooL-graphql v0.0.1 // indirect
 	github.com/containerd/console v1.0.2 // indirect
 	github.com/henvic/httpretty v0.0.6 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
