@@ -1,6 +1,6 @@
 package ui
 
-import "dlvhdr/gh-prs/utils"
+import "github.com/dlvhdr/gh-prs/utils"
 
 func (m Model) getCurrSection() *section {
 	if m.data == nil || len(*m.data) == 0 {

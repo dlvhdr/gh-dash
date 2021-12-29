@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -50,6 +51,10 @@ type Commits struct {
 	}
 }
 
+func makeQuery(query string) string {
+	return fmt.Sprintf("is:pr %s", query)
+}
+
 func FetchRepoPullRequests(query string) ([]PullRequestData, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
@@ -66,7 +71,7 @@ func FetchRepoPullRequests(query string) ([]PullRequestData, error) {
 		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
 	}
 	variables := map[string]interface{}{
-		"query": graphql.String(query),
+		"query": graphql.String(makeQuery(query)),
 		"limit": graphql.Int(Limit),
 	}
 	err = client.Query("SearchPullRequests", &queryResult, variables)

@@ -1,11 +1,11 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/data"
-	"dlvhdr/gh-prs/utils"
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/utils"
 )
 
 type PullRequest struct {

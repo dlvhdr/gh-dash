@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/config"
-	"dlvhdr/gh-prs/utils"
 	"os"
 	"sort"
 	"strings"
@@ -13,6 +11,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/utils"
 )
 
 type Model struct {

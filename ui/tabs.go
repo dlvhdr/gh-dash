@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/utils"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/utils"
 )
 
 func (m Model) renderTabs() string {

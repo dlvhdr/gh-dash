@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"dlvhdr/gh-prs/config"
-	"dlvhdr/gh-prs/data"
 	"fmt"
 	"strings"
 
@@ -10,6 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/data"
 )
 
 type section struct {
