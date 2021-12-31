@@ -205,6 +205,7 @@ func (m Model) View() string {
 	}
 
 	paddedContentStyle := lipgloss.NewStyle().
+		PaddingTop(0).
 		PaddingLeft(mainContentPadding).
 		PaddingRight(mainContentPadding)
 

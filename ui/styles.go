@@ -6,79 +6,66 @@ var (
 	headerHeight       = 6
 	footerHeight       = 2
 	singleRuneWidth    = 4
-	mainContentPadding = 0
+	mainContentPadding = 1
 	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
 
-	emptyCellWidth     = lipgloss.Width(cellStyle.Render(""))
-	reviewCellWidth    = emptyCellWidth
-	mergeableCellWidth = emptyCellWidth
+	reviewCellWidth    = singleRuneWidth
+	mergeableCellWidth = singleRuneWidth
 	ciCellWidth        = lipgloss.Width(cellStyle.Render("CI"))
-	linesCellWidth     = lipgloss.Width(cellStyle.Render("+12345 / -12345"))
-	prAuthorCellWidth  = 15 + cellPadding
-	prRepoCellWidth    = 20 + cellPadding
-	updatedAtCellWidth = lipgloss.Width("Updated At") + cellPadding
-	usedWidth          = emptyCellWidth + reviewCellWidth + mergeableCellWidth +
+	linesCellWidth     = lipgloss.Width(cellStyle.Render("123450 / -123450"))
+	prAuthorCellWidth  = 15
+	prRepoCellWidth    = 20
+	updatedAtCellWidth = lipgloss.Width(cellStyle.Render(" Updated"))
+	usedWidth          = reviewCellWidth + mergeableCellWidth +
 		ciCellWidth + linesCellWidth + prAuthorCellWidth + prRepoCellWidth + updatedAtCellWidth
 
-	indigo       = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
-	subtleIndigo = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
-	selected     = lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: subtleIndigo.Dark}
-	border       = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
-	subtleBorder = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
-	highlight    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
-
-	activeTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      " ",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┘",
-		BottomRight: "└",
-	}
-
-	tabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      "─",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┴",
-		BottomRight: "┴",
-	}
+	indigo             = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
+	subtleIndigo       = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
+	selectedBackground = lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: subtleIndigo.Dark}
+	border             = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
+	secondaryBorder    = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#39386b"}
+	faintBorder        = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#28283b"}
+	mainText           = lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"}
+	secondaryText      = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#666CA6"}
+	faintText          = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#3E4057"}
+	warningText        = lipgloss.AdaptiveColor{Light: "#F23D5C", Dark: "#F23D5C"}
+	successText        = lipgloss.AdaptiveColor{Light: "#3DF294", Dark: "#3DF294"}
 
 	tab = lipgloss.NewStyle().
-		Border(tabBorder, true).
-		BorderForeground(highlight).
 		Faint(true).
-		Padding(0, 1)
+		Bold(true).
+		Padding(0, 2)
 
 	activeTab = tab.
+			Foreground(mainText).
 			Copy().
-			Faint(false).
-			Bold(true).
-			Border(activeTabBorder, true)
+			Faint(false)
 
 	tabGap = tab.Copy().
 		BorderTop(false).
 		BorderLeft(false).
 		BorderRight(false)
 
+	tabsRow = lipgloss.NewStyle().
+		PaddingTop(1).
+		PaddingBottom(0).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderBottomForeground(border).
+		BorderBottom(true)
+
 	emptyStateStyle = lipgloss.NewStyle().
 			Faint(true).
-			PaddingLeft(2).
+			PaddingLeft(1).
 			MarginBottom(1)
 
 	headerStyle = lipgloss.NewStyle().
-			BorderStyle(lipgloss.DoubleBorder()).
-			BorderForeground(border).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(secondaryBorder).
 			BorderBottom(true)
 
 	pullRequestStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.NormalBorder()).
-				BorderForeground(subtleBorder).
+				BorderForeground(faintBorder).
 				BorderBottom(true)
 
 	cellStyle = lipgloss.NewStyle().
@@ -86,13 +73,17 @@ var (
 			PaddingRight(1).
 			MaxHeight(1)
 
-	selectedCellStyle = cellStyle.Copy().Background(selected)
+	titleCellStyle = cellStyle.Copy().
+			Bold(true).
+			Foreground(mainText)
 
-	singleRuneCellStyle = cellStyle.Copy().PaddingRight(1).Width(singleRuneWidth)
+	selectedCellStyle = cellStyle.Copy().Background(selectedBackground)
 
-	selectedRuneCellStyle = singleRuneCellStyle.Copy().Background(selected)
+	singleRuneTitleCellStyle = titleCellStyle.Copy().Width(singleRuneWidth)
 
-	selectionPointerStyle = lipgloss.NewStyle()
+	singleRuneCellStyle = cellStyle.Copy().Width(singleRuneWidth)
+
+	selectedSingleRuneCellStyle = singleRuneCellStyle.Copy().Background(selectedBackground)
 
 	spinnerStyle = lipgloss.NewStyle().PaddingLeft(2)
 )
@@ -107,7 +98,7 @@ func makeCellStyle(isSelected bool) lipgloss.Style {
 
 func makeRuneCellStyle(isSelected bool) lipgloss.Style {
 	if isSelected {
-		return selectedRuneCellStyle.Copy()
+		return selectedSingleRuneCellStyle.Copy()
 	}
 
 	return singleRuneCellStyle.Copy()

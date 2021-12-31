@@ -20,8 +20,12 @@ func (m Model) renderTabs() string {
 	{
 		row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 		gap := tabGap.Render(
-			strings.Repeat(" ", utils.Max(0, m.viewport.Width-lipgloss.Width(row)-2+mainContentPadding)),
+			strings.Repeat(
+				" ",
+				utils.Max(0, m.viewport.Width-lipgloss.Width(row)),
+			),
 		)
-		return lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+
+		return tabsRow.Render(lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap))
 	}
 }
