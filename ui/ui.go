@@ -60,7 +60,7 @@ func NewModel(logFile *os.File) Model {
 }
 
 func initScreen() tea.Msg {
-	sections, err := config.ParseSectionsConfig()
+	sections, err := config.ParseConfig()
 	if err != nil {
 		return errMsg{err}
 	}
