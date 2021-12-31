@@ -133,7 +133,7 @@ func (m Model) renderPullRequestList() string {
 		renderedPRs = append(renderedPRs, pr.render(isSelected, m.viewport.Width))
 	}
 
-	s.WriteString(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...))
+	s.WriteString(lipgloss.NewStyle().Height(m.viewport.Height).Render(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...)))
 	return s.String()
 }
 

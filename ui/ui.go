@@ -16,15 +16,17 @@ import (
 )
 
 type Model struct {
-	keys     utils.KeyMap
-	err      error
-	configs  []config.SectionConfig
-	data     *[]section
-	viewport viewport.Model
-	cursor   cursor
-	help     help.Model
-	ready    bool
-	logger   *os.File
+	keys          utils.KeyMap
+	err           error
+	configs       []config.SectionConfig
+	data          *[]section
+	viewport      viewport.Model
+	cursor        cursor
+	help          help.Model
+	ready         bool
+	isSidebarOpen bool
+	width         int
+	logger        *os.File
 }
 
 type cursor struct {
@@ -168,12 +170,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.WindowSizeMsg:
+		m.width = msg.Width
 		m.help.Width = msg.Width
 		verticalMargins := headerHeight + footerHeight
 
 		if !m.ready {
 			m.viewport = viewport.Model{
-				Width:  msg.Width - 2*mainContentPadding,
+				Width:  msg.Width - 2*mainContentPadding - sideBarWidth,
 				Height: msg.Height - verticalMargins,
 			}
 			m.ready = true
@@ -181,7 +184,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Render the viewport one line below the header.
 			m.viewport.YPosition = headerHeight + 1
 		} else {
-			m.viewport.Width = msg.Width - 2*mainContentPadding
+			m.viewport.Width = msg.Width - 2*mainContentPadding - sideBarWidth
 			m.viewport.Height = msg.Height - verticalMargins
 		}
 
@@ -212,11 +215,10 @@ func (m Model) View() string {
 	s := strings.Builder{}
 	s.WriteString(m.renderTabs())
 	s.WriteString("\n")
-	s.WriteString(paddedContentStyle.Render(m.renderTableHeader()))
+	table := lipgloss.JoinVertical(lipgloss.Top, paddedContentStyle.Render(m.renderTableHeader()), m.renderCurrentSection())
+	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, table, m.renderSidebar()))
 	s.WriteString("\n")
-	s.WriteString(m.renderCurrentSection())
-	s.WriteString("\n")
-	s.WriteString(lipgloss.PlaceVertical(2, lipgloss.Bottom, m.help.View(m.keys)))
+	s.WriteString(m.renderHelp())
 	return s.String()
 }
 

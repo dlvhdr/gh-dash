@@ -8,6 +8,7 @@ var (
 	singleRuneWidth    = 4
 	mainContentPadding = 1
 	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
+	sideBarWidth       = 50
 
 	reviewCellWidth    = singleRuneWidth
 	mergeableCellWidth = singleRuneWidth
@@ -49,9 +50,9 @@ var (
 	tabsRow = lipgloss.NewStyle().
 		PaddingTop(1).
 		PaddingBottom(0).
+		BorderBottom(true).
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderBottomForeground(border).
-		BorderBottom(true)
+		BorderBottomForeground(border)
 
 	emptyStateStyle = lipgloss.NewStyle().
 			Faint(true).
@@ -86,6 +87,21 @@ var (
 	selectedSingleRuneCellStyle = singleRuneCellStyle.Copy().Background(selectedBackground)
 
 	spinnerStyle = lipgloss.NewStyle().PaddingLeft(2)
+
+	helpStyle = lipgloss.NewStyle().
+			Height(footerHeight).
+			BorderTop(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(border)
+
+	sideBarStyle = lipgloss.NewStyle().
+			PaddingLeft(2).
+			PaddingRight(2).
+			Width(sideBarWidth).
+			MaxWidth(sideBarWidth).
+			BorderLeft(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(border)
 )
 
 func makeCellStyle(isSelected bool) lipgloss.Style {
