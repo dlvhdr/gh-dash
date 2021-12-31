@@ -75,47 +75,47 @@ func (section *section) renderLoadingState() string {
 	return spinnerStyle.Render(fmt.Sprintf("%s Fetching Pull Requests...", section.Spinner.View()))
 }
 
-func renderEmptyState() string {
-	emptyState := emptyStateStyle.Render("No PRs were found that match the given filters...")
+func (section *section) renderEmptyState() string {
+	emptyState := emptyStateStyle.Render(fmt.Sprintf(
+		"No PRs were found that match the given filters: %s",
+		section.Config.Filters,
+	))
 	return fmt.Sprintf(emptyState + "\n")
 }
 
 func getTitleWidth(viewportWidth int) int {
-	return viewportWidth - usedWidth - cellPadding - 5
+	return viewportWidth - usedWidth
 }
 
 func (m Model) renderTableHeader() string {
-	emptyCell := singleRuneCellStyle.Copy().Bold(true).Width(emptyCellWidth).Render(" ")
-	reviewCell := singleRuneCellStyle.Copy().Bold(true).Width(reviewCellWidth).Render("")
-	mergeableCell := singleRuneCellStyle.Copy().Bold(true).Width(mergeableCellWidth).Render("")
-	ciCell := cellStyle.Copy().Bold(true).Width(ciCellWidth + 1).Render("CI")
-	linesCell := cellStyle.Copy().Bold(true).Width(linesCellWidth).Render("Lines")
-	prAuthorCell := cellStyle.Copy().Bold(true).Width(prAuthorCellWidth).Render("Author")
-	prRepoCell := cellStyle.Copy().Bold(true).Width(prRepoCellWidth).Render("Repo")
-	updatedAtCell := cellStyle.Copy().Bold(true).Width(updatedAtCellWidth).Render("Updated At")
+	reviewCell := singleRuneTitleCellStyle.Copy().Width(reviewCellWidth).Render("")
+	mergeableCell := singleRuneTitleCellStyle.Copy().Width(mergeableCellWidth).Render("")
+	ciCell := titleCellStyle.Copy().Width(ciCellWidth).Render("CI")
+	linesCell := titleCellStyle.Copy().Width(linesCellWidth).Render("Lines")
+	prAuthorCell := titleCellStyle.Copy().Width(prAuthorCellWidth).Render("Author")
+	prRepoCell := titleCellStyle.Copy().Width(prRepoCellWidth).Render("Repo")
+	updatedAtCell := titleCellStyle.Copy().Width(updatedAtCellWidth).Render(" Updated")
 
-	prTitleCell := cellStyle.
+	prTitleCell := titleCellStyle.
 		Copy().
-		Bold(true).
 		Width(getTitleWidth(m.viewport.Width)).
 		MaxWidth(getTitleWidth(m.viewport.Width)).
 		Render("Title")
 
 	return headerStyle.
-		Width(m.viewport.Width - mainContentPadding).
-		MaxWidth(m.viewport.Width - mainContentPadding).
+		Width(m.viewport.Width).
+		MaxWidth(m.viewport.Width).
 		Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Left,
-				emptyCell,
+				updatedAtCell,
 				reviewCell,
+				prRepoCell,
 				prTitleCell,
+				prAuthorCell,
 				mergeableCell,
 				ciCell,
 				linesCell,
-				prAuthorCell,
-				prRepoCell,
-				updatedAtCell,
 			),
 		)
 }
@@ -123,7 +123,7 @@ func (m Model) renderTableHeader() string {
 func (m Model) renderPullRequestList() string {
 	section := m.getCurrSection()
 	if len(section.Prs) == 0 {
-		return fmt.Sprintf("%s\n", renderEmptyState())
+		return fmt.Sprintf("%s\n", section.renderEmptyState())
 	}
 
 	s := strings.Builder{}
