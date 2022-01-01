@@ -55,10 +55,7 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 		}
 
 		status := statusCheck.CheckRun.Status
-		if status == "PENDING" ||
-			status == "QUEUED" ||
-			status == "IN_PROGRESS" ||
-			status == "WAITING" {
+		if data.IsStatusWaiting(string(status)) {
 			accStatus = "PENDING"
 		}
 	}
@@ -104,7 +101,7 @@ func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 		)
 
 	totalWidth := getTitleWidth(viewportWidth)
-	title := makeCellStyle(isSelected).Render(pr.Data.Title)
+	title := makeCellStyle(isSelected).Render(utils.TruncateString(pr.Data.Title, totalWidth-6))
 
 	return makeCellStyle(isSelected).
 		Width(totalWidth).
@@ -130,6 +127,19 @@ func (pr PullRequest) renderUpdateAt(isSelected bool) string {
 		Width(updatedAtCellWidth).
 		MaxWidth(updatedAtCellWidth).
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
+}
+
+func (pr PullRequest) renderState() string {
+	switch pr.Data.State {
+	case "OPEN":
+		return "Open"
+	case "CLOSED":
+		return "Closed"
+	case "MERGED":
+		return "Merged"
+	default:
+		return ""
+	}
 }
 
 func (pr PullRequest) render(isSelected bool, viewPortWidth int) string {

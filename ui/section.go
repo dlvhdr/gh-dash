@@ -122,6 +122,9 @@ func (m Model) renderTableHeader() string {
 
 func (m Model) renderPullRequestList() string {
 	section := m.getCurrSection()
+	if section == nil {
+		return ""
+	}
 	if len(section.Prs) == 0 {
 		return fmt.Sprintf("%s\n", section.renderEmptyState())
 	}
@@ -139,6 +142,9 @@ func (m Model) renderPullRequestList() string {
 
 func (m Model) renderCurrentSection() string {
 	section := m.getCurrSection()
+	if section == nil {
+		return ""
+	}
 	if section.IsLoading {
 		return lipgloss.NewStyle().
 			Height(m.viewport.Height).
@@ -148,6 +154,7 @@ func (m Model) renderCurrentSection() string {
 	return lipgloss.NewStyle().
 		PaddingLeft(mainContentPadding).
 		PaddingRight(mainContentPadding).
+		MaxWidth(m.viewport.Width).
 		Render(m.viewport.View())
 }
 

@@ -20,7 +20,7 @@ var (
 	usedWidth          = reviewCellWidth + mergeableCellWidth +
 		ciCellWidth + linesCellWidth + prAuthorCellWidth + prRepoCellWidth + updatedAtCellWidth
 
-	indigo             = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
+	indigo             = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#383B5B"}
 	subtleIndigo       = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
 	selectedBackground = lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: subtleIndigo.Dark}
 	border             = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
@@ -38,8 +38,8 @@ var (
 		Padding(0, 2)
 
 	activeTab = tab.
-			Foreground(mainText).
 			Copy().
+			Foreground(mainText).
 			Faint(false)
 
 	tabGap = tab.Copy().
@@ -51,7 +51,7 @@ var (
 		PaddingTop(1).
 		PaddingBottom(0).
 		BorderBottom(true).
-		BorderStyle(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.ThickBorder()).
 		BorderBottomForeground(border)
 
 	emptyStateStyle = lipgloss.NewStyle().
@@ -95,13 +95,30 @@ var (
 			BorderForeground(border)
 
 	sideBarStyle = lipgloss.NewStyle().
-			PaddingLeft(2).
-			PaddingRight(2).
+			Padding(1, 2).
 			Width(sideBarWidth).
 			MaxWidth(sideBarWidth).
 			BorderLeft(true).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(border)
+			BorderRight(true).
+			BorderStyle(lipgloss.Border{
+			Top:         "",
+			Bottom:      "",
+			Left:        "│",
+			Right:       "x",
+			TopLeft:     "",
+			TopRight:    "",
+			BottomRight: "",
+			BottomLeft:  "",
+		}).
+		BorderForeground(border)
+
+	mainTextStyle = lipgloss.NewStyle().
+			Foreground(mainText).
+			Bold(true)
+
+	pillStyle = mainTextStyle.Copy().
+			PaddingLeft(1).
+			PaddingRight(1)
 )
 
 func makeCellStyle(isSelected bool) lipgloss.Style {
