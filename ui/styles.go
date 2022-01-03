@@ -31,6 +31,9 @@ var (
 	faintText          = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#3E4057"}
 	warningText        = lipgloss.AdaptiveColor{Light: "#F23D5C", Dark: "#F23D5C"}
 	successText        = lipgloss.AdaptiveColor{Light: "#3DF294", Dark: "#3DF294"}
+	openPR             = lipgloss.AdaptiveColor{Light: "#42A0FA", Dark: "#42A0FA"}
+	closedPR           = lipgloss.AdaptiveColor{Light: "#C38080", Dark: "#C38080"}
+	mergedPR           = lipgloss.AdaptiveColor{Light: "#A371F7", Dark: "#A371F7"}
 
 	tab = lipgloss.NewStyle().
 		Faint(true).
@@ -107,6 +110,7 @@ var (
 			Bold(true)
 
 	pillStyle = mainTextStyle.Copy().
+			Foreground(subtleIndigo).
 			PaddingLeft(1).
 			PaddingRight(1)
 )

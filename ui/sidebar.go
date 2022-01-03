@@ -52,39 +52,59 @@ func (sidebar *Sidebar) renderTitle() string {
 }
 
 func (sidebar *Sidebar) renderStatusPill() string {
-	color := ""
+	bgColor := ""
 	switch sidebar.pr.Data.State {
 	case "OPEN":
-		color = subtleIndigo.Dark
+		bgColor = openPR.Dark
 	case "CLOSED":
-		color = faintText.Dark
+		bgColor = closedPR.Dark
 	case "MERGED":
-		color = "#123123"
+		bgColor = mergedPR.Dark
 	}
 
 	return pillStyle.
-		Background(lipgloss.Color(color)).
+		Background(lipgloss.Color(bgColor)).
 		Render(sidebar.pr.renderState())
 }
 
 func (sidebar *Sidebar) renderMergeablePill() string {
-	if sidebar.pr.Data.Mergeable != "MERGEABLE" {
+	status := sidebar.pr.Data.Mergeable
+	if status == "CONFLICTING" {
 		return pillStyle.Copy().
 			Background(warningText).
-			Render("Merge Conflicts")
+			Render(" Merge Conflicts")
+	} else if status == "MERGEABLE" {
+		return pillStyle.Copy().
+			Background(successText).
+			Render(" Mergeable")
+	}
 
+	return ""
+}
+
+func (sidebar *Sidebar) renderChecksPill() string {
+	status := sidebar.pr.getStatusChecksRollup()
+	if status == "FAILURE" {
+		return pillStyle.Copy().
+			Background(warningText).
+			Render(" Checks")
+	} else if status == "PENDING" {
+		return pillStyle.Copy().
+			Background(faintText).
+			Render(waitingGlyph + " Checks")
 	}
 
 	return pillStyle.Copy().
 		Background(successText).
 		Foreground(subtleIndigo).
-		Render("Mergeable")
+		Render(" Checks")
 }
 
 func (sidebar *Sidebar) renderPills() string {
 	statusPill := sidebar.renderStatusPill()
 	mergeablePill := sidebar.renderMergeablePill()
-	return lipgloss.JoinHorizontal(lipgloss.Left, statusPill, " ", mergeablePill)
+	checksPill := sidebar.renderChecksPill()
+	return lipgloss.JoinHorizontal(lipgloss.Left, statusPill, " ", mergeablePill, " ", checksPill)
 }
 
 func (sidebar Sidebar) renderDescription() string {

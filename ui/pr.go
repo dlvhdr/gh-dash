@@ -40,11 +40,11 @@ func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 	case "UNKNOWN":
 		fallthrough
 	default:
-		return mergeCellStyle.Render(waitingGlyph)
+		return mergeCellStyle.Foreground(faintText).Render("-")
 	}
 }
 
-func (pr PullRequest) renderCiStatus(isSelected bool) string {
+func (pr PullRequest) getStatusChecksRollup() string {
 	accStatus := "SUCCESS"
 	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
@@ -65,6 +65,11 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 		}
 	}
 
+	return accStatus
+}
+
+func (pr PullRequest) renderCiStatus(isSelected bool) string {
+	accStatus := pr.getStatusChecksRollup()
 	ciCellStyle := makeCellStyle(isSelected).Width(ciCellWidth).MaxWidth(ciCellWidth)
 	if accStatus == "SUCCESS" {
 		return ciCellStyle.Render(successGlyph)
@@ -137,11 +142,11 @@ func (pr PullRequest) renderUpdateAt(isSelected bool) string {
 func (pr PullRequest) renderState() string {
 	switch pr.Data.State {
 	case "OPEN":
-		return "Open"
+		return " Open"
 	case "CLOSED":
-		return "Closed"
+		return "﫧Closed"
 	case "MERGED":
-		return "Merged"
+		return " Merged"
 	default:
 		return ""
 	}
