@@ -48,28 +48,33 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	accStatus := "SUCCESS"
 	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
-		conclusion := statusCheck.CheckRun.Conclusion
-		if conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE" {
-			accStatus = "FAILURE"
-			break
+		var conclusion string
+		if statusCheck.Typename == "CheckRun" {
+			conclusion = string(statusCheck.CheckRun.Conclusion)
+			status := string(statusCheck.CheckRun.Status)
+			if isStatusWaiting(status) {
+				accStatus = "PENDING"
+			}
+		} else if statusCheck.Typename == "StatusContext" {
+			conclusion = string(statusCheck.StatusContext.State)
 		}
 
-		status := statusCheck.CheckRun.Status
-		if data.IsStatusWaiting(string(status)) {
-			accStatus = "PENDING"
+		if isConclusionAFailure(conclusion) {
+			accStatus = "FAILURE"
+			break
 		}
 	}
 
 	ciCellStyle := makeCellStyle(isSelected).Width(ciCellWidth).MaxWidth(ciCellWidth)
 	if accStatus == "SUCCESS" {
-		return ciCellStyle.Foreground(successText).Render("")
+		return ciCellStyle.Render(successGlyph)
 	}
 
 	if accStatus == "PENDING" {
-		return ciCellStyle.Foreground(faintText).Render("")
+		return ciCellStyle.Render(waitingGlyph)
 	}
 
-	return ciCellStyle.Foreground(warningText).Render("")
+	return ciCellStyle.Render(failureGlyph)
 }
 
 func (pr PullRequest) renderLines(isSelected bool) string {

@@ -42,6 +42,9 @@ type CheckRun struct {
 		App struct {
 			Name graphql.String
 		}
+		Creator struct {
+			Login graphql.String
+		}
 		WorkflowRun struct {
 			Workflow struct {
 				Name graphql.String
@@ -59,6 +62,9 @@ type StatusContext struct {
 	Context     graphql.String
 	Description graphql.String
 	State       graphql.String
+	Creator     struct {
+		Login graphql.String
+	}
 }
 
 type Commits struct {

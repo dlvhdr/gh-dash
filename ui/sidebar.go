@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/data"
 )
 
 type Sidebar struct {
@@ -69,12 +68,16 @@ func (sidebar *Sidebar) renderStatusPill() string {
 }
 
 func (sidebar *Sidebar) renderMergeablePill() string {
-	if sidebar.pr.Data.Mergeable == "MERGEABLE" {
-		return ""
+	if sidebar.pr.Data.Mergeable != "MERGEABLE" {
+		return pillStyle.Copy().
+			Background(warningText).
+			Render("Merge Conflicts")
+
 	}
 
-	return pillStyle.
-		Background(subtleIndigo).
+	return pillStyle.Copy().
+		Background(successText).
+		Foreground(subtleIndigo).
 		Render("Mergeable")
 }
 
@@ -85,10 +88,6 @@ func (sidebar *Sidebar) renderPills() string {
 }
 
 func (sidebar Sidebar) renderDescription() string {
-	// if sidebar.pr.Data.Body == "" {
-	// 	return lipgloss.NewStyle().Italic(true).MarginTop(1).Render("No description provided.")
-	// }
-
 	width := sideBarWidth - 6
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(sidebar.pr.Data.Body, "")
@@ -138,14 +137,13 @@ func (sidebar Sidebar) renderChecks() string {
 	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
 		if node.Typename == "CheckRun" {
 			checkRun := node.CheckRun
-			status := string(checkRun.Status)
-			renderedStatus := renderCheckRunConclusion(&status, string(checkRun.Conclusion))
+			renderedStatus := renderCheckRunConclusion(checkRun)
 			name := renderCheckRunName(checkRun)
 			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Left, renderedStatus, " ", name))
 		} else if node.Typename == "StatusContext" {
 			statusContext := node.StatusContext
-			status := renderCheckRunConclusion(nil, string(statusContext.State))
-			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Left, status, " ", string(statusContext.Context)))
+			status := renderStatusContextConclusion(statusContext)
+			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Left, status, " ", renderStatusContextName(statusContext)))
 		}
 	}
 
@@ -161,26 +159,4 @@ func (sidebar Sidebar) renderChecks() string {
 
 	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, checks...)
 	return lipgloss.JoinVertical(lipgloss.Left, title, renderedChecks)
-}
-
-func renderCheckRunName(checkRun data.CheckRun) string {
-	workflow := string(checkRun.CheckSuite.WorkflowRun.Workflow.Name)
-	name := string(checkRun.Name)
-	if workflow == "" {
-		return name
-	}
-	return lipgloss.JoinHorizontal(lipgloss.Left, workflow, "/", name)
-}
-
-func renderCheckRunConclusion(status *string, conclusion string) string {
-	conclusionStr := string(conclusion)
-	if status != nil && data.IsStatusWaiting(*status) {
-		return lipgloss.NewStyle().Foreground(faintBorder).Render("")
-	}
-
-	if conclusionStr == "FAILURE" || conclusionStr == "TIMED_OUT" || conclusionStr == "STARTUP_FAILURE" {
-		return lipgloss.NewStyle().Foreground(warningText).Render("")
-	}
-
-	return lipgloss.NewStyle().Foreground(successText).Render("")
 }
