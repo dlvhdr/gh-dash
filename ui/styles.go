@@ -8,6 +8,7 @@ var (
 	singleRuneWidth    = 4
 	mainContentPadding = 1
 	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
+	sideBarWidth       = 50
 
 	reviewCellWidth    = singleRuneWidth
 	mergeableCellWidth = singleRuneWidth
@@ -19,7 +20,7 @@ var (
 	usedWidth          = reviewCellWidth + mergeableCellWidth +
 		ciCellWidth + linesCellWidth + prAuthorCellWidth + prRepoCellWidth + updatedAtCellWidth
 
-	indigo             = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
+	indigo             = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#383B5B"}
 	subtleIndigo       = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
 	selectedBackground = lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: subtleIndigo.Dark}
 	border             = lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark}
@@ -37,8 +38,8 @@ var (
 		Padding(0, 2)
 
 	activeTab = tab.
-			Foreground(mainText).
 			Copy().
+			Foreground(mainText).
 			Faint(false)
 
 	tabGap = tab.Copy().
@@ -49,9 +50,9 @@ var (
 	tabsRow = lipgloss.NewStyle().
 		PaddingTop(1).
 		PaddingBottom(0).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderBottomForeground(border).
-		BorderBottom(true)
+		BorderBottom(true).
+		BorderStyle(lipgloss.ThickBorder()).
+		BorderBottomForeground(border)
 
 	emptyStateStyle = lipgloss.NewStyle().
 			Faint(true).
@@ -86,6 +87,28 @@ var (
 	selectedSingleRuneCellStyle = singleRuneCellStyle.Copy().Background(selectedBackground)
 
 	spinnerStyle = lipgloss.NewStyle().PaddingLeft(2)
+
+	helpStyle = lipgloss.NewStyle().
+			Height(footerHeight).
+			BorderTop(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(border)
+
+	sideBarStyle = lipgloss.NewStyle().
+			Padding(1, 2).
+			Width(sideBarWidth).
+			MaxWidth(sideBarWidth).
+			BorderLeft(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(border)
+
+	mainTextStyle = lipgloss.NewStyle().
+			Foreground(mainText).
+			Bold(true)
+
+	pillStyle = mainTextStyle.Copy().
+			PaddingLeft(1).
+			PaddingRight(1)
 )
 
 func makeCellStyle(isSelected bool) lipgloss.Style {

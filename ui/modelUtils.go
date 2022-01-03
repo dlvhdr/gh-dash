@@ -9,6 +9,16 @@ func (m Model) getCurrSection() *section {
 	return &(*m.data)[m.cursor.currSectionId]
 }
 
+func (m Model) getCurrPr() *PullRequest {
+	section := m.getCurrSection()
+	if section == nil || section.numPrs() == 0 || m.cursor.currPrId > section.numPrs()-1 {
+		return nil
+	}
+
+	pr := section.Prs[m.cursor.currPrId]
+	return &pr
+}
+
 func (m *Model) prevPr() {
 	currSection := m.getCurrSection()
 	if currSection == nil {
@@ -26,6 +36,7 @@ func (m *Model) nextPr() {
 	}
 
 	newPrId := utils.Min(m.cursor.currPrId+1, currSection.numPrs()-1)
+	newPrId = utils.Max(newPrId, 0)
 	m.cursor.currPrId = newPrId
 }
 

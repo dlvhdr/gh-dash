@@ -22,7 +22,7 @@ func (m Model) renderTabs() string {
 		gap := tabGap.Render(
 			strings.Repeat(
 				" ",
-				utils.Max(0, m.viewport.Width-lipgloss.Width(row)),
+				utils.Max(0, m.width-lipgloss.Width(row)),
 			),
 		)
 

@@ -27,7 +27,7 @@ func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 		return reviewCellStyle.Copy().Foreground(warningText).Render("")
 	}
 
-	return reviewCellStyle.Copy().Foreground(faintText).Render("")
+	return reviewCellStyle.Copy().Render(waitingGlyph)
 }
 
 func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
@@ -36,11 +36,11 @@ func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 	case "MERGEABLE":
 		return mergeCellStyle.Foreground(successText).Render("")
 	case "CONFLICTING":
-		return mergeCellStyle.Foreground(warningText).Render("")
+		return mergeCellStyle.Render(failureGlyph)
 	case "UNKNOWN":
 		fallthrough
 	default:
-		return mergeCellStyle.Foreground(faintText).Render("")
+		return mergeCellStyle.Render(waitingGlyph)
 	}
 }
 
@@ -48,31 +48,33 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	accStatus := "SUCCESS"
 	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
-		conclusion := statusCheck.CheckRun.Conclusion
-		if conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE" {
-			accStatus = "FAILURE"
-			break
+		var conclusion string
+		if statusCheck.Typename == "CheckRun" {
+			conclusion = string(statusCheck.CheckRun.Conclusion)
+			status := string(statusCheck.CheckRun.Status)
+			if isStatusWaiting(status) {
+				accStatus = "PENDING"
+			}
+		} else if statusCheck.Typename == "StatusContext" {
+			conclusion = string(statusCheck.StatusContext.State)
 		}
 
-		status := statusCheck.CheckRun.Status
-		if status == "PENDING" ||
-			status == "QUEUED" ||
-			status == "IN_PROGRESS" ||
-			status == "WAITING" {
-			accStatus = "PENDING"
+		if isConclusionAFailure(conclusion) {
+			accStatus = "FAILURE"
+			break
 		}
 	}
 
 	ciCellStyle := makeCellStyle(isSelected).Width(ciCellWidth).MaxWidth(ciCellWidth)
 	if accStatus == "SUCCESS" {
-		return ciCellStyle.Foreground(successText).Render("")
+		return ciCellStyle.Render(successGlyph)
 	}
 
 	if accStatus == "PENDING" {
-		return ciCellStyle.Foreground(faintText).Render("")
+		return ciCellStyle.Render(waitingGlyph)
 	}
 
-	return ciCellStyle.Foreground(warningText).Render("")
+	return ciCellStyle.Render(failureGlyph)
 }
 
 func (pr PullRequest) renderLines(isSelected bool) string {
@@ -104,7 +106,7 @@ func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 		)
 
 	totalWidth := getTitleWidth(viewportWidth)
-	title := makeCellStyle(isSelected).Render(pr.Data.Title)
+	title := makeCellStyle(isSelected).Render(utils.TruncateString(pr.Data.Title, totalWidth-6))
 
 	return makeCellStyle(isSelected).
 		Width(totalWidth).
@@ -130,6 +132,19 @@ func (pr PullRequest) renderUpdateAt(isSelected bool) string {
 		Width(updatedAtCellWidth).
 		MaxWidth(updatedAtCellWidth).
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
+}
+
+func (pr PullRequest) renderState() string {
+	switch pr.Data.State {
+	case "OPEN":
+		return "Open"
+	case "CLOSED":
+		return "Closed"
+	case "MERGED":
+		return "Merged"
+	default:
+		return ""
+	}
 }
 
 func (pr PullRequest) render(isSelected bool, viewPortWidth int) string {

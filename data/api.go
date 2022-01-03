@@ -16,6 +16,7 @@ const (
 type PullRequestData struct {
 	Number int
 	Title  string
+	Body   string
 	Author struct {
 		Login string
 	}
@@ -34,16 +35,46 @@ type PullRequestData struct {
 	Commits Commits `graphql:"commits(last: 1)"`
 }
 
+type CheckRun struct {
+	Name       graphql.String
+	Status     graphql.String
+	Conclusion graphql.String
+	CheckSuite struct {
+		Creator struct {
+			Login graphql.String
+		}
+		WorkflowRun struct {
+			Workflow struct {
+				Name graphql.String
+			}
+		}
+	}
+}
+
+type StatusContext struct {
+	Context graphql.String
+	State   graphql.String
+	Creator struct {
+		Login graphql.String
+	}
+}
+
 type Commits struct {
 	Nodes []struct {
 		Commit struct {
+			Deployments struct {
+				Nodes []struct {
+					Task        graphql.String
+					Description graphql.String
+				}
+			} `graphql:"deployments(last: 10)"`
 			StatusCheckRollup struct {
 				Contexts struct {
-					Nodes []struct {
-						CheckRun struct {
-							Status     graphql.String
-							Conclusion graphql.String
-						} `graphql:"... on CheckRun"`
+					TotalCount graphql.Int
+					Nodes      []struct {
+						Typename      graphql.String `graphql:"__typename"`
+						CheckRun      CheckRun       `graphql:"... on CheckRun"`
+						StatusContext StatusContext  `graphql:"... on StatusContext"`
 					}
 				} `graphql:"contexts(last: 20)"`
 			}
