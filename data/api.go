@@ -36,12 +36,10 @@ type PullRequestData struct {
 }
 
 type CheckRun struct {
-	Title      graphql.String
-	Url        graphql.String
+	Name       graphql.String
+	Status     graphql.String
+	Conclusion graphql.String
 	CheckSuite struct {
-		App struct {
-			Name graphql.String
-		}
 		Creator struct {
 			Login graphql.String
 		}
@@ -51,18 +49,12 @@ type CheckRun struct {
 			}
 		}
 	}
-	Summary    graphql.String
-	Text       graphql.String
-	Name       graphql.String
-	Status     graphql.String
-	Conclusion graphql.String
 }
 
 type StatusContext struct {
-	Context     graphql.String
-	Description graphql.String
-	State       graphql.String
-	Creator     struct {
+	Context graphql.String
+	State   graphql.String
+	Creator struct {
 		Login graphql.String
 	}
 }

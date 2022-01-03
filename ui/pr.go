@@ -27,7 +27,7 @@ func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 		return reviewCellStyle.Copy().Foreground(warningText).Render("")
 	}
 
-	return reviewCellStyle.Copy().Foreground(faintText).Render("")
+	return reviewCellStyle.Copy().Render(waitingGlyph)
 }
 
 func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
@@ -36,11 +36,11 @@ func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 	case "MERGEABLE":
 		return mergeCellStyle.Foreground(successText).Render("")
 	case "CONFLICTING":
-		return mergeCellStyle.Foreground(warningText).Render("")
+		return mergeCellStyle.Render(failureGlyph)
 	case "UNKNOWN":
 		fallthrough
 	default:
-		return mergeCellStyle.Foreground(faintText).Render("")
+		return mergeCellStyle.Render(waitingGlyph)
 	}
 }
 

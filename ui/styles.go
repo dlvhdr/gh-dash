@@ -99,18 +99,8 @@ var (
 			Width(sideBarWidth).
 			MaxWidth(sideBarWidth).
 			BorderLeft(true).
-			BorderRight(true).
-			BorderStyle(lipgloss.Border{
-			Top:         "",
-			Bottom:      "",
-			Left:        "│",
-			Right:       "x",
-			TopLeft:     "",
-			TopRight:    "",
-			BottomRight: "",
-			BottomLeft:  "",
-		}).
-		BorderForeground(border)
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(border)
 
 	mainTextStyle = lipgloss.NewStyle().
 			Foreground(mainText).

@@ -55,12 +55,12 @@ var Keys = KeyMap{
 		key.WithHelp("Ctrl+d", "page down"),
 	),
 	TogglePreview: key.NewBinding(
-		key.WithKeys("o"),
-		key.WithHelp("o", "open in Preview"),
+		key.WithKeys("p"),
+		key.WithHelp("p", "open in Preview"),
 	),
 	OpenGithub: key.NewBinding(
-		key.WithKeys("O"),
-		key.WithHelp("O", "open in GitHub"),
+		key.WithKeys("o"),
+		key.WithHelp("o", "open in GitHub"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
