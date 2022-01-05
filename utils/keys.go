@@ -7,6 +7,7 @@ type KeyMap struct {
 	Down          key.Binding
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
+	Refresh       key.Binding
 	PageDown      key.Binding
 	PageUp        key.Binding
 	NextSection   key.Binding
@@ -25,6 +26,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		{k.PrevSection, k.NextSection},
 		{k.PageDown, k.PageUp},
 		{k.TogglePreview, k.OpenGithub},
+		{k.Refresh},
 		{k.Help, k.Quit},
 	}
 }
@@ -61,6 +63,10 @@ var Keys = KeyMap{
 	OpenGithub: key.NewBinding(
 		key.WithKeys("o"),
 		key.WithHelp("o", "open in GitHub"),
+	),
+	Refresh: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "refresh"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
