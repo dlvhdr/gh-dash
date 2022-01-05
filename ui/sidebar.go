@@ -22,6 +22,7 @@ func (m Model) renderSidebar() string {
 	style := sideBarStyle.Copy().
 		Height(height).
 		MaxHeight(height)
+
 	pr := m.getCurrPr()
 	if pr == nil {
 		return style.Copy().Align(lipgloss.Center).Render(

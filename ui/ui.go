@@ -135,6 +135,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			utils.OpenBrowser(currPR.Data.Url)
 			return m, nil
+		case key.Matches(msg, m.keys.Refresh):
+			var newData []section
+			for _, section := range *m.data {
+				if section.IsLoading {
+					return m, nil
+				}
+
+				section.Spinner = spinner.Model{Spinner: spinner.Dot}
+				section.IsLoading = true
+				section.Prs = []PullRequest{}
+				newData = append(newData, section)
+			}
+			m.data = &newData
+			return m, m.startFetchingSectionsData()
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
@@ -162,7 +176,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		var internalCmd tea.Cmd
 		section := (*m.data)[msg.SectionId]
+		if !section.IsLoading {
+			return m, nil
+		}
 		section.Spinner, internalCmd = section.Spinner.Update(msg.InternalTickMsg)
+		if internalCmd == nil {
+			return m, nil
+		}
+
 		(*m.data)[msg.SectionId] = section
 		return m, section.Tick(internalCmd)
 
