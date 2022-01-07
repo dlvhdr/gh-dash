@@ -9,7 +9,7 @@ import (
 
 func (m Model) renderTabs() string {
 	var tabs []string
-	for i, sectionConfig := range m.configs {
+	for i, sectionConfig := range m.config.PRSections {
 		if m.cursor.currSectionId == i {
 			tabs = append(tabs, activeTab.Render(sectionConfig.Title))
 		} else {

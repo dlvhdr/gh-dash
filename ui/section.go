@@ -14,7 +14,7 @@ import (
 
 type section struct {
 	Id        int
-	Config    config.SectionConfig
+	Config    config.PRSectionConfig
 	Prs       []PullRequest
 	Spinner   spinner.Model
 	IsLoading bool

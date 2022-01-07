@@ -18,7 +18,7 @@ import (
 type Model struct {
 	keys          utils.KeyMap
 	err           error
-	configs       []config.SectionConfig
+	config        *config.Config
 	data          *[]section
 	viewport      viewport.Model
 	cursor        cursor
@@ -35,7 +35,7 @@ type cursor struct {
 }
 
 type initMsg struct {
-	Config []config.SectionConfig
+	Config config.Config
 }
 
 type errMsg struct {
@@ -73,12 +73,12 @@ func NewModel(logFile *os.File) Model {
 }
 
 func initScreen() tea.Msg {
-	sections, err := config.ParseConfig()
+	config, err := config.ParseConfig()
 	if err != nil {
 		return errMsg{err}
 	}
 
-	return initMsg{Config: sections}
+	return initMsg{Config: config}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -159,9 +159,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case initMsg:
-		m.configs = msg.Config
+		m.config = &msg.Config
 		var data []section
-		for i, sectionConfig := range m.configs {
+		for i, sectionConfig := range m.config.PRSections {
 			s := spinner.Model{Spinner: spinner.Dot}
 			data = append(data, section{
 				Id:        i,
@@ -238,7 +238,7 @@ func (m Model) View() string {
 		return m.err.Error()
 	}
 
-	if m.configs == nil {
+	if m.config == nil {
 		return "Reading config...\n"
 	}
 
