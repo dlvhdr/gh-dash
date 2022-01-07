@@ -1,0 +1,61 @@
+package ui
+
+import (
+	"os"
+
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/utils"
+)
+
+func NewModel(logFile *os.File) Model {
+	helpModel := help.NewModel()
+	style := lipgloss.NewStyle().Foreground(secondaryText)
+	helpModel.Styles = help.Styles{
+		ShortDesc:      style.Copy(),
+		FullDesc:       style.Copy(),
+		ShortSeparator: style.Copy(),
+		FullSeparator:  style.Copy(),
+		FullKey:        style.Copy(),
+		ShortKey:       style.Copy(),
+		Ellipsis:       style.Copy(),
+	}
+	return Model{
+		keys: utils.Keys,
+		help: helpModel,
+		cursor: cursor{
+			currSectionId: 0,
+			currPrId:      0,
+		},
+		logger: logFile,
+	}
+}
+
+func (m *Model) updateOnConfigFetched(config config.Config) {
+	m.config = &config
+	var data []section
+	for i, sectionConfig := range m.config.PRSections {
+		s := spinner.Model{Spinner: spinner.Dot}
+		data = append(data, section{
+			Id:        i,
+			Config:    sectionConfig,
+			Spinner:   s,
+			IsLoading: true,
+		})
+	}
+	m.data = &data
+	m.isSidebarOpen = m.config.Defaults.Preview.Open
+}
+
+func (m Model) startFetchingSectionsData() tea.Cmd {
+	var cmds []tea.Cmd
+	for _, section := range *m.data {
+		section := section
+		cmds = append(cmds, section.fetchSectionPullRequests())
+		cmds = append(cmds, section.Tick(spinner.Tick))
+	}
+	return tea.Batch(cmds...)
+}

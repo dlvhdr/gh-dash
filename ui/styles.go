@@ -8,7 +8,6 @@ var (
 	singleRuneWidth    = 4
 	mainContentPadding = 1
 	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
-	sideBarWidth       = 50
 
 	reviewCellWidth    = singleRuneWidth
 	mergeableCellWidth = singleRuneWidth
@@ -99,8 +98,6 @@ var (
 
 	sideBarStyle = lipgloss.NewStyle().
 			Padding(1, 2).
-			Width(sideBarWidth).
-			MaxWidth(sideBarWidth).
 			BorderLeft(true).
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderForeground(border)

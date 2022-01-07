@@ -14,8 +14,18 @@ type PRSectionConfig struct {
 	Filters string
 }
 
+type PreviewConfig struct {
+	Open  bool
+	Width int
+}
+
+type Defaults struct {
+	Preview PreviewConfig
+}
+
 type Config struct {
 	PRSections []PRSectionConfig `yaml:"prSections"`
+	Defaults   Defaults
 }
 
 const PrsDir = "prs"
@@ -23,16 +33,43 @@ const ConfigFileName = "config.yml"
 
 type configError struct {
 	configDir string
+	parser    ConfigParser
 	err       error
 }
 
-const DefaultConfigContents = `prSections:
-  - title: My Pull Requests
-    filters: is:open author:@me
-  - title: Needs My Review
-    filters: is:open review-requested:@me
-  - title: Subscribed
-    filters: is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs`
+type ConfigParser struct{}
+
+func (parser ConfigParser) getDefaultConfig() Config {
+	return Config{
+		Defaults: Defaults{
+			Preview: PreviewConfig{
+				Open:  true,
+				Width: 50,
+			},
+		},
+		PRSections: []PRSectionConfig{
+			{
+				Title:   "My Pull Requests",
+				Filters: "is:open author:@me",
+			},
+			{
+				Title:   "Needs My Review",
+				Filters: "is:open review-requested:@me",
+			},
+			{
+				Title:   "Subscribed",
+				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs`",
+			},
+		},
+	}
+}
+
+func (parser ConfigParser) getDefaultConfigYamlContents() string {
+	defaultConfig := parser.getDefaultConfig()
+	yaml, _ := yaml.Marshal(defaultConfig)
+
+	return string(yaml)
+}
 
 func (e configError) Error() string {
 	return fmt.Sprintf(
@@ -47,13 +84,13 @@ press q to exit.
 
 Original error: %v`,
 		path.Join(e.configDir, PrsDir, ConfigFileName),
-		DefaultConfigContents,
+		string(e.parser.getDefaultConfigYamlContents()),
 		e.err,
 	)
 }
 
-func writeDefaultConfigContents(newConfigFile *os.File) error {
-	_, err := newConfigFile.WriteString(DefaultConfigContents)
+func (parser ConfigParser) writeDefaultConfigContents(newConfigFile *os.File) error {
+	_, err := newConfigFile.WriteString(parser.getDefaultConfigYamlContents())
 
 	if err != nil {
 		return err
@@ -62,7 +99,7 @@ func writeDefaultConfigContents(newConfigFile *os.File) error {
 	return nil
 }
 
-func createConfigFileIfMissing(configFilePath string) error {
+func (parser ConfigParser) createConfigFileIfMissing(configFilePath string) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		newConfigFile, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 		if err != nil {
@@ -70,32 +107,32 @@ func createConfigFileIfMissing(configFilePath string) error {
 		}
 
 		defer newConfigFile.Close()
-		return writeDefaultConfigContents(newConfigFile)
+		return parser.writeDefaultConfigContents(newConfigFile)
 	}
 
 	return nil
 }
 
-func getConfigFileOrCreateIfMissing() (*string, error) {
+func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
 	var err error
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
 		configDir, err = os.UserConfigDir()
 		if err != nil {
-			return nil, configError{configDir: configDir, err: err}
+			return nil, configError{parser: parser, configDir: configDir, err: err}
 		}
 	}
 
 	prsConfigDir := filepath.Join(configDir, PrsDir)
 	err = os.MkdirAll(prsConfigDir, os.ModePerm)
 	if err != nil {
-		return nil, configError{configDir: configDir, err: err}
+		return nil, configError{parser: parser, configDir: configDir, err: err}
 	}
 
 	configFilePath := filepath.Join(prsConfigDir, ConfigFileName)
-	err = createConfigFileIfMissing(configFilePath)
+	err = parser.createConfigFileIfMissing(configFilePath)
 	if err != nil {
-		return nil, configError{configDir: configDir, err: err}
+		return nil, configError{parser: parser, configDir: configDir, err: err}
 	}
 
 	return &configFilePath, nil
@@ -109,26 +146,31 @@ func (e parsingError) Error() string {
 	return fmt.Sprintf("failed parsing config.yml: %v", e.err)
 }
 
-func readConfigFile(path string) (Config, error) {
-	var config Config
+func (parser ConfigParser) readConfigFile(path string) (Config, error) {
+	config := parser.getDefaultConfig()
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return config, configError{configDir: path, err: err}
+		return config, configError{parser: parser, configDir: path, err: err}
 	}
 
 	err = yaml.Unmarshal([]byte(data), &config)
 	return config, err
 }
 
+func initParser() ConfigParser {
+	return ConfigParser{}
+}
+
 func ParseConfig() (Config, error) {
+	parser := initParser()
 	var config Config
 	var err error
-	configFilePath, err := getConfigFileOrCreateIfMissing()
+	configFilePath, err := parser.getConfigFileOrCreateIfMissing()
 	if err != nil {
 		return config, parsingError{err: err}
 	}
 
-	config, err = readConfigFile(*configFilePath)
+	config, err = parser.readConfigFile(*configFilePath)
 	if err != nil {
 		return config, parsingError{err: err}
 	}
