@@ -32,8 +32,9 @@ type PullRequestData struct {
 	HeadRepository struct {
 		Name string
 	}
-	IsDraft bool
-	Commits Commits `graphql:"commits(last: 1)"`
+	Comments Comments `graphql:"comments(last: 3)"`
+	IsDraft  bool
+	Commits  Commits `graphql:"commits(last: 1)"`
 }
 
 type CheckRun struct {
@@ -80,6 +81,16 @@ type Commits struct {
 				} `graphql:"contexts(last: 20)"`
 			}
 		}
+	}
+}
+
+type Comments struct {
+	Nodes []struct {
+		Author struct {
+			Login string
+		}
+		Body      string
+		UpdatedAt time.Time
 	}
 }
 
