@@ -49,29 +49,6 @@ type pullRequestsRenderedMsg struct {
 	content   string
 }
 
-func NewModel(logFile *os.File) Model {
-	helpModel := help.NewModel()
-	style := lipgloss.NewStyle().Foreground(secondaryText)
-	helpModel.Styles = help.Styles{
-		ShortDesc:      style.Copy(),
-		FullDesc:       style.Copy(),
-		ShortSeparator: style.Copy(),
-		FullSeparator:  style.Copy(),
-		FullKey:        style.Copy(),
-		ShortKey:       style.Copy(),
-		Ellipsis:       style.Copy(),
-	}
-	return Model{
-		keys: utils.Keys,
-		help: helpModel,
-		cursor: cursor{
-			currSectionId: 0,
-			currPrId:      0,
-		},
-		logger: logFile,
-	}
-}
-
 func initScreen() tea.Msg {
 	config, err := config.ParseConfig()
 	if err != nil {
@@ -159,18 +136,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case initMsg:
-		m.config = &msg.Config
-		var data []section
-		for i, sectionConfig := range m.config.PRSections {
-			s := spinner.Model{Spinner: spinner.Dot}
-			data = append(data, section{
-				Id:        i,
-				Config:    sectionConfig,
-				Spinner:   s,
-				IsLoading: true,
-			})
-		}
-		m.data = &data
+		m.updateOnConfigFetched(msg.Config)
+		m.viewport.Width = m.calcViewPortWidth()
 		return m, m.startFetchingSectionsData()
 
 	case tickMsg:
@@ -255,14 +222,4 @@ func (m Model) View() string {
 	s.WriteString("\n")
 	s.WriteString(m.renderHelp())
 	return s.String()
-}
-
-func (m Model) startFetchingSectionsData() tea.Cmd {
-	var cmds []tea.Cmd
-	for _, section := range *m.data {
-		section := section
-		cmds = append(cmds, section.fetchSectionPullRequests())
-		cmds = append(cmds, section.Tick(spinner.Tick))
-	}
-	return tea.Batch(cmds...)
 }

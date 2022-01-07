@@ -21,7 +21,9 @@ func (m Model) renderSidebar() string {
 	height := m.viewport.Height + mainContentPadding*2
 	style := sideBarStyle.Copy().
 		Height(height).
-		MaxHeight(height)
+		MaxHeight(height).
+		Width(m.getSidebarWidth()).
+		MaxWidth(m.getSidebarWidth())
 
 	pr := m.getCurrPr()
 	if pr == nil {
@@ -48,7 +50,7 @@ func (m Model) renderSidebar() string {
 }
 
 func (sidebar *Sidebar) renderTitle() string {
-	return mainTextStyle.Copy().Width(sideBarWidth - 6).
+	return mainTextStyle.Copy().Width(sidebar.model.getSidebarWidth() - 6).
 		Render(sidebar.pr.Data.Title)
 }
 
@@ -109,7 +111,7 @@ func (sidebar *Sidebar) renderPills() string {
 }
 
 func (sidebar Sidebar) renderDescription() string {
-	width := sideBarWidth - 6
+	width := sidebar.model.getSidebarWidth() - 6
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(sidebar.pr.Data.Body, "")
 
@@ -180,4 +182,8 @@ func (sidebar Sidebar) renderChecks() string {
 
 	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, checks...)
 	return lipgloss.JoinVertical(lipgloss.Left, title, renderedChecks)
+}
+
+func (m Model) getSidebarWidth() int {
+	return m.config.Defaults.Preview.Width
 }

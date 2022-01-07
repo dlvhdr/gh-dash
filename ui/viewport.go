@@ -3,7 +3,7 @@ package ui
 func (m Model) calcViewPortWidth() int {
 	sideBarOffset := 0
 	if m.isSidebarOpen {
-		sideBarOffset = sideBarWidth
+		sideBarOffset = m.getSidebarWidth()
 	}
 	return m.width - sideBarOffset
 }
