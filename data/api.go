@@ -28,6 +28,7 @@ type PullRequestData struct {
 	Additions      int
 	Deletions      int
 	HeadRefName    string
+	BaseRefName    string
 	HeadRepository struct {
 		Name string
 	}

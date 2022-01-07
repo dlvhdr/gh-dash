@@ -39,6 +39,8 @@ func (m Model) renderSidebar() string {
 
 	s := strings.Builder{}
 	s.WriteString(sidebar.renderTitle())
+	s.WriteString("\n")
+	s.WriteString(sidebar.renderBranches())
 	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderPills())
 	s.WriteString("\n")
@@ -52,6 +54,12 @@ func (m Model) renderSidebar() string {
 func (sidebar *Sidebar) renderTitle() string {
 	return mainTextStyle.Copy().Width(sidebar.model.getSidebarWidth() - 6).
 		Render(sidebar.pr.Data.Title)
+}
+
+func (sidebar *Sidebar) renderBranches() string {
+	return lipgloss.NewStyle().
+		Foreground(secondaryText).
+		Render(sidebar.pr.Data.BaseRefName + "  " + sidebar.pr.Data.HeadRefName)
 }
 
 func (sidebar *Sidebar) renderStatusPill() string {
