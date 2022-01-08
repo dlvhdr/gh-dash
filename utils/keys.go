@@ -50,11 +50,11 @@ var Keys = KeyMap{
 	),
 	PageUp: key.NewBinding(
 		key.WithKeys("ctrl+u"),
-		key.WithHelp("Ctrl+u", "page up"),
+		key.WithHelp("Ctrl+u", "preview page up"),
 	),
 	PageDown: key.NewBinding(
 		key.WithKeys("ctrl+d"),
-		key.WithHelp("Ctrl+d", "page down"),
+		key.WithHelp("Ctrl+d", "preview page down"),
 	),
 	TogglePreview: key.NewBinding(
 		key.WithKeys("p"),

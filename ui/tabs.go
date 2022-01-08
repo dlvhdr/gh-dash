@@ -26,6 +26,6 @@ func (m Model) renderTabs() string {
 			),
 		)
 
-		return tabsRow.Render(lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap))
+		return tabsRow.MaxWidth(m.width).Render(lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap))
 	}
 }

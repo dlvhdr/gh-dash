@@ -97,10 +97,19 @@ var (
 			BorderForeground(border)
 
 	sideBarStyle = lipgloss.NewStyle().
-			Padding(1, 2).
+			Padding(0, 2).
 			BorderLeft(true).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(border)
+			BorderStyle(lipgloss.Border{
+			Top:         "",
+			Bottom:      " ",
+			Left:        "│",
+			Right:       "",
+			TopLeft:     "",
+			TopRight:    "",
+			BottomRight: "",
+			BottomLeft:  "",
+		}).
+		BorderForeground(border)
 
 	mainTextStyle = lipgloss.NewStyle().
 			Foreground(mainText).

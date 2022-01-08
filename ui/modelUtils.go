@@ -11,7 +11,10 @@ func (m Model) getCurrSection() *section {
 
 func (m Model) getCurrPr() *PullRequest {
 	section := m.getCurrSection()
-	if section == nil || section.numPrs() == 0 || m.cursor.currPrId > section.numPrs()-1 {
+	if section == nil ||
+		section.IsLoading ||
+		section.numPrs() == 0 ||
+		m.cursor.currPrId > section.numPrs()-1 {
 		return nil
 	}
 

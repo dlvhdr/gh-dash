@@ -32,7 +32,7 @@ type PullRequestData struct {
 	HeadRepository struct {
 		Name string
 	}
-	Comments Comments `graphql:"comments(last: 3)"`
+	Comments Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	IsDraft  bool
 	Commits  Commits `graphql:"commits(last: 1)"`
 }

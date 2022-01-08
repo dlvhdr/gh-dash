@@ -2,7 +2,6 @@ package ui
 
 import (
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -15,12 +14,12 @@ type Sidebar struct {
 	pr    PullRequest
 }
 
-func (m Model) renderSidebar() string {
+func (m *Model) renderSidebar() string {
 	if !m.isSidebarOpen {
 		return ""
 	}
 
-	height := m.viewport.Height + mainContentPadding*2
+	height := m.sidebarViewport.Height
 	style := sideBarStyle.Copy().
 		Height(height).
 		MaxHeight(height).
@@ -34,8 +33,17 @@ func (m Model) renderSidebar() string {
 		)
 	}
 
+	return style.Copy().Render(m.sidebarViewport.View())
+}
+
+func (m *Model) setSidebarViewportContent() {
+	pr := m.getCurrPr()
+	if pr == nil {
+		return
+	}
+
 	sidebar := Sidebar{
-		model: m,
+		model: *m,
 		pr:    *pr,
 	}
 
@@ -52,7 +60,7 @@ func (m Model) renderSidebar() string {
 	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderComments())
 
-	return style.Copy().Render(s.String())
+	m.sidebarViewport.SetContent(s.String())
 }
 
 func (sidebar *Sidebar) renderTitle() string {
@@ -193,9 +201,6 @@ func (sidebar Sidebar) renderComments() string {
 	width := sidebar.model.getSidebarWidth() - 8
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
 	commentNodes := sidebar.pr.Data.Comments.Nodes
-	sort.Slice(commentNodes, func(i, j int) bool {
-		return commentNodes[i].UpdatedAt.After(commentNodes[j].UpdatedAt)
-	})
 	var renderedComments []string
 	for _, comment := range commentNodes {
 		header := lipgloss.JoinHorizontal(lipgloss.Left,

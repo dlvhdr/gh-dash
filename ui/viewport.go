@@ -8,7 +8,12 @@ func (m Model) calcViewPortWidth() int {
 	return m.width - sideBarOffset
 }
 
-func (m *Model) syncViewPort() {
-	m.viewport.Width = m.calcViewPortWidth()
-	m.viewport.SetContent(m.renderPullRequestList())
+func (m *Model) syncMainViewPort() {
+	m.mainViewport.Width = m.calcViewPortWidth()
+	m.mainViewport.SetContent(m.renderPullRequestList())
+}
+
+func (m *Model) syncSidebarViewPort() {
+	m.sidebarViewport.Width = m.getSidebarWidth()
+	m.setSidebarViewportContent()
 }

@@ -87,7 +87,7 @@ func getTitleWidth(viewportWidth int) int {
 	return viewportWidth - usedWidth
 }
 
-func (m Model) renderTableHeader() string {
+func (m *Model) renderTableHeader() string {
 	reviewCell := singleRuneTitleCellStyle.Copy().Width(reviewCellWidth).Render("")
 	mergeableCell := singleRuneTitleCellStyle.Copy().Width(mergeableCellWidth).Render("")
 	ciCell := titleCellStyle.Copy().Width(ciCellWidth).Render("CI")
@@ -98,13 +98,13 @@ func (m Model) renderTableHeader() string {
 
 	prTitleCell := titleCellStyle.
 		Copy().
-		Width(getTitleWidth(m.viewport.Width)).
-		MaxWidth(getTitleWidth(m.viewport.Width)).
+		Width(getTitleWidth(m.mainViewport.Width)).
+		MaxWidth(getTitleWidth(m.mainViewport.Width)).
 		Render("Title")
 
 	return headerStyle.
-		Width(m.viewport.Width).
-		MaxWidth(m.viewport.Width).
+		Width(m.mainViewport.Width).
+		MaxWidth(m.mainViewport.Width).
 		Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Left,
@@ -133,29 +133,29 @@ func (m Model) renderPullRequestList() string {
 	var renderedPRs []string
 	for prId, pr := range section.Prs {
 		isSelected := m.cursor.currSectionId == section.Id && m.cursor.currPrId == prId
-		renderedPRs = append(renderedPRs, pr.render(isSelected, m.viewport.Width))
+		renderedPRs = append(renderedPRs, pr.render(isSelected, m.mainViewport.Width))
 	}
 
-	s.WriteString(lipgloss.NewStyle().Height(m.viewport.Height).Render(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...)))
+	s.WriteString(lipgloss.NewStyle().Height(m.mainViewport.Height).Render(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...)))
 	return s.String()
 }
 
-func (m Model) renderCurrentSection() string {
+func (m *Model) renderCurrentSection() string {
 	section := m.getCurrSection()
 	if section == nil {
 		return ""
 	}
 	if section.IsLoading {
 		return lipgloss.NewStyle().
-			Height(m.viewport.Height).
+			Height(m.mainViewport.Height).
 			Render(section.renderLoadingState())
 	}
 
 	return lipgloss.NewStyle().
 		PaddingLeft(mainContentPadding).
 		PaddingRight(mainContentPadding).
-		MaxWidth(m.viewport.Width).
-		Render(m.viewport.View())
+		MaxWidth(m.mainViewport.Width).
+		Render(m.mainViewport.View())
 }
 
 func (section section) numPrs() int {
