@@ -105,7 +105,7 @@ var (
 			BlockSuffix: "",
 		},
 		LinkText: ansi.StylePrimitive{
-			Color: stringPtr("56"),
+			Color: stringPtr("#666CA6"),
 			Bold:  boolPtr(true),
 		},
 		Image: ansi.StylePrimitive{

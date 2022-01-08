@@ -78,7 +78,7 @@ func (section *section) renderLoadingState() string {
 func (section *section) renderEmptyState() string {
 	emptyState := emptyStateStyle.Render(fmt.Sprintf(
 		"No PRs were found that match the given filters: %s",
-		section.Config.Filters,
+		lipgloss.NewStyle().Italic(true).Render(section.Config.Filters),
 	))
 	return fmt.Sprintf(emptyState + "\n")
 }
