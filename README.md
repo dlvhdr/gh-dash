@@ -2,7 +2,7 @@
 
 A `gh` cli extension to display a dashboard with pull requests by filters you care about.
 
-![demo](https://github.com/dlvhdr/gh-prs/blob/8621183574c573e4077360b5027ffea70999b921/demo.gif)
+![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
 
 ## Installation
 
