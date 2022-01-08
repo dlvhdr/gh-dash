@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/ui/markdown"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
@@ -127,25 +127,12 @@ func (sidebar Sidebar) renderDescription() string {
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(sidebar.pr.Data.Body, "")
 
-	regex = regexp.MustCompile("\n\n")
-	body = regex.ReplaceAllString(body, "\n")
 	body = strings.TrimSpace(body)
-
 	if body == "" {
 		return lipgloss.NewStyle().Italic(true).Render("No description provided.")
 	}
 
-	// TODO: create style JSON file and load it somewhere once
-	style := glamour.DefaultStyles["dark"]
-	indentToken := ""
-	indent := uint(0)
-	style.Document.Indent = &indent
-	style.Document.IndentToken = &indentToken
-	style.Document.Margin = &indent
-	markdownRenderer, _ := glamour.NewTermRenderer(
-		glamour.WithStyles(*style),
-		glamour.WithWordWrap(width),
-	)
+	markdownRenderer := markdown.GetMarkdownRenderer(width)
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""
@@ -160,7 +147,7 @@ func (sidebar Sidebar) renderDescription() string {
 }
 
 func (sidebar Sidebar) renderChecks() string {
-	title := mainTextStyle.Copy().MarginBottom(1).Render("ﱔ Checks")
+	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render("ﱔ Checks")
 
 	commits := sidebar.pr.Data.Commits.Nodes
 	if len(commits) == 0 {
@@ -204,25 +191,7 @@ func (sidebar Sidebar) renderChecks() string {
 
 func (sidebar Sidebar) renderComments() string {
 	width := sidebar.model.getSidebarWidth() - 8
-	markdownStyle := glamour.DefaultStyles["dark"]
-	indentToken := ""
-	indent := uint(0)
-	markdownStyle.Document.BlockPrefix = indentToken
-	markdownStyle.Document.Prefix = indentToken
-	markdownStyle.Document.BlockSuffix = indentToken
-	markdownStyle.Document.Indent = &indent
-	markdownStyle.Document.IndentToken = &indentToken
-	markdownStyle.Document.Margin = &indent
-	markdownStyle.Paragraph.Indent = &indent
-	markdownStyle.Paragraph.IndentToken = &indentToken
-	markdownStyle.Paragraph.Margin = &indent
-	markdownStyle.Paragraph.Prefix = indentToken
-	markdownStyle.Paragraph.BlockPrefix = indentToken
-	markdownStyle.Paragraph.BlockSuffix = indentToken
-	markdownRenderer, _ := glamour.NewTermRenderer(
-		glamour.WithStyles(*markdownStyle),
-		glamour.WithWordWrap(width),
-	)
+	markdownRenderer := markdown.GetMarkdownRenderer(width)
 	commentNodes := sidebar.pr.Data.Comments.Nodes
 	sort.Slice(commentNodes, func(i, j int) bool {
 		return commentNodes[i].UpdatedAt.After(commentNodes[j].UpdatedAt)
@@ -251,7 +220,7 @@ func (sidebar Sidebar) renderComments() string {
 		)
 	}
 
-	title := mainTextStyle.Copy().MarginBottom(1).Render(" Comments")
+	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render(" Comments")
 	return lipgloss.JoinVertical(lipgloss.Left,
 		title,
 		lipgloss.NewStyle().PaddingLeft(2).Render(
