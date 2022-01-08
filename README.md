@@ -46,7 +46,7 @@ Then, select that font as your font for the terminal.
 
 ## Configuring
 
-Configuration is provided within a `config.yml` file under the extension's directory.
+Configuration is provided within a `config.yml` file under the extension's directory (usually `~/.config/prs/`)
 
 The default `config.yml` file contains:
 
