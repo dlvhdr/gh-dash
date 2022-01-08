@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
-	"github.com/dlvhdr/gh-prs/utils"
 )
 
 type Sidebar struct {
@@ -58,7 +57,7 @@ func (m *Model) setSidebarViewportContent() {
 	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderChecks())
 	s.WriteString("\n\n")
-	s.WriteString(sidebar.renderComments())
+	s.WriteString(sidebar.renderActivity())
 
 	m.sidebarViewport.SetContent(s.String())
 }
@@ -154,86 +153,6 @@ func (sidebar Sidebar) renderDescription() string {
 		Render(rendered)
 }
 
-func (sidebar Sidebar) renderChecks() string {
-	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render("ﱔ Checks")
-
-	commits := sidebar.pr.Data.Commits.Nodes
-	if len(commits) == 0 {
-		return ""
-	}
-
-	lastCommit := commits[0]
-	var checks []string
-	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
-		if node.Typename == "CheckRun" {
-			checkRun := node.CheckRun
-			renderedStatus := renderCheckRunConclusion(checkRun)
-			name := renderCheckRunName(checkRun)
-			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Left, renderedStatus, " ", name))
-		} else if node.Typename == "StatusContext" {
-			statusContext := node.StatusContext
-			status := renderStatusContextConclusion(statusContext)
-			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Left, status, " ", renderStatusContextName(statusContext)))
-		}
-	}
-
-	if len(checks) == 0 {
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			title,
-			lipgloss.NewStyle().
-				Italic(true).
-				PaddingLeft(2).
-				Width(sidebar.model.getSidebarWidth()-6).
-				Render("No checks to display..."),
-		)
-	}
-
-	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, checks...)
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.model.getSidebarWidth()-6).Render(renderedChecks),
-	)
-}
-
-func (sidebar Sidebar) renderComments() string {
-	width := sidebar.model.getSidebarWidth() - 8
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
-	commentNodes := sidebar.pr.Data.Comments.Nodes
-	var renderedComments []string
-	for _, comment := range commentNodes {
-		header := lipgloss.JoinHorizontal(lipgloss.Left,
-			mainTextStyle.Copy().Render(comment.Author.Login),
-			" ",
-			lipgloss.NewStyle().Foreground(faintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
-		)
-		body, err := markdownRenderer.Render(comment.Body)
-		if err != nil {
-			continue
-		}
-		renderedComments = append(renderedComments, lipgloss.JoinVertical(
-			lipgloss.Left,
-			header,
-			body,
-		))
-	}
-	if len(renderedComments) == 0 {
-		renderedComments = append(
-			renderedComments,
-			lipgloss.NewStyle().Italic(true).Render("No comments..."),
-		)
-	}
-
-	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render(" Comments")
-	return lipgloss.JoinVertical(lipgloss.Left,
-		title,
-		lipgloss.NewStyle().PaddingLeft(2).Render(
-			lipgloss.JoinVertical(lipgloss.Left, renderedComments...),
-		),
-	)
-}
-
-func (m Model) getSidebarWidth() int {
+func (m *Model) getSidebarWidth() int {
 	return m.config.Defaults.Preview.Width
 }

@@ -32,9 +32,10 @@ type PullRequestData struct {
 	HeadRepository struct {
 		Name string
 	}
-	Comments Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	IsDraft  bool
-	Commits  Commits `graphql:"commits(last: 1)"`
+	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
+	IsDraft       bool
+	Commits       Commits `graphql:"commits(last: 1)"`
 }
 
 type CheckRun struct {
@@ -84,14 +85,29 @@ type Commits struct {
 	}
 }
 
-type Comments struct {
-	Nodes []struct {
-		Author struct {
-			Login string
-		}
-		Body      string
-		UpdatedAt time.Time
+type Comment struct {
+	Author struct {
+		Login string
 	}
+	Body      string
+	UpdatedAt time.Time
+}
+
+type Comments struct {
+	Nodes []Comment
+}
+
+type Review struct {
+	Author struct {
+		Login string
+	}
+	Body      string
+	State     string
+	UpdatedAt time.Time
+}
+
+type Reviews struct {
+	Nodes []Review
 }
 
 func makeQuery(query string) string {
