@@ -4,8 +4,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/ui/markdown"
+	"github.com/dlvhdr/gh-prs/utils"
 )
 
 type Sidebar struct {
@@ -13,12 +14,12 @@ type Sidebar struct {
 	pr    PullRequest
 }
 
-func (m Model) renderSidebar() string {
+func (m *Model) renderSidebar() string {
 	if !m.isSidebarOpen {
 		return ""
 	}
 
-	height := m.viewport.Height + mainContentPadding*2
+	height := m.sidebarViewport.Height
 	style := sideBarStyle.Copy().
 		Height(height).
 		MaxHeight(height).
@@ -32,8 +33,17 @@ func (m Model) renderSidebar() string {
 		)
 	}
 
+	return style.Copy().Render(m.sidebarViewport.View())
+}
+
+func (m *Model) setSidebarViewportContent() {
+	pr := m.getCurrPr()
+	if pr == nil {
+		return
+	}
+
 	sidebar := Sidebar{
-		model: m,
+		model: *m,
 		pr:    *pr,
 	}
 
@@ -43,12 +53,14 @@ func (m Model) renderSidebar() string {
 	s.WriteString(sidebar.renderBranches())
 	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderPills())
-	s.WriteString("\n")
+	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderDescription())
 	s.WriteString("\n\n")
 	s.WriteString(sidebar.renderChecks())
+	s.WriteString("\n\n")
+	s.WriteString(sidebar.renderComments())
 
-	return style.Copy().Render(s.String())
+	m.sidebarViewport.SetContent(s.String())
 }
 
 func (sidebar *Sidebar) renderTitle() string {
@@ -123,25 +135,12 @@ func (sidebar Sidebar) renderDescription() string {
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(sidebar.pr.Data.Body, "")
 
-	regex = regexp.MustCompile("\n\n")
-	body = regex.ReplaceAllString(body, "\n")
 	body = strings.TrimSpace(body)
-
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).MarginTop(1).Render("No description provided.")
+		return lipgloss.NewStyle().Italic(true).Render("No description provided.")
 	}
 
-	// TODO: create style JSON file and load it somewhere once
-	style := glamour.DefaultStyles["dark"]
-	indentToken := ""
-	indent := uint(0)
-	style.Document.Indent = &indent
-	style.Document.IndentToken = &indentToken
-	style.Document.Margin = &indent
-	markdownRenderer, _ := glamour.NewTermRenderer(
-		glamour.WithStyles(*style),
-		glamour.WithWordWrap(width),
-	)
+	markdownRenderer := markdown.GetMarkdownRenderer(width)
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""
@@ -156,7 +155,7 @@ func (sidebar Sidebar) renderDescription() string {
 }
 
 func (sidebar Sidebar) renderChecks() string {
-	title := mainTextStyle.Copy().MarginBottom(1).Render("ﱔ Checks")
+	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render("ﱔ Checks")
 
 	commits := sidebar.pr.Data.Commits.Nodes
 	if len(commits) == 0 {
@@ -184,12 +183,55 @@ func (sidebar Sidebar) renderChecks() string {
 			title,
 			lipgloss.NewStyle().
 				Italic(true).
+				PaddingLeft(2).
+				Width(sidebar.model.getSidebarWidth()-6).
 				Render("No checks to display..."),
 		)
 	}
 
 	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, checks...)
-	return lipgloss.JoinVertical(lipgloss.Left, title, renderedChecks)
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.model.getSidebarWidth()-6).Render(renderedChecks),
+	)
+}
+
+func (sidebar Sidebar) renderComments() string {
+	width := sidebar.model.getSidebarWidth() - 8
+	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	commentNodes := sidebar.pr.Data.Comments.Nodes
+	var renderedComments []string
+	for _, comment := range commentNodes {
+		header := lipgloss.JoinHorizontal(lipgloss.Left,
+			mainTextStyle.Copy().Render(comment.Author.Login),
+			" ",
+			lipgloss.NewStyle().Foreground(faintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		)
+		body, err := markdownRenderer.Render(comment.Body)
+		if err != nil {
+			continue
+		}
+		renderedComments = append(renderedComments, lipgloss.JoinVertical(
+			lipgloss.Left,
+			header,
+			body,
+		))
+	}
+	if len(renderedComments) == 0 {
+		renderedComments = append(
+			renderedComments,
+			lipgloss.NewStyle().Italic(true).Render("No comments..."),
+		)
+	}
+
+	title := mainTextStyle.Copy().MarginBottom(1).Underline(true).Render(" Comments")
+	return lipgloss.JoinVertical(lipgloss.Left,
+		title,
+		lipgloss.NewStyle().PaddingLeft(2).Render(
+			lipgloss.JoinVertical(lipgloss.Left, renderedComments...),
+		),
+	)
 }
 
 func (m Model) getSidebarWidth() int {

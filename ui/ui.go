@@ -16,17 +16,18 @@ import (
 )
 
 type Model struct {
-	keys          utils.KeyMap
-	err           error
-	config        *config.Config
-	data          *[]section
-	viewport      viewport.Model
-	cursor        cursor
-	help          help.Model
-	ready         bool
-	isSidebarOpen bool
-	width         int
-	logger        *os.File
+	keys            utils.KeyMap
+	err             error
+	config          *config.Config
+	data            *[]section
+	mainViewport    viewport.Model
+	sidebarViewport viewport.Model
+	cursor          cursor
+	help            help.Model
+	ready           bool
+	isSidebarOpen   bool
+	width           int
+	logger          *os.File
 }
 
 type cursor struct {
@@ -78,7 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				currPrId:      0,
 			}
 			m.cursor = newCursor
-			m.syncViewPort()
+			m.syncMainViewPort()
+			m.syncSidebarViewPort()
 			return m, nil
 
 		case key.Matches(msg, m.keys.NextSection):
@@ -88,22 +90,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				currPrId:      0,
 			}
 			m.cursor = newCursor
-			m.syncViewPort()
+			m.syncSidebarViewPort()
+			m.syncMainViewPort()
 			return m, nil
 
 		case key.Matches(msg, m.keys.Down):
 			m.nextPr()
-			m.syncViewPort()
+			m.syncMainViewPort()
+			m.syncSidebarViewPort()
 			return m, nil
 
 		case key.Matches(msg, m.keys.Up):
 			m.prevPr()
-			m.syncViewPort()
+			m.syncMainViewPort()
+			m.syncSidebarViewPort()
 			return m, nil
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.isSidebarOpen = !m.isSidebarOpen
-			m.syncViewPort()
+			m.syncMainViewPort()
+			m.syncSidebarViewPort()
 			return m, nil
 		case key.Matches(msg, m.keys.OpenGithub):
 			currPR := m.getCurrPr()
@@ -125,6 +131,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				newData = append(newData, section)
 			}
 			m.data = &newData
+			m.syncSidebarViewPort()
 			return m, m.startFetchingSectionsData()
 
 		case key.Matches(msg, m.keys.Help):
@@ -137,7 +144,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case initMsg:
 		m.updateOnConfigFetched(msg.Config)
-		m.viewport.Width = m.calcViewPortWidth()
+		m.mainViewport.Width = m.calcViewPortWidth()
+		m.sidebarViewport.Width = m.getSidebarWidth()
+		m.syncSidebarViewPort()
 		return m, m.startFetchingSectionsData()
 
 	case tickMsg:
@@ -168,7 +177,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		section.Spinner.Finish()
 		section.IsLoading = false
 		(*m.data)[msg.sectionId] = section
-		m.viewport.SetContent(msg.content)
+		m.mainViewport.SetContent(msg.content)
+		m.syncSidebarViewPort()
 		return m, nil
 
 	case tea.WindowSizeMsg:
@@ -177,17 +187,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		verticalMargins := headerHeight + footerHeight
 
 		if !m.ready {
-			m.viewport = viewport.Model{
+			m.mainViewport = viewport.Model{
 				Width:  m.calcViewPortWidth(),
-				Height: msg.Height - verticalMargins,
+				Height: msg.Height - verticalMargins - 1,
+			}
+			m.sidebarViewport = viewport.Model{
+				Width:  0,
+				Height: msg.Height - verticalMargins + 1,
 			}
 			m.ready = true
-
-			// Render the viewport one line below the header.
-			m.viewport.YPosition = headerHeight + 1
 		} else {
-			m.viewport.Height = msg.Height - verticalMargins
-			m.syncViewPort()
+			m.mainViewport.Height = msg.Height - verticalMargins - 1
+			m.sidebarViewport.Height = msg.Height - verticalMargins + 1
+			m.syncMainViewPort()
+			m.syncSidebarViewPort()
 		}
 		return m, nil
 	case errMsg:
@@ -195,7 +208,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.viewport, cmd = m.viewport.Update(msg)
+	m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -210,14 +223,12 @@ func (m Model) View() string {
 	}
 
 	paddedContentStyle := lipgloss.NewStyle().
-		PaddingTop(0).
-		PaddingLeft(mainContentPadding).
-		PaddingRight(mainContentPadding)
+		Padding(0, mainContentPadding)
 
 	s := strings.Builder{}
 	s.WriteString(m.renderTabs())
 	s.WriteString("\n")
-	table := lipgloss.JoinVertical(lipgloss.Top, paddedContentStyle.Render(m.renderTableHeader()), m.renderCurrentSection())
+	table := paddedContentStyle.Render(lipgloss.JoinVertical(lipgloss.Top, m.renderTableHeader(), m.renderCurrentSection()))
 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, table, m.renderSidebar()))
 	s.WriteString("\n")
 	s.WriteString(m.renderHelp())
