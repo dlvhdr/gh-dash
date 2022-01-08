@@ -46,32 +46,28 @@ Then, select that font as your font for the terminal.
 
 ## Configuring
 
-Configuration is provided within a `sections.yml` file under the extension's directory. If the configuration file is missing, a prompt to create it will be displayed when running `gh prs`.
+Configuration is provided within a `config.yml` file under the extension's directory.
 
-Each section is defined by a top level array item and has the following properties:
-
-- title - shown in the TUI
-- repos - a list of repos to enumerate
-- filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
-
-Example `sections.yml` file:
+The default `config.yml` file contains:
 
 ```yml
-- title: My Pull Requests
-  repos:
-    - dlvhdr/gh-prs
-  filters: author:@me
-- title: Needs My Review
-  repos:
-    - dlvhdr/gh-prs
-  filters: review-requested:@me
-- title: Subscribed
-  repos:
-    - cli/cli
-    - charmbracelet/glamour
-    - charmbracelet/lipgloss
-  filters: -author:@me
+prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me
+  - title: Needs My Review
+    filters: is:open review-requested:@me
+  - title: Subscribed
+    filters: is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs`
+defaults:
+  preview:
+    open: true
+    width: 60
 ```
+
+Adding PR sections is as easy as adding to the list of `prSections` where the properties are:
+
+- title - shown in the TUI
+- filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
 
 ## Usage
 
