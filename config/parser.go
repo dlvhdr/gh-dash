@@ -58,7 +58,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 			{
 				Title:   "Subscribed",
-				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs`",
+				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs",
 			},
 		},
 	}
