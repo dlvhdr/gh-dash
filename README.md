@@ -57,7 +57,7 @@ prSections:
   - title: Needs My Review
     filters: is:open review-requested:@me
   - title: Subscribed
-    filters: is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs`
+    filters: is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs
     limit: 50 # optional limit per section
 defaults:
   prsLimit: 20 # global limit
