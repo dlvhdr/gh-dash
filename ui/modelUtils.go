@@ -2,7 +2,7 @@ package ui
 
 import "github.com/dlvhdr/gh-prs/utils"
 
-func (m Model) getCurrSection() *section {
+func (m Model) getCurrSection() *Section {
 	if m.data == nil || len(*m.data) == 0 {
 		return nil
 	}
@@ -43,7 +43,7 @@ func (m *Model) nextPr() {
 	m.cursor.currPrId = newPrId
 }
 
-func (m Model) getSectionAt(id int) *section {
+func (m Model) getSectionAt(id int) *Section {
 	return &(*m.data)[id]
 }
 

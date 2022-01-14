@@ -49,6 +49,8 @@ func (m *Model) onLineDown() {
 		m.mainViewport.bottomBoundId += 1
 		m.mainViewport.model.LineDown(prRowHeight)
 	}
+
+	m.sidebarViewport.YOffset = 0
 }
 
 func (m *Model) onLineUp() {
@@ -58,6 +60,7 @@ func (m *Model) onLineUp() {
 		m.mainViewport.bottomBoundId -= 1
 		m.mainViewport.model.LineUp(prRowHeight)
 	}
+	m.sidebarViewport.YOffset = 0
 }
 
 func (m *Model) RenderMainViewPort() string {

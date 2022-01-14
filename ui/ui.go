@@ -19,7 +19,7 @@ type Model struct {
 	keys            utils.KeyMap
 	err             error
 	config          *config.Config
-	data            *[]section
+	data            *[]Section
 	mainViewport    MainViewport
 	sidebarViewport viewport.Model
 	cursor          cursor
@@ -123,7 +123,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			utils.OpenBrowser(currPR.Data.Url)
 			return m, nil
 		case key.Matches(msg, m.keys.Refresh):
-			var newData []section
+			var newData []Section
 			for _, section := range *m.data {
 				if section.IsLoading {
 					return m, nil

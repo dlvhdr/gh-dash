@@ -12,6 +12,7 @@ import (
 type PRSectionConfig struct {
 	Title   string
 	Filters string
+	Limit   *int `yaml:"limit,omitempty"`
 }
 
 type PreviewConfig struct {
@@ -20,7 +21,8 @@ type PreviewConfig struct {
 }
 
 type Defaults struct {
-	Preview PreviewConfig
+	Preview  PreviewConfig
+	PrsLimit int `yaml:"prsLimit"`
 }
 
 type Config struct {
@@ -46,6 +48,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
+			PrsLimit: 20,
 		},
 		PRSections: []PRSectionConfig{
 			{
