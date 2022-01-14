@@ -36,14 +36,21 @@ func NewModel(logFile *os.File) Model {
 
 func (m *Model) updateOnConfigFetched(config config.Config) {
 	m.config = &config
-	var data []section
+	var data []Section
 	for i, sectionConfig := range m.config.PRSections {
 		s := spinner.Model{Spinner: spinner.Dot}
-		data = append(data, section{
+		data = append(data, Section{
 			Id:        i,
 			Config:    sectionConfig,
 			Spinner:   s,
 			IsLoading: true,
+			Limit: func() int {
+				if sectionConfig.Limit != nil {
+					return *sectionConfig.Limit
+				}
+
+				return m.config.Defaults.PrsLimit
+			}(),
 		})
 	}
 	m.data = &data

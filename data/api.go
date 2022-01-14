@@ -9,10 +9,6 @@ import (
 	graphql "github.com/cli/shurcooL-graphql"
 )
 
-const (
-	Limit = 20
-)
-
 type PullRequestData struct {
 	Number int
 	Title  string
@@ -114,7 +110,7 @@ func makeQuery(query string) string {
 	return fmt.Sprintf("is:pr %s", query)
 }
 
-func FetchRepoPullRequests(query string) ([]PullRequestData, error) {
+func FetchRepoPullRequests(query string, limit int) ([]PullRequestData, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
 	if err != nil {
@@ -131,7 +127,7 @@ func FetchRepoPullRequests(query string) ([]PullRequestData, error) {
 	}
 	variables := map[string]interface{}{
 		"query": graphql.String(makeQuery(query)),
-		"limit": graphql.Int(Limit),
+		"limit": graphql.Int(limit),
 	}
 	err = client.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {

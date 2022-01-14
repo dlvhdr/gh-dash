@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -18,7 +19,7 @@ func (m *Model) renderSidebar() string {
 		return ""
 	}
 
-	height := m.sidebarViewport.Height
+	height := m.sidebarViewport.Height + pagerHeight
 	style := sideBarStyle.Copy().
 		Height(height).
 		MaxHeight(height).
@@ -32,7 +33,11 @@ func (m *Model) renderSidebar() string {
 		)
 	}
 
-	return style.Copy().Render(m.sidebarViewport.View())
+	return style.Copy().Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.sidebarViewport.View(),
+		pagerStyle.Copy().Render(fmt.Sprintf("%d%%", int(m.sidebarViewport.ScrollPercent()*100))),
+	))
 }
 
 func (m *Model) setSidebarViewportContent() {

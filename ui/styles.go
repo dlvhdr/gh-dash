@@ -103,7 +103,7 @@ var (
 			BorderLeft(true).
 			BorderStyle(lipgloss.Border{
 			Top:         "",
-			Bottom:      " ",
+			Bottom:      "",
 			Left:        "│",
 			Right:       "",
 			TopLeft:     "",

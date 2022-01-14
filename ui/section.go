@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -11,13 +10,13 @@ import (
 	"github.com/dlvhdr/gh-prs/data"
 )
 
-type section struct {
+type Section struct {
 	Id        int
 	Config    config.PRSectionConfig
 	Prs       []PullRequest
 	Spinner   spinner.Model
 	IsLoading bool
-	Paginator paginator.Model
+	Limit     int
 }
 
 type tickMsg struct {
@@ -25,7 +24,7 @@ type tickMsg struct {
 	InternalTickMsg tea.Msg
 }
 
-func (section *section) Tick(spinnerTickCmd tea.Cmd) func() tea.Msg {
+func (section *Section) Tick(spinnerTickCmd tea.Cmd) func() tea.Msg {
 	return func() tea.Msg {
 		return tickMsg{
 			SectionId:       section.Id,
@@ -34,9 +33,9 @@ func (section *section) Tick(spinnerTickCmd tea.Cmd) func() tea.Msg {
 	}
 }
 
-func (section *section) fetchSectionPullRequests() tea.Cmd {
+func (section *Section) fetchSectionPullRequests() tea.Cmd {
 	return func() tea.Msg {
-		fetched, err := data.FetchRepoPullRequests(section.Config.Filters)
+		fetched, err := data.FetchRepoPullRequests(section.Config.Filters, section.Limit)
 		if err != nil {
 			return sectionPullRequestsFetchedMsg{
 				SectionId: section.Id,
@@ -67,14 +66,14 @@ func (m Model) makeRenderPullRequestCmd(sectionId int) tea.Cmd {
 	}
 }
 
-func (section *section) renderLoadingState() string {
+func (section *Section) renderLoadingState() string {
 	if !section.IsLoading {
 		return ""
 	}
 	return spinnerStyle.Render(fmt.Sprintf("%s Fetching Pull Requests...", section.Spinner.View()))
 }
 
-func (section *section) renderEmptyState() string {
+func (section *Section) renderEmptyState() string {
 	emptyState := emptyStateStyle.Render(fmt.Sprintf(
 		"No PRs were found that match the given filters: %s",
 		lipgloss.NewStyle().Italic(true).Render(section.Config.Filters),
@@ -102,6 +101,8 @@ func (m *Model) renderTableHeader() string {
 		Render("Title")
 
 	return headerStyle.
+		PaddingLeft(mainContentPadding).
+		PaddingRight(mainContentPadding).
 		Width(m.mainViewport.model.Width).
 		MaxWidth(m.mainViewport.model.Width).
 		Render(
@@ -155,6 +156,6 @@ func (m *Model) renderCurrentSection() string {
 		Render(m.RenderMainViewPort())
 }
 
-func (section section) numPrs() int {
+func (section Section) numPrs() int {
 	return len(section.Prs)
 }
