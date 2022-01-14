@@ -5,8 +5,10 @@ import "github.com/charmbracelet/lipgloss"
 var (
 	headerHeight       = 6
 	footerHeight       = 2
+	prRowHeight        = 2
 	singleRuneWidth    = 4
 	mainContentPadding = 1
+	pagerHeight        = 2
 	cellPadding        = cellStyle.GetPaddingLeft() + cellStyle.GetPaddingRight()
 
 	reviewCellWidth    = singleRuneWidth
@@ -119,6 +121,11 @@ var (
 			Foreground(subtleIndigo).
 			PaddingLeft(1).
 			PaddingRight(1)
+
+	pagerStyle = lipgloss.NewStyle().
+			MarginTop(1).
+			Bold(true).
+			Foreground(faintText)
 )
 
 func makeCellStyle(isSelected bool) lipgloss.Style {

@@ -20,7 +20,7 @@ type Model struct {
 	err             error
 	config          *config.Config
 	data            *[]section
-	mainViewport    viewport.Model
+	mainViewport    MainViewport
 	sidebarViewport viewport.Model
 	cursor          cursor
 	help            help.Model
@@ -81,6 +81,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.cursor = newCursor
 			m.syncMainViewPort()
 			m.syncSidebarViewPort()
+			m.setMainViewPortBounds()
 			return m, nil
 
 		case key.Matches(msg, m.keys.NextSection):
@@ -92,11 +93,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.cursor = newCursor
 			m.syncSidebarViewPort()
 			m.syncMainViewPort()
+			m.setMainViewPortBounds()
 			return m, nil
 
 		case key.Matches(msg, m.keys.Down):
 			m.nextPr()
 			m.syncMainViewPort()
+			m.onLineDown()
 			m.syncSidebarViewPort()
 			return m, nil
 
@@ -104,6 +107,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prevPr()
 			m.syncMainViewPort()
 			m.syncSidebarViewPort()
+			m.onLineUp()
 			return m, nil
 
 		case key.Matches(msg, m.keys.TogglePreview):
@@ -144,7 +148,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case initMsg:
 		m.updateOnConfigFetched(msg.Config)
-		m.mainViewport.Width = m.calcViewPortWidth()
+		m.mainViewport.model.Width = m.calcViewPortWidth()
 		m.sidebarViewport.Width = m.getSidebarWidth()
 		m.syncSidebarViewPort()
 		return m, m.startFetchingSectionsData()
@@ -163,13 +167,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		(*m.data)[msg.SectionId] = section
 		return m, section.Tick(internalCmd)
 
-	case repoPullRequestsFetchedMsg:
+	case sectionPullRequestsFetchedMsg:
 		section := (*m.data)[msg.SectionId]
 		section.Prs = msg.Prs
 		sort.Slice(section.Prs, func(i, j int) bool {
 			return section.Prs[i].Data.UpdatedAt.After(section.Prs[j].Data.UpdatedAt)
 		})
 		(*m.data)[msg.SectionId] = section
+		m.setMainViewPortBounds()
 		return m, m.makeRenderPullRequestCmd(msg.SectionId)
 
 	case pullRequestsRenderedMsg:
@@ -177,19 +182,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		section.Spinner.Finish()
 		section.IsLoading = false
 		(*m.data)[msg.sectionId] = section
-		m.mainViewport.SetContent(msg.content)
+		m.mainViewport.model.SetContent(msg.content)
 		m.syncSidebarViewPort()
 		return m, nil
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.help.Width = msg.Width
-		verticalMargins := headerHeight + footerHeight
+		verticalMargins := headerHeight + footerHeight + pagerHeight
 
 		if !m.ready {
-			m.mainViewport = viewport.Model{
-				Width:  m.calcViewPortWidth(),
-				Height: msg.Height - verticalMargins - 1,
+			m.mainViewport = MainViewport{
+				model: viewport.Model{
+					Width:  m.calcViewPortWidth(),
+					Height: msg.Height - verticalMargins - 1,
+				},
 			}
 			m.sidebarViewport = viewport.Model{
 				Width:  0,
@@ -197,7 +204,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.ready = true
 		} else {
-			m.mainViewport.Height = msg.Height - verticalMargins - 1
+			m.mainViewport.model.Height = msg.Height - verticalMargins - 1
 			m.sidebarViewport.Height = msg.Height - verticalMargins + 1
 			m.syncMainViewPort()
 			m.syncSidebarViewPort()

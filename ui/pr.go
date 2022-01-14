@@ -12,7 +12,7 @@ type PullRequest struct {
 	Data data.PullRequestData
 }
 
-type repoPullRequestsFetchedMsg struct {
+type sectionPullRequestsFetchedMsg struct {
 	SectionId int
 	Prs       []PullRequest
 }
@@ -166,6 +166,7 @@ func (pr PullRequest) render(isSelected bool, viewPortWidth int) string {
 	return rowStyle.
 		Width(viewPortWidth).
 		MaxWidth(viewPortWidth).
+		MaxHeight(prRowHeight).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left,
 			updatedAtCell,
 			reviewCell,
