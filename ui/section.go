@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -39,7 +38,7 @@ func (section *section) fetchSectionPullRequests() tea.Cmd {
 	return func() tea.Msg {
 		fetched, err := data.FetchRepoPullRequests(section.Config.Filters)
 		if err != nil {
-			return repoPullRequestsFetchedMsg{
+			return sectionPullRequestsFetchedMsg{
 				SectionId: section.Id,
 				Prs:       []PullRequest{},
 			}
@@ -52,7 +51,7 @@ func (section *section) fetchSectionPullRequests() tea.Cmd {
 			})
 		}
 
-		return repoPullRequestsFetchedMsg{
+		return sectionPullRequestsFetchedMsg{
 			SectionId: section.Id,
 			Prs:       prs,
 		}
@@ -98,13 +97,13 @@ func (m *Model) renderTableHeader() string {
 
 	prTitleCell := titleCellStyle.
 		Copy().
-		Width(getTitleWidth(m.mainViewport.Width)).
-		MaxWidth(getTitleWidth(m.mainViewport.Width)).
+		Width(getTitleWidth(m.mainViewport.model.Width)).
+		MaxWidth(getTitleWidth(m.mainViewport.model.Width)).
 		Render("Title")
 
 	return headerStyle.
-		Width(m.mainViewport.Width).
-		MaxWidth(m.mainViewport.Width).
+		Width(m.mainViewport.model.Width).
+		MaxWidth(m.mainViewport.model.Width).
 		Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Left,
@@ -129,15 +128,13 @@ func (m Model) renderPullRequestList() string {
 		return fmt.Sprintf("%s\n", section.renderEmptyState())
 	}
 
-	s := strings.Builder{}
 	var renderedPRs []string
 	for prId, pr := range section.Prs {
 		isSelected := m.cursor.currSectionId == section.Id && m.cursor.currPrId == prId
-		renderedPRs = append(renderedPRs, pr.render(isSelected, m.mainViewport.Width))
+		renderedPRs = append(renderedPRs, pr.render(isSelected, m.mainViewport.model.Width))
 	}
 
-	s.WriteString(lipgloss.NewStyle().Height(m.mainViewport.Height).Render(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...)))
-	return s.String()
+	return lipgloss.NewStyle().Render(lipgloss.JoinVertical(lipgloss.Left, renderedPRs...))
 }
 
 func (m *Model) renderCurrentSection() string {
@@ -147,15 +144,15 @@ func (m *Model) renderCurrentSection() string {
 	}
 	if section.IsLoading {
 		return lipgloss.NewStyle().
-			Height(m.mainViewport.Height).
+			Height(m.mainViewport.model.Height + pagerHeight).
 			Render(section.renderLoadingState())
 	}
 
 	return lipgloss.NewStyle().
 		PaddingLeft(mainContentPadding).
 		PaddingRight(mainContentPadding).
-		MaxWidth(m.mainViewport.Width).
-		Render(m.mainViewport.View())
+		MaxWidth(m.mainViewport.model.Width).
+		Render(m.RenderMainViewPort())
 }
 
 func (section section) numPrs() int {
