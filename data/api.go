@@ -107,7 +107,7 @@ type Reviews struct {
 }
 
 func makeQuery(query string) string {
-	return fmt.Sprintf("is:pr %s", query)
+	return fmt.Sprintf("is:pr archived:false %s", query)
 }
 
 func FetchRepoPullRequests(query string, limit int) ([]PullRequestData, error) {
