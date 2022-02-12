@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"os"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,7 +9,7 @@ import (
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
-func NewModel(logFile *os.File) Model {
+func NewModel() Model {
 	helpModel := help.NewModel()
 	style := lipgloss.NewStyle().Foreground(secondaryText)
 	helpModel.Styles = help.Styles{
@@ -30,7 +28,6 @@ func NewModel(logFile *os.File) Model {
 			currSectionId: 0,
 			currPrId:      0,
 		},
-		logger: logFile,
 	}
 }
 

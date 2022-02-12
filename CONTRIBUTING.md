@@ -38,7 +38,9 @@ Scan through our [existing issues](https://github.com/dlvhdr/gh-prs/issues) to f
 ```sh
 git clone https://github.com/dlvhdr/gh-prs.git
 ```
+
 or if you have the `gh` cli
+
 ```sh
 gh repo clone dlvhdr/gh-prs
 ```
@@ -53,6 +55,20 @@ When you're finished with the changes, create a pull request.
 
 - Fill the "Ready for review" template so that we can review your PR. This template helps reviewers understand your changes as well as the purpose of your pull request.
 - Don't forget to [link PR to issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) if you are solving one.
+
+### Debugging
+
+- Pass the debug flag: `go run gh-prs.go --debug`
+- Write to the log by using Go's builtin `log` package
+- View the log by running `tail -f debug.log`
+
+```golang
+import "log"
+
+// more code...
+
+log.Printf("Some message with a variable %v\n", someVariable)
+```
 
 ### Your PR is merged!
 

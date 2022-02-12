@@ -21,7 +21,7 @@ func createModel(debug bool) (ui.Model, *os.File) {
 		}
 	}
 
-	return ui.NewModel(loggerFile), loggerFile
+	return ui.NewModel(), loggerFile
 }
 
 func main() {

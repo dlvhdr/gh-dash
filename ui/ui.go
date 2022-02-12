@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"os"
 	"sort"
 	"strings"
 
@@ -27,7 +26,6 @@ type Model struct {
 	ready           bool
 	isSidebarOpen   bool
 	width           int
-	logger          *os.File
 }
 
 type cursor struct {
