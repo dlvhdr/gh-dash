@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/ui/components/tabs"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
@@ -21,6 +22,7 @@ func NewModel() Model {
 		ShortKey:       style.Copy(),
 		Ellipsis:       style.Copy(),
 	}
+	tabsModel := tabs.NewModel()
 	return Model{
 		keys: utils.Keys,
 		help: helpModel,
@@ -28,11 +30,13 @@ func NewModel() Model {
 			currSectionId: 0,
 			currPrId:      0,
 		},
+		tabs: tabsModel,
 	}
 }
 
 func (m *Model) updateOnConfigFetched(config config.Config) {
 	m.config = &config
+	m.context.Config = config
 	var data []Section
 	for i, sectionConfig := range m.config.PRSections {
 		s := spinner.Model{Spinner: spinner.Dot}

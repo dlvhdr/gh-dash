@@ -11,6 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/ui/components/tabs"
+	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
@@ -26,6 +28,8 @@ type Model struct {
 	ready           bool
 	isSidebarOpen   bool
 	width           int
+	tabs            tabs.Model
+	context         context.ProgramContext
 }
 
 type cursor struct {
@@ -80,6 +84,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainViewPort()
 			m.syncSidebarViewPort()
 			m.setMainViewPortBounds()
+			m.tabs.SetCurrSectionId(newCursor.currSectionId)
+
 			return m, nil
 
 		case key.Matches(msg, m.keys.NextSection):
@@ -92,7 +98,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncSidebarViewPort()
 			m.syncMainViewPort()
 			m.setMainViewPortBounds()
-			return m, nil
+			m.tabs.SetCurrSectionId(newCursor.currSectionId)
+
+			return m, cmd
 
 		case key.Matches(msg, m.keys.Down):
 			m.nextPr()
@@ -200,6 +208,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Width:  0,
 				Height: msg.Height - verticalMargins + 1,
 			}
+			m.context.ScreenWidth = m.width
 			m.ready = true
 		} else {
 			m.mainViewport.model.Height = msg.Height - verticalMargins - 1
@@ -231,7 +240,7 @@ func (m Model) View() string {
 		Padding(0, mainContentPadding)
 
 	s := strings.Builder{}
-	s.WriteString(m.renderTabs())
+	s.WriteString(m.tabs.View(m.context))
 	s.WriteString("\n")
 	table := paddedContentStyle.Render(lipgloss.JoinVertical(lipgloss.Top, m.renderTableHeader(), m.renderCurrentSection()))
 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, table, m.renderSidebar()))
