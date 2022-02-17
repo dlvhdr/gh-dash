@@ -25,7 +25,7 @@ func Min(a, b int) int {
 	return b
 }
 
-func runProviders(url string) error {
+func openInBrowser(url string) error {
 	var err error
 	providers := []string{"xdg-open", "x-www-browser", "www-browser", "wslview"}
 
