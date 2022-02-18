@@ -25,7 +25,7 @@ func Min(a, b int) int {
 	return b
 }
 
-func openInBrowser(url string) error {
+func openInLinuxBrowser(url string) error {
 	var err error
 	providers := []string{"xdg-open", "x-www-browser", "www-browser", "wslview"}
 
@@ -47,7 +47,7 @@ func OpenBrowser(url string) {
 
 	switch runtime.GOOS {
 	case "linux":
-		err = runProviders(url)
+		err = openInLinuxBrowser(url)
 	case "windows":
 		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
