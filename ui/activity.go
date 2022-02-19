@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
 	"github.com/dlvhdr/gh-prs/utils"
 )
@@ -110,13 +111,13 @@ func renderReviewHeader(review data.Review) string {
 func renderReviewDecision(decision string) string {
 	switch decision {
 	case "PENDING":
-		return waitingGlyph
+		return constants.WaitingGlyph
 	case "COMMENTED":
 		return lipgloss.NewStyle().Foreground(faintText).Render("")
 	case "APPROVED":
-		return successGlyph
+		return constants.SuccessGlyph
 	case "CHANGES_REQUESTED":
-		return failureGlyph
+		return constants.FailureGlyph
 	}
 
 	return ""

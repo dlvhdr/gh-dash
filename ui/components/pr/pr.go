@@ -1,10 +1,14 @@
-package ui
+package pr
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/ui/components/table"
+	"github.com/dlvhdr/gh-prs/ui/constants"
+	"github.com/dlvhdr/gh-prs/ui/styles"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
@@ -19,15 +23,16 @@ type sectionPullRequestsFetchedMsg struct {
 
 func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 	reviewCellStyle := makeRuneCellStyle(isSelected)
+	log.Printf("%v", pr.Data.ReviewDecision)
 	if pr.Data.ReviewDecision == "APPROVED" {
-		return reviewCellStyle.Copy().Foreground(successText).Render("")
+		return reviewCellStyle.Foreground(successText).Render("")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
-		return reviewCellStyle.Copy().Foreground(warningText).Render("")
+		return reviewCellStyle.Foreground(styles.DefaultTheme.WarningText).Render("")
 	}
 
-	return reviewCellStyle.Copy().Render(waitingGlyph)
+	return reviewCellStyle.Render(constants.WaitingGlyph)
 }
 
 func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
@@ -36,15 +41,15 @@ func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
 	case "MERGEABLE":
 		return mergeCellStyle.Foreground(successText).Render("")
 	case "CONFLICTING":
-		return mergeCellStyle.Render(failureGlyph)
+		return mergeCellStyle.Render(constants.FailureGlyph)
 	case "UNKNOWN":
 		fallthrough
 	default:
-		return mergeCellStyle.Foreground(faintText).Render("-")
+		return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("-")
 	}
 }
 
-func (pr PullRequest) getStatusChecksRollup() string {
+func (pr PullRequest) GetStatusChecksRollup() string {
 	accStatus := "SUCCESS"
 	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
@@ -69,17 +74,17 @@ func (pr PullRequest) getStatusChecksRollup() string {
 }
 
 func (pr PullRequest) renderCiStatus(isSelected bool) string {
-	accStatus := pr.getStatusChecksRollup()
-	ciCellStyle := makeCellStyle(isSelected).Width(ciCellWidth).MaxWidth(ciCellWidth)
+	accStatus := pr.GetStatusChecksRollup()
+	ciCellStyle := makeCellStyle(isSelected)
 	if accStatus == "SUCCESS" {
-		return ciCellStyle.Render(successGlyph)
+		return ciCellStyle.Render(constants.SuccessGlyph)
 	}
 
 	if accStatus == "PENDING" {
-		return ciCellStyle.Render(waitingGlyph)
+		return ciCellStyle.Render(constants.WaitingGlyph)
 	}
 
-	return ciCellStyle.Render(failureGlyph)
+	return ciCellStyle.Render(constants.FailureGlyph)
 }
 
 func (pr PullRequest) renderLines(isSelected bool) string {
@@ -94,52 +99,42 @@ func (pr PullRequest) renderLines(isSelected bool) string {
 	)
 
 	return makeCellStyle(isSelected).
-		Width(linesCellWidth).
-		MaxWidth(linesCellWidth).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left, added, separator, removed))
 }
 
 func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 	number := makeCellStyle(isSelected).
 		MaxWidth(6).
-		Foreground(secondaryText).
+		Foreground(styles.DefaultTheme.SecondaryText).
 		PaddingLeft(0).
 		PaddingRight(0).
 		Align(lipgloss.Left).
 		Render(
-			fmt.Sprintf("#%s", fmt.Sprintf("%d", pr.Data.Number)),
+			fmt.Sprintf("#%s", fmt.Sprintf("%d ", pr.Data.Number)),
 		)
 
-	totalWidth := getTitleWidth(viewportWidth)
-	title := makeCellStyle(isSelected).Render(utils.TruncateString(pr.Data.Title, totalWidth-6))
+	title := makeCellStyle(isSelected).Render(pr.Data.Title)
 
 	return makeCellStyle(isSelected).
-		Width(totalWidth).
-		MaxWidth(totalWidth).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left, number, title))
 }
 
 func (pr PullRequest) renderAuthor(isSelected bool) string {
-	return makeCellStyle(isSelected).Width(prAuthorCellWidth).Render(
-		utils.TruncateString(pr.Data.Author.Login, prAuthorCellWidth-cellPadding),
-	)
+	return makeCellStyle(isSelected).Render(pr.Data.Author.Login)
 }
 
 func (pr PullRequest) renderRepoName(isSelected bool) string {
 	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
 	return makeCellStyle(isSelected).
-		Width(prRepoCellWidth).
 		Render(repoName)
 }
 
 func (pr PullRequest) renderUpdateAt(isSelected bool) string {
 	return makeCellStyle(isSelected).
-		Width(updatedAtCellWidth).
-		MaxWidth(updatedAtCellWidth).
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
 
-func (pr PullRequest) renderState() string {
+func (pr PullRequest) RenderState() string {
 	switch pr.Data.State {
 	case "OPEN":
 		return " Open"
@@ -152,29 +147,26 @@ func (pr PullRequest) renderState() string {
 	}
 }
 
-func (pr PullRequest) render(isSelected bool, viewPortWidth int) string {
-	reviewCell := pr.renderReviewStatus(isSelected)
-	mergeableCell := pr.renderMergeableStatus(isSelected)
-	ciCell := pr.renderCiStatus(isSelected)
-	linesCell := pr.renderLines(isSelected)
-	prTitleCell := pr.renderTitle(viewPortWidth, isSelected)
-	prAuthorCell := pr.renderAuthor(isSelected)
-	prRepoCell := pr.renderRepoName(isSelected)
-	updatedAtCell := pr.renderUpdateAt(isSelected)
+func (pr PullRequest) Render(isSelected bool, viewPortWidth int) table.Row {
+	return table.Row{
+		pr.renderUpdateAt(isSelected),
+		pr.renderReviewStatus(isSelected),
+		pr.renderRepoName(isSelected),
+		pr.renderTitle(viewPortWidth, isSelected),
+		pr.renderAuthor(isSelected),
+		pr.renderMergeableStatus(isSelected),
+		pr.renderCiStatus(isSelected),
+		pr.renderLines(isSelected),
+	}
+}
 
-	rowStyle := pullRequestStyle.Copy()
-	return rowStyle.
-		Width(viewPortWidth).
-		MaxWidth(viewPortWidth).
-		MaxHeight(prRowHeight).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left,
-			updatedAtCell,
-			reviewCell,
-			prRepoCell,
-			prTitleCell,
-			prAuthorCell,
-			mergeableCell,
-			ciCell,
-			linesCell,
-		))
+func isConclusionAFailure(conclusion string) bool {
+	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE"
+}
+
+func isStatusWaiting(status string) bool {
+	return status == "PENDING" ||
+		status == "QUEUED" ||
+		status == "IN_PROGRESS" ||
+		status == "WAITING"
 }

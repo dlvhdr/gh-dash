@@ -16,8 +16,8 @@ type MainViewport struct {
 
 func (m *Model) syncMainViewPort() {
 	m.mainViewport.model.Width = m.calcViewPortWidth()
-	prs := m.renderPullRequestList()
-	m.mainViewport.model.SetContent(prs)
+	// prs := m.section.View()
+	// m.mainViewport.model.SetContent(prs)
 }
 
 func (m *Model) calcViewPortWidth() int {
@@ -39,7 +39,7 @@ func (m *Model) setMainViewPortBounds() {
 	}
 
 	m.mainViewport.topBoundId = 0
-	m.mainViewport.bottomBoundId = utils.Min(currSection.numPrs()-1, m.getNumPrsPerPage()-1)
+	m.mainViewport.bottomBoundId = utils.Min(currSection.NumPrs()-1, m.getNumPrsPerPage()-1)
 }
 
 func (m *Model) onLineDown() {
@@ -65,12 +65,12 @@ func (m *Model) onLineUp() {
 
 func (m *Model) RenderMainViewPort() string {
 	pagerContent := ""
-	numPrs := m.getCurrSection().numPrs()
+	numPrs := m.getCurrSection().NumPrs()
 	if numPrs > 0 {
 		pagerContent = fmt.Sprintf(
 			"PR %v/%v",
 			m.cursor.currPrId+1,
-			m.getCurrSection().numPrs(),
+			m.getCurrSection().NumPrs(),
 		)
 	}
 

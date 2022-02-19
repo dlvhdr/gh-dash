@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/ui/components/pr"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
 )
 
 type Sidebar struct {
 	model Model
-	pr    PullRequest
+	pr    pr.PullRequest
 }
 
 func (m *Model) renderSidebar() string {
@@ -41,14 +43,14 @@ func (m *Model) renderSidebar() string {
 }
 
 func (m *Model) setSidebarViewportContent() {
-	pr := m.getCurrPr()
-	if pr == nil {
+	currPr := m.getCurrPr()
+	if currPr == nil {
 		return
 	}
 
 	sidebar := Sidebar{
 		model: *m,
-		pr:    *pr,
+		pr:    pr.PullRequest{Data: *currPr},
 	}
 
 	s := strings.Builder{}
@@ -91,7 +93,7 @@ func (sidebar *Sidebar) renderStatusPill() string {
 
 	return pillStyle.
 		Background(lipgloss.Color(bgColor)).
-		Render(sidebar.pr.renderState())
+		Render(sidebar.pr.RenderState())
 }
 
 func (sidebar *Sidebar) renderMergeablePill() string {
@@ -110,7 +112,7 @@ func (sidebar *Sidebar) renderMergeablePill() string {
 }
 
 func (sidebar *Sidebar) renderChecksPill() string {
-	status := sidebar.pr.getStatusChecksRollup()
+	status := sidebar.pr.GetStatusChecksRollup()
 	if status == "FAILURE" {
 		return pillStyle.Copy().
 			Background(warningText).
@@ -118,7 +120,7 @@ func (sidebar *Sidebar) renderChecksPill() string {
 	} else if status == "PENDING" {
 		return pillStyle.Copy().
 			Background(faintText).
-			Render(waitingGlyph + " Checks")
+			Render(constants.WaitingGlyph + " Checks")
 	}
 
 	return pillStyle.Copy().

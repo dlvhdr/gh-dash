@@ -7,7 +7,6 @@ import (
 )
 
 type Model struct {
-	Context       context.ProgramContext
 	CurrSectionId int
 }
 

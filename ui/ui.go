@@ -1,16 +1,15 @@
 package ui
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/ui/components/prssection"
 	"github.com/dlvhdr/gh-prs/ui/components/tabs"
 	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/utils"
@@ -20,11 +19,11 @@ type Model struct {
 	keys            utils.KeyMap
 	err             error
 	config          *config.Config
-	data            *[]Section
 	mainViewport    MainViewport
 	sidebarViewport viewport.Model
 	cursor          cursor
 	help            help.Model
+	sections        []*prssection.Model
 	ready           bool
 	isSidebarOpen   bool
 	width           int
@@ -126,24 +125,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if currPR == nil {
 				return m, nil
 			}
-			utils.OpenBrowser(currPR.Data.Url)
+			utils.OpenBrowser(currPR.Url)
 			return m, nil
-		case key.Matches(msg, m.keys.Refresh):
-			var newData []Section
-			for _, section := range *m.data {
-				if section.IsLoading {
-					return m, nil
-				}
-
-				section.Spinner = spinner.Model{Spinner: spinner.Dot}
-				section.IsLoading = true
-				section.Prs = []PullRequest{}
-				newData = append(newData, section)
-			}
-			m.data = &newData
-			m.syncSidebarViewPort()
-			return m, m.startFetchingSectionsData()
-
+		// case key.Matches(msg, m.keys.Refresh):
+		// 	var newData []Section
+		// 	for _, section := range *m.data {
+		// 		if section.IsLoading {
+		// 			return m, nil
+		// 		}
+		//
+		// 		// section.IsLoading = true
+		// 		section.Prs = []PullRequest{}
+		// 		newData = append(newData, section)
+		// 	}
+		// 	m.data = &newData
+		// 	m.syncSidebarViewPort()
+		// 	return m, m.startFetchingSectionsData()
+		//
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
@@ -157,40 +155,50 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mainViewport.model.Width = m.calcViewPortWidth()
 		m.sidebarViewport.Width = m.getSidebarWidth()
 		m.syncSidebarViewPort()
-		return m, m.startFetchingSectionsData()
 
-	case tickMsg:
-		var internalCmd tea.Cmd
-		section := (*m.data)[msg.SectionId]
-		if !section.IsLoading {
-			return m, nil
+		fetchPRsCmds := make([]tea.Cmd, 0, len(msg.Config.PRSections))
+		sections := make([]*prssection.Model, 0, len(msg.Config.PRSections))
+		for i, sectionConfig := range msg.Config.PRSections {
+			sectionModel := prssection.NewModel(i, &m.context, sectionConfig, nil)
+			sections = append(sections, &sectionModel)
+			fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionPullRequests())
 		}
-		section.Spinner, internalCmd = section.Spinner.Update(msg.InternalTickMsg)
-		if internalCmd == nil {
-			return m, nil
-		}
+		m.sections = sections
 
-		(*m.data)[msg.SectionId] = section
-		return m, section.Tick(internalCmd)
+		return m, tea.Batch(fetchPRsCmds...)
 
-	case sectionPullRequestsFetchedMsg:
-		section := (*m.data)[msg.SectionId]
-		section.Prs = msg.Prs
-		sort.Slice(section.Prs, func(i, j int) bool {
-			return section.Prs[i].Data.UpdatedAt.After(section.Prs[j].Data.UpdatedAt)
-		})
-		(*m.data)[msg.SectionId] = section
-		m.setMainViewPortBounds()
-		return m, m.makeRenderPullRequestCmd(msg.SectionId)
+	// case tickMsg:
+	// 	var internalCmd tea.Cmd
+	// 	section := (*m.data)[msg.SectionId]
+	// 	if !section.IsLoading {
+	// 		return m, nil
+	// 	}
+	// 	section.Spinner, internalCmd = section.Spinner.Update(msg.InternalTickMsg)
+	// 	if internalCmd == nil {
+	// 		return m, nil
+	// 	}
+	//
+	// 	(*m.data)[msg.SectionId] = section
+	// 	return m, section.Tick(internalCmd)
 
-	case pullRequestsRenderedMsg:
-		section := (*m.data)[msg.sectionId]
-		section.Spinner.Finish()
-		section.IsLoading = false
-		(*m.data)[msg.sectionId] = section
-		m.mainViewport.model.SetContent(msg.content)
-		m.syncSidebarViewPort()
-		return m, nil
+	// case sectionPullRequestsFetchedMsg:
+	// 	section := (*m.data)[msg.SectionId]
+	// 	section.Prs = msg.Prs
+	// 	sort.Slice(section.Prs, func(i, j int) bool {
+	// 		return section.Prs[i].UpdatedAt.After(section.Prs[j].UpdatedAt)
+	// 	})
+	// 	(*m.data)[msg.SectionId] = section
+	// 	m.setMainViewPortBounds()
+	// 	return m, m.makeRenderPullRequestCmd(msg.SectionId)
+	//
+	// case pullRequestsRenderedMsg:
+	// 	section := (*m.data)[msg.sectionId]
+	// 	section.Spinner.Finish()
+	// 	section.IsLoading = false
+	// 	(*m.data)[msg.sectionId] = section
+	// 	m.mainViewport.model.SetContent(msg.content)
+	// 	m.syncSidebarViewPort()
+	// 	return m, nil
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -209,6 +217,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Height: msg.Height - verticalMargins + 1,
 			}
 			m.context.ScreenWidth = m.width
+			m.context.MainViewportWidth = m.mainViewport.model.Width
 			m.ready = true
 		} else {
 			m.mainViewport.model.Height = msg.Height - verticalMargins - 1
@@ -221,6 +230,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, nil
 	}
+
+	updatedSections := make([]*prssection.Model, 0, len(m.sections))
+	for _, section := range m.sections {
+		updatedSection, cmd := section.Update(msg)
+		updatedSections = append(updatedSections, &updatedSection)
+		cmds = append(cmds, cmd)
+	}
+	m.sections = updatedSections
 
 	m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
 	cmds = append(cmds, cmd)
@@ -236,14 +253,14 @@ func (m Model) View() string {
 		return "Reading config...\n"
 	}
 
-	paddedContentStyle := lipgloss.NewStyle().
-		Padding(0, mainContentPadding)
-
 	s := strings.Builder{}
 	s.WriteString(m.tabs.View(m.context))
 	s.WriteString("\n")
-	table := paddedContentStyle.Render(lipgloss.JoinVertical(lipgloss.Top, m.renderTableHeader(), m.renderCurrentSection()))
-	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, table, m.renderSidebar()))
+	s.WriteString(lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.getCurrSection().View(),
+		m.renderSidebar()),
+	)
 	s.WriteString("\n")
 	s.WriteString(m.renderHelp())
 	return s.String()
