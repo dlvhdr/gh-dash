@@ -11,6 +11,7 @@ import (
 	"github.com/dlvhdr/gh-prs/config"
 	"github.com/dlvhdr/gh-prs/ui/components/prssection"
 	"github.com/dlvhdr/gh-prs/ui/components/tabs"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/utils"
 )
@@ -26,7 +27,6 @@ type Model struct {
 	sections        []*prssection.Model
 	ready           bool
 	isSidebarOpen   bool
-	width           int
 	tabs            tabs.Model
 	context         context.ProgramContext
 }
@@ -70,6 +70,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
+	currSection := m.getCurrSection()
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -80,12 +82,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				currPrId:      0,
 			}
 			m.cursor = newCursor
-			m.syncMainViewPort()
 			m.syncSidebarViewPort()
-			m.setMainViewPortBounds()
 			m.tabs.SetCurrSectionId(newCursor.currSectionId)
-
-			return m, nil
 
 		case key.Matches(msg, m.keys.NextSection):
 			nextSection := m.getSectionAt(m.getNextSectionId())
@@ -95,64 +93,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.cursor = newCursor
 			m.syncSidebarViewPort()
-			m.syncMainViewPort()
-			m.setMainViewPortBounds()
 			m.tabs.SetCurrSectionId(newCursor.currSectionId)
 
-			return m, cmd
-
 		case key.Matches(msg, m.keys.Down):
-			m.nextPr()
-			m.syncMainViewPort()
-			m.onLineDown()
+			m.cursor.currPrId = currSection.NextPr()
 			m.syncSidebarViewPort()
-			return m, nil
 
 		case key.Matches(msg, m.keys.Up):
-			m.prevPr()
-			m.syncMainViewPort()
+			m.cursor.currPrId = currSection.PrevPr()
 			m.syncSidebarViewPort()
-			m.onLineUp()
-			return m, nil
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.isSidebarOpen = !m.isSidebarOpen
-			m.syncMainViewPort()
 			m.syncSidebarViewPort()
-			return m, nil
+
 		case key.Matches(msg, m.keys.OpenGithub):
 			currPR := m.getCurrPr()
-			if currPR == nil {
-				return m, nil
+			if currPR != nil {
+				utils.OpenBrowser(currPR.Url)
 			}
-			utils.OpenBrowser(currPR.Url)
-			return m, nil
-		// case key.Matches(msg, m.keys.Refresh):
-		// 	var newData []Section
-		// 	for _, section := range *m.data {
-		// 		if section.IsLoading {
-		// 			return m, nil
-		// 		}
-		//
-		// 		// section.IsLoading = true
-		// 		section.Prs = []PullRequest{}
-		// 		newData = append(newData, section)
-		// 	}
-		// 	m.data = &newData
-		// 	m.syncSidebarViewPort()
-		// 	return m, m.startFetchingSectionsData()
-		//
+
+		case key.Matches(msg, m.keys.Refresh):
+			cmd = currSection.FetchSectionPullRequests()
+
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-			return m, nil
 
 		case key.Matches(msg, m.keys.Quit):
-			return m, tea.Quit
+			cmd = tea.Quit
 		}
 
 	case initMsg:
 		m.updateOnConfigFetched(msg.Config)
-		m.mainViewport.model.Width = m.calcViewPortWidth()
 		m.sidebarViewport.Width = m.getSidebarWidth()
 		m.syncSidebarViewPort()
 
@@ -165,82 +137,46 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.sections = sections
 
-		return m, tea.Batch(fetchPRsCmds...)
+		cmd = tea.Batch(fetchPRsCmds...)
 
-	// case tickMsg:
-	// 	var internalCmd tea.Cmd
-	// 	section := (*m.data)[msg.SectionId]
-	// 	if !section.IsLoading {
-	// 		return m, nil
-	// 	}
-	// 	section.Spinner, internalCmd = section.Spinner.Update(msg.InternalTickMsg)
-	// 	if internalCmd == nil {
-	// 		return m, nil
-	// 	}
-	//
-	// 	(*m.data)[msg.SectionId] = section
-	// 	return m, section.Tick(internalCmd)
-
-	// case sectionPullRequestsFetchedMsg:
-	// 	section := (*m.data)[msg.SectionId]
-	// 	section.Prs = msg.Prs
-	// 	sort.Slice(section.Prs, func(i, j int) bool {
-	// 		return section.Prs[i].UpdatedAt.After(section.Prs[j].UpdatedAt)
-	// 	})
-	// 	(*m.data)[msg.SectionId] = section
-	// 	m.setMainViewPortBounds()
-	// 	return m, m.makeRenderPullRequestCmd(msg.SectionId)
-	//
-	// case pullRequestsRenderedMsg:
-	// 	section := (*m.data)[msg.sectionId]
-	// 	section.Spinner.Finish()
-	// 	section.IsLoading = false
-	// 	(*m.data)[msg.sectionId] = section
-	// 	m.mainViewport.model.SetContent(msg.content)
-	// 	m.syncSidebarViewPort()
-	// 	return m, nil
+	case prssection.SectionMsg:
+		for _, section := range m.sections {
+			var updatedSection prssection.Model
+			if msg.GetSectionId() == section.Id {
+				updatedSection, cmd = section.Update(msg)
+				m.sections[section.Id] = &updatedSection
+			}
+		}
 
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
 		m.help.Width = msg.Width
 		verticalMargins := headerHeight + footerHeight + pagerHeight
 
 		if !m.ready {
-			m.mainViewport = MainViewport{
-				model: viewport.Model{
-					Width:  m.calcViewPortWidth(),
-					Height: msg.Height - verticalMargins - 1,
-				},
-			}
 			m.sidebarViewport = viewport.Model{
 				Width:  0,
 				Height: msg.Height - verticalMargins + 1,
 			}
-			m.context.ScreenWidth = m.width
-			m.context.MainViewportWidth = m.mainViewport.model.Width
+			m.context.ScreenWidth = msg.Width
+			m.context.MainContentWidth = m.calcMainContentWidth(m.context.ScreenWidth)
+			m.context.MainContentHeight = msg.Height - verticalMargins - 2
 			m.ready = true
-		} else {
-			m.mainViewport.model.Height = msg.Height - verticalMargins - 1
-			m.sidebarViewport.Height = msg.Height - verticalMargins + 1
-			m.syncMainViewPort()
-			m.syncSidebarViewPort()
 		}
-		return m, nil
+		for _, section := range m.sections {
+			section.SetDimensions(constants.Dimensions{
+				Width:  m.calcMainContentWidth(),
+				Height: msg.Height - verticalMargins - 2,
+			})
+		}
+
 	case errMsg:
 		m.err = msg
-		return m, nil
 	}
 
-	updatedSections := make([]*prssection.Model, 0, len(m.sections))
-	for _, section := range m.sections {
-		updatedSection, cmd := section.Update(msg)
-		updatedSections = append(updatedSections, &updatedSection)
-		cmds = append(cmds, cmd)
-	}
-	m.sections = updatedSections
+	newSidebarViewport, sidebarCmd := m.sidebarViewport.Update(msg)
+	m.sidebarViewport = newSidebarViewport
 
-	m.sidebarViewport, cmd = m.sidebarViewport.Update(msg)
-	cmds = append(cmds, cmd)
+	cmds = append(cmds, cmd, sidebarCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -257,10 +193,10 @@ func (m Model) View() string {
 	s.WriteString(m.tabs.View(m.context))
 	s.WriteString("\n")
 	s.WriteString(lipgloss.JoinHorizontal(
-		lipgloss.Top,
+		lipgloss.Left,
 		m.getCurrSection().View(),
-		m.renderSidebar()),
-	)
+		m.renderSidebar(),
+	))
 	s.WriteString("\n")
 	s.WriteString(m.renderHelp())
 	return s.String()

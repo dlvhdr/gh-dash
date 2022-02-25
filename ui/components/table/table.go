@@ -2,18 +2,20 @@ package table
 
 import (
 	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-prs/ui/components/listviewport"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/styles"
 )
 
 type Model struct {
-	Spinner    spinner.Model
-	IsLoading  bool
-	Columns    []Column
-	Rows       []Row
-	Width      int
-	EmptyState *string
+	Spinner      spinner.Model
+	IsLoading    bool
+	Columns      []Column
+	Rows         []Row
+	EmptyState   *string
+	dimensions   constants.Dimensions
+	rowsViewport listviewport.Model
 }
 
 type Column struct {
@@ -24,44 +26,78 @@ type Column struct {
 
 type Row []string
 
-func NewModel(width int, columns []Column, rows []Row, emptyState *string) Model {
+func NewModel(dimensions constants.Dimensions, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
 	return Model{
-		Spinner:    spinner.Model{},
-		IsLoading:  true,
-		Columns:    columns,
-		Rows:       rows,
-		Width:      width,
-		EmptyState: emptyState,
+		Spinner:      spinner.Model{},
+		IsLoading:    true,
+		Columns:      columns,
+		Rows:         rows,
+		EmptyState:   emptyState,
+		dimensions:   dimensions,
+		rowsViewport: listviewport.NewModel(dimensions, itemTypeLabel, len(rows), 2),
 	}
-}
-
-func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen)
 }
 
 func (m Model) View() string {
-	headerColumns := m.renderHeader()
-	header := headerStyle.Copy().
-		Width(m.Width).
-		MaxWidth(m.Width).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, headerColumns...))
+	header := m.renderHeader()
+	rows := m.renderRows()
 
-	rows := m.renderRows(headerColumns)
-
-	return lipgloss.JoinVertical(lipgloss.Left, header, rows)
+	return lipgloss.JoinVertical(lipgloss.Top, header, rows)
 }
 
-func getColumnWidths(renderedColumns []string) []int {
-	widths := make([]int, len(renderedColumns))
+func (m *Model) SetDimensions(dimensions constants.Dimensions) {
+	m.dimensions = dimensions
+	m.rowsViewport.SetDimensions(constants.Dimensions{
+		Width:  dimensions.Width,
+		Height: dimensions.Height - lipgloss.Height(headerStyle.Render("Header")),
+	})
+}
 
-	for _, column := range renderedColumns {
-		widths = append(widths, lipgloss.Width(column))
+func (m *Model) GetCurrItem() int {
+	return m.rowsViewport.GetCurrItem()
+}
+
+func (m *Model) PrevItem() int {
+	currItem := m.rowsViewport.PrevItem()
+	m.syncViewPortContent()
+
+	return currItem
+}
+
+func (m *Model) NextItem() int {
+	currItem := m.rowsViewport.NextItem()
+	m.syncViewPortContent()
+
+	return currItem
+}
+
+func (m *Model) syncViewPortContent() {
+	headerColumns := m.renderHeaderColumns()
+	renderedRows := make([]string, 0, len(m.Rows))
+	for i := range m.Rows {
+		renderedRows = append(renderedRows, m.renderRow(i, headerColumns))
 	}
 
-	return widths
+	m.rowsViewport.SyncViewPort(
+		lipgloss.JoinVertical(lipgloss.Top, renderedRows...),
+	)
 }
 
-func (m *Model) renderHeader() []string {
+func (m *Model) SetRows(rows []Row) {
+	m.Rows = rows
+	m.rowsViewport.NumItems = len(m.Rows)
+	m.syncViewPortContent()
+}
+
+func (m *Model) OnLineDown() {
+	m.rowsViewport.NextItem()
+}
+
+func (m *Model) OnLineUp() {
+	m.rowsViewport.PrevItem()
+}
+
+func (m *Model) renderHeaderColumns() []string {
 	renderedColumns := make([]string, len(m.Columns))
 	takenWidth := 0
 	numGrowingColumns := 0
@@ -88,7 +124,7 @@ func (m *Model) renderHeader() []string {
 		takenWidth += lipgloss.Width(cell)
 	}
 
-	leftoverWidth := m.Width - takenWidth
+	leftoverWidth := m.dimensions.Width - takenWidth
 	if numGrowingColumns == 0 {
 		return renderedColumns
 	}
@@ -105,35 +141,39 @@ func (m *Model) renderHeader() []string {
 	return renderedColumns
 }
 
-func (m *Model) renderRows(headerColumns []string) string {
+func (m *Model) renderHeader() string {
+	headerColumns := m.renderHeaderColumns()
+	return headerStyle.Copy().
+		Width(m.dimensions.Width).
+		MaxWidth(m.dimensions.Width).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left, headerColumns...))
+}
+
+func (m *Model) renderRows() string {
 	if len(m.Rows) == 0 && m.EmptyState != nil {
 		return *m.EmptyState
 	}
 
-	renderedRows := make([]string, 0, len(m.Rows))
-	for i := range m.Rows {
-		renderedRows = append(renderedRows, m.renderRow(i, headerColumns))
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left, renderedRows...)
+	return lipgloss.JoinVertical(lipgloss.Top, m.rowsViewport.View())
 
 }
 
 func (m *Model) renderRow(rowId int, headerColumns []string) string {
+	var style lipgloss.Style
+	if m.rowsViewport.GetCurrItem() == rowId {
+		style = selectedCellStyle
+	} else {
+		style = cellStyle
+	}
+
 	renderedColumns := make([]string, len(m.Columns))
 	for i, column := range m.Rows[rowId] {
 		renderedColumns = append(
 			renderedColumns,
-			cellStyle.Width(lipgloss.Width(headerColumns[i])).Render(column),
+			style.Copy().Width(lipgloss.Width(headerColumns[i])).Render(column),
 		)
 	}
-	return lipgloss.JoinHorizontal(lipgloss.Left, renderedColumns...)
-}
 
-func intPtr(val int) *int {
-	return &val
-}
-
-func boolPtr(val bool) *bool {
-	return &val
+	return rowStyle.Copy().
+		Render(lipgloss.JoinHorizontal(lipgloss.Left, renderedColumns...))
 }

@@ -2,7 +2,6 @@ package pr
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
@@ -22,8 +21,7 @@ type sectionPullRequestsFetchedMsg struct {
 }
 
 func (pr PullRequest) renderReviewStatus(isSelected bool) string {
-	reviewCellStyle := makeRuneCellStyle(isSelected)
-	log.Printf("%v", pr.Data.ReviewDecision)
+	reviewCellStyle := lipgloss.NewStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
 		return reviewCellStyle.Foreground(successText).Render("")
 	}
@@ -36,7 +34,7 @@ func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 }
 
 func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
-	mergeCellStyle := makeRuneCellStyle(isSelected)
+	mergeCellStyle := lipgloss.NewStyle()
 	switch pr.Data.Mergeable {
 	case "MERGEABLE":
 		return mergeCellStyle.Foreground(successText).Render("")
@@ -75,7 +73,7 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 
 func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	accStatus := pr.GetStatusChecksRollup()
-	ciCellStyle := makeCellStyle(isSelected)
+	ciCellStyle := lipgloss.NewStyle()
 	if accStatus == "SUCCESS" {
 		return ciCellStyle.Render(constants.SuccessGlyph)
 	}
@@ -88,49 +86,40 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 }
 
 func (pr PullRequest) renderLines(isSelected bool) string {
-	separator := makeCellStyle(isSelected).Faint(true).PaddingLeft(1).PaddingRight(1).Render("/")
-	added := makeCellStyle(isSelected).PaddingLeft(0).PaddingRight(0).Render(fmt.Sprintf("%d", pr.Data.Additions))
 	deletions := 0
 	if pr.Data.Deletions > 0 {
 		deletions = pr.Data.Deletions
 	}
-	removed := makeCellStyle(isSelected).PaddingLeft(0).PaddingRight(0).Render(
-		fmt.Sprintf("-%d", deletions),
-	)
 
-	return makeCellStyle(isSelected).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, added, separator, removed))
+	return lipgloss.NewStyle().Render(
+		fmt.Sprintf("%d / -%d", pr.Data.Additions, deletions),
+	)
 }
 
 func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
-	number := makeCellStyle(isSelected).
-		MaxWidth(6).
+	return lipgloss.NewStyle().
+		Inline(true).
 		Foreground(styles.DefaultTheme.SecondaryText).
-		PaddingLeft(0).
-		PaddingRight(0).
-		Align(lipgloss.Left).
 		Render(
-			fmt.Sprintf("#%s", fmt.Sprintf("%d ", pr.Data.Number)),
+			fmt.Sprintf("#%d %s",
+				pr.Data.Number,
+				titleText.Copy().Render(pr.Data.Title),
+			),
 		)
-
-	title := makeCellStyle(isSelected).Render(pr.Data.Title)
-
-	return makeCellStyle(isSelected).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, number, title))
 }
 
 func (pr PullRequest) renderAuthor(isSelected bool) string {
-	return makeCellStyle(isSelected).Render(pr.Data.Author.Login)
+	return lipgloss.NewStyle().Render(pr.Data.Author.Login)
 }
 
 func (pr PullRequest) renderRepoName(isSelected bool) string {
 	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
-	return makeCellStyle(isSelected).
+	return lipgloss.NewStyle().
 		Render(repoName)
 }
 
 func (pr PullRequest) renderUpdateAt(isSelected bool) string {
-	return makeCellStyle(isSelected).
+	return lipgloss.NewStyle().
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
 
