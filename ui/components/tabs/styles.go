@@ -8,13 +8,14 @@ import (
 var (
 	tab = lipgloss.NewStyle().
 		Faint(true).
-		Bold(true).
 		Padding(0, 2)
 
 	activeTab = tab.
 			Copy().
-			Foreground(styles.DefaultTheme.MainText).
-			Faint(false)
+			Faint(false).
+			Bold(true).
+			Background(styles.DefaultTheme.SelectedBackground).
+			Foreground(styles.DefaultTheme.MainText)
 
 	tabGap = tab.Copy().
 		BorderTop(false).

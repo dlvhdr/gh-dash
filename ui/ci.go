@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 )
 
 func isStatusWaiting(status string) bool {
@@ -17,22 +18,22 @@ func isStatusWaiting(status string) bool {
 func renderCheckRunConclusion(checkRun data.CheckRun) string {
 	conclusionStr := string(checkRun.Conclusion)
 	if isStatusWaiting(string(checkRun.Status)) {
-		return waitingGlyph
+		return constants.WaitingGlyph
 	}
 
 	if isConclusionAFailure(conclusionStr) {
-		return failureGlyph
+		return constants.FailureGlyph
 	}
 
-	return successGlyph
+	return constants.SuccessGlyph
 }
 
 func renderStatusContextConclusion(statusContext data.StatusContext) string {
 	if isConclusionAFailure(string(statusContext.State)) {
-		return failureGlyph
+		return constants.FailureGlyph
 	}
 
-	return successGlyph
+	return constants.SuccessGlyph
 }
 
 func isConclusionAFailure(conclusion string) bool {

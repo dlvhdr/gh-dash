@@ -1,61 +1,38 @@
 package ui
 
-import "github.com/dlvhdr/gh-prs/utils"
+import (
+	"github.com/dlvhdr/gh-prs/data"
+	"github.com/dlvhdr/gh-prs/ui/components/prssection"
+)
 
-func (m Model) getCurrSection() *Section {
-	if m.data == nil || len(*m.data) == 0 {
+func (m Model) getCurrSection() *prssection.Model {
+	if m.sections == nil || len(m.sections) == 0 {
 		return nil
 	}
-	return &(*m.data)[m.cursor.currSectionId]
+	return m.sections[m.currSectionId]
 }
 
-func (m Model) getCurrPr() *PullRequest {
+func (m Model) getCurrPr() *data.PullRequestData {
 	section := m.getCurrSection()
-	if section == nil ||
-		section.IsLoading ||
-		section.numPrs() == 0 ||
-		m.cursor.currPrId > section.numPrs()-1 {
+	if section == nil {
 		return nil
 	}
-
-	pr := section.Prs[m.cursor.currPrId]
-	return &pr
+	return section.GetCurrPr()
 }
 
-func (m *Model) prevPr() {
-	currSection := m.getCurrSection()
-	if currSection == nil {
-		return
-	}
-
-	newPrId := utils.Max(m.cursor.currPrId-1, 0)
-	m.cursor.currPrId = newPrId
-}
-
-func (m *Model) nextPr() {
-	currSection := m.getCurrSection()
-	if currSection == nil {
-		return
-	}
-
-	newPrId := utils.Min(m.cursor.currPrId+1, currSection.numPrs()-1)
-	newPrId = utils.Max(newPrId, 0)
-	m.cursor.currPrId = newPrId
-}
-
-func (m Model) getSectionAt(id int) *Section {
-	return &(*m.data)[id]
+func (m Model) getSectionAt(id int) *prssection.Model {
+	return m.sections[id]
 }
 
 func (m Model) getPrevSectionId() int {
-	m.cursor.currSectionId = (m.cursor.currSectionId - 1) % len(m.config.PRSections)
-	if m.cursor.currSectionId < 0 {
-		m.cursor.currSectionId += len(m.config.PRSections)
+	m.currSectionId = (m.currSectionId - 1) % len(m.config.PRSections)
+	if m.currSectionId < 0 {
+		m.currSectionId += len(m.config.PRSections)
 	}
 
-	return m.cursor.currSectionId
+	return m.currSectionId
 }
 
 func (m Model) getNextSectionId() int {
-	return (m.cursor.currSectionId + 1) % len(m.config.PRSections)
+	return (m.currSectionId + 1) % len(m.config.PRSections)
 }
