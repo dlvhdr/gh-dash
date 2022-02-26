@@ -1,7 +1,6 @@
 package table
 
 import (
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/ui/components/listviewport"
 	"github.com/dlvhdr/gh-prs/ui/constants"
@@ -9,8 +8,6 @@ import (
 )
 
 type Model struct {
-	Spinner      spinner.Model
-	IsLoading    bool
 	Columns      []Column
 	Rows         []Row
 	EmptyState   *string
@@ -28,8 +25,6 @@ type Row []string
 
 func NewModel(dimensions constants.Dimensions, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
 	return Model{
-		Spinner:      spinner.Model{},
-		IsLoading:    true,
 		Columns:      columns,
 		Rows:         rows,
 		EmptyState:   emptyState,
@@ -38,19 +33,24 @@ func NewModel(dimensions constants.Dimensions, columns []Column, rows []Row, ite
 	}
 }
 
-func (m Model) View() string {
+func (m Model) View(spinnerText *string) string {
 	header := m.renderHeader()
-	rows := m.renderRows()
+	body := m.renderBody(spinnerText)
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, rows)
+	return lipgloss.JoinVertical(lipgloss.Top, header, body)
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.dimensions = dimensions
-	m.rowsViewport.SetDimensions(constants.Dimensions{
-		Width:  dimensions.Width,
-		Height: dimensions.Height - lipgloss.Height(headerStyle.Render("Header")),
+	m.rowsViewport.SetViewportDimensions(constants.Dimensions{
+		Width:  m.dimensions.Width,
+		Height: m.dimensions.Height,
 	})
+	m.SyncViewPortContent()
+}
+
+func (m *Model) ResetCurrItem() {
+	m.rowsViewport.ResetCurrItem()
 }
 
 func (m *Model) GetCurrItem() int {
@@ -59,19 +59,19 @@ func (m *Model) GetCurrItem() int {
 
 func (m *Model) PrevItem() int {
 	currItem := m.rowsViewport.PrevItem()
-	m.syncViewPortContent()
+	m.SyncViewPortContent()
 
 	return currItem
 }
 
 func (m *Model) NextItem() int {
 	currItem := m.rowsViewport.NextItem()
-	m.syncViewPortContent()
+	m.SyncViewPortContent()
 
 	return currItem
 }
 
-func (m *Model) syncViewPortContent() {
+func (m *Model) SyncViewPortContent() {
 	headerColumns := m.renderHeaderColumns()
 	renderedRows := make([]string, 0, len(m.Rows))
 	for i := range m.Rows {
@@ -85,8 +85,9 @@ func (m *Model) syncViewPortContent() {
 
 func (m *Model) SetRows(rows []Row) {
 	m.Rows = rows
-	m.rowsViewport.NumItems = len(m.Rows)
-	m.syncViewPortContent()
+
+	m.rowsViewport.SetNumItems(len(rows))
+	m.SyncViewPortContent()
 }
 
 func (m *Model) OnLineDown() {
@@ -149,13 +150,16 @@ func (m *Model) renderHeader() string {
 		Render(lipgloss.JoinHorizontal(lipgloss.Left, headerColumns...))
 }
 
-func (m *Model) renderRows() string {
-	if len(m.Rows) == 0 && m.EmptyState != nil {
-		return *m.EmptyState
+func (m *Model) renderBody(spinnerText *string) string {
+	bodyStyle := lipgloss.NewStyle().
+		Height(m.dimensions.Height + 2)
+	if spinnerText != nil {
+		return bodyStyle.Render(*spinnerText)
+	} else if len(m.Rows) == 0 && m.EmptyState != nil {
+		return bodyStyle.Render(*m.EmptyState)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, m.rowsViewport.View())
-
 }
 
 func (m *Model) renderRow(rowId int, headerColumns []string) string {

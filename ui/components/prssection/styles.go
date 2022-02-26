@@ -13,4 +13,9 @@ var (
 			PaddingLeft(1).
 			PaddingRight(1)
 	spinnerStyle = lipgloss.NewStyle().Padding(0, 1)
+
+	emptyStateStyle = lipgloss.NewStyle().
+			Faint(true).
+			PaddingLeft(1).
+			MarginBottom(1)
 )

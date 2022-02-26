@@ -1,6 +1,7 @@
 package prssection
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -17,9 +18,9 @@ import (
 
 type Model struct {
 	Id        int
-	Context   *context.ProgramContext
 	Config    config.PRSectionConfig
 	Prs       []data.PullRequestData
+	ctx       *context.ProgramContext
 	spinner   spinner.Model
 	isLoading bool
 	table     table.Model
@@ -28,11 +29,11 @@ type Model struct {
 func NewModel(id int, ctx *context.ProgramContext, config config.PRSectionConfig, prs []data.PullRequestData) Model {
 	m := Model{
 		Id:        id,
-		Context:   ctx,
 		Config:    config,
+		ctx:       ctx,
+		isLoading: true,
 		Prs:       prs,
 		spinner:   spinner.Model{Spinner: spinner.Dot},
-		isLoading: true,
 	}
 
 	m.table = table.NewModel(
@@ -40,7 +41,10 @@ func NewModel(id int, ctx *context.ProgramContext, config config.PRSectionConfig
 		m.getSectionColumns(),
 		m.buildPullRequestRows(),
 		"PR",
-		nil,
+		utils.StringPtr(emptyStateStyle.Render(fmt.Sprintf(
+			"No PRs were found that match the given filters: %s",
+			lipgloss.NewStyle().Italic(true).Render(m.Config.Filters),
+		))),
 	)
 
 	return m
@@ -83,32 +87,28 @@ func (m *Model) createNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 
 func (m *Model) getDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.Context.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.Context.MainContentHeight,
+		Width:  m.ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
+		Height: m.ctx.MainContentHeight,
 	}
 }
 
 func (m *Model) View() string {
-	var parts []string
-	parts = append(parts, m.table.View())
-
+	var spinnerText *string
 	if m.isLoading {
-		parts = append(
-			parts,
-			lipgloss.JoinHorizontal(lipgloss.Left,
-				spinnerStyle.Copy().Render(m.spinner.View()),
-				"Fetching Pull Requests...",
-			),
-		)
+		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Left,
+			spinnerStyle.Copy().Render(m.spinner.View()),
+			"Fetching Pull Requests...",
+		))
 	}
 
 	return containerStyle.Copy().Render(
-		lipgloss.JoinVertical(lipgloss.Top, parts...),
+		lipgloss.JoinVertical(lipgloss.Top, m.table.View(spinnerText)),
 	)
 }
 
-func (m *Model) SetDimensions(dimensions constants.Dimensions) {
-	m.table.SetDimensions(dimensions)
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.table.SetDimensions(m.getDimensions())
 }
 
 func (m *Model) getSectionColumns() []table.Column {
@@ -181,8 +181,12 @@ func (msg SectionTickMsg) GetSectionId() int {
 	return msg.SectionId
 }
 
-func (m *Model) GetCurrPr() int {
-	return m.table.GetCurrItem()
+func (m *Model) GetCurrPr() *data.PullRequestData {
+	if len(m.Prs) == 0 {
+		return nil
+	}
+	pr := m.Prs[m.table.GetCurrItem()]
+	return &pr
 }
 
 func (m *Model) NextPr() int {
@@ -197,6 +201,8 @@ func (m *Model) FetchSectionPullRequests() tea.Cmd {
 	if m == nil {
 		return nil
 	}
+	m.Prs = nil
+	m.table.ResetCurrItem()
 	m.table.Rows = nil
 	m.isLoading = true
 	var cmds []tea.Cmd
@@ -205,7 +211,7 @@ func (m *Model) FetchSectionPullRequests() tea.Cmd {
 	cmds = append(cmds, func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
-			limit = &m.Context.Config.Defaults.PrsLimit
+			limit = &m.ctx.Config.Defaults.PrsLimit
 		}
 		fetchedPrs, err := data.FetchRepoPullRequests(m.Config.Filters, *limit)
 		if err != nil {
@@ -225,4 +231,8 @@ func (m *Model) FetchSectionPullRequests() tea.Cmd {
 	})
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) IsLoading() bool {
+	return m.isLoading
 }

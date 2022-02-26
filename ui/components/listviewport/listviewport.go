@@ -37,6 +37,11 @@ func NewModel(dimensions constants.Dimensions, itemTypeLabel string, numItems, l
 	return model
 }
 
+func (m *Model) SetNumItems(numItems int) {
+	m.NumItems = numItems
+	m.bottomBoundId = utils.Min(m.NumItems-1, m.getNumPrsPerPage()-1)
+}
+
 func (m *Model) SyncViewPort(content string) {
 	m.viewport.Width = m.Width
 	m.viewport.SetContent(content)
@@ -46,12 +51,16 @@ func (m *Model) getNumPrsPerPage() int {
 	return m.viewport.Height / m.ListItemHeight
 }
 
+func (m *Model) ResetCurrItem() {
+	m.currId = 0
+}
+
 func (m *Model) GetCurrItem() int {
 	return m.currId
 }
 
 func (m *Model) NextItem() int {
-	atBottomOfViewport := m.currId > m.bottomBoundId
+	atBottomOfViewport := m.currId >= m.bottomBoundId
 	if atBottomOfViewport {
 		m.topBoundId += 1
 		m.bottomBoundId += 1
@@ -76,7 +85,7 @@ func (m *Model) PrevItem() int {
 	return m.currId
 }
 
-func (m *Model) SetDimensions(dimensions constants.Dimensions) {
+func (m *Model) SetViewportDimensions(dimensions constants.Dimensions) {
 	m.viewport.Height = dimensions.Height
 	m.viewport.Width = dimensions.Width
 }
