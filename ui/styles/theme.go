@@ -15,6 +15,7 @@ type Theme struct {
 	FaintText          lipgloss.AdaptiveColor
 	SelectedBackground lipgloss.AdaptiveColor
 	SecondaryText      lipgloss.AdaptiveColor
+	SubleMainText      lipgloss.AdaptiveColor
 }
 
 var subtleIndigo = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
@@ -22,6 +23,7 @@ var subtleIndigo = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
 var DefaultTheme = Theme{
 	MainText:           lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"},
 	BrightMainText:     lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"},
+	SubleMainText:      subtleIndigo,
 	Border:             lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark},
 	SecondaryBorder:    lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#39386b"},
 	WarningText:        lipgloss.AdaptiveColor{Light: "#F23D5C", Dark: "#F23D5C"},

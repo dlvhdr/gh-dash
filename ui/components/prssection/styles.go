@@ -8,10 +8,11 @@ var (
 	updatedAtCellWidth = lipgloss.Width(" Updated")
 	prRepoCellWidth    = 20
 	prAuthorCellWidth  = 15
+	ContainerPadding   = 1
 
 	containerStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
-			PaddingRight(1)
+			Padding(0, ContainerPadding)
+
 	spinnerStyle = lipgloss.NewStyle().Padding(0, 1)
 
 	emptyStateStyle = lipgloss.NewStyle().

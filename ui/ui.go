@@ -5,10 +5,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/ui/components/prsidebar"
 	"github.com/dlvhdr/gh-prs/ui/components/prssection"
 	"github.com/dlvhdr/gh-prs/ui/components/tabs"
 	"github.com/dlvhdr/gh-prs/ui/context"
@@ -16,30 +16,28 @@ import (
 )
 
 type Model struct {
-	keys            utils.KeyMap
-	err             error
-	config          *config.Config
-	sidebarViewport viewport.Model
-	currSectionId   int
-	help            help.Model
-	sections        []*prssection.Model
-	ready           bool
-	isSidebarOpen   bool
-	tabs            tabs.Model
-	ctx             context.ProgramContext
+	keys          utils.KeyMap
+	err           error
+	sidebar       prsidebar.Model
+	currSectionId int
+	help          help.Model
+	sections      []*prssection.Model
+	ready         bool
+	isSidebarOpen bool
+	tabs          tabs.Model
+	ctx           context.ProgramContext
 }
 
 func NewModel() Model {
 	helpModel := help.NewModel()
-	style := lipgloss.NewStyle().Foreground(secondaryText)
 	helpModel.Styles = help.Styles{
-		ShortDesc:      style.Copy(),
-		FullDesc:       style.Copy(),
-		ShortSeparator: style.Copy(),
-		FullSeparator:  style.Copy(),
-		FullKey:        style.Copy(),
-		ShortKey:       style.Copy(),
-		Ellipsis:       style.Copy(),
+		ShortDesc:      helpTextStyle.Copy(),
+		FullDesc:       helpTextStyle.Copy(),
+		ShortSeparator: helpTextStyle.Copy(),
+		FullSeparator:  helpTextStyle.Copy(),
+		FullKey:        helpTextStyle.Copy(),
+		ShortKey:       helpTextStyle.Copy(),
+		Ellipsis:       helpTextStyle.Copy(),
 	}
 	tabsModel := tabs.NewModel()
 	return Model{
@@ -47,6 +45,7 @@ func NewModel() Model {
 		help:          helpModel,
 		currSectionId: 0,
 		tabs:          tabsModel,
+		sidebar:       prsidebar.NewModel(),
 	}
 }
 
@@ -65,8 +64,9 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
+		cmd        tea.Cmd
+		sidebarCmd tea.Cmd
+		cmds       []tea.Cmd
 	)
 
 	currSection := m.getCurrSection()
@@ -87,16 +87,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Down):
 			currSection.NextPr()
 			m.onViewedPrChanged()
-			return m, nil
 
 		case key.Matches(msg, m.keys.Up):
 			currSection.PrevPr()
 			m.onViewedPrChanged()
-			return m, nil
 
 		case key.Matches(msg, m.keys.TogglePreview):
-			m.isSidebarOpen = !m.isSidebarOpen
-			m.syncSidebarViewPort()
+			m.sidebar.IsOpen = !m.sidebar.IsOpen
+			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
 			currPR := m.getCurrPr()
@@ -112,59 +110,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
+
 		}
 
 	case initMsg:
-		m.updateOnConfigFetched(msg.Config)
-		m.syncSidebarViewPort()
+		m.ctx.Config = &msg.Config
+		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
+		m.syncMainContentWidth()
 
 		newSections, fetchPRsCmds := m.fetchAllSections()
 		m.sections = newSections
 		cmd = fetchPRsCmds
 
 	case prssection.SectionMsg:
-		for _, section := range m.sections {
-			var updatedSection prssection.Model
-			if msg.GetSectionId() == section.Id {
-				updatedSection, cmd = section.Update(msg)
-				m.sections[section.Id] = &updatedSection
-			}
+		updatedSection, sectionCmd := m.updateRelevantSection(msg)
+		m.sections[updatedSection.Id] = &updatedSection
+		cmd = sectionCmd
 
-			if msg.GetSectionId() == m.currSectionId {
-				switch msg.(type) {
-				case prssection.SectionPullRequestsFetchedMsg:
-					m.syncSidebarViewPort()
-				}
+		if msg.GetSectionId() == m.currSectionId {
+			switch msg.(type) {
+			case prssection.SectionPullRequestsFetchedMsg:
+				m.syncSidebarPr()
 			}
 		}
 
 	case tea.WindowSizeMsg:
-		verticalMargins := headerHeight + footerHeight
-
-		contentHeight := msg.Height - verticalMargins
-		if !m.ready {
-			m.sidebarViewport = viewport.Model{
-				Width:  0,
-				Height: contentHeight,
-			}
-			m.ready = true
-		}
-
-		m.help.Width = msg.Width
-		m.ctx.ScreenWidth = msg.Width
-		m.ctx.MainContentWidth = m.calcMainContentWidth()
-		m.ctx.MainContentHeight = contentHeight - 2
-		for _, section := range m.sections {
-			section.UpdateProgramContext(&m.ctx)
-		}
+		m.onWindowSizeChanged(msg)
 
 	case errMsg:
 		m.err = msg
 	}
 
-	newSidebarViewport, sidebarCmd := m.sidebarViewport.Update(msg)
-	m.sidebarViewport = newSidebarViewport
-
+	m.syncProgramContext()
+	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 	cmds = append(cmds, cmd, sidebarCmd)
 	return m, tea.Batch(cmds...)
 }
@@ -174,20 +152,22 @@ func (m Model) View() string {
 		return m.err.Error()
 	}
 
-	if m.config == nil {
+	if m.ctx.Config == nil {
 		return "Reading config...\n"
 	}
 
 	s := strings.Builder{}
 	s.WriteString(m.tabs.View(m.ctx))
 	s.WriteString("\n")
-	s.WriteString(lipgloss.JoinHorizontal(
-		lipgloss.Left,
+	mainContent := lipgloss.JoinHorizontal(
+		lipgloss.Top,
 		m.getCurrSection().View(),
-		m.renderSidebar(),
-	))
+		m.sidebar.View(),
+	)
+	s.WriteString(mainContent)
 	s.WriteString("\n")
-	s.WriteString(m.renderHelp())
+	help := m.renderHelp()
+	s.WriteString(help)
 	return s.String()
 }
 
@@ -207,13 +187,13 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedPrChanged() {
-	m.syncSidebarViewPort()
+	m.syncSidebarPr()
 }
 
 func (m *Model) fetchAllSections() (newSections []*prssection.Model, fetchCmds tea.Cmd) {
-	fetchPRsCmds := make([]tea.Cmd, 0, len(m.config.PRSections))
-	sections := make([]*prssection.Model, 0, len(m.config.PRSections))
-	for i, sectionConfig := range m.config.PRSections {
+	fetchPRsCmds := make([]tea.Cmd, 0, len(m.ctx.Config.PRSections))
+	sections := make([]*prssection.Model, 0, len(m.ctx.Config.PRSections))
+	for i, sectionConfig := range m.ctx.Config.PRSections {
 		sectionModel := prssection.NewModel(i, &m.ctx, sectionConfig, nil)
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionPullRequests())
@@ -221,26 +201,40 @@ func (m *Model) fetchAllSections() (newSections []*prssection.Model, fetchCmds t
 	return sections, tea.Batch(fetchPRsCmds...)
 }
 
-func (m *Model) updateOnConfigFetched(config config.Config) {
-	m.config = &config
-	m.ctx.Config = config
-	m.isSidebarOpen = m.config.Defaults.Preview.Open
+func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
+	m.help.Width = msg.Width
+	m.ctx.ScreenWidth = msg.Width
+	m.ctx.ScreenHeight = msg.Height
+	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - footerHeight
+	m.syncMainContentWidth()
 }
 
-func (m *Model) calcMainContentWidth() int {
-	sideBarOffset := 0
-	if m.isSidebarOpen {
-		sideBarOffset = m.getSidebarWidth()
-	}
-	return m.ctx.ScreenWidth - sideBarOffset
-}
-
-func (m *Model) syncSidebarViewPort() {
-	m.ctx.MainContentWidth = m.calcMainContentWidth()
-	section := m.getCurrSection()
-	if section != nil {
+func (m *Model) syncProgramContext() {
+	for _, section := range m.sections {
 		section.UpdateProgramContext(&m.ctx)
 	}
-	m.sidebarViewport.Width = m.getSidebarWidth()
-	m.setSidebarViewportContent()
+	m.sidebar.UpdateProgramContext(&m.ctx)
+}
+
+func (m *Model) updateRelevantSection(msg prssection.SectionMsg) (updatedSection prssection.Model, cmd tea.Cmd) {
+	for _, section := range m.sections {
+		if msg.GetSectionId() == section.Id {
+			updatedSection, cmd = section.Update(msg)
+		}
+	}
+
+	return updatedSection, cmd
+}
+
+func (m *Model) syncMainContentWidth() {
+	sideBarOffset := 0
+	if m.sidebar.IsOpen {
+		sideBarOffset = m.ctx.Config.Defaults.Preview.Width
+	}
+	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
+}
+
+func (m *Model) syncSidebarPr() {
+	currPr := m.getCurrPr()
+	m.sidebar.SetPrData(currPr)
 }

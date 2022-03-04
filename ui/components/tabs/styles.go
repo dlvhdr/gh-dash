@@ -6,6 +6,10 @@ import (
 )
 
 var (
+	tabsBorderHeight  = 1
+	tabsContentHeight = 2
+	TabsHeight        = tabsBorderHeight + tabsContentHeight
+
 	tab = lipgloss.NewStyle().
 		Faint(true).
 		Padding(0, 2)
@@ -23,6 +27,7 @@ var (
 		BorderRight(false)
 
 	tabsRow = lipgloss.NewStyle().
+		Height(tabsContentHeight).
 		PaddingTop(1).
 		PaddingBottom(0).
 		BorderBottom(true).

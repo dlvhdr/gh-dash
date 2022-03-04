@@ -6,6 +6,8 @@ import (
 )
 
 var (
+	headerHeight = 2
+
 	cellStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).

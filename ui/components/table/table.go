@@ -37,16 +37,15 @@ func (m Model) View(spinnerText *string) string {
 	header := m.renderHeader()
 	body := m.renderBody(spinnerText)
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, body)
+	return lipgloss.JoinVertical(lipgloss.Left, header, body)
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.dimensions = dimensions
-	m.rowsViewport.SetViewportDimensions(constants.Dimensions{
+	m.rowsViewport.SetDimensions(constants.Dimensions{
 		Width:  m.dimensions.Width,
 		Height: m.dimensions.Height,
 	})
-	m.SyncViewPortContent()
 }
 
 func (m *Model) ResetCurrItem() {
@@ -79,7 +78,7 @@ func (m *Model) SyncViewPortContent() {
 	}
 
 	m.rowsViewport.SyncViewPort(
-		lipgloss.JoinVertical(lipgloss.Top, renderedRows...),
+		lipgloss.JoinVertical(lipgloss.Left, renderedRows...),
 	)
 }
 
@@ -109,14 +108,20 @@ func (m *Model) renderHeaderColumns() []string {
 		}
 
 		if column.Width != nil {
-			renderedColumns[i] = titleCellStyle.Copy().Width(*column.Width).Render(column.Title)
+			renderedColumns[i] = titleCellStyle.Copy().
+				Width(*column.Width).
+				MaxWidth(*column.Width).
+				Render(column.Title)
 			takenWidth += *column.Width
 			continue
 		}
 
 		if len(column.Title) == 1 {
 			takenWidth += styles.SingleRuneWidth
-			renderedColumns[i] = singleRuneTitleCellStyle.Copy().Width(styles.SingleRuneWidth).Render(column.Title)
+			renderedColumns[i] = singleRuneTitleCellStyle.Copy().
+				Width(styles.SingleRuneWidth).
+				MaxWidth(styles.SingleRuneWidth).
+				Render(column.Title)
 			continue
 		}
 
@@ -136,7 +141,7 @@ func (m *Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		renderedColumns[i] = titleCellStyle.Copy().Width(growCellWidth).Render(column.Title)
+		renderedColumns[i] = titleCellStyle.Copy().Width(growCellWidth).MaxWidth(growCellWidth).Render(column.Title)
 	}
 
 	return renderedColumns
@@ -144,22 +149,23 @@ func (m *Model) renderHeaderColumns() []string {
 
 func (m *Model) renderHeader() string {
 	headerColumns := m.renderHeaderColumns()
+	header := lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...)
 	return headerStyle.Copy().
 		Width(m.dimensions.Width).
 		MaxWidth(m.dimensions.Width).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, headerColumns...))
+		Render(header)
 }
 
 func (m *Model) renderBody(spinnerText *string) string {
 	bodyStyle := lipgloss.NewStyle().
-		Height(m.dimensions.Height + 2)
+		Height(m.dimensions.Height)
 	if spinnerText != nil {
 		return bodyStyle.Render(*spinnerText)
 	} else if len(m.Rows) == 0 && m.EmptyState != nil {
 		return bodyStyle.Render(*m.EmptyState)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Top, m.rowsViewport.View())
+	return m.rowsViewport.View()
 }
 
 func (m *Model) renderRow(rowId int, headerColumns []string) string {
@@ -172,12 +178,14 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 
 	renderedColumns := make([]string, len(m.Columns))
 	for i, column := range m.Rows[rowId] {
+		colWidth := lipgloss.Width(headerColumns[i])
 		renderedColumns = append(
 			renderedColumns,
-			style.Copy().Width(lipgloss.Width(headerColumns[i])).Render(column),
+			style.Copy().Width(colWidth).MaxWidth(colWidth).Render(column),
 		)
 	}
 
-	return rowStyle.Copy().
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, renderedColumns...))
+	return rowStyle.Copy().Render(
+		lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...),
+	)
 }

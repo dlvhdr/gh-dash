@@ -35,10 +35,10 @@ func (m Model) View(ctx context.ProgramContext) string {
 		}
 	}
 
-	return tabsRow.
+	return tabsRow.Copy().
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, tabs...))
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, tabs...))
 }
 
 func (m *Model) SetCurrSectionId(id int) {
