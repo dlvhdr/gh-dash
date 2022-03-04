@@ -88,27 +88,33 @@ func (m *Model) createNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 func (m *Model) getDimensions() constants.Dimensions {
 	return constants.Dimensions{
 		Width:  m.ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.ctx.MainContentHeight,
+		Height: m.ctx.MainContentHeight - 2,
 	}
 }
 
 func (m *Model) View() string {
 	var spinnerText *string
 	if m.isLoading {
-		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Left,
+		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
 			spinnerStyle.Copy().Render(m.spinner.View()),
 			"Fetching Pull Requests...",
 		))
 	}
 
 	return containerStyle.Copy().Render(
-		lipgloss.JoinVertical(lipgloss.Top, m.table.View(spinnerText)),
+		m.table.View(spinnerText),
 	)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	oldDimensions := m.getDimensions()
 	m.ctx = ctx
-	m.table.SetDimensions(m.getDimensions())
+	newDimensions := m.getDimensions()
+	m.table.SetDimensions(newDimensions)
+
+	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
+		m.table.SyncViewPortContent()
+	}
 }
 
 func (m *Model) getSectionColumns() []table.Column {

@@ -14,7 +14,6 @@ type Model struct {
 	topBoundId     int
 	bottomBoundId  int
 	currId         int
-	Width          int
 	ListItemHeight int
 	NumItems       int
 	ItemTypeLabel  string
@@ -22,13 +21,12 @@ type Model struct {
 
 func NewModel(dimensions constants.Dimensions, itemTypeLabel string, numItems, listItemHeight int) Model {
 	model := Model{
-		Width:          dimensions.Width,
 		NumItems:       numItems,
 		ListItemHeight: listItemHeight,
 		currId:         0,
 		viewport: viewport.Model{
 			Width:  dimensions.Width,
-			Height: dimensions.Height,
+			Height: dimensions.Height - pagerHeight,
 		},
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
@@ -43,7 +41,6 @@ func (m *Model) SetNumItems(numItems int) {
 }
 
 func (m *Model) SyncViewPort(content string) {
-	m.viewport.Width = m.Width
 	m.viewport.SetContent(content)
 }
 
@@ -85,8 +82,8 @@ func (m *Model) PrevItem() int {
 	return m.currId
 }
 
-func (m *Model) SetViewportDimensions(dimensions constants.Dimensions) {
-	m.viewport.Height = dimensions.Height
+func (m *Model) SetDimensions(dimensions constants.Dimensions) {
+	m.viewport.Height = dimensions.Height - pagerHeight
 	m.viewport.Width = dimensions.Width
 }
 
@@ -100,9 +97,14 @@ func (m *Model) View() string {
 			m.NumItems,
 		)
 	}
-	return lipgloss.JoinVertical(
-		lipgloss.Top,
-		m.viewport.View(),
-		pagerStyle.Copy().Render(pagerContent),
-	)
+	viewport := m.viewport.View()
+	pager := pagerStyle.Copy().Render(pagerContent)
+	return lipgloss.NewStyle().
+		Width(m.viewport.Width).
+		MaxWidth(m.viewport.Width).
+		Render(lipgloss.JoinVertical(
+			lipgloss.Left,
+			viewport,
+			pager,
+		))
 }

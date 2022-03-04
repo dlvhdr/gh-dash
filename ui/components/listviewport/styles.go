@@ -6,8 +6,12 @@ import (
 )
 
 var (
+	pagerHeight = 2
+
 	pagerStyle = lipgloss.NewStyle().
-		MarginTop(1).
-		Bold(true).
-		Foreground(styles.DefaultTheme.FaintText)
+			Height(pagerHeight).
+			MaxHeight(pagerHeight).
+			PaddingTop(1).
+			Bold(true).
+			Foreground(styles.DefaultTheme.FaintText)
 )

@@ -1,4 +1,4 @@
-package ui
+package prsidebar
 
 import (
 	"sort"
@@ -9,6 +9,7 @@ import (
 	"github.com/dlvhdr/gh-prs/data"
 	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
+	"github.com/dlvhdr/gh-prs/ui/styles"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
@@ -17,12 +18,12 @@ type RenderedActivity struct {
 	RenderedString string
 }
 
-func (sidebar *Sidebar) renderActivity() string {
-	width := sidebar.model.getSidebarWidth() - 8
+func (m *Model) renderActivity() string {
+	width := m.GetSidebarContentWidth() - 8
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
 
 	var activity []RenderedActivity
-	for _, comment := range sidebar.pr.Data.Comments.Nodes {
+	for _, comment := range m.pr.Data.Comments.Nodes {
 		renderedComment, err := renderComment(comment, markdownRenderer)
 		if err != nil {
 			continue
@@ -33,7 +34,7 @@ func (sidebar *Sidebar) renderActivity() string {
 		})
 	}
 
-	for _, review := range sidebar.pr.Data.LatestReviews.Nodes {
+	for _, review := range m.pr.Data.LatestReviews.Nodes {
 		renderedReview, err := renderReview(review, markdownRenderer)
 		if err != nil {
 			continue
@@ -64,7 +65,7 @@ func (sidebar *Sidebar) renderActivity() string {
 }
 
 func renderTitle() string {
-	return mainTextStyle.Copy().
+	return styles.MainTextStyle.Copy().
 		MarginBottom(1).
 		Underline(true).
 		Render(" Comments")
@@ -75,10 +76,10 @@ func renderEmptyState() string {
 }
 
 func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
-	header := lipgloss.JoinHorizontal(lipgloss.Left,
-		mainTextStyle.Copy().Render(comment.Author.Login),
+	header := lipgloss.JoinHorizontal(lipgloss.Top,
+		styles.MainTextStyle.Copy().Render(comment.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(faintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
 	body, err := markdownRenderer.Render(comment.Body)
 	return lipgloss.JoinVertical(
@@ -99,12 +100,12 @@ func renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (st
 }
 
 func renderReviewHeader(review data.Review) string {
-	return lipgloss.JoinHorizontal(lipgloss.Left,
+	return lipgloss.JoinHorizontal(lipgloss.Top,
 		renderReviewDecision(review.State),
 		" ",
-		mainTextStyle.Copy().Render(review.Author.Login),
+		styles.MainTextStyle.Copy().Render(review.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(faintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
 	)
 }
 
@@ -113,7 +114,7 @@ func renderReviewDecision(decision string) string {
 	case "PENDING":
 		return constants.WaitingGlyph
 	case "COMMENTED":
-		return lipgloss.NewStyle().Foreground(faintText).Render("")
+		return lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("")
 	case "APPROVED":
 		return constants.SuccessGlyph
 	case "CHANGES_REQUESTED":
