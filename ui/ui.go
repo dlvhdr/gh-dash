@@ -3,11 +3,11 @@ package ui
 import (
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
+	"github.com/dlvhdr/gh-prs/ui/components/help"
 	"github.com/dlvhdr/gh-prs/ui/components/prsidebar"
 	"github.com/dlvhdr/gh-prs/ui/components/prssection"
 	"github.com/dlvhdr/gh-prs/ui/components/tabs"
@@ -29,20 +29,10 @@ type Model struct {
 }
 
 func NewModel() Model {
-	helpModel := help.NewModel()
-	helpModel.Styles = help.Styles{
-		ShortDesc:      helpTextStyle.Copy(),
-		FullDesc:       helpTextStyle.Copy(),
-		ShortSeparator: helpTextStyle.Copy(),
-		FullSeparator:  helpTextStyle.Copy(),
-		FullKey:        helpTextStyle.Copy(),
-		ShortKey:       helpTextStyle.Copy(),
-		Ellipsis:       helpTextStyle.Copy(),
-	}
 	tabsModel := tabs.NewModel()
 	return Model{
 		keys:          utils.Keys,
-		help:          helpModel,
+		help:          help.NewModel(),
 		currSectionId: 0,
 		tabs:          tabsModel,
 		sidebar:       prsidebar.NewModel(),
@@ -66,6 +56,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd        tea.Cmd
 		sidebarCmd tea.Cmd
+		helpCmd    tea.Cmd
 		cmds       []tea.Cmd
 	)
 
@@ -105,9 +96,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Refresh):
 			cmd = currSection.FetchSectionPullRequests()
 
-		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
-
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
 
@@ -143,7 +131,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.syncProgramContext()
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
-	cmds = append(cmds, cmd, sidebarCmd)
+	m.help, helpCmd = m.help.Update(msg)
+	cmds = append(cmds, cmd, sidebarCmd, helpCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -166,8 +155,7 @@ func (m Model) View() string {
 	)
 	s.WriteString(mainContent)
 	s.WriteString("\n")
-	help := m.renderHelp()
-	s.WriteString(help)
+	s.WriteString(m.help.View(m.ctx))
 	return s.String()
 }
 
@@ -202,10 +190,10 @@ func (m *Model) fetchAllSections() (newSections []*prssection.Model, fetchCmds t
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
-	m.help.Width = msg.Width
+	m.help.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - footerHeight
+	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - help.FooterHeight
 	m.syncMainContentWidth()
 }
 
