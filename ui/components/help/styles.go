@@ -1,4 +1,4 @@
-package ui
+package help
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	footerHeight = 3
+	FooterHeight = 3
 
 	helpTextStyle = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SecondaryText)
 	helpStyle     = lipgloss.NewStyle().
-			Height(footerHeight - 1).
+			Height(FooterHeight - 1).
 			BorderTop(true).
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderForeground(styles.DefaultTheme.Border)
