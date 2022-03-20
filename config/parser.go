@@ -9,7 +9,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type PRSectionConfig struct {
+const PrsDir = "prs"
+const ConfigFileName = "config.yml"
+
+type ViewType string
+
+const (
+	PRsView    ViewType = "prs"
+	IssuesView ViewType = "issues"
+)
+
+type SectionConfig struct {
 	Title   string
 	Filters string
 	Limit   *int `yaml:"limit,omitempty"`
@@ -21,17 +31,17 @@ type PreviewConfig struct {
 }
 
 type Defaults struct {
-	Preview  PreviewConfig
-	PrsLimit int `yaml:"prsLimit"`
+	Preview     PreviewConfig `yaml:"preview"`
+	PrsLimit    int           `yaml:"prsLimit"`
+	IssuesLimit int           `yaml:"issuesLimit"`
+	View        ViewType      `yaml:"view"`
 }
 
 type Config struct {
-	PRSections []PRSectionConfig `yaml:"prSections"`
-	Defaults   Defaults
+	PRSections     []SectionConfig `yaml:"prSections"`
+	IssuesSections []SectionConfig `yaml:"issuesSections"`
+	Defaults       Defaults        `yaml:"defaults"`
 }
-
-const PrsDir = "prs"
-const ConfigFileName = "config.yml"
 
 type configError struct {
 	configDir string
@@ -48,9 +58,11 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit: 20,
+			PrsLimit:    20,
+			IssuesLimit: 20,
+			View:        PRsView,
 		},
-		PRSections: []PRSectionConfig{
+		PRSections: []SectionConfig{
 			{
 				Title:   "My Pull Requests",
 				Filters: "is:open author:@me",
@@ -58,6 +70,20 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			{
 				Title:   "Needs My Review",
 				Filters: "is:open review-requested:@me",
+			},
+			{
+				Title:   "Subscribed",
+				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs",
+			},
+		},
+		IssuesSections: []SectionConfig{
+			{
+				Title:   "My Issues",
+				Filters: "is:open author:@me",
+			},
+			{
+				Title:   "Assigned",
+				Filters: "is:open assignee:@me",
 			},
 			{
 				Title:   "Subscribed",

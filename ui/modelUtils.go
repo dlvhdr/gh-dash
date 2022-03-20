@@ -2,37 +2,43 @@ package ui
 
 import (
 	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/components/prssection"
+	"github.com/dlvhdr/gh-prs/ui/components/section"
 )
 
-func (m Model) getCurrSection() *prssection.Model {
-	if m.sections == nil || len(m.sections) == 0 {
+func (m *Model) getCurrSection() section.Section {
+	sections := m.getCurrentViewSections()
+	if len(sections) == 0 {
 		return nil
 	}
-	return m.sections[m.currSectionId]
+	return sections[m.currSectionId]
 }
 
-func (m Model) getCurrPr() *data.PullRequestData {
+func (m *Model) getCurrRowData() data.RowData {
 	section := m.getCurrSection()
 	if section == nil {
 		return nil
 	}
-	return section.GetCurrPr()
+	return section.GetCurrRow()
 }
 
-func (m Model) getSectionAt(id int) *prssection.Model {
-	return m.sections[id]
+func (m *Model) getSectionAt(id int) section.Section {
+	sections := m.getCurrentViewSections()
+	if len(sections) <= id {
+		return nil
+	}
+	return sections[id]
 }
 
-func (m Model) getPrevSectionId() int {
-	m.currSectionId = (m.currSectionId - 1) % len(m.ctx.Config.PRSections)
+func (m *Model) getPrevSectionId() int {
+	sectionsConfigs := m.ctx.GetViewSectionsConfig()
+	m.currSectionId = (m.currSectionId - 1) % len(sectionsConfigs)
 	if m.currSectionId < 0 {
-		m.currSectionId += len(m.ctx.Config.PRSections)
+		m.currSectionId += len(sectionsConfigs)
 	}
 
 	return m.currSectionId
 }
 
-func (m Model) getNextSectionId() int {
-	return (m.currSectionId + 1) % len(m.ctx.Config.PRSections)
+func (m *Model) getNextSectionId() int {
+	return (m.currSectionId + 1) % len(m.ctx.GetViewSectionsConfig())
 }
