@@ -1,5 +1,12 @@
 package data
 
+import "time"
+
+type RowData interface {
+	GetUrl() string
+	GetUpdatedAt() time.Time
+}
+
 func IsStatusWaiting(status string) bool {
 	return status == "PENDING" ||
 		status == "QUEUED" ||

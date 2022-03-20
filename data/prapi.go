@@ -106,11 +106,19 @@ type Reviews struct {
 	Nodes []Review
 }
 
-func makeQuery(query string) string {
+func (data PullRequestData) GetUrl() string {
+	return data.Url
+}
+
+func (data PullRequestData) GetUpdatedAt() time.Time {
+	return data.UpdatedAt
+}
+
+func makePullRequestsQuery(query string) string {
 	return fmt.Sprintf("is:pr %s", query)
 }
 
-func FetchRepoPullRequests(query string, limit int) ([]PullRequestData, error) {
+func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
 	if err != nil {
@@ -126,7 +134,7 @@ func FetchRepoPullRequests(query string, limit int) ([]PullRequestData, error) {
 		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
 	}
 	variables := map[string]interface{}{
-		"query": graphql.String(makeQuery(query)),
+		"query": graphql.String(makePullRequestsQuery(query)),
 		"limit": graphql.Int(limit),
 	}
 	err = client.Query("SearchPullRequests", &queryResult, variables)

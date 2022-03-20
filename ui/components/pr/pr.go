@@ -20,7 +20,7 @@ type sectionPullRequestsFetchedMsg struct {
 	Prs       []PullRequest
 }
 
-func (pr PullRequest) renderReviewStatus(isSelected bool) string {
+func (pr PullRequest) renderReviewStatus() string {
 	reviewCellStyle := lipgloss.NewStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
 		return reviewCellStyle.Foreground(successText).Render("")
@@ -33,21 +33,25 @@ func (pr PullRequest) renderReviewStatus(isSelected bool) string {
 	return reviewCellStyle.Render(constants.WaitingGlyph)
 }
 
-func (pr PullRequest) renderMergeableStatus(isSelected bool) string {
+func (pr PullRequest) renderState() string {
 	mergeCellStyle := lipgloss.NewStyle()
-	switch pr.Data.Mergeable {
-	case "MERGEABLE":
-		return mergeCellStyle.Foreground(successText).Render("")
-	case "CONFLICTING":
-		return mergeCellStyle.Render(constants.FailureGlyph)
-	case "UNKNOWN":
-		fallthrough
+	switch pr.Data.State {
+	case "OPEN":
+		return mergeCellStyle.Foreground(openPR).Render("")
+	case "CLOSED":
+		return mergeCellStyle.Foreground(closedPR).Render("")
+	case "MERGED":
+		return mergeCellStyle.Foreground(mergedPR).Render("")
 	default:
 		return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("-")
 	}
 }
 
 func (pr PullRequest) GetStatusChecksRollup() string {
+	if pr.Data.Mergeable == "CONFLICTING" {
+		return "FAILURE"
+	}
+
 	accStatus := "SUCCESS"
 	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
@@ -71,7 +75,8 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 	return accStatus
 }
 
-func (pr PullRequest) renderCiStatus(isSelected bool) string {
+func (pr PullRequest) renderCiStatus() string {
+
 	accStatus := pr.GetStatusChecksRollup()
 	ciCellStyle := lipgloss.NewStyle()
 	if accStatus == "SUCCESS" {
@@ -85,7 +90,7 @@ func (pr PullRequest) renderCiStatus(isSelected bool) string {
 	return ciCellStyle.Render(constants.FailureGlyph)
 }
 
-func (pr PullRequest) renderLines(isSelected bool) string {
+func (pr PullRequest) renderLines() string {
 	deletions := 0
 	if pr.Data.Deletions > 0 {
 		deletions = pr.Data.Deletions
@@ -96,7 +101,7 @@ func (pr PullRequest) renderLines(isSelected bool) string {
 	)
 }
 
-func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
+func (pr PullRequest) renderTitle() string {
 	return lipgloss.NewStyle().
 		Inline(true).
 		Foreground(styles.DefaultTheme.SecondaryText).
@@ -108,17 +113,17 @@ func (pr PullRequest) renderTitle(viewportWidth int, isSelected bool) string {
 		)
 }
 
-func (pr PullRequest) renderAuthor(isSelected bool) string {
+func (pr PullRequest) renderAuthor() string {
 	return lipgloss.NewStyle().Render(pr.Data.Author.Login)
 }
 
-func (pr PullRequest) renderRepoName(isSelected bool) string {
+func (pr PullRequest) renderRepoName() string {
 	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
 	return lipgloss.NewStyle().
 		Render(repoName)
 }
 
-func (pr PullRequest) renderUpdateAt(isSelected bool) string {
+func (pr PullRequest) renderUpdateAt() string {
 	return lipgloss.NewStyle().
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
@@ -136,16 +141,16 @@ func (pr PullRequest) RenderState() string {
 	}
 }
 
-func (pr PullRequest) Render(isSelected bool, viewPortWidth int) table.Row {
+func (pr PullRequest) ToTableRow() table.Row {
 	return table.Row{
-		pr.renderUpdateAt(isSelected),
-		pr.renderReviewStatus(isSelected),
-		pr.renderRepoName(isSelected),
-		pr.renderTitle(viewPortWidth, isSelected),
-		pr.renderAuthor(isSelected),
-		pr.renderMergeableStatus(isSelected),
-		pr.renderCiStatus(isSelected),
-		pr.renderLines(isSelected),
+		pr.renderUpdateAt(),
+		pr.renderRepoName(),
+		pr.renderTitle(),
+		pr.renderAuthor(),
+		pr.renderReviewStatus(),
+		pr.renderState(),
+		pr.renderCiStatus(),
+		pr.renderLines(),
 	}
 }
 

@@ -1,4 +1,4 @@
-package prssection
+package issuessection
 
 import (
 	"fmt"
@@ -9,23 +9,25 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/config"
 	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/components/pr"
+	"github.com/dlvhdr/gh-prs/ui/components/issue"
 	"github.com/dlvhdr/gh-prs/ui/components/section"
 	"github.com/dlvhdr/gh-prs/ui/components/table"
+	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/utils"
 )
 
-const SectionType = "prs"
+const SectionType = "issues"
 
 type Model struct {
-	Prs     []data.PullRequestData
+	Issues  []data.IssueData
 	section section.Model
+	error   error
 }
 
 func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) Model {
 	m := Model{
-		Prs: []data.PullRequestData{},
+		Issues: []data.IssueData{},
 		section: section.Model{
 			Id:        id,
 			Config:    config,
@@ -34,15 +36,16 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 			IsLoading: true,
 			Type:      SectionType,
 		},
+		error: nil,
 	}
 
 	m.section.Table = table.NewModel(
-		m.section.GetDimensions(),
+		m.getDimensions(),
 		m.GetSectionColumns(),
 		m.BuildRows(),
-		"PR",
+		"Issue",
 		utils.StringPtr(emptyStateStyle.Render(fmt.Sprintf(
-			"No PRs were found that match the given filters: %s",
+			"No issues were found that match the given filters: %s",
 			lipgloss.NewStyle().Italic(true).Render(m.section.Config.Filters),
 		))),
 	)
@@ -50,18 +53,15 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 	return m
 }
 
-func (m *Model) Id() int {
-	return m.section.Id
-}
-
 func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case SectionPullRequestsFetchedMsg:
-		m.Prs = msg.Prs
+	case SectionIssuesFetchedMsg:
+		m.Issues = msg.Issues
 		m.section.IsLoading = false
 		m.section.Table.SetRows(m.BuildRows())
+		m.error = msg.Err
 
 	case section.SectionTickMsg:
 		if !m.section.IsLoading {
@@ -76,13 +76,24 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, cmd
 }
 
+func (m *Model) getDimensions() constants.Dimensions {
+	return constants.Dimensions{
+		Width:  m.section.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
+		Height: m.section.Ctx.MainContentHeight - 2,
+	}
+}
+
 func (m *Model) View() string {
 	var spinnerText *string
 	if m.section.IsLoading {
 		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
 			spinnerStyle.Copy().Render(m.section.Spinner.View()),
-			"Fetching Pull Requests...",
+			"Fetching Issues...",
 		))
+	}
+
+	if m.error != nil {
+		spinnerText = utils.StringPtr(fmt.Sprintf("Error while fetching issues: %v", m.error))
 	}
 
 	return containerStyle.Copy().Render(
@@ -91,7 +102,14 @@ func (m *Model) View() string {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	m.section.UpdateProgramContext(ctx)
+	oldDimensions := m.getDimensions()
+	m.section.Ctx = ctx
+	newDimensions := m.getDimensions()
+	m.section.Table.SetDimensions(newDimensions)
+
+	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
+		m.section.Table.SyncViewPortContent()
+	}
 }
 
 func (m *Model) GetSectionColumns() []table.Column {
@@ -102,82 +120,80 @@ func (m *Model) GetSectionColumns() []table.Column {
 		},
 		{
 			Title: "",
-			Width: &prRepoCellWidth,
+			Width: &issueRepoCellWidth,
 		},
 		{
 			Title: "Title",
 			Grow:  utils.BoolPtr(true),
 		},
 		{
-			Title: "Author",
-			Width: &prAuthorCellWidth,
+			Title: "Creator",
 		},
 		{
-			Title: "",
-			Width: utils.IntPtr(4),
+			Title: "Assignees",
+			Width: &issueAssigneesCellWidth,
 		},
 		{
-			Title: "",
+			Title: "",
+			Width: &issueNumCommentsCellWidth,
 		},
 		{
-			Title: "",
-			Width: &ciCellWidth,
-		},
-		{
-			Title: "",
-			Width: &linesCellWidth,
+			Title: "﨔",
+			Width: &issueNumCommentsCellWidth,
 		},
 	}
 }
 
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
-	for _, currPr := range m.Prs {
-		prModel := pr.PullRequest{Data: currPr}
-		rows = append(rows, prModel.ToTableRow())
+	for _, currIssue := range m.Issues {
+		issueModel := issue.Issue{Data: currIssue, Width: m.getDimensions().Width}
+		rows = append(rows, issueModel.ToTableRow())
 	}
 
 	return rows
 }
 
 func (m *Model) NumRows() int {
-	return len(m.Prs)
+	return len(m.Issues)
 }
 
-type SectionPullRequestsFetchedMsg struct {
+type SectionIssuesFetchedMsg struct {
 	SectionId int
-	Prs       []data.PullRequestData
+	Issues    []data.IssueData
+	Err       error
 }
 
-func (msg SectionPullRequestsFetchedMsg) GetSectionId() int {
+func (msg SectionIssuesFetchedMsg) GetSectionId() int {
 	return msg.SectionId
 }
 
-func (msg SectionPullRequestsFetchedMsg) GetSectionType() string {
+func (msg SectionIssuesFetchedMsg) GetSectionType() string {
 	return SectionType
 }
 
 func (m *Model) GetCurrRow() data.RowData {
-	if len(m.Prs) == 0 {
+	if len(m.Issues) == 0 {
 		return nil
 	}
-	pr := m.Prs[m.section.Table.GetCurrItem()]
-	return &pr
+	issue := m.Issues[m.section.Table.GetCurrItem()]
+	return &issue
 }
 
 func (m *Model) NextRow() int {
-	return m.section.NextRow()
+	return m.section.Table.NextItem()
 }
 
 func (m *Model) PrevRow() int {
-	return m.section.PrevRow()
+	return m.section.Table.PrevItem()
 }
 
 func (m *Model) FetchSectionRows() tea.Cmd {
+	m.error = nil
 	if m == nil {
 		return nil
 	}
-	m.Prs = nil
+	m.Issues = nil
 	m.section.Table.ResetCurrItem()
 	m.section.Table.Rows = nil
 	m.section.IsLoading = true
@@ -187,26 +203,31 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	cmds = append(cmds, func() tea.Msg {
 		limit := m.section.Config.Limit
 		if limit == nil {
-			limit = &m.section.Ctx.Config.Defaults.PrsLimit
+			limit = &m.section.Ctx.Config.Defaults.IssuesLimit
 		}
-		fetchedPrs, err := data.FetchPullRequests(m.section.Config.Filters, *limit)
+		fetchedIssues, err := data.FetchIssues(m.section.Config.Filters, *limit)
 		if err != nil {
-			return SectionPullRequestsFetchedMsg{
+			return SectionIssuesFetchedMsg{
 				SectionId: m.section.Id,
-				Prs:       []data.PullRequestData{},
+				Issues:    []data.IssueData{},
+				Err:       err,
 			}
 		}
 
-		sort.Slice(fetchedPrs, func(i, j int) bool {
-			return fetchedPrs[i].UpdatedAt.After(fetchedPrs[j].UpdatedAt)
+		sort.Slice(fetchedIssues, func(i, j int) bool {
+			return fetchedIssues[i].UpdatedAt.After(fetchedIssues[j].UpdatedAt)
 		})
-		return SectionPullRequestsFetchedMsg{
+		return SectionIssuesFetchedMsg{
 			SectionId: m.section.Id,
-			Prs:       fetchedPrs,
+			Issues:    fetchedIssues,
 		}
 	})
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) Id() int {
+	return m.section.Id
 }
 
 func (m *Model) GetIsLoading() bool {
@@ -214,12 +235,13 @@ func (m *Model) GetIsLoading() bool {
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
-	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
-	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
-	for i, sectionConfig := range ctx.Config.PRSections {
+	sectionConfigs := ctx.Config.IssuesSections
+	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
+	sections = make([]section.Section, 0, len(sectionConfigs))
+	for i, sectionConfig := range sectionConfigs {
 		sectionModel := NewModel(i, &ctx, sectionConfig)
 		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
+		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchSectionRows())
 	}
-	return sections, tea.Batch(fetchPRsCmds...)
+	return sections, tea.Batch(fetchIssuesCmds...)
 }

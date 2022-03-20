@@ -79,15 +79,9 @@ func (m Model) View() string {
 func (m *Model) SetPrData(prData *data.PullRequestData) {
 	if prData == nil {
 		m.pr = nil
+		return
 	} else {
 		m.pr = &pr.PullRequest{Data: *prData}
-	}
-	m.setSidebarViewportContent()
-}
-
-func (m *Model) setSidebarViewportContent() {
-	if m.pr == nil {
-		return
 	}
 
 	s := strings.Builder{}
@@ -178,6 +172,9 @@ func (m *Model) renderDescription() string {
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(m.pr.Data.Body, "")
 
+	regex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	body = regex.ReplaceAllString(body, "")
+
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return lipgloss.NewStyle().Italic(true).Render("No description provided.")
@@ -190,7 +187,6 @@ func (m *Model) renderDescription() string {
 	}
 
 	return lipgloss.NewStyle().
-		MaxHeight(10).
 		Width(width).
 		MaxWidth(width).
 		Align(lipgloss.Left).

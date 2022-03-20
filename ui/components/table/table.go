@@ -179,10 +179,8 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	renderedColumns := make([]string, len(m.Columns))
 	for i, column := range m.Rows[rowId] {
 		colWidth := lipgloss.Width(headerColumns[i])
-		renderedColumns = append(
-			renderedColumns,
-			style.Copy().Width(colWidth).MaxWidth(colWidth).Render(column),
-		)
+		col := style.Copy().Width(colWidth).MaxWidth(colWidth).Render(column)
+		renderedColumns = append(renderedColumns, col)
 	}
 
 	return rowStyle.Copy().Render(

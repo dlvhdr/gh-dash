@@ -1,6 +1,7 @@
 package prsidebar
 
 import (
+	"regexp"
 	"sort"
 	"time"
 
@@ -81,7 +82,11 @@ func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) 
 		" ",
 		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
-	body, err := markdownRenderer.Render(comment.Body)
+
+	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	body := regex.ReplaceAllString(comment.Body, "")
+	body, err := markdownRenderer.Render(body)
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
