@@ -90,7 +90,8 @@ type Comment struct {
 }
 
 type Comments struct {
-	Nodes []Comment
+	Nodes      []Comment
+	TotalCount int
 }
 
 type Review struct {

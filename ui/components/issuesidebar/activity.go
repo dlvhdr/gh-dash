@@ -1,4 +1,4 @@
-package prsidebar
+package issuesidebar
 
 import (
 	"regexp"
@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/constants"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
 	"github.com/dlvhdr/gh-prs/ui/styles"
 	"github.com/dlvhdr/gh-prs/utils"
@@ -24,7 +23,7 @@ func (m *Model) renderActivity() string {
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
 
 	var activity []RenderedActivity
-	for _, comment := range m.pr.Data.Comments.Nodes {
+	for _, comment := range m.issue.Data.Comments.Nodes {
 		renderedComment, err := renderComment(comment, markdownRenderer)
 		if err != nil {
 			continue
@@ -32,17 +31,6 @@ func (m *Model) renderActivity() string {
 		activity = append(activity, RenderedActivity{
 			UpdatedAt:      comment.UpdatedAt,
 			RenderedString: renderedComment,
-		})
-	}
-
-	for _, review := range m.pr.Data.LatestReviews.Nodes {
-		renderedReview, err := renderReview(review, markdownRenderer)
-		if err != nil {
-			continue
-		}
-		activity = append(activity, RenderedActivity{
-			UpdatedAt:      review.UpdatedAt,
-			RenderedString: renderedReview,
 		})
 	}
 
@@ -92,39 +80,4 @@ func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) 
 		header,
 		body,
 	), err
-}
-
-func renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (string, error) {
-	header := renderReviewHeader(review)
-	body, err := markdownRenderer.Render(review.Body)
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		header,
-		body,
-	), err
-}
-
-func renderReviewHeader(review data.Review) string {
-	return lipgloss.JoinHorizontal(lipgloss.Top,
-		renderReviewDecision(review.State),
-		" ",
-		styles.MainTextStyle.Copy().Render(review.Author.Login),
-		" ",
-		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
-	)
-}
-
-func renderReviewDecision(decision string) string {
-	switch decision {
-	case "PENDING":
-		return constants.WaitingGlyph
-	case "COMMENTED":
-		return lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("")
-	case "APPROVED":
-		return constants.SuccessGlyph
-	case "CHANGES_REQUESTED":
-		return constants.FailureGlyph
-	}
-
-	return ""
 }

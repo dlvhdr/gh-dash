@@ -9,10 +9,12 @@ import (
 	"github.com/dlvhdr/gh-prs/config"
 	"github.com/dlvhdr/gh-prs/data"
 	"github.com/dlvhdr/gh-prs/ui/components/help"
+	"github.com/dlvhdr/gh-prs/ui/components/issuesidebar"
 	"github.com/dlvhdr/gh-prs/ui/components/issuessection"
 	"github.com/dlvhdr/gh-prs/ui/components/prsidebar"
 	"github.com/dlvhdr/gh-prs/ui/components/prssection"
 	"github.com/dlvhdr/gh-prs/ui/components/section"
+	"github.com/dlvhdr/gh-prs/ui/components/sidebar"
 	"github.com/dlvhdr/gh-prs/ui/components/tabs"
 	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/utils"
@@ -21,7 +23,7 @@ import (
 type Model struct {
 	keys          utils.KeyMap
 	err           error
-	sidebar       prsidebar.Model
+	sidebar       sidebar.Model
 	currSectionId int
 	help          help.Model
 	prs           []section.Section
@@ -39,7 +41,7 @@ func NewModel() Model {
 		help:          help.NewModel(),
 		currSectionId: 0,
 		tabs:          tabsModel,
-		sidebar:       prsidebar.NewModel(),
+		sidebar:       sidebar.NewModel(),
 	}
 }
 
@@ -72,7 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			if prevSection != nil {
 				m.setCurrSectionId(prevSection.Id())
-				m.onViewedPrChanged()
+				m.onViewedRowChanged()
 			}
 
 		case key.Matches(msg, m.keys.NextSection):
@@ -80,19 +82,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			nextSection := m.getSectionAt(nextSectionId)
 			if nextSection != nil {
 				m.setCurrSectionId(nextSection.Id())
-				m.onViewedPrChanged()
+				m.onViewedRowChanged()
 			}
 
 		case key.Matches(msg, m.keys.Down):
 			currSection.NextRow()
-			m.onViewedPrChanged()
+			m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Up):
 			currSection.PrevRow()
-			m.onViewedPrChanged()
+			m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.TogglePreview):
-			m.sidebar.IsOpen = m.ctx.View != config.IssuesView && !m.sidebar.IsOpen
+			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
@@ -108,7 +110,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
 			m.setCurrSectionId(0)
-			m.onViewedPrChanged()
 
 			currSections := m.getCurrentViewSections()
 			if len(currSections) == 0 {
@@ -116,6 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.setCurrentViewSections(newSections)
 				cmd = fetchSectionsCmds
 			}
+			m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
@@ -137,7 +139,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.GetSectionId() == m.currSectionId {
 			switch msg.GetSectionType() {
 			case prssection.SectionType:
-				m.onViewedPrChanged()
+				m.onViewedRowChanged()
 			}
 		}
 
@@ -199,7 +201,7 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 	m.tabs.SetCurrSectionId(newSectionId)
 }
 
-func (m *Model) onViewedPrChanged() {
+func (m *Model) onViewedRowChanged() {
 	m.syncSidebarPr()
 }
 
@@ -235,7 +237,7 @@ func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
 
 func (m *Model) syncMainContentWidth() {
 	sideBarOffset := 0
-	if m.sidebar.IsOpen && m.ctx.View == config.PRsView {
+	if m.sidebar.IsOpen {
 		sideBarOffset = m.ctx.Config.Defaults.Preview.Width
 	}
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
@@ -243,10 +245,15 @@ func (m *Model) syncMainContentWidth() {
 
 func (m *Model) syncSidebarPr() {
 	currRowData := m.getCurrRowData()
+	width := m.sidebar.GetSidebarContentWidth()
 
-	switch pr := currRowData.(type) {
+	switch data := currRowData.(type) {
 	case *data.PullRequestData:
-		m.sidebar.SetPrData(pr)
+		content := prsidebar.NewModel(data, width).View()
+		m.sidebar.SetContent(content)
+	case *data.IssueData:
+		content := issuesidebar.NewModel(data, width).View()
+		m.sidebar.SetContent(content)
 	}
 }
 
@@ -276,7 +283,6 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 
 func (m *Model) switchSelectedView() config.ViewType {
 	if m.ctx.View == config.PRsView {
-		m.sidebar.IsOpen = false
 		return config.IssuesView
 	} else {
 		return config.PRsView

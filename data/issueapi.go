@@ -13,6 +13,7 @@ type IssueData struct {
 	Number int
 	Title  string
 	Body   string
+	State  string
 	Author struct {
 		Login string
 	}
@@ -22,8 +23,9 @@ type IssueData struct {
 		Name string
 	}
 	Assignees Assignees      `graphql:"assignees(first: 3)"`
-	Comments  IssueComments  `graphql:"comments(first: 15)"`
+	Comments  Comments       `graphql:"comments(first: 15)"`
 	Reactions IssueReactions `graphql:"reactions(first: 1)"`
+	Labels    IssueLabels    `graphql:"labels(first: 3)"`
 }
 
 type Assignees struct {
@@ -34,12 +36,17 @@ type Assignee struct {
 	Login string
 }
 
-type IssueComments struct {
+type IssueReactions struct {
 	TotalCount int
 }
 
-type IssueReactions struct {
-	TotalCount int
+type Label struct {
+	Color string
+	Name  string
+}
+
+type IssueLabels struct {
+	Nodes []Label
 }
 
 func (data IssueData) GetUrl() string {

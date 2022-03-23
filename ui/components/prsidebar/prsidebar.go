@@ -1,89 +1,36 @@
 package prsidebar
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-prs/data"
 	"github.com/dlvhdr/gh-prs/ui/components/pr"
 	"github.com/dlvhdr/gh-prs/ui/constants"
-	"github.com/dlvhdr/gh-prs/ui/context"
 	"github.com/dlvhdr/gh-prs/ui/markdown"
 	"github.com/dlvhdr/gh-prs/ui/styles"
 )
 
 type Model struct {
-	pr              *pr.PullRequest
-	IsOpen          bool
-	sidebarViewport viewport.Model
-	ctx             *context.ProgramContext
+	pr    *pr.PullRequest
+	width int
 }
 
-func NewModel() Model {
+func NewModel(data *data.PullRequestData, width int) Model {
+	var p *pr.PullRequest
+	if data == nil {
+		p = nil
+	} else {
+		p = &pr.PullRequest{Data: *data}
+	}
 	return Model{
-		pr:     nil,
-		IsOpen: false,
-		sidebarViewport: viewport.Model{
-			Width:  0,
-			Height: 0,
-		},
-		ctx: nil,
+		pr:    p,
+		width: width,
 	}
-}
-
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, constants.Keys.PageDown):
-			m.sidebarViewport.HalfViewDown()
-
-		case key.Matches(msg, constants.Keys.PageUp):
-			m.sidebarViewport.HalfViewUp()
-		}
-	}
-
-	return m, nil
 }
 
 func (m Model) View() string {
-	if !m.IsOpen {
-		return ""
-	}
-
-	height := m.ctx.MainContentHeight
-	style := sideBarStyle.Copy().
-		Height(height).
-		MaxHeight(height).
-		Width(m.ctx.Config.Defaults.Preview.Width).
-		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
-
-	if m.pr == nil {
-		return style.Copy().Align(lipgloss.Center).Render(
-			lipgloss.PlaceVertical(height, lipgloss.Center, "Select a Pull Request..."),
-		)
-	}
-
-	return style.Copy().Render(lipgloss.JoinVertical(
-		lipgloss.Top,
-		m.sidebarViewport.View(),
-		pagerStyle.Copy().Render(fmt.Sprintf("%d%%", int(m.sidebarViewport.ScrollPercent()*100))),
-	))
-}
-
-func (m *Model) SetPrData(prData *data.PullRequestData) {
-	if prData == nil {
-		m.pr = nil
-		return
-	} else {
-		m.pr = &pr.PullRequest{Data: *prData}
-	}
-
 	s := strings.Builder{}
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n")
@@ -97,11 +44,11 @@ func (m *Model) SetPrData(prData *data.PullRequestData) {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	m.sidebarViewport.SetContent(s.String())
+	return s.String()
 }
 
 func (m *Model) renderTitle() string {
-	return styles.MainTextStyle.Copy().Width(m.GetSidebarContentWidth() - 6).
+	return styles.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
 		Render(m.pr.Data.Title)
 }
 
@@ -168,7 +115,7 @@ func (m *Model) renderPills() string {
 }
 
 func (m *Model) renderDescription() string {
-	width := m.GetSidebarContentWidth() - 6
+	width := m.getIndentedContentWidth()
 	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	body := regex.ReplaceAllString(m.pr.Data.Body, "")
 
@@ -193,18 +140,6 @@ func (m *Model) renderDescription() string {
 		Render(rendered)
 }
 
-func (m *Model) GetSidebarContentWidth() int {
-	if m.ctx.Config == nil {
-		return 0
-	}
-	return m.ctx.Config.Defaults.Preview.Width - 2*contentPadding - borderWidth
-}
-
-func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	if ctx == nil {
-		return
-	}
-	m.ctx = ctx
-	m.sidebarViewport.Height = m.ctx.MainContentHeight - pagerHeight
-	m.sidebarViewport.Width = m.GetSidebarContentWidth()
+func (m *Model) getIndentedContentWidth() int {
+	return m.width - 6
 }
