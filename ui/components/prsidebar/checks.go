@@ -43,7 +43,7 @@ func (sidebar *Model) renderChecks() string {
 			lipgloss.NewStyle().
 				Italic(true).
 				PaddingLeft(2).
-				Width(sidebar.GetSidebarContentWidth()-6).
+				Width(sidebar.getIndentedContentWidth()).
 				Render("No checks to display..."),
 		)
 	}
@@ -52,7 +52,7 @@ func (sidebar *Model) renderChecks() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.GetSidebarContentWidth()-6).Render(renderedChecks),
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(renderedChecks),
 	)
 }
 

@@ -119,6 +119,9 @@ func (m *Model) GetSectionColumns() []table.Column {
 			Width: &updatedAtCellWidth,
 		},
 		{
+			Title: "ﭦ",
+		},
+		{
 			Title: "",
 			Width: &issueRepoCellWidth,
 		},

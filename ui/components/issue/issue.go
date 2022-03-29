@@ -18,6 +18,7 @@ type Issue struct {
 func (issue *Issue) ToTableRow() table.Row {
 	return table.Row{
 		issue.renderUpdateAt(),
+		issue.renderStatus(),
 		issue.renderRepoName(),
 		issue.renderTitle(),
 		issue.renderOpenedBy(),
@@ -61,6 +62,14 @@ func (issue *Issue) renderAssignees() string {
 		assignees = append(assignees, assignee.Login)
 	}
 	return lipgloss.NewStyle().Render(strings.Join(assignees, ","))
+}
+
+func (issue *Issue) renderStatus() string {
+	if issue.Data.State == "OPEN" {
+		return lipgloss.NewStyle().Foreground(OpenIssue).Render("")
+	} else {
+		return lipgloss.NewStyle().Foreground(OpenIssue).Render("")
+	}
 }
 
 func (issue *Issue) renderNumComments() string {
