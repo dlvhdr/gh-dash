@@ -2,7 +2,7 @@ package sidebar
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 var (

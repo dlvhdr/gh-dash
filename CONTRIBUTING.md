@@ -1,4 +1,4 @@
-# Welcome to `gh-prs` contributing guide ✨
+# Welcome to `gh-dash` contributing guide ✨
 
 Thank you for investing your time in contributing to our project!
 
@@ -25,24 +25,24 @@ To navigate our codebase with confidence, familiar yourself with:
 
 If you spot a problem, first search if an issue already exists.
 
-If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/dlvhdr/gh-prs/issues/new/choose).
+If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/dlvhdr/gh-dash/issues/new/choose).
 
 ### Solve an issue
 
-Scan through our [existing issues](https://github.com/dlvhdr/gh-prs/issues) to find one that interests you.
+Scan through our [existing issues](https://github.com/dlvhdr/gh-dash/issues) to find one that interests you.
 
 #### Make Changes
 
 1. Fork the repository.
 
 ```sh
-git clone https://github.com/dlvhdr/gh-prs.git
+git clone https://github.com/dlvhdr/gh-dash.git
 ```
 
 or if you have the `gh` cli
 
 ```sh
-gh repo clone dlvhdr/gh-prs
+gh repo clone dlvhdr/gh-dash
 ```
 
 2. Install Go: https://go.dev/
@@ -58,7 +58,7 @@ When you're finished with the changes, create a pull request.
 
 ### Debugging
 
-- Pass the debug flag: `go run gh-prs.go --debug`
+- Pass the debug flag: `go run gh-dash.go --debug`
 - Write to the log by using Go's builtin `log` package
 - View the log by running `tail -f debug.log`
 

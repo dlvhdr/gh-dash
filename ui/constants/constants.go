@@ -3,7 +3,7 @@ package constants
 import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type KeyMap struct {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/ui/constants"
-	"github.com/dlvhdr/gh-prs/utils"
+	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {

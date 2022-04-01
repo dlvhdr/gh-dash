@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const PrsDir = "prs"
+const DashDir = "gh-dash"
 const ConfigFileName = "config.yml"
 
 type ViewType string
@@ -73,7 +73,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 			{
 				Title:   "Subscribed",
-				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs",
+				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-dash",
 			},
 		},
 		IssuesSections: []SectionConfig{
@@ -87,7 +87,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 			{
 				Title:   "Subscribed",
-				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-prs",
+				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-dash",
 			},
 		},
 	}
@@ -108,11 +108,11 @@ Create one under: %s
 Example of a config.yml file:
 %s
 
-For more info, go to https://github.com/dlvhdr/gh-prs
+For more info, go to https://github.com/dlvhdr/gh-dash
 press q to exit.
 
 Original error: %v`,
-		path.Join(e.configDir, PrsDir, ConfigFileName),
+		path.Join(e.configDir, DashDir, ConfigFileName),
 		string(e.parser.getDefaultConfigYamlContents()),
 		e.err,
 	)
@@ -152,7 +152,7 @@ func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
 		}
 	}
 
-	prsConfigDir := filepath.Join(configDir, PrsDir)
+	prsConfigDir := filepath.Join(configDir, DashDir)
 	err = os.MkdirAll(prsConfigDir, os.ModePerm)
 	if err != nil {
 		return nil, configError{parser: parser, configDir: configDir, err: err}

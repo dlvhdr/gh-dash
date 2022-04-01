@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/components/issue"
-	"github.com/dlvhdr/gh-prs/ui/markdown"
-	"github.com/dlvhdr/gh-prs/ui/styles"
+	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components/issue"
+	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {

@@ -3,8 +3,8 @@ package tabs
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/config"
-	"github.com/dlvhdr/gh-prs/ui/context"
+	"github.com/dlvhdr/gh-dash/config"
+	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
 type Model struct {

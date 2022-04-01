@@ -2,9 +2,9 @@ package table
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/ui/components/listviewport"
-	"github.com/dlvhdr/gh-prs/ui/constants"
-	"github.com/dlvhdr/gh-prs/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
+	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
