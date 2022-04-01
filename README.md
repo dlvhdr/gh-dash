@@ -1,20 +1,20 @@
 # gh-dash
 
-A `gh` cli extension to display a dashboard with pull requests or issues by filters you care about.
+✨ A GitHub (`gh`) CLI extension to display a dashboard with **pull requests** and **issues** by filters you care about.
 
-![demo](https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif)
+<img width="800px" src="https://raw.githubusercontent.com/dlvhdr/gh-prs/main/demo.gif" />
 
 ## Installation
 
 Installation requires a minimum version (2.0.0) of the the Github CLI to support extensions.
 
-1. Install the `gh cli` - see the [installation/upgrade instructions](https://github.com/cli/cli#installation)
+1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
 
 2. Install this extension:
 
-```sh
-gh extension install dlvhdr/gh-dash
-```
+   ```sh
+   gh extension install dlvhdr/gh-dash
+   ```
 
 3. To get the icons to render properly you should download and install a Nerd font from https://www.nerdfonts.com/.
    Then, select that font as your font for the terminal.
@@ -74,7 +74,7 @@ defaults:
     width: 60
 ```
 
-Adding PR or issue section is as easy as adding to the list of `prSections` or `issueSections` appropriately:
+Adding a PR or issue section is as easy as adding to the list of `prSections` or `issueSections` respectively:
 
 - title - shown in the TUI
 - filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
