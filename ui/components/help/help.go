@@ -4,8 +4,8 @@ import (
 	bbHelp "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/dlvhdr/gh-prs/ui/context"
-	"github.com/dlvhdr/gh-prs/utils"
+	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {

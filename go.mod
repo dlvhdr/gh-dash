@@ -1,4 +1,4 @@
-module github.com/dlvhdr/gh-prs
+module github.com/dlvhdr/gh-dash
 
 go 1.17
 

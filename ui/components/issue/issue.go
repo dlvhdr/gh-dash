@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/components/table"
-	"github.com/dlvhdr/gh-prs/utils"
+	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components/table"
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Issue struct {

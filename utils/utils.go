@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+const (
+	ApproxDaysInYear  = 365
+	ApproxDaysInMonth = 28
+	DaysInWeek        = 7
+)
+
 func Max(a, b int) int {
 	if a > b {
 		return a
@@ -91,20 +97,14 @@ func TimeElapsed(then time.Time) string {
 	var text string
 
 	now := time.Now()
-	year2, month2, day2 := now.Date()
-	hour2, minute2, second2 := now.Clock()
-
-	year1, month1, day1 := then.Date()
-	hour1, minute1, second1 := then.Clock()
-
-	year := math.Abs(float64(int(year2 - year1)))
-	month := math.Abs(float64(int(month2 - month1)))
-	day := math.Abs(float64(int(day2 - day1)))
-	hour := math.Abs(float64(int(hour2 - hour1)))
-	minute := math.Abs(float64(int(minute2 - minute1)))
-	second := math.Abs(float64(int(second2 - second1)))
-
-	week := math.Floor(day / 7)
+	diff := now.Sub(then)
+	day := math.Floor(diff.Hours() / 24)
+	year := math.Floor(day / ApproxDaysInYear)
+	month := math.Floor(day / ApproxDaysInMonth)
+	week := math.Floor(day / DaysInWeek)
+	hour := math.Floor(math.Abs(diff.Hours()))
+	minute := math.Floor(math.Abs(diff.Minutes()))
+	second := math.Floor(math.Abs(diff.Seconds()))
 
 	if year > 0 {
 		parts = append(parts, strconv.Itoa(int(year))+"y")

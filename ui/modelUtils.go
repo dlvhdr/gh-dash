@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/dlvhdr/gh-prs/data"
-	"github.com/dlvhdr/gh-prs/ui/components/section"
+	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components/section"
 )
 
 func (m *Model) getCurrSection() section.Section {
