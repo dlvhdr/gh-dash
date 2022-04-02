@@ -83,7 +83,7 @@ func (m *Model) PrevItem() int {
 }
 
 func (m *Model) FirstItem() int {
-	m.currId = m.topBoundId
+	m.currId = 0
 	m.viewport.GotoTop()
 	return m.currId
 }
