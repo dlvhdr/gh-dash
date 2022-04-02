@@ -82,6 +82,18 @@ func (m *Model) PrevItem() int {
 	return m.currId
 }
 
+func (m *Model) FirstItem() int {
+	m.currId = m.topBoundId
+	m.viewport.GotoTop()
+	return m.currId
+}
+
+func (m *Model) LastItem() int {
+	m.currId = m.NumItems - 1
+	m.viewport.GotoBottom()
+	return m.currId
+}
+
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.viewport.Height = dimensions.Height - pagerHeight
 	m.viewport.Width = dimensions.Width

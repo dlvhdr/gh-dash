@@ -191,6 +191,14 @@ func (m *Model) PrevRow() int {
 	return m.section.Table.PrevItem()
 }
 
+func (m *Model) FirstItem() int {
+	return m.section.Table.FirstItem()
+}
+
+func (m *Model) LastItem() int {
+	return m.section.Table.LastItem()
+}
+
 func (m *Model) FetchSectionRows() tea.Cmd {
 	m.error = nil
 	if m == nil {

@@ -9,6 +9,8 @@ import (
 type KeyMap struct {
 	Up            key.Binding
 	Down          key.Binding
+	FirstItem     key.Binding
+	LastItem      key.Binding
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
 	Refresh       key.Binding
@@ -38,6 +40,14 @@ var (
 		Down: key.NewBinding(
 			key.WithKeys("down", "j"),
 			key.WithHelp("↓/j", "move down"),
+		),
+		FirstItem: key.NewBinding(
+			key.WithKeys("g", "home"),
+			key.WithHelp("g/home", "first item"),
+		),
+		LastItem: key.NewBinding(
+			key.WithKeys("G", "end"),
+			key.WithHelp("G/end", "last item"),
 		),
 		PrevSection: key.NewBinding(
 			key.WithKeys("left", "h"),

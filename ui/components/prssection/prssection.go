@@ -173,6 +173,14 @@ func (m *Model) PrevRow() int {
 	return m.section.PrevRow()
 }
 
+func (m *Model) FirstItem() int {
+	return m.section.FirstItem()
+}
+
+func (m *Model) LastItem() int {
+	return m.section.LastItem()
+}
+
 func (m *Model) FetchSectionRows() tea.Cmd {
 	if m == nil {
 		return nil

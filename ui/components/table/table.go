@@ -70,6 +70,20 @@ func (m *Model) NextItem() int {
 	return currItem
 }
 
+func (m *Model) FirstItem() int {
+	currItem := m.rowsViewport.FirstItem()
+	m.SyncViewPortContent()
+
+	return currItem
+}
+
+func (m *Model) LastItem() int {
+	currItem := m.rowsViewport.LastItem()
+	m.SyncViewPortContent()
+
+	return currItem
+}
+
 func (m *Model) SyncViewPortContent() {
 	headerColumns := m.renderHeaderColumns()
 	renderedRows := make([]string, 0, len(m.Rows))
