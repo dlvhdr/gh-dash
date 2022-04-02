@@ -96,6 +96,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			currSection.PrevRow()
 			m.onViewedRowChanged()
 
+		case key.Matches(msg, m.keys.FirstLine):
+			currSection.FirstItem()
+			m.onViewedRowChanged()
+
+		case key.Matches(msg, m.keys.LastLine):
+			currSection.LastItem()
+			m.onViewedRowChanged()
+
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()

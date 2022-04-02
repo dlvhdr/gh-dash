@@ -28,6 +28,8 @@ type Section interface {
 	GetCurrRow() data.RowData
 	NextRow() int
 	PrevRow() int
+	FirstItem() int
+	LastItem() int
 	FetchSectionRows() tea.Cmd
 	GetIsLoading() bool
 	GetSectionColumns() []table.Column
@@ -101,6 +103,14 @@ func (m *Model) NextRow() int {
 
 func (m *Model) PrevRow() int {
 	return m.Table.PrevItem()
+}
+
+func (m *Model) FirstItem() int {
+	return m.Table.FirstItem()
+}
+
+func (m *Model) LastItem() int {
+	return m.Table.LastItem()
 }
 
 func (m *Model) GetIsLoading() bool {

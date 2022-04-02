@@ -5,6 +5,8 @@ import "github.com/charmbracelet/bubbles/key"
 type KeyMap struct {
 	Up            key.Binding
 	Down          key.Binding
+	FirstLine     key.Binding
+	LastLine      key.Binding
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
 	Refresh       key.Binding
@@ -24,6 +26,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down},
+		{k.FirstLine, k.LastLine},
 		{k.PrevSection, k.NextSection},
 		{k.PageDown, k.PageUp},
 		{k.TogglePreview, k.OpenGithub},
@@ -48,6 +51,14 @@ var Keys = KeyMap{
 	NextSection: key.NewBinding(
 		key.WithKeys("right", "l"),
 		key.WithHelp("/l", "next section"),
+	),
+	FirstLine: key.NewBinding(
+		key.WithKeys("g", "home"),
+		key.WithHelp("g/home", "first item"),
+	),
+	LastLine: key.NewBinding(
+		key.WithKeys("G", "end"),
+		key.WithHelp("G/end", "last item"),
 	),
 	PageUp: key.NewBinding(
 		key.WithKeys("ctrl+u"),
