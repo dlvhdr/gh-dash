@@ -6,9 +6,9 @@
 
 ## Installation
 
-Installation requires a minimum version (2.0.0) of the the Github CLI to support extensions.
-
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
+   
+   _Installation requires a minimum version (2.0.0) of the the GitHub CLI that supports extensions._
 
 2. Install this extension:
 
@@ -20,28 +20,37 @@ Installation requires a minimum version (2.0.0) of the the Github CLI to support
    Then, select that font as your font for the terminal.
 
 <details>
-    <summary><strong>Installing Manually</strong></summary>
+   <summary><strong>Installing Manually</strong></summary>
 
-> if you want to install this extension **manually**, do these steps:
+> If you want to install this extension **manually**, follow these steps:
 
-1. clone repo
+1. Clone the repo
 
    ```bash
    # git
    git clone https://github.com/dlvhdr/gh-dash
 
-   # github cli
+   # GitHub CLI
    gh repo clone dlvhdr/gh-dash
    ```
 
-2. cd to it
+2. Cd into it
 
    ```bash
    cd gh-dash
    ```
 
-3. install it locally
-`bash gh extension install . `
+3. Install it locally
+   ```bash
+   gh extension install .
+   ```
+</details>
+
+<details>
+   <summary><strong>🌈 How do I get these exact colors and font?</strong></summary>
+   
+   > I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
+   > For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
 </details>
 
 ## Configuring
