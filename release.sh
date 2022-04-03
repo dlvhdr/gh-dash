@@ -20,4 +20,4 @@ GOOS=linux GOARCH=arm64 go build -o "dist/linux-arm64"
 GOOS=windows GOARCH=386 go build -o "dist/windows-i386.exe"
 GOOS=windows GOARCH=amd64 go build -o "dist/windows-amd64.exe"
 
-# gh release create $tag ./dist/* --title="${tag}" --notes "${tag}"
+gh release create $tag ./dist/* --title="${tag}" --notes "${tag}"
