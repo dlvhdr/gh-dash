@@ -3,6 +3,8 @@ package data
 import "time"
 
 type RowData interface {
+	GetRepoNameWithOwner() string
+	GetNumber() int
 	GetUrl() string
 	GetUpdatedAt() time.Time
 }

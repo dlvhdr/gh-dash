@@ -28,6 +28,12 @@ type PullRequestData struct {
 	HeadRepository struct {
 		Name string
 	}
+	HeadRef struct {
+		Name string
+	}
+	Repository struct {
+		NameWithOwner string
+	}
 	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
 	IsDraft       bool
@@ -105,6 +111,14 @@ type Review struct {
 
 type Reviews struct {
 	Nodes []Review
+}
+
+func (data PullRequestData) GetRepoNameWithOwner() string {
+	return data.Repository.NameWithOwner
+}
+
+func (data PullRequestData) GetNumber() int {
+	return data.Number
 }
 
 func (data PullRequestData) GetUrl() string {

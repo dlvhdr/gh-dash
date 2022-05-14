@@ -70,6 +70,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
+		case m.isUserDefinedKeybinding(msg):
+			m.executeKeybinding(msg.String())
+
 		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			if prevSection != nil {
@@ -287,4 +290,18 @@ func (m *Model) switchSelectedView() config.ViewType {
 	} else {
 		return config.PRsView
 	}
+}
+
+func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
+	if m.ctx.View != config.PRsView {
+		return false
+	}
+
+	for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+		if keybinding.Key == msg.String() {
+			return true
+		}
+	}
+
+	return false
 }
