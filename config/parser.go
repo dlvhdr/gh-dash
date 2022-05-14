@@ -37,10 +37,21 @@ type Defaults struct {
 	View        ViewType      `yaml:"view"`
 }
 
+type Keybinding struct {
+	Key     string `yaml:"key"`
+	Command string `yaml:"command"`
+}
+
+type Keybindings struct {
+	Prs []Keybinding `yaml:"prs"`
+}
+
 type Config struct {
-	PRSections     []SectionConfig `yaml:"prSections"`
-	IssuesSections []SectionConfig `yaml:"issuesSections"`
-	Defaults       Defaults        `yaml:"defaults"`
+	PRSections     []SectionConfig   `yaml:"prSections"`
+	IssuesSections []SectionConfig   `yaml:"issuesSections"`
+	Defaults       Defaults          `yaml:"defaults"`
+	Keybindings    Keybindings       `yaml:"keybindings"`
+	RepoPaths      map[string]string `yaml:"repoPaths"`
 }
 
 type configError struct {
@@ -90,6 +101,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-dash",
 			},
 		},
+		Keybindings: Keybindings{
+			Prs: []Keybinding{},
+		},
+		RepoPaths: map[string]string{},
 	}
 }
 

@@ -20,7 +20,8 @@ type IssueData struct {
 	UpdatedAt  time.Time
 	Url        string
 	Repository struct {
-		Name string
+		Name          string
+		NameWithOwner string
 	}
 	Assignees Assignees      `graphql:"assignees(first: 3)"`
 	Comments  Comments       `graphql:"comments(first: 15)"`
@@ -47,6 +48,14 @@ type Label struct {
 
 type IssueLabels struct {
 	Nodes []Label
+}
+
+func (data IssueData) GetRepoNameWithOwner() string {
+	return data.Repository.NameWithOwner
+}
+
+func (data IssueData) GetNumber() int {
+	return data.Number
 }
 
 func (data IssueData) GetUrl() string {
