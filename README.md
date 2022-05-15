@@ -81,12 +81,51 @@ defaults:
   preview:
     open: true
     width: 60
+repoPaths:
+  dlvhdr/gh-dash: ~/code/gh-dash
+keybindings: # optional
+  prs:
+   - key: c
+     command: cd {{.RepoPath}}; gh pr checkout {{.PrNumber}}
 ```
 
 Adding a PR or issue section is as easy as adding to the list of `prSections` or `issueSections` respectively:
 
 - title - shown in the TUI
 - filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
+
+### Keybindings
+
+Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
+The available arguments are:
+
+| Arguement     | Description   |
+| ------------- | ------------- |
+| `RepoName`  | The full name of the repo (e.g. `dlvhdr/gh-dash`)  |
+| `RepoPath`  | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping  |
+| `PrNumber`  | The PR number  |
+| `HeadRefName`  | The PR's remote branch name  |
+
+
+For example, to review a PR with either Neovim or VSCode, include this in your `config.yml` file:
+
+```yaml
+repoPaths:
+  dlvhdr/gh-dash: ~/code/gh-dash
+keybindings:
+  prs:
+    - key: c
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+          gh pr checkout {{.PrNumber}} &&
+          nvim -c ":DiffviewOpen master...{{.HeadRefName}}"
+        '
+    - key: v
+      command: >
+        cd {{.RepoPath}} &&
+        code . &&
+        gh pr checkout {{.PrNumber}}
+```
 
 ## Usage
 
