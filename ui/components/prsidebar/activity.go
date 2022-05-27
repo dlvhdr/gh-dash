@@ -69,7 +69,7 @@ func renderTitle() string {
 	return styles.MainTextStyle.Copy().
 		MarginBottom(1).
 		Underline(true).
-		Render(" Comments")
+		Render(" Comments")
 }
 
 func renderEmptyState() string {
