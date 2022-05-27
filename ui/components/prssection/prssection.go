@@ -97,7 +97,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 func (m *Model) GetSectionColumns() []table.Column {
 	return []table.Column{
 		{
-			Title: "ﮮ",
+			Title: "",
 			Width: &updatedAtCellWidth,
 		},
 		{
