@@ -64,6 +64,9 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 			}
 		} else if statusCheck.Typename == "StatusContext" {
 			conclusion = string(statusCheck.StatusContext.State)
+			if isStatusWaiting(conclusion) {
+				accStatus = "PENDING"
+			}
 		}
 
 		if isConclusionAFailure(conclusion) {

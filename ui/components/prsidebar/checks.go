@@ -70,7 +70,12 @@ func renderCheckRunConclusion(checkRun data.CheckRun) string {
 }
 
 func renderStatusContextConclusion(statusContext data.StatusContext) string {
-	if data.IsConclusionAFailure(string(statusContext.State)) {
+	conclusionStr := string(statusContext.State)
+	if data.IsStatusWaiting(conclusionStr) {
+		return constants.WaitingGlyph
+	}
+
+	if data.IsConclusionAFailure(conclusionStr) {
 		return constants.FailureGlyph
 	}
 
