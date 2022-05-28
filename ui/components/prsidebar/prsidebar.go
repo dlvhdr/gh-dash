@@ -94,7 +94,7 @@ func (m *Model) renderChecksPill() string {
 		return pillStyle.Copy().
 			Background(styles.DefaultTheme.WarningText).
 			Render(" Checks")
-	} else if status == "SUCCESS" {
+	} else if status == "PENDING" {
 		return pillStyle.Copy().
 			Background(styles.DefaultTheme.FaintText).
 			Foreground(styles.DefaultTheme.MainText).
