@@ -58,6 +58,8 @@ func OpenBrowser(url string) {
 		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
 		err = exec.Command("open", url).Start()
+	case "android":
+		err = exec.Command("termux-open-url", url).Start()
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}
