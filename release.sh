@@ -22,5 +22,7 @@ GOOS=linux GOARCH=arm GOARM=6 go build -o "dist/linux-arm-6"
 GOOS=linux GOARCH=arm64 go build -o "dist/linux-arm64"
 GOOS=windows GOARCH=386 go build -o "dist/windows-i386.exe"
 GOOS=windows GOARCH=amd64 go build -o "dist/windows-amd64.exe"
+GOOS=android GOARCH=amd64 go build -o "dist/android-amd64"
+GOOS=android GOARCH=arm64 go build -o "dist/android-arm64"
 
 gh release create $tag ./dist/* --title="${tag}" --notes "${tag}"
