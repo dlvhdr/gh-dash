@@ -15,12 +15,12 @@ type Model struct {
 	textInput    textinput.Model
 }
 
-func NewModel(sectionId int, sectionType string, ctx context.ProgramContext, initialValue string) Model {
+func NewModel(sectionId int, sectionType string, ctx *context.ProgramContext, initialValue string) Model {
 	prompt := " is:pr "
 	ti := textinput.New()
 	ti.Placeholder = ""
 	ti.Focus()
-	ti.Width = ctx.MainContentWidth - lipgloss.Width(prompt) - 6
+	ti.Width = getInputWidth(ctx, prompt)
 	ti.PromptStyle = ti.PromptStyle.Copy().Foreground(styles.DefaultTheme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Copy().Faint(true)
@@ -81,6 +81,15 @@ func (m *Model) Blur() {
 
 func (m *Model) ResetValue() {
 	m.textInput.SetValue(m.InitialValue)
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.textInput.Width = getInputWidth(ctx, m.textInput.Prompt)
+	m.textInput.SetValue(m.textInput.Value())
+}
+
+func getInputWidth(ctx *context.ProgramContext, prompt string) int {
+	return ctx.MainContentWidth - lipgloss.Width(prompt) - 6
 }
 
 type SearchCancelled struct {

@@ -89,6 +89,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
 	}
+
+	m.Search.UpdateProgramContext(ctx)
 }
 
 type SectionMsg interface {

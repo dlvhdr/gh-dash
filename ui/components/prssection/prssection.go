@@ -29,7 +29,7 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 		Config:      config,
 		Ctx:         ctx,
 		Spinner:     spinner.Model{Spinner: spinner.Dot},
-		Search:      search.NewModel(id, SectionType, *ctx, config.Filters),
+		Search:      search.NewModel(id, SectionType, ctx, config.Filters),
 		IsLoading:   true,
 		IsSearching: false,
 		Type:        SectionType,
