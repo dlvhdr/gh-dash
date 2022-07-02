@@ -71,7 +71,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if currSection != nil && currSection.GetIsSearching() {
-			cmd = m.updateSection(currSection.Id(), currSection.Type(), msg)
+			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 			break
 		}
 
@@ -82,7 +82,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			if prevSection != nil {
-				m.setCurrSectionId(prevSection.Id())
+				m.setCurrSectionId(prevSection.GetId())
 				m.onViewedRowChanged()
 			}
 
@@ -90,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			nextSectionId := m.getNextSectionId()
 			nextSection := m.getSectionAt(nextSectionId)
 			if nextSection != nil {
-				m.setCurrSectionId(nextSection.Id())
+				m.setCurrSectionId(nextSection.GetId())
 				m.onViewedRowChanged()
 			}
 

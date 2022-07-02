@@ -21,33 +21,34 @@ import (
 const SectionType = "issues"
 
 type Model struct {
-	Issues  []data.IssueData
-	section section.Model
-	error   error
+	section.Model
+	Issues []data.IssueData
+	error  error
 }
 
 func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) Model {
+	section := section.Model{
+		Id:        id,
+		Config:    config,
+		Ctx:       ctx,
+		Spinner:   spinner.Model{Spinner: spinner.Dot},
+		IsLoading: true,
+		Type:      SectionType,
+	}
 	m := Model{
-		Issues: []data.IssueData{},
-		section: section.Model{
-			Id:        id,
-			Config:    config,
-			Ctx:       ctx,
-			Spinner:   spinner.Model{Spinner: spinner.Dot},
-			IsLoading: true,
-			Type:      SectionType,
-		},
-		error: nil,
+		section,
+		[]data.IssueData{},
+		nil,
 	}
 
-	m.section.Table = table.NewModel(
+	m.Table = table.NewModel(
 		m.getDimensions(),
 		m.GetSectionColumns(),
 		m.BuildRows(),
 		"Issue",
 		utils.StringPtr(emptyStateStyle.Render(fmt.Sprintf(
 			"No issues were found that match the given filters: %s",
-			lipgloss.NewStyle().Italic(true).Render(m.section.Config.Filters),
+			lipgloss.NewStyle().Italic(true).Render(m.Config.Filters),
 		))),
 	)
 
@@ -60,18 +61,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SectionIssuesFetchedMsg:
 		m.Issues = msg.Issues
-		m.section.IsLoading = false
-		m.section.Table.SetRows(m.BuildRows())
+		m.IsLoading = false
+		m.Table.SetRows(m.BuildRows())
 		m.error = msg.Err
 
 	case section.SectionTickMsg:
-		if !m.section.IsLoading {
+		if !m.IsLoading {
 			return &m, nil
 		}
 
 		var internalTickCmd tea.Cmd
-		m.section.Spinner, internalTickCmd = m.section.Spinner.Update(msg.InternalTickMsg)
-		cmd = m.section.CreateNextTickCmd(internalTickCmd)
+		m.Spinner, internalTickCmd = m.Spinner.Update(msg.InternalTickMsg)
+		cmd = m.CreateNextTickCmd(internalTickCmd)
 	}
 
 	return &m, cmd
@@ -79,16 +80,16 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 func (m *Model) getDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.section.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.section.Ctx.MainContentHeight - 2 - styles.SearchHeight,
+		Width:  m.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
+		Height: m.Ctx.MainContentHeight - 2 - styles.SearchHeight,
 	}
 }
 
 func (m *Model) View() string {
 	var spinnerText *string
-	if m.section.IsLoading {
+	if m.IsLoading {
 		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
-			spinnerStyle.Copy().Render(m.section.Spinner.View()),
+			spinnerStyle.Copy().Render(m.Spinner.View()),
 			"Fetching Issues...",
 		))
 	}
@@ -98,19 +99,8 @@ func (m *Model) View() string {
 	}
 
 	return containerStyle.Copy().Render(
-		m.section.Table.View(spinnerText),
+		m.Table.View(spinnerText),
 	)
-}
-
-func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldDimensions := m.getDimensions()
-	m.section.Ctx = ctx
-	newDimensions := m.getDimensions()
-	m.section.Table.SetDimensions(newDimensions)
-
-	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
-		m.section.Table.SyncViewPortContent()
-	}
 }
 
 func (m *Model) GetSectionColumns() []table.Column {
@@ -180,24 +170,8 @@ func (m *Model) GetCurrRow() data.RowData {
 	if len(m.Issues) == 0 {
 		return nil
 	}
-	issue := m.Issues[m.section.Table.GetCurrItem()]
+	issue := m.Issues[m.Table.GetCurrItem()]
 	return &issue
-}
-
-func (m *Model) NextRow() int {
-	return m.section.Table.NextItem()
-}
-
-func (m *Model) PrevRow() int {
-	return m.section.Table.PrevItem()
-}
-
-func (m *Model) FirstItem() int {
-	return m.section.Table.FirstItem()
-}
-
-func (m *Model) LastItem() int {
-	return m.section.Table.LastItem()
 }
 
 func (m *Model) FetchSectionRows() tea.Cmd {
@@ -206,21 +180,21 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 		return nil
 	}
 	m.Issues = nil
-	m.section.Table.ResetCurrItem()
-	m.section.Table.Rows = nil
-	m.section.IsLoading = true
+	m.Table.ResetCurrItem()
+	m.Table.Rows = nil
+	m.IsLoading = true
 	var cmds []tea.Cmd
-	cmds = append(cmds, m.section.CreateNextTickCmd(spinner.Tick))
+	cmds = append(cmds, m.CreateNextTickCmd(spinner.Tick))
 
 	cmds = append(cmds, func() tea.Msg {
-		limit := m.section.Config.Limit
+		limit := m.Config.Limit
 		if limit == nil {
-			limit = &m.section.Ctx.Config.Defaults.IssuesLimit
+			limit = &m.Ctx.Config.Defaults.IssuesLimit
 		}
-		fetchedIssues, err := data.FetchIssues(m.section.Config.Filters, *limit)
+		fetchedIssues, err := data.FetchIssues(m.Config.Filters, *limit)
 		if err != nil {
 			return SectionIssuesFetchedMsg{
-				SectionId: m.section.Id,
+				SectionId: m.Id,
 				Issues:    []data.IssueData{},
 				Err:       err,
 			}
@@ -230,7 +204,7 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 			return fetchedIssues[i].UpdatedAt.After(fetchedIssues[j].UpdatedAt)
 		})
 		return SectionIssuesFetchedMsg{
-			SectionId: m.section.Id,
+			SectionId: m.Id,
 			Issues:    fetchedIssues,
 		}
 	})
@@ -238,35 +212,15 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m *Model) Id() int {
-	return m.section.Id
-}
-
-func (m *Model) Type() string {
-	return m.section.Type
-}
-
-func (m *Model) GetIsLoading() bool {
-	return m.section.IsLoading
-}
-
-func (m *Model) GetIsSearching() bool {
-	return m.section.IsSearching
-}
-
 func (m *Model) SetIsSearching(val bool) tea.Cmd {
-	m.section.IsSearching = val
+	m.IsSearching = val
 	if val {
-		m.section.Search.Focus()
-		return m.section.Search.Init()
+		m.Search.Focus()
+		return m.Search.Init()
 	} else {
-		m.section.Search.Blur()
+		m.Search.Blur()
 		return nil
 	}
-}
-
-func (m *Model) ResetFilters() {
-	m.section.Search.ResetValue()
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {

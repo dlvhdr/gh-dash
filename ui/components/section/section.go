@@ -25,10 +25,24 @@ type Model struct {
 }
 
 type Section interface {
-	Id() int
-	Type() string
+	Identifier
+	Component
+	Table
+	Search
+	UpdateProgramContext(ctx *context.ProgramContext)
+}
+
+type Identifier interface {
+	GetId() int
+	GetType() string
+}
+
+type Component interface {
 	Update(msg tea.Msg) (Section, tea.Cmd)
 	View() string
+}
+
+type Table interface {
 	NumRows() int
 	GetCurrRow() data.RowData
 	NextRow() int
@@ -36,13 +50,14 @@ type Section interface {
 	FirstItem() int
 	LastItem() int
 	FetchSectionRows() tea.Cmd
-	GetIsLoading() bool
-	SetIsSearching(val bool) tea.Cmd
-	GetIsSearching() bool
 	GetSectionColumns() []table.Column
 	BuildRows() []table.Row
+}
+
+type Search interface {
+	SetIsSearching(val bool) tea.Cmd
+	GetIsSearching() bool
 	ResetFilters()
-	UpdateProgramContext(ctx *context.ProgramContext)
 }
 
 func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
@@ -56,7 +71,6 @@ func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 			Type:            m.Type,
 		}
 	}
-
 }
 
 func (m *Model) GetDimensions() constants.Dimensions {
@@ -97,6 +111,14 @@ type SectionTickMsg struct {
 	Type            string
 }
 
+func (m *Model) GetId() int {
+	return m.Id
+}
+
+func (m *Model) GetType() string {
+	return m.Type
+}
+
 func (msg SectionTickMsg) GetSectionId() int {
 	return msg.SectionId
 }
@@ -121,28 +143,21 @@ func (m *Model) LastItem() int {
 	return m.Table.LastItem()
 }
 
-func (m *Model) GetIsLoading() bool {
-	return m.IsLoading
+func (m *Model) GetIsSearching() bool {
+	return m.IsSearching
 }
 
-// search:        search.NewModel(),
-// case search.SearchSubmitted:
-// 	m.isSearching = false
-// 	searchConfig := config.SectionConfig{Title: "Search", Filters: msg.Term}
-//
-// 	m.ctx.Config.PRSections = append(m.ctx.Config.PRSections, searchConfig)
-//
-// 	id := len(m.ctx.Config.PRSections)
-// 	log.Printf("setting new section %v\n", id)
-// 	searchSection := prssection.NewModel(id, &m.ctx, searchConfig)
-// 	m.prs = append(m.prs, &searchSection)
-// 	m.tabs.SetCurrSectionId(len(m.prs))
-// 	cmd = searchSection.FetchSectionRows()
-//
-// s.WriteString(m.search.View(m.ctx))
+func (m *Model) SetIsSearching(val bool) tea.Cmd {
+	m.IsSearching = val
+	if val {
+		m.Search.Focus()
+		return m.Search.Init()
+	} else {
+		m.Search.Blur()
+		return nil
+	}
+}
 
-// if m.isSearching {
-// 	newSearchModel, searchCmd := m.search.Update(msg)
-// 	m.search = newSearchModel
-// 	return m, searchCmd
-// }
+func (m *Model) ResetFilters() {
+	m.Search.ResetValue()
+}

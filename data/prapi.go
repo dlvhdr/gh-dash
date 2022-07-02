@@ -134,7 +134,6 @@ func makePullRequestsQuery(query string) string {
 }
 
 func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
-	// return []PullRequestData{}, nil
 	var err error
 	client, err := gh.GQLClient(nil)
 	if err != nil {
