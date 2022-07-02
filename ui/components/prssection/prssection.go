@@ -1,7 +1,7 @@
 package prssection
 
 import (
-	"fmt"
+	"log"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -10,6 +10,7 @@ import (
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/ui/components/search"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/context"
@@ -27,12 +28,14 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 	m := Model{
 		Prs: []data.PullRequestData{},
 		section: section.Model{
-			Id:        id,
-			Config:    config,
-			Ctx:       ctx,
-			Spinner:   spinner.Model{Spinner: spinner.Dot},
-			IsLoading: true,
-			Type:      SectionType,
+			Id:          id,
+			Config:      config,
+			Ctx:         ctx,
+			Spinner:     spinner.Model{Spinner: spinner.Dot},
+			Search:      search.NewModel(id, SectionType, *ctx, config.Filters),
+			IsLoading:   true,
+			IsSearching: false,
+			Type:        SectionType,
 		},
 	}
 
@@ -41,10 +44,9 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 		m.GetSectionColumns(),
 		m.BuildRows(),
 		"PR",
-		utils.StringPtr(emptyStateStyle.Render(fmt.Sprintf(
-			"No PRs were found that match the given filters: %s",
-			lipgloss.NewStyle().Italic(true).Render(m.section.Config.Filters),
-		))),
+		utils.StringPtr(emptyStateStyle.Render(
+			"No PRs were found that match the given filters",
+		)),
 	)
 
 	return m
@@ -52,6 +54,10 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 
 func (m *Model) Id() int {
 	return m.section.Id
+}
+
+func (m *Model) Type() string {
+	return m.section.Type
 }
 
 func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
@@ -71,9 +77,20 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		var internalTickCmd tea.Cmd
 		m.section.Spinner, internalTickCmd = m.section.Spinner.Update(msg.InternalTickMsg)
 		cmd = m.section.CreateNextTickCmd(internalTickCmd)
+
+	case search.SearchSubmitted:
+		m.SetIsSearching(false)
+		m.section.Config.Filters = msg.Term
+		cmd = m.FetchSectionRows()
+
+	case search.SearchCancelled:
+		m.SetIsSearching(false)
+
 	}
 
-	return &m, cmd
+	sm, searchCmd := m.section.Search.Update(msg)
+	m.section.Search = sm
+	return &m, tea.Batch(searchCmd, cmd)
 }
 
 func (m *Model) View() string {
@@ -85,8 +102,15 @@ func (m *Model) View() string {
 		))
 	}
 
+	var search string
+	search = m.section.Search.View(*m.section.Ctx)
+
 	return containerStyle.Copy().Render(
-		m.section.Table.View(spinnerText),
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			search,
+			m.section.Table.View(spinnerText),
+		),
 	)
 }
 
@@ -181,6 +205,10 @@ func (m *Model) LastItem() int {
 	return m.section.LastItem()
 }
 
+func (m *Model) ResetFilters() {
+	m.section.Search.ResetValue()
+}
+
 func (m *Model) FetchSectionRows() tea.Cmd {
 	if m == nil {
 		return nil
@@ -192,6 +220,7 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, m.section.CreateNextTickCmd(spinner.Tick))
 
+	log.Printf("fetching filters: %v\n", m.section.Config.Filters)
 	cmds = append(cmds, func() tea.Msg {
 		limit := m.section.Config.Limit
 		if limit == nil {
@@ -219,6 +248,21 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 
 func (m *Model) GetIsLoading() bool {
 	return m.section.IsLoading
+}
+
+func (m *Model) GetIsSearching() bool {
+	return m.section.IsSearching
+}
+
+func (m *Model) SetIsSearching(val bool) tea.Cmd {
+	m.section.IsSearching = val
+	if val {
+		m.section.Search.Focus()
+		return m.section.Search.Init()
+	} else {
+		m.section.Search.Blur()
+		return nil
+	}
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {

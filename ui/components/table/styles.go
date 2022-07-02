@@ -24,7 +24,7 @@ var (
 
 	headerStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(styles.DefaultTheme.SecondaryBorder).
+			BorderForeground(styles.DefaultTheme.FaintBorder).
 			BorderBottom(true)
 
 	rowStyle = lipgloss.NewStyle().

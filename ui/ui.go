@@ -17,6 +17,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/ui/components/tabs"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -69,6 +70,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if currSection != nil && currSection.GetIsSearching() {
+			cmd = m.updateSection(currSection.Id(), currSection.Type(), msg)
+			break
+		}
+
 		switch {
 		case m.isUserDefinedKeybinding(msg):
 			m.executeKeybinding(msg.String())
@@ -115,6 +121,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Refresh):
+			currSection.ResetFilters()
 			cmd = currSection.FetchSectionRows()
 
 		case key.Matches(msg, m.keys.SwitchView):
@@ -129,6 +136,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd = fetchSectionsCmds
 			}
 			m.onViewedRowChanged()
+
+		case key.Matches(msg, m.keys.Search):
+			if currSection != nil {
+				cmd = currSection.SetIsSearching(true)
+			}
 
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
@@ -162,6 +174,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.syncProgramContext()
+
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 	m.help, helpCmd = m.help.Update(msg)
 	cmds = append(cmds, cmd, sidebarCmd, helpCmd)
@@ -220,7 +233,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.help.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - help.FooterHeight
+	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - styles.FooterHeight
 	m.syncMainContentWidth()
 }
 
@@ -231,19 +244,22 @@ func (m *Model) syncProgramContext() {
 	m.sidebar.UpdateProgramContext(&m.ctx)
 }
 
-func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
+func (m *Model) updateSection(id int, st string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
-
-	switch msg.GetSectionType() {
+	switch st {
 	case prssection.SectionType:
-		updatedSection, cmd = m.prs[msg.GetSectionId()].Update(msg)
-		m.prs[msg.GetSectionId()] = updatedSection
+		updatedSection, cmd = m.prs[id].Update(msg)
+		m.prs[id] = updatedSection
 	case issuessection.SectionType:
-		updatedSection, cmd = m.issues[msg.GetSectionId()].Update(msg)
-		m.issues[msg.GetSectionId()] = updatedSection
+		updatedSection, cmd = m.issues[id].Update(msg)
+		m.issues[id] = updatedSection
 	}
 
 	return cmd
+}
+
+func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
+	return m.updateSection(msg.GetSectionId(), msg.GetSectionType(), msg)
 }
 
 func (m *Model) syncMainContentWidth() {

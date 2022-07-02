@@ -14,6 +14,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -79,7 +80,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 func (m *Model) getDimensions() constants.Dimensions {
 	return constants.Dimensions{
 		Width:  m.section.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.section.Ctx.MainContentHeight - 2,
+		Height: m.section.Ctx.MainContentHeight - 2 - styles.SearchHeight,
 	}
 }
 
@@ -241,8 +242,31 @@ func (m *Model) Id() int {
 	return m.section.Id
 }
 
+func (m *Model) Type() string {
+	return m.section.Type
+}
+
 func (m *Model) GetIsLoading() bool {
 	return m.section.IsLoading
+}
+
+func (m *Model) GetIsSearching() bool {
+	return m.section.IsSearching
+}
+
+func (m *Model) SetIsSearching(val bool) tea.Cmd {
+	m.section.IsSearching = val
+	if val {
+		m.section.Search.Focus()
+		return m.section.Search.Init()
+	} else {
+		m.section.Search.Blur()
+		return nil
+	}
+}
+
+func (m *Model) ResetFilters() {
+	m.section.Search.ResetValue()
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {

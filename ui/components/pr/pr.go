@@ -53,7 +53,12 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 	}
 
 	accStatus := "SUCCESS"
-	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
+	commits := pr.Data.Commits.Nodes
+	if len(commits) == 0 {
+		return "PENDING"
+	}
+
+	mostRecentCommit := commits[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
 		var conclusion string
 		if statusCheck.Typename == "CheckRun" {
