@@ -5,13 +5,19 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 )
 
 const DashDir = "gh-dash"
 const ConfigFileName = "config.yml"
 const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
+
+var validate *validator.Validate
 
 type ViewType string
 
@@ -47,12 +53,50 @@ type Keybindings struct {
 	Prs []Keybinding `yaml:"prs"`
 }
 
+type HexColor string
+
+type ColorThemeText struct {
+	Main      HexColor `yaml:"main" validate:"hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
+	Bright    HexColor `yaml:"bright" validate:"hexcolor"`
+	Subtle    HexColor `yaml:"subtle" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+	Warning   HexColor `yaml:"warning" validate:"hexcolor"`
+	Success   HexColor `yaml:"success" validate:"hexcolor"`
+}
+
+type ColorThemeBorder struct {
+	Main      HexColor `yaml:"main" validate:"hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+}
+
+type ColorThemeBackground struct {
+	Selected HexColor `yaml:"selected" validate:"hexcolor"`
+}
+
+type ColorTheme struct {
+	Text       ColorThemeText       `yaml:"text" validate:"dive"`
+	Background ColorThemeBackground `yaml:"background" validate:"dive"`
+	Border     ColorThemeBorder     `yaml:"border" validate:"dive"`
+}
+
+type ColorThemeConfig struct {
+	UseShellTheme bool       `yaml:"useShellTheme,omitempty"`
+	Inline        ColorTheme `yaml:",inline" validate:"dive"`
+}
+
+type ThemeConfig struct {
+	Colors ColorThemeConfig `yaml:"colors" validate:"dive"`
+}
+
 type Config struct {
 	PRSections     []SectionConfig   `yaml:"prSections"`
 	IssuesSections []SectionConfig   `yaml:"issuesSections"`
 	Defaults       Defaults          `yaml:"defaults"`
 	Keybindings    Keybindings       `yaml:"keybindings"`
 	RepoPaths      map[string]string `yaml:"repoPaths"`
+	Theme          ThemeConfig       `yaml:"theme" validate:"dive"`
 }
 
 type configError struct {
@@ -106,6 +150,54 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			Prs: []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
+		Theme: ThemeConfig{
+			Colors: ColorThemeConfig{
+				UseShellTheme: false,
+				Inline: func() ColorTheme {
+					if lipgloss.HasDarkBackground() {
+						return ColorTheme{
+							Text: ColorThemeText{
+								Main:      "#E2E1ED",
+								Secondary: "#666CA6",
+								Bright:    "#E2E1ED",
+								Subtle:    "#242347",
+								Faint:     "#3E4057",
+								Warning:   "#F23D5C",
+								Success:   "#3DF294",
+							},
+							Background: ColorThemeBackground{
+								Selected: "#39386B",
+							},
+							Border: ColorThemeBorder{
+								Main:      "#383B5B",
+								Secondary: "#39386B",
+								Faint:     "#2B2B40",
+							},
+						}
+					} else {
+						return ColorTheme{
+							Text: ColorThemeText{
+								Main:      "#242347",
+								Secondary: "#5A56E0",
+								Bright:    "#242347",
+								Subtle:    "#5A57B5",
+								Faint:     "#5A56E0",
+								Warning:   "#F23D5C",
+								Success:   "#3DF294",
+							},
+							Background: ColorThemeBackground{
+								Selected: "#5A57B5",
+							},
+							Border: ColorThemeBorder{
+								Main:      "#5A56E0",
+								Secondary: "#5A56E0",
+								Faint:     "#D9DCCF",
+							},
+						}
+					}
+				}(),
+			},
+		},
 	}
 }
 
@@ -240,17 +332,34 @@ func (parser ConfigParser) readConfigFile(path string) (Config, error) {
 	}
 
 	err = yaml.Unmarshal([]byte(data), &config)
+	if err != nil {
+		return config, err
+	}
+
+	err = validate.Struct(config)
 	return config, err
 }
 
 func initParser() ConfigParser {
+	validate = validator.New()
+
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.Split(fld.Tag.Get("yaml"), ",")[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
 	return ConfigParser{}
 }
 
 func ParseConfig() (Config, error) {
 	parser := initParser()
+
 	var config Config
 	var err error
+
 	configFilePath, err := parser.getConfigFileOrCreateIfMissing()
 	if err != nil {
 		return config, parsingError{err: err}

@@ -1,8 +1,14 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/config"
+)
 
-var indigo = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#383B5B"}
+var (
+	SingleRuneWidth    = 4
+	MainContentPadding = 1
+)
 
 type Theme struct {
 	MainText           lipgloss.AdaptiveColor
@@ -18,23 +24,43 @@ type Theme struct {
 	SubleMainText      lipgloss.AdaptiveColor
 }
 
-var subtleIndigo = lipgloss.AdaptiveColor{Light: "#5A57B5", Dark: "#242347"}
+var DefaultTheme = func() Theme {
+	_shimHex := func(hex config.HexColor) lipgloss.AdaptiveColor {
+		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
+	}
+	_shimAnsi := func(code string) lipgloss.AdaptiveColor {
+		return lipgloss.AdaptiveColor{Light: code, Dark: code}
+	}
 
-var DefaultTheme = Theme{
-	MainText:           lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"},
-	BrightMainText:     lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"},
-	SubleMainText:      subtleIndigo,
-	Border:             lipgloss.AdaptiveColor{Light: indigo.Light, Dark: indigo.Dark},
-	SecondaryBorder:    lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#39386b"},
-	WarningText:        lipgloss.AdaptiveColor{Light: "#F23D5C", Dark: "#F23D5C"},
-	SuccessText:        lipgloss.AdaptiveColor{Light: "#3DF294", Dark: "#3DF294"},
-	FaintBorder:        lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#2b2b40"},
-	FaintText:          lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#3E4057"},
-	SelectedBackground: lipgloss.AdaptiveColor{Light: subtleIndigo.Light, Dark: "#39386b"},
-	SecondaryText:      lipgloss.AdaptiveColor{Light: indigo.Light, Dark: "#666CA6"},
-}
+	cfg, _ := config.ParseConfig()
 
-var (
-	SingleRuneWidth    = 4
-	MainContentPadding = 1
-)
+	if cfg.Theme.Colors.UseShellTheme {
+		return Theme{
+			MainText:           _shimAnsi("255"),
+			BrightMainText:     _shimAnsi("15"),
+			SubleMainText:      _shimAnsi("254"),
+			Border:             _shimAnsi("0"),
+			SecondaryBorder:    _shimAnsi("8"),
+			WarningText:        _shimAnsi("1"),
+			SuccessText:        _shimAnsi("2"),
+			FaintBorder:        _shimAnsi("240"),
+			FaintText:          _shimAnsi("253"),
+			SelectedBackground: _shimAnsi("6"),
+			SecondaryText:      _shimAnsi("11"),
+		}
+	} else {
+		return Theme{
+			MainText:           _shimHex(cfg.Theme.Colors.Inline.Text.Main),
+			BrightMainText:     _shimHex(cfg.Theme.Colors.Inline.Text.Bright),
+			SubleMainText:      _shimHex(cfg.Theme.Colors.Inline.Text.Subtle),
+			Border:             _shimHex(cfg.Theme.Colors.Inline.Border.Main),
+			SecondaryBorder:    _shimHex(cfg.Theme.Colors.Inline.Border.Secondary),
+			WarningText:        _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
+			SuccessText:        _shimHex(cfg.Theme.Colors.Inline.Text.Success),
+			FaintBorder:        _shimHex(cfg.Theme.Colors.Inline.Border.Faint),
+			FaintText:          _shimHex(cfg.Theme.Colors.Inline.Text.Faint),
+			SelectedBackground: _shimHex(cfg.Theme.Colors.Inline.Background.Selected),
+			SecondaryText:      _shimHex(cfg.Theme.Colors.Inline.Text.Secondary),
+		}
+	}
+}()
