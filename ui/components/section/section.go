@@ -57,7 +57,7 @@ type Table interface {
 
 type Search interface {
 	SetIsSearching(val bool) tea.Cmd
-	GetIsSearching() bool
+	IsSearchFocused() bool
 	ResetFilters()
 	GetFilters() string
 }
@@ -90,12 +90,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		m.Table.SyncViewPortContent()
 		m.Search.UpdateProgramContext(ctx)
 	}
-}
-
-type SectionMsg interface {
-	GetSectionId() int
-	GetSectionType() string
-	GetInternalMsg() tea.Msg
 }
 
 type SectionRowsFetchedMsg struct {
@@ -135,7 +129,7 @@ func (m *Model) LastItem() int {
 	return m.Table.LastItem()
 }
 
-func (m *Model) GetIsSearching() bool {
+func (m *Model) IsSearchFocused() bool {
 	return m.IsSearching
 }
 
@@ -155,7 +149,7 @@ func (m *Model) ResetFilters() {
 	m.Search.ResetValue()
 }
 
-type DelegatedSectionMsg struct {
+type SectionMsg struct {
 	Id          int
 	Type        string
 	InternalMsg tea.Msg
@@ -168,7 +162,7 @@ func (m *Model) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 
 	return func() tea.Msg {
 		internalMsg := cmd()
-		return DelegatedSectionMsg{
+		return SectionMsg{
 			Id:          m.Id,
 			Type:        m.Type,
 			InternalMsg: internalMsg,

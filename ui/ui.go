@@ -70,7 +70,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if currSection != nil && currSection.GetIsSearching() {
+		if currSection != nil && currSection.IsSearchFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 			break
 		}
@@ -156,7 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setCurrentViewSections(newSections)
 		cmd = fetchSectionsCmds
 
-	case section.DelegatedSectionMsg:
+	case section.SectionMsg:
 		cmd = m.updateRelevantSection(msg)
 
 		if msg.Id == m.currSectionId {
@@ -250,11 +250,11 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 
 	switch msg.(type) {
 
-	case section.DelegatedSectionMsg:
+	case section.SectionMsg:
 		wrappedMsg = msg
 
 	default:
-		wrappedMsg = section.DelegatedSectionMsg{
+		wrappedMsg = section.SectionMsg{
 			Id:          id,
 			Type:        sType,
 			InternalMsg: msg,
@@ -273,7 +273,7 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	return cmd
 }
 
-func (m *Model) updateRelevantSection(msg section.DelegatedSectionMsg) (cmd tea.Cmd) {
+func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
 	return m.updateSection(msg.Id, msg.Type, msg)
 }
 

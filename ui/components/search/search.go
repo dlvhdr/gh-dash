@@ -11,7 +11,6 @@ import (
 type Model struct {
 	sectionType  string
 	initialValue string
-	searchValue  string
 	textInput    textinput.Model
 }
 
@@ -32,7 +31,6 @@ func NewModel(sectionType string, ctx *context.ProgramContext, initialValue stri
 		textInput:    ti,
 		initialValue: initialValue,
 		sectionType:  sectionType,
-		searchValue:  initialValue,
 	}
 }
 
@@ -42,19 +40,6 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
-			m.searchValue = m.textInput.Value()
-			return m, m.submitSearch
-		case tea.KeyCtrlC, tea.KeyEsc:
-			m.textInput.SetValue(m.initialValue)
-			m.searchValue = m.initialValue
-			return m, m.cancelSearch
-		}
-	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
@@ -81,8 +66,9 @@ func (m *Model) Blur() {
 	m.textInput.Blur()
 }
 
-func (m *Model) ResetValue() {
+func (m *Model) ResetValue() string {
 	m.textInput.SetValue(m.initialValue)
+	return m.textInput.Value()
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -110,5 +96,5 @@ func (m Model) submitSearch() tea.Msg {
 }
 
 func (m Model) Value() string {
-	return m.searchValue
+	return m.textInput.Value()
 }

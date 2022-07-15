@@ -20,7 +20,8 @@ const SectionType = "prs"
 
 type Model struct {
 	section.Model
-	Prs []data.PullRequestData
+	Prs         []data.PullRequestData
+	searchValue string
 }
 
 func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) Model {
@@ -37,6 +38,7 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 	m := Model{
 		section,
 		[]data.PullRequestData{},
+		config.Filters,
 	}
 
 	m.Table = table.NewModel(
@@ -57,12 +59,25 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case section.DelegatedSectionMsg:
+	case section.SectionMsg:
 		if msg.Id != m.Id || msg.Type != m.Type {
 			return &m, nil
 		}
 
 		switch iMsg := msg.InternalMsg.(type) {
+
+		case tea.KeyMsg:
+			switch iMsg.Type {
+			case tea.KeyEnter:
+				m.searchValue = m.Search.Value()
+				m.SetIsSearching(false)
+				cmd = m.FetchSectionRows()
+				return &m, nil
+			case tea.KeyCtrlC, tea.KeyEsc:
+				m.searchValue = m.Search.ResetValue()
+				m.SetIsSearching(false)
+				return &m, nil
+			}
 
 		case SectionPullRequestsFetchedMsg:
 			m.Prs = iMsg.Prs
@@ -77,13 +92,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			var internalTickCmd tea.Cmd
 			m.Spinner, internalTickCmd = m.Spinner.Update(iMsg.InternalTickMsg)
 			cmd = m.CreateNextTickCmd(internalTickCmd)
-
-		case search.SearchSubmitted:
-			m.SetIsSearching(false)
-			cmd = m.FetchSectionRows()
-
-		case search.SearchCancelled:
-			m.SetIsSearching(false)
 
 		}
 		sm, searchCmd := m.Search.Update(msg.InternalMsg)
