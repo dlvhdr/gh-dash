@@ -66,9 +66,8 @@ func (m *Model) Blur() {
 	m.textInput.Blur()
 }
 
-func (m *Model) ResetValue() string {
-	m.textInput.SetValue(m.initialValue)
-	return m.textInput.Value()
+func (m *Model) SetValue(val string) {
+	m.textInput.SetValue(val)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {

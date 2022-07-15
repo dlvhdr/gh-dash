@@ -59,25 +59,28 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
+	case tea.KeyMsg:
+
+		switch msg.Type {
+
+		case tea.KeyEnter:
+			m.searchValue = m.Search.Value()
+			m.SetIsSearching(false)
+			return &m, m.FetchSectionRows()
+
+		case tea.KeyCtrlC, tea.KeyEsc:
+			m.Search.SetValue(m.searchValue)
+			blinkCmd := m.SetIsSearching(false)
+			return &m, blinkCmd
+
+		}
+
 	case section.SectionMsg:
 		if msg.Id != m.Id || msg.Type != m.Type {
 			return &m, nil
 		}
 
 		switch iMsg := msg.InternalMsg.(type) {
-
-		case tea.KeyMsg:
-			switch iMsg.Type {
-			case tea.KeyEnter:
-				m.searchValue = m.Search.Value()
-				m.SetIsSearching(false)
-				cmd = m.FetchSectionRows()
-				return &m, nil
-			case tea.KeyCtrlC, tea.KeyEsc:
-				m.searchValue = m.Search.ResetValue()
-				m.SetIsSearching(false)
-				return &m, nil
-			}
 
 		case SectionPullRequestsFetchedMsg:
 			m.Prs = iMsg.Prs
@@ -94,12 +97,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			cmd = m.CreateNextTickCmd(internalTickCmd)
 
 		}
-		sm, searchCmd := m.Search.Update(msg.InternalMsg)
-		m.Search = sm
-		return &m, tea.Batch(m.MakeSectionCmd(searchCmd), cmd)
 	}
 
-	return &m, nil
+	search, searchCmd := m.Search.Update(msg)
+	m.Search = search
+	return &m, tea.Batch(cmd, searchCmd)
 }
 
 func (m *Model) View() string {

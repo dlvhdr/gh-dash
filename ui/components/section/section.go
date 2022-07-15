@@ -137,8 +137,7 @@ func (m *Model) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
 		m.Search.Focus()
-		cmd := m.Search.Init()
-		return m.MakeSectionCmd(cmd)
+		return m.Search.Init()
 	} else {
 		m.Search.Blur()
 		return nil
@@ -146,7 +145,7 @@ func (m *Model) SetIsSearching(val bool) tea.Cmd {
 }
 
 func (m *Model) ResetFilters() {
-	m.Search.ResetValue()
+	m.Search.SetValue(m.Config.Filters)
 }
 
 type SectionMsg struct {

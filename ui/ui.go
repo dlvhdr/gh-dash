@@ -72,7 +72,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if currSection != nil && currSection.IsSearchFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
-			break
+			return m, cmd
 		}
 
 		switch {
@@ -140,6 +140,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
 				cmd = currSection.SetIsSearching(true)
+				return m, cmd
 			}
 
 		case key.Matches(msg, m.keys.Quit):
@@ -177,7 +178,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 	m.help, helpCmd = m.help.Update(msg)
-	cmds = append(cmds, cmd, sidebarCmd, helpCmd)
+	sectionCmd := m.updateCurrentSection(msg)
+	cmds = append(cmds, cmd, sidebarCmd, helpCmd, sectionCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -246,27 +248,12 @@ func (m *Model) syncProgramContext() {
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
-	var wrappedMsg tea.Msg
-
-	switch msg.(type) {
-
-	case section.SectionMsg:
-		wrappedMsg = msg
-
-	default:
-		wrappedMsg = section.SectionMsg{
-			Id:          id,
-			Type:        sType,
-			InternalMsg: msg,
-		}
-	}
-
 	switch sType {
 	case prssection.SectionType:
-		updatedSection, cmd = m.prs[id].Update(wrappedMsg)
+		updatedSection, cmd = m.prs[id].Update(msg)
 		m.prs[id] = updatedSection
 	case issuessection.SectionType:
-		updatedSection, cmd = m.issues[id].Update(wrappedMsg)
+		updatedSection, cmd = m.issues[id].Update(msg)
 		m.issues[id] = updatedSection
 	}
 
@@ -275,6 +262,14 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 
 func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
 	return m.updateSection(msg.Id, msg.Type, msg)
+}
+
+func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
+	section := m.getCurrSection()
+	if section == nil {
+		return nil
+	}
+	return m.updateSection(section.GetId(), section.GetType(), msg)
 }
 
 func (m *Model) syncMainContentWidth() {
