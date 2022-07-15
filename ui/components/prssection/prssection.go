@@ -29,7 +29,7 @@ func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) 
 		Config:      config,
 		Ctx:         ctx,
 		Spinner:     spinner.Model{Spinner: spinner.Dot},
-		Search:      search.NewModel(id, SectionType, ctx, config.Filters),
+		Search:      search.NewModel(SectionType, ctx, config.Filters),
 		IsLoading:   true,
 		IsSearching: false,
 		Type:        SectionType,
@@ -56,33 +56,42 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case SectionPullRequestsFetchedMsg:
-		m.Prs = msg.Prs
-		m.IsLoading = false
-		m.Table.SetRows(m.BuildRows())
 
-	case section.SectionTickMsg:
-		if !m.IsLoading {
+	case section.DelegatedSectionMsg:
+		if msg.Id != m.Id || msg.Type != m.Type {
 			return &m, nil
 		}
 
-		var internalTickCmd tea.Cmd
-		m.Spinner, internalTickCmd = m.Spinner.Update(msg.InternalTickMsg)
-		cmd = m.CreateNextTickCmd(internalTickCmd)
+		switch iMsg := msg.InternalMsg.(type) {
 
-	case search.SearchSubmitted:
-		m.SetIsSearching(false)
-		m.Config.Filters = msg.Term
-		cmd = m.FetchSectionRows()
+		case SectionPullRequestsFetchedMsg:
+			m.Prs = iMsg.Prs
+			m.IsLoading = false
+			m.Table.SetRows(m.BuildRows())
 
-	case search.SearchCancelled:
-		m.SetIsSearching(false)
+		case section.SectionTickMsg:
+			if !m.IsLoading {
+				return &m, nil
+			}
 
+			var internalTickCmd tea.Cmd
+			m.Spinner, internalTickCmd = m.Spinner.Update(iMsg.InternalTickMsg)
+			cmd = m.CreateNextTickCmd(internalTickCmd)
+
+		case search.SearchSubmitted:
+			m.SetIsSearching(false)
+			cmd = m.FetchSectionRows()
+
+		case search.SearchCancelled:
+			m.SetIsSearching(false)
+
+		}
+		sm, searchCmd := m.Search.Update(msg.InternalMsg)
+		m.Search = sm
+		return &m, tea.Batch(m.MakeSectionCmd(searchCmd), cmd)
 	}
 
-	sm, searchCmd := m.Search.Update(msg)
-	m.Search = sm
-	return &m, tea.Batch(searchCmd, cmd)
+	return &m, nil
 }
 
 func (m *Model) View() string {
@@ -157,16 +166,7 @@ func (m *Model) NumRows() int {
 }
 
 type SectionPullRequestsFetchedMsg struct {
-	SectionId int
-	Prs       []data.PullRequestData
-}
-
-func (msg SectionPullRequestsFetchedMsg) GetSectionId() int {
-	return msg.SectionId
-}
-
-func (msg SectionPullRequestsFetchedMsg) GetSectionType() string {
-	return SectionType
+	Prs []data.PullRequestData
 }
 
 func (m *Model) GetCurrRow() data.RowData {
@@ -188,16 +188,15 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	var cmds []tea.Cmd
 	cmds = append(cmds, m.CreateNextTickCmd(spinner.Tick))
 
-	cmds = append(cmds, func() tea.Msg {
+	cmd := func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		fetchedPrs, err := data.FetchPullRequests(m.Config.Filters, *limit)
+		fetchedPrs, err := data.FetchPullRequests(m.GetFilters(), *limit)
 		if err != nil {
 			return SectionPullRequestsFetchedMsg{
-				SectionId: m.Id,
-				Prs:       []data.PullRequestData{},
+				Prs: []data.PullRequestData{},
 			}
 		}
 
@@ -205,10 +204,10 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 			return fetchedPrs[i].UpdatedAt.After(fetchedPrs[j].UpdatedAt)
 		})
 		return SectionPullRequestsFetchedMsg{
-			SectionId: m.Id,
-			Prs:       fetchedPrs,
+			Prs: fetchedPrs,
 		}
-	})
+	}
+	cmds = append(cmds, m.MakeSectionCmd(cmd))
 
 	return tea.Batch(cmds...)
 }

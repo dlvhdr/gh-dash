@@ -30,6 +30,7 @@ type Section interface {
 	Table
 	Search
 	UpdateProgramContext(ctx *context.ProgramContext)
+	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
 }
 
 type Identifier interface {
@@ -58,19 +59,18 @@ type Search interface {
 	SetIsSearching(val bool) tea.Cmd
 	GetIsSearching() bool
 	ResetFilters()
+	GetFilters() string
 }
 
 func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 	if m == nil || nextTickCmd == nil {
 		return nil
 	}
-	return func() tea.Msg {
+	return m.MakeSectionCmd(func() tea.Msg {
 		return SectionTickMsg{
-			SectionId:       m.Id,
 			InternalTickMsg: nextTickCmd(),
-			Type:            m.Type,
 		}
-	}
+	})
 }
 
 func (m *Model) GetDimensions() constants.Dimensions {
@@ -88,14 +88,14 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
+		m.Search.UpdateProgramContext(ctx)
 	}
-
-	m.Search.UpdateProgramContext(ctx)
 }
 
 type SectionMsg interface {
 	GetSectionId() int
 	GetSectionType() string
+	GetInternalMsg() tea.Msg
 }
 
 type SectionRowsFetchedMsg struct {
@@ -108,9 +108,7 @@ func (msg SectionRowsFetchedMsg) GetSectionId() int {
 }
 
 type SectionTickMsg struct {
-	SectionId       int
 	InternalTickMsg tea.Msg
-	Type            string
 }
 
 func (m *Model) GetId() int {
@@ -119,14 +117,6 @@ func (m *Model) GetId() int {
 
 func (m *Model) GetType() string {
 	return m.Type
-}
-
-func (msg SectionTickMsg) GetSectionId() int {
-	return msg.SectionId
-}
-
-func (msg SectionTickMsg) GetSectionType() string {
-	return msg.Type
 }
 
 func (m *Model) NextRow() int {
@@ -153,7 +143,8 @@ func (m *Model) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
 		m.Search.Focus()
-		return m.Search.Init()
+		cmd := m.Search.Init()
+		return m.MakeSectionCmd(cmd)
 	} else {
 		m.Search.Blur()
 		return nil
@@ -162,4 +153,29 @@ func (m *Model) SetIsSearching(val bool) tea.Cmd {
 
 func (m *Model) ResetFilters() {
 	m.Search.ResetValue()
+}
+
+type DelegatedSectionMsg struct {
+	Id          int
+	Type        string
+	InternalMsg tea.Msg
+}
+
+func (m *Model) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
+	if cmd == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		internalMsg := cmd()
+		return DelegatedSectionMsg{
+			Id:          m.Id,
+			Type:        m.Type,
+			InternalMsg: internalMsg,
+		}
+	}
+}
+
+func (m *Model) GetFilters() string {
+	return m.Search.Value()
 }

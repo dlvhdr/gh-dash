@@ -9,13 +9,13 @@ import (
 )
 
 type Model struct {
-	sectionId    int
 	sectionType  string
-	InitialValue string
+	initialValue string
+	searchValue  string
 	textInput    textinput.Model
 }
 
-func NewModel(sectionId int, sectionType string, ctx *context.ProgramContext, initialValue string) Model {
+func NewModel(sectionType string, ctx *context.ProgramContext, initialValue string) Model {
 	prompt := " is:pr "
 	ti := textinput.New()
 	ti.Placeholder = ""
@@ -30,9 +30,9 @@ func NewModel(sectionId int, sectionType string, ctx *context.ProgramContext, in
 
 	return Model{
 		textInput:    ti,
-		InitialValue: initialValue,
-		sectionId:    sectionId,
+		initialValue: initialValue,
 		sectionType:  sectionType,
+		searchValue:  initialValue,
 	}
 }
 
@@ -47,9 +47,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
+			m.searchValue = m.textInput.Value()
 			return m, m.submitSearch
 		case tea.KeyCtrlC, tea.KeyEsc:
-			m.textInput.SetValue(m.InitialValue)
+			m.textInput.SetValue(m.initialValue)
+			m.searchValue = m.initialValue
 			return m, m.cancelSearch
 		}
 	}
@@ -80,12 +82,13 @@ func (m *Model) Blur() {
 }
 
 func (m *Model) ResetValue() {
-	m.textInput.SetValue(m.InitialValue)
+	m.textInput.SetValue(m.initialValue)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.textInput.Width = getInputWidth(ctx, m.textInput.Prompt)
 	m.textInput.SetValue(m.textInput.Value())
+	m.textInput.Blur()
 }
 
 func getInputWidth(ctx *context.ProgramContext, prompt string) int {
@@ -93,41 +96,19 @@ func getInputWidth(ctx *context.ProgramContext, prompt string) int {
 }
 
 type SearchCancelled struct {
-	sectionId   int
-	sectionType string
-}
-
-func (sc SearchCancelled) GetSectionId() int {
-	return sc.sectionId
-}
-func (sc SearchCancelled) GetSectionType() string {
-	return sc.sectionType
 }
 
 func (m Model) cancelSearch() tea.Msg {
-	return SearchCancelled{
-		sectionId:   m.sectionId,
-		sectionType: m.sectionType,
-	}
+	return SearchCancelled{}
 }
 
 type SearchSubmitted struct {
-	sectionId   int
-	sectionType string
-	Term        string
-}
-
-func (sc SearchSubmitted) GetSectionId() int {
-	return sc.sectionId
-}
-func (sc SearchSubmitted) GetSectionType() string {
-	return sc.sectionType
 }
 
 func (m Model) submitSearch() tea.Msg {
-	return SearchSubmitted{
-		sectionId:   m.sectionId,
-		sectionType: m.sectionType,
-		Term:        m.textInput.Value(),
-	}
+	return SearchSubmitted{}
+}
+
+func (m Model) Value() string {
+	return m.searchValue
 }

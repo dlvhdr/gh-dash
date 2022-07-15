@@ -156,11 +156,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setCurrentViewSections(newSections)
 		cmd = fetchSectionsCmds
 
-	case section.SectionMsg:
+	case section.DelegatedSectionMsg:
 		cmd = m.updateRelevantSection(msg)
 
-		if msg.GetSectionId() == m.currSectionId {
-			switch msg.GetSectionType() {
+		if msg.Id == m.currSectionId {
+			switch msg.Type {
 			case prssection.SectionType:
 				m.onViewedRowChanged()
 			}
@@ -244,22 +244,37 @@ func (m *Model) syncProgramContext() {
 	m.sidebar.UpdateProgramContext(&m.ctx)
 }
 
-func (m *Model) updateSection(id int, st string, msg tea.Msg) (cmd tea.Cmd) {
+func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
-	switch st {
+	var wrappedMsg tea.Msg
+
+	switch msg.(type) {
+
+	case section.DelegatedSectionMsg:
+		wrappedMsg = msg
+
+	default:
+		wrappedMsg = section.DelegatedSectionMsg{
+			Id:          id,
+			Type:        sType,
+			InternalMsg: msg,
+		}
+	}
+
+	switch sType {
 	case prssection.SectionType:
-		updatedSection, cmd = m.prs[id].Update(msg)
+		updatedSection, cmd = m.prs[id].Update(wrappedMsg)
 		m.prs[id] = updatedSection
 	case issuessection.SectionType:
-		updatedSection, cmd = m.issues[id].Update(msg)
+		updatedSection, cmd = m.issues[id].Update(wrappedMsg)
 		m.issues[id] = updatedSection
 	}
 
 	return cmd
 }
 
-func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
-	return m.updateSection(msg.GetSectionId(), msg.GetSectionType(), msg)
+func (m *Model) updateRelevantSection(msg section.DelegatedSectionMsg) (cmd tea.Cmd) {
+	return m.updateSection(msg.Id, msg.Type, msg)
 }
 
 func (m *Model) syncMainContentWidth() {
@@ -274,12 +289,12 @@ func (m *Model) syncSidebarPr() {
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 
-	switch data := currRowData.(type) {
+	switch row := currRowData.(type) {
 	case *data.PullRequestData:
-		content := prsidebar.NewModel(data, width).View()
+		content := prsidebar.NewModel(row, width).View()
 		m.sidebar.SetContent(content)
 	case *data.IssueData:
-		content := issuesidebar.NewModel(data, width).View()
+		content := issuesidebar.NewModel(row, width).View()
 		m.sidebar.SetContent(content)
 	}
 }
