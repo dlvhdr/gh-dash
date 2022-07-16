@@ -6,7 +6,7 @@ import (
 
 var (
 	pillStyle = styles.MainTextStyle.Copy().
-		Foreground(styles.DefaultTheme.SubleMainText).
+		Foreground(styles.DefaultTheme.InvertedText).
 		PaddingLeft(1).
 		PaddingRight(1)
 )
