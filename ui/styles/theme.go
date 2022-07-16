@@ -12,7 +12,6 @@ var (
 
 type Theme struct {
 	MainText           lipgloss.AdaptiveColor
-	BrightMainText     lipgloss.AdaptiveColor
 	Border             lipgloss.AdaptiveColor
 	SecondaryBorder    lipgloss.AdaptiveColor
 	WarningText        lipgloss.AdaptiveColor
@@ -37,7 +36,6 @@ var DefaultTheme = func() Theme {
 	if cfg.Theme.Colors.UseShellTheme {
 		return Theme{
 			MainText:           _shimAnsi("255"),
-			BrightMainText:     _shimAnsi("15"),
 			SubleMainText:      _shimAnsi("254"),
 			Border:             _shimAnsi("0"),
 			SecondaryBorder:    _shimAnsi("8"),
@@ -50,10 +48,9 @@ var DefaultTheme = func() Theme {
 		}
 	} else {
 		return Theme{
-			MainText:           _shimHex(cfg.Theme.Colors.Inline.Text.Main),
-			BrightMainText:     _shimHex(cfg.Theme.Colors.Inline.Text.Bright),
-			SubleMainText:      _shimHex(cfg.Theme.Colors.Inline.Text.Subtle),
-			Border:             _shimHex(cfg.Theme.Colors.Inline.Border.Main),
+			MainText:           _shimHex(cfg.Theme.Colors.Inline.Text.Primary),
+			SubleMainText:      _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
+			Border:             _shimHex(cfg.Theme.Colors.Inline.Border.Primary),
 			SecondaryBorder:    _shimHex(cfg.Theme.Colors.Inline.Border.Secondary),
 			WarningText:        _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
 			SuccessText:        _shimHex(cfg.Theme.Colors.Inline.Text.Success),

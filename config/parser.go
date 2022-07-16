@@ -56,17 +56,16 @@ type Keybindings struct {
 type HexColor string
 
 type ColorThemeText struct {
-	Main      HexColor `yaml:"main" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Bright    HexColor `yaml:"bright" validate:"hexcolor"`
-	Subtle    HexColor `yaml:"subtle" validate:"hexcolor"`
+	Inverted  HexColor `yaml:"inverted" validate:"hexcolor"`
 	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
 	Warning   HexColor `yaml:"warning" validate:"hexcolor"`
 	Success   HexColor `yaml:"success" validate:"hexcolor"`
 }
 
 type ColorThemeBorder struct {
-	Main      HexColor `yaml:"main" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
 	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
 }
@@ -157,10 +156,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					if lipgloss.HasDarkBackground() {
 						return ColorTheme{
 							Text: ColorThemeText{
-								Main:      "#E2E1ED",
+								Primary:   "#E2E1ED",
 								Secondary: "#666CA6",
-								Bright:    "#E2E1ED",
-								Subtle:    "#242347",
+								Inverted:  "#242347",
 								Faint:     "#3E4057",
 								Warning:   "#F23D5C",
 								Success:   "#3DF294",
@@ -169,7 +167,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 								Selected: "#39386B",
 							},
 							Border: ColorThemeBorder{
-								Main:      "#383B5B",
+								Primary:   "#383B5B",
 								Secondary: "#39386B",
 								Faint:     "#2B2B40",
 							},
@@ -177,10 +175,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					} else {
 						return ColorTheme{
 							Text: ColorThemeText{
-								Main:      "#242347",
+								Primary:   "#242347",
 								Secondary: "#5A56E0",
-								Bright:    "#242347",
-								Subtle:    "#5A57B5",
+								Inverted:  "#5A57B5",
 								Faint:     "#5A56E0",
 								Warning:   "#F23D5C",
 								Success:   "#3DF294",
@@ -189,7 +186,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 								Selected: "#5A57B5",
 							},
 							Border: ColorThemeBorder{
-								Main:      "#5A56E0",
+								Primary:   "#5A56E0",
 								Secondary: "#5A56E0",
 								Faint:     "#D9DCCF",
 							},
