@@ -33,7 +33,7 @@ var DefaultTheme = func() Theme {
 
 	cfg, _ := config.ParseConfig()
 
-	if cfg.Theme.Colors.UseShellTheme {
+	if cfg.Theme == nil {
 		return Theme{
 			MainText:           _shimAnsi("255"),
 			SubleMainText:      _shimAnsi("254"),

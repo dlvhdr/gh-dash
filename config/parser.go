@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 )
@@ -75,18 +74,17 @@ type ColorThemeBackground struct {
 }
 
 type ColorTheme struct {
-	Text       ColorThemeText       `yaml:"text" validate:"dive"`
-	Background ColorThemeBackground `yaml:"background" validate:"dive"`
-	Border     ColorThemeBorder     `yaml:"border" validate:"dive"`
+	Text       ColorThemeText       `yaml:"text" validate:"required,dive"`
+	Background ColorThemeBackground `yaml:"background" validate:"required,dive"`
+	Border     ColorThemeBorder     `yaml:"border" validate:"required,dive"`
 }
 
 type ColorThemeConfig struct {
-	UseShellTheme bool       `yaml:"useShellTheme,omitempty"`
-	Inline        ColorTheme `yaml:",inline" validate:"dive"`
+	Inline ColorTheme `yaml:",inline" validate:"dive"`
 }
 
 type ThemeConfig struct {
-	Colors ColorThemeConfig `yaml:"colors" validate:"dive"`
+	Colors ColorThemeConfig `yaml:"colors,omitempty" validate:"dive"`
 }
 
 type Config struct {
@@ -95,7 +93,7 @@ type Config struct {
 	Defaults       Defaults          `yaml:"defaults"`
 	Keybindings    Keybindings       `yaml:"keybindings"`
 	RepoPaths      map[string]string `yaml:"repoPaths"`
-	Theme          ThemeConfig       `yaml:"theme" validate:"dive"`
+	Theme          *ThemeConfig      `yaml:"theme,omitempty" validate:"omitempty,dive"`
 }
 
 type configError struct {
@@ -149,52 +147,6 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			Prs: []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
-		Theme: ThemeConfig{
-			Colors: ColorThemeConfig{
-				UseShellTheme: false,
-				Inline: func() ColorTheme {
-					if lipgloss.HasDarkBackground() {
-						return ColorTheme{
-							Text: ColorThemeText{
-								Primary:   "#E2E1ED",
-								Secondary: "#666CA6",
-								Inverted:  "#242347",
-								Faint:     "#3E4057",
-								Warning:   "#F23D5C",
-								Success:   "#3DF294",
-							},
-							Background: ColorThemeBackground{
-								Selected: "#39386B",
-							},
-							Border: ColorThemeBorder{
-								Primary:   "#383B5B",
-								Secondary: "#39386B",
-								Faint:     "#2B2B40",
-							},
-						}
-					} else {
-						return ColorTheme{
-							Text: ColorThemeText{
-								Primary:   "#242347",
-								Secondary: "#5A56E0",
-								Inverted:  "#5A57B5",
-								Faint:     "#5A56E0",
-								Warning:   "#F23D5C",
-								Success:   "#3DF294",
-							},
-							Background: ColorThemeBackground{
-								Selected: "#5A57B5",
-							},
-							Border: ColorThemeBorder{
-								Primary:   "#5A56E0",
-								Secondary: "#5A56E0",
-								Faint:     "#D9DCCF",
-							},
-						}
-					}
-				}(),
-			},
-		},
 	}
 }
 
