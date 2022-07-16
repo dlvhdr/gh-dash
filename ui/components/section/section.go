@@ -24,6 +24,7 @@ type Model struct {
 	IsLoading    bool
 	SearchBar    search.Model
 	IsSearching  bool
+	SearchValue  string
 	Table        table.Model
 	Type         string
 	SingularForm string
@@ -45,11 +46,12 @@ func NewModel(
 		Config:       cfg,
 		Ctx:          ctx,
 		Spinner:      spinner.Model{Spinner: spinner.Dot},
-		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
 		Columns:      columns,
 		SingularForm: singular,
 		PluralForm:   plural,
 		IsLoading:    false,
+		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
+		SearchValue:  cfg.Filters,
 		IsSearching:  false,
 	}
 	m.Table = table.NewModel(
@@ -214,7 +216,18 @@ func (m *Model) GetFilters() string {
 
 func (m *Model) GetMainContent() string {
 	if m.Table.Rows == nil && m.IsLoading == false {
-		return fmt.Sprintf("Enter a query to the search bar above by pressing %s and submit it with %s.", keyStyle.Render("/"), keyStyle.Render("Enter"))
+		d := m.GetDimensions()
+		return lipgloss.Place(
+			d.Width,
+			d.Height,
+			lipgloss.Center,
+			lipgloss.Center,
+			fmt.Sprintf(
+				"Enter a query to the search bar above by pressing %s and submit it with %s.",
+				keyStyle.Render("/"),
+				keyStyle.Render("Enter"),
+			),
+		)
 	} else {
 		return m.Table.View(m.GetSpinnerText())
 	}

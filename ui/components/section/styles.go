@@ -23,5 +23,5 @@ var (
 			PaddingLeft(1).
 			MarginBottom(1)
 
-	keyStyle = lipgloss.NewStyle().Foreground(styles.DefaultTheme.BrightMainText).Background(styles.DefaultTheme.FaintText).Padding(0, 1)
+	keyStyle = lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText).Background(styles.DefaultTheme.SelectedBackground).Padding(0, 1)
 )

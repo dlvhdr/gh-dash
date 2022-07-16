@@ -22,10 +22,8 @@ var (
 			Background(styles.DefaultTheme.SelectedBackground).
 			Foreground(styles.DefaultTheme.PrimaryText)
 
-	tabGap = tab.Copy().
-		BorderTop(false).
-		BorderLeft(false).
-		BorderRight(false)
+	tabSeparator = lipgloss.NewStyle().
+			Foreground(styles.DefaultTheme.SecondaryBorder)
 
 	tabsRow = lipgloss.NewStyle().
 		Height(tabsContentHeight).

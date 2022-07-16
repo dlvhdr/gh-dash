@@ -13,6 +13,7 @@ import (
 
 type Model struct {
 	IsOpen     bool
+	data       string
 	viewport   viewport.Model
 	ctx        *context.ProgramContext
 	emptyState string
@@ -21,12 +22,13 @@ type Model struct {
 func NewModel() Model {
 	return Model{
 		IsOpen: false,
+		data:   "",
 		viewport: viewport.Model{
 			Width:  0,
 			Height: 0,
 		},
 		ctx:        nil,
-		emptyState: "",
+		emptyState: "Nothing selected...",
 	}
 }
 
@@ -57,7 +59,7 @@ func (m Model) View() string {
 		Width(m.ctx.Config.Defaults.Preview.Width).
 		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
 
-	if m.viewport.View() == "" {
+	if m.data == "" {
 		return style.Copy().Align(lipgloss.Center).Render(
 			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
 		)
@@ -71,6 +73,7 @@ func (m Model) View() string {
 }
 
 func (m *Model) SetContent(data string) {
+	m.data = data
 	m.viewport.SetContent(data)
 }
 

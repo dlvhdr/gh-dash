@@ -14,12 +14,11 @@ import (
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
-const SectionType = "prs"
+const SectionType = "pr"
 
 type Model struct {
 	section.Model
-	Prs         []data.PullRequestData
-	searchValue string
+	Prs []data.PullRequestData
 }
 
 func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Model {
@@ -34,7 +33,6 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Mod
 			"Pull Requests",
 		),
 		[]data.PullRequestData{},
-		cfg.Filters,
 	}
 
 	return m
@@ -50,12 +48,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		switch msg.Type {
 
 		case tea.KeyEnter:
-			m.searchValue = m.SearchBar.Value()
+			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
 			return &m, m.FetchSectionRows()
 
 		case tea.KeyCtrlC, tea.KeyEsc:
-			m.SearchBar.SetValue(m.searchValue)
+			m.SearchBar.SetValue(m.SearchValue)
 			blinkCmd := m.SetIsSearching(false)
 			return &m, blinkCmd
 
@@ -191,7 +189,7 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig)
+		sectionModel := NewModel(i+1, &ctx, sectionConfig) // 0 is the search section
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
 	}

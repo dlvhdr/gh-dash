@@ -1,6 +1,8 @@
 package search
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,7 +17,7 @@ type Model struct {
 }
 
 func NewModel(sectionType string, ctx *context.ProgramContext, initialValue string) Model {
-	prompt := " is:pr "
+	prompt := fmt.Sprintf(" is:%s ", sectionType)
 	ti := textinput.New()
 	ti.Placeholder = ""
 	ti.Focus()

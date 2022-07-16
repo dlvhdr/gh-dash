@@ -127,7 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.SwitchView):
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
-			m.setCurrSectionId(0)
+			m.setCurrSectionId(1)
 
 			currSections := m.getCurrentViewSections()
 			if len(currSections) == 0 {
@@ -284,6 +284,11 @@ func (m *Model) syncSidebarPr() {
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 
+	if currRowData == nil {
+		m.sidebar.SetContent("")
+		return
+	}
+
 	switch row := currRowData.(type) {
 	case *data.PullRequestData:
 		content := prsidebar.NewModel(row, width).View()
@@ -319,7 +324,12 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		)
 		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
-		m.issues = newSections
+		search := issuessection.NewModel(
+			0,
+			&m.ctx,
+			config.SectionConfig{Title: "", Filters: ""},
+		)
+		m.issues = append([]section.Section{&search}, newSections...)
 	}
 }
 
