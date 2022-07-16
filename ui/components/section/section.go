@@ -1,8 +1,11 @@
 package section
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/search"
@@ -10,18 +13,55 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/styles"
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {
-	Id          int
-	Config      config.SectionConfig
-	Ctx         *context.ProgramContext
-	Spinner     spinner.Model
-	IsLoading   bool
-	Search      search.Model
-	IsSearching bool
-	Table       table.Model
-	Type        string
+	Id           int
+	Config       config.SectionConfig
+	Ctx          *context.ProgramContext
+	Spinner      spinner.Model
+	IsLoading    bool
+	SearchBar    search.Model
+	IsSearching  bool
+	Table        table.Model
+	Type         string
+	SingularForm string
+	PluralForm   string
+	Columns      []table.Column
+}
+
+func NewModel(
+	id int,
+	ctx *context.ProgramContext,
+	cfg config.SectionConfig,
+	sType string,
+	columns []table.Column,
+	singular, plural string,
+) Model {
+	m := Model{
+		Id:           id,
+		Type:         sType,
+		Config:       cfg,
+		Ctx:          ctx,
+		Spinner:      spinner.Model{Spinner: spinner.Dot},
+		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
+		Columns:      columns,
+		SingularForm: singular,
+		PluralForm:   plural,
+		IsLoading:    false,
+		IsSearching:  false,
+	}
+	m.Table = table.NewModel(
+		m.GetDimensions(),
+		m.Columns,
+		nil,
+		m.SingularForm,
+		utils.StringPtr(emptyStateStyle.Render(
+			fmt.Sprintf("No %s were found that match the given filters", m.PluralForm),
+		)),
+	)
+	return m
 }
 
 type Section interface {
@@ -51,7 +91,6 @@ type Table interface {
 	FirstItem() int
 	LastItem() int
 	FetchSectionRows() tea.Cmd
-	GetSectionColumns() []table.Column
 	BuildRows() []table.Row
 }
 
@@ -88,7 +127,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
-		m.Search.UpdateProgramContext(ctx)
+		m.SearchBar.UpdateProgramContext(ctx)
 	}
 }
 
@@ -136,16 +175,16 @@ func (m *Model) IsSearchFocused() bool {
 func (m *Model) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
-		m.Search.Focus()
-		return m.Search.Init()
+		m.SearchBar.Focus()
+		return m.SearchBar.Init()
 	} else {
-		m.Search.Blur()
+		m.SearchBar.Blur()
 		return nil
 	}
 }
 
 func (m *Model) ResetFilters() {
-	m.Search.SetValue(m.Config.Filters)
+	m.SearchBar.SetValue(m.Config.Filters)
 }
 
 type SectionMsg struct {
@@ -170,5 +209,37 @@ func (m *Model) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 }
 
 func (m *Model) GetFilters() string {
-	return m.Search.Value()
+	return m.SearchBar.Value()
+}
+
+func (m *Model) GetMainContent() string {
+	if m.Table.Rows == nil && m.IsLoading == false {
+		return fmt.Sprintf("Enter a query to the search bar above by pressing %s and submit it with %s.", keyStyle.Render("/"), keyStyle.Render("Enter"))
+	} else {
+		return m.Table.View(m.GetSpinnerText())
+	}
+}
+
+func (m *Model) GetSpinnerText() *string {
+	var spinnerText *string
+	if m.IsLoading {
+		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
+			spinnerStyle.Copy().Render(m.Spinner.View()),
+			fmt.Sprintf("Fetching %s...", m.PluralForm),
+		))
+	}
+	return spinnerText
+}
+
+func (m *Model) View() string {
+	var search string
+	search = m.SearchBar.View(*m.Ctx)
+
+	return containerStyle.Copy().Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			search,
+			m.GetMainContent(),
+		),
+	)
 }

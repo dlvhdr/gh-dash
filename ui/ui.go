@@ -40,7 +40,7 @@ func NewModel() Model {
 	return Model{
 		keys:          utils.Keys,
 		help:          help.NewModel(),
-		currSectionId: 0,
+		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
 	}
@@ -312,7 +312,12 @@ func (m *Model) getCurrentViewSections() []section.Section {
 
 func (m *Model) setCurrentViewSections(newSections []section.Section) {
 	if m.ctx.View == config.PRsView {
-		m.prs = newSections
+		search := prssection.NewModel(
+			0,
+			&m.ctx,
+			config.SectionConfig{Title: "", Filters: "archived:false"},
+		)
+		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
 		m.issues = newSections
 	}

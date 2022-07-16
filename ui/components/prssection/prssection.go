@@ -5,11 +5,9 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
-	"github.com/dlvhdr/gh-dash/ui/components/search"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/context"
@@ -24,32 +22,20 @@ type Model struct {
 	searchValue string
 }
 
-func NewModel(id int, ctx *context.ProgramContext, config config.SectionConfig) Model {
-	section := section.Model{
-		Id:          id,
-		Config:      config,
-		Ctx:         ctx,
-		Spinner:     spinner.Model{Spinner: spinner.Dot},
-		Search:      search.NewModel(SectionType, ctx, config.Filters),
-		IsLoading:   true,
-		IsSearching: false,
-		Type:        SectionType,
-	}
+func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Model {
 	m := Model{
-		section,
+		section.NewModel(
+			id,
+			ctx,
+			cfg,
+			SectionType,
+			GetSectionColumns(),
+			"PR",
+			"Pull Requests",
+		),
 		[]data.PullRequestData{},
-		config.Filters,
+		cfg.Filters,
 	}
-
-	m.Table = table.NewModel(
-		m.GetDimensions(),
-		m.GetSectionColumns(),
-		m.BuildRows(),
-		"PR",
-		utils.StringPtr(emptyStateStyle.Render(
-			"No PRs were found that match the given filters",
-		)),
-	)
 
 	return m
 }
@@ -64,12 +50,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		switch msg.Type {
 
 		case tea.KeyEnter:
-			m.searchValue = m.Search.Value()
+			m.searchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
 			return &m, m.FetchSectionRows()
 
 		case tea.KeyCtrlC, tea.KeyEsc:
-			m.Search.SetValue(m.searchValue)
+			m.SearchBar.SetValue(m.searchValue)
 			blinkCmd := m.SetIsSearching(false)
 			return &m, blinkCmd
 
@@ -99,33 +85,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 	}
 
-	search, searchCmd := m.Search.Update(msg)
-	m.Search = search
+	search, searchCmd := m.SearchBar.Update(msg)
+	m.SearchBar = search
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func (m *Model) View() string {
-	var spinnerText *string
-	if m.IsLoading {
-		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
-			spinnerStyle.Copy().Render(m.Spinner.View()),
-			"Fetching Pull Requests...",
-		))
-	}
-
-	var search string
-	search = m.Search.View(*m.Ctx)
-
-	return containerStyle.Copy().Render(
-		lipgloss.JoinVertical(
-			lipgloss.Left,
-			search,
-			m.Table.View(spinnerText),
-		),
-	)
-}
-
-func (m *Model) GetSectionColumns() []table.Column {
+func GetSectionColumns() []table.Column {
 	return []table.Column{
 		{
 			Title: "",
@@ -226,7 +191,7 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(i, &ctx, sectionConfig)
+		sectionModel := NewModel(i+1, &ctx, sectionConfig)
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
 	}

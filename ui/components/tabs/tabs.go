@@ -13,7 +13,7 @@ type Model struct {
 
 func NewModel() Model {
 	return Model{
-		CurrSectionId: 0,
+		CurrSectionId: 1,
 	}
 }
 

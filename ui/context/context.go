@@ -1,6 +1,8 @@
 package context
 
-import "github.com/dlvhdr/gh-dash/config"
+import (
+	"github.com/dlvhdr/gh-dash/config"
+)
 
 type ProgramContext struct {
 	ScreenHeight      int
@@ -12,9 +14,12 @@ type ProgramContext struct {
 }
 
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
+	var configs []config.SectionConfig
 	if ctx.View == config.PRsView {
-		return ctx.Config.PRSections
+		configs = ctx.Config.PRSections
 	} else {
-		return ctx.Config.IssuesSections
+		configs = ctx.Config.IssuesSections
 	}
+
+	return append([]config.SectionConfig{{Title: ""}}, configs...)
 }

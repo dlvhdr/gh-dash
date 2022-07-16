@@ -215,10 +215,10 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 func (m *Model) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
-		m.Search.Focus()
-		return m.Search.Init()
+		m.SearchBar.Focus()
+		return m.SearchBar.Init()
 	} else {
-		m.Search.Blur()
+		m.SearchBar.Blur()
 		return nil
 	}
 }
