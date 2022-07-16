@@ -23,7 +23,13 @@ type Theme struct {
 	SubleMainText      lipgloss.AdaptiveColor
 }
 
+var theme *Theme
+
 var DefaultTheme = func() Theme {
+	if theme != nil {
+		return *theme
+	}
+
 	_shimHex := func(hex config.HexColor) lipgloss.AdaptiveColor {
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
@@ -34,7 +40,7 @@ var DefaultTheme = func() Theme {
 	cfg, _ := config.ParseConfig()
 
 	if cfg.Theme == nil {
-		return Theme{
+		theme = &Theme{
 			MainText:           _shimAnsi("255"),
 			SubleMainText:      _shimAnsi("254"),
 			Border:             _shimAnsi("0"),
@@ -47,7 +53,7 @@ var DefaultTheme = func() Theme {
 			SecondaryText:      _shimAnsi("11"),
 		}
 	} else {
-		return Theme{
+		theme = &Theme{
 			MainText:           _shimHex(cfg.Theme.Colors.Inline.Text.Primary),
 			SubleMainText:      _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
 			Border:             _shimHex(cfg.Theme.Colors.Inline.Border.Primary),
@@ -60,4 +66,6 @@ var DefaultTheme = func() Theme {
 			SecondaryText:      _shimHex(cfg.Theme.Colors.Inline.Text.Secondary),
 		}
 	}
+
+	return *theme
 }()
