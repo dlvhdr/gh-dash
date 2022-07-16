@@ -7,7 +7,7 @@
 ## Installation
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
-   
+
    _Installation requires a minimum version (2.0.0) of the the GitHub CLI that supports extensions._
 
 2. Install this extension:
@@ -44,7 +44,7 @@
    ```bash
    gh extension install .
    ```
-</details>
+   </details>
 
 <details>
    <summary><strong>🌈 How do I get these exact colors and font?</strong></summary>
@@ -85,8 +85,8 @@ repoPaths:
   dlvhdr/gh-dash: ~/code/gh-dash
 keybindings: # optional
   prs:
-   - key: c
-     command: cd {{.RepoPath}}; gh pr checkout {{.PrNumber}}
+    - key: c
+      command: cd {{.RepoPath}}; gh pr checkout {{.PrNumber}}
 ```
 
 Adding a PR or issue section is as easy as adding to the list of `prSections` or `issueSections` respectively:
@@ -99,13 +99,12 @@ Adding a PR or issue section is as easy as adding to the list of `prSections` or
 Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
 The available arguments are:
 
-| Arguement     | Description   |
-| ------------- | ------------- |
-| `RepoName`  | The full name of the repo (e.g. `dlvhdr/gh-dash`)  |
-| `RepoPath`  | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping  |
-| `PrNumber`  | The PR number  |
-| `HeadRefName`  | The PR's remote branch name  |
-
+| Arguement     | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `RepoName`    | The full name of the repo (e.g. `dlvhdr/gh-dash`)                               |
+| `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
+| `PrNumber`    | The PR number                                                                   |
+| `HeadRefName` | The PR's remote branch name                                                     |
 
 For example, to review a PR with either Neovim or VSCode, include this in your `config.yml` file:
 
@@ -125,6 +124,29 @@ keybindings:
         cd {{.RepoPath}} &&
         code . &&
         gh pr checkout {{.PrNumber}}
+```
+
+### Custom Themes
+
+To override the default set of terminal colors and instead create your own color scheme, you can define one in your `config.yml` file.
+If you choose to go this route, you need to specify _all_ of the following keys as colors in hex format (`#RRGGBB`), otherwise validation will fail.
+
+```yaml
+theme:
+  colors:
+    text:
+      primary: "#E2E1ED"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#3E4057"
+      warning: "#F23D5C"
+      success: "#3DF294"
+    background:
+      selected: "#39386B"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"
 ```
 
 ## Usage

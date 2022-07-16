@@ -5,13 +5,18 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 )
 
 const DashDir = "gh-dash"
 const ConfigFileName = "config.yml"
 const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
+
+var validate *validator.Validate
 
 type ViewType string
 
@@ -47,12 +52,48 @@ type Keybindings struct {
 	Prs []Keybinding `yaml:"prs"`
 }
 
+type HexColor string
+
+type ColorThemeText struct {
+	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
+	Inverted  HexColor `yaml:"inverted" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+	Warning   HexColor `yaml:"warning" validate:"hexcolor"`
+	Success   HexColor `yaml:"success" validate:"hexcolor"`
+}
+
+type ColorThemeBorder struct {
+	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+}
+
+type ColorThemeBackground struct {
+	Selected HexColor `yaml:"selected" validate:"hexcolor"`
+}
+
+type ColorTheme struct {
+	Text       ColorThemeText       `yaml:"text" validate:"required,dive"`
+	Background ColorThemeBackground `yaml:"background" validate:"required,dive"`
+	Border     ColorThemeBorder     `yaml:"border" validate:"required,dive"`
+}
+
+type ColorThemeConfig struct {
+	Inline ColorTheme `yaml:",inline" validate:"dive"`
+}
+
+type ThemeConfig struct {
+	Colors ColorThemeConfig `yaml:"colors,omitempty" validate:"dive"`
+}
+
 type Config struct {
 	PRSections     []SectionConfig   `yaml:"prSections"`
 	IssuesSections []SectionConfig   `yaml:"issuesSections"`
 	Defaults       Defaults          `yaml:"defaults"`
 	Keybindings    Keybindings       `yaml:"keybindings"`
 	RepoPaths      map[string]string `yaml:"repoPaths"`
+	Theme          *ThemeConfig      `yaml:"theme,omitempty" validate:"omitempty,dive"`
 }
 
 type configError struct {
@@ -240,17 +281,34 @@ func (parser ConfigParser) readConfigFile(path string) (Config, error) {
 	}
 
 	err = yaml.Unmarshal([]byte(data), &config)
+	if err != nil {
+		return config, err
+	}
+
+	err = validate.Struct(config)
 	return config, err
 }
 
 func initParser() ConfigParser {
+	validate = validator.New()
+
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.Split(fld.Tag.Get("yaml"), ",")[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
 	return ConfigParser{}
 }
 
 func ParseConfig() (Config, error) {
 	parser := initParser()
+
 	var config Config
 	var err error
+
 	configFilePath, err := parser.getConfigFileOrCreateIfMissing()
 	if err != nil {
 		return config, parsingError{err: err}

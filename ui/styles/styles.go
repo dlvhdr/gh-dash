@@ -4,6 +4,6 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	MainTextStyle = lipgloss.NewStyle().
-		Foreground(DefaultTheme.MainText).
+		Foreground(DefaultTheme.PrimaryText).
 		Bold(true)
 )

@@ -15,7 +15,7 @@ var (
 	mergedPR = lipgloss.AdaptiveColor{Light: "#A371F7", Dark: "#A371F7"}
 
 	pillStyle = styles.MainTextStyle.Copy().
-			Foreground(styles.DefaultTheme.SubleMainText).
+			Foreground(styles.DefaultTheme.InvertedText).
 			PaddingLeft(1).
 			PaddingRight(1)
 
@@ -32,7 +32,7 @@ var (
 			BottomRight: "",
 			BottomLeft:  "",
 		}).
-		BorderForeground(styles.DefaultTheme.Border)
+		BorderForeground(styles.DefaultTheme.PrimaryBorder)
 
 	pagerStyle = lipgloss.NewStyle().
 			Height(pagerHeight).

@@ -18,7 +18,7 @@ var (
 
 	titleCellStyle = cellStyle.Copy().
 			Bold(true).
-			Foreground(styles.DefaultTheme.MainText)
+			Foreground(styles.DefaultTheme.PrimaryText)
 
 	singleRuneTitleCellStyle = titleCellStyle.Copy().Width(styles.SingleRuneWidth)
 

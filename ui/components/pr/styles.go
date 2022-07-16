@@ -10,5 +10,5 @@ var (
 	openPR      = lipgloss.AdaptiveColor{Light: "#42A0FA", Dark: "#42A0FA"}
 	closedPR    = lipgloss.AdaptiveColor{Light: "#C38080", Dark: "#C38080"}
 	mergedPR    = lipgloss.AdaptiveColor{Light: "#A371F7", Dark: "#A371F7"}
-	titleText   = lipgloss.NewStyle().Foreground(styles.DefaultTheme.MainText)
+	titleText   = lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText)
 )

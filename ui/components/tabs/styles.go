@@ -20,7 +20,7 @@ var (
 			Faint(false).
 			Bold(true).
 			Background(styles.DefaultTheme.SelectedBackground).
-			Foreground(styles.DefaultTheme.MainText)
+			Foreground(styles.DefaultTheme.PrimaryText)
 
 	tabGap = tab.Copy().
 		BorderTop(false).
@@ -33,17 +33,17 @@ var (
 		PaddingBottom(0).
 		BorderBottom(true).
 		BorderStyle(lipgloss.ThickBorder()).
-		BorderBottomForeground(styles.DefaultTheme.Border)
+		BorderBottomForeground(styles.DefaultTheme.PrimaryBorder)
 
 	viewSwitcher = lipgloss.NewStyle()
 
 	activeView = lipgloss.NewStyle().
-			Foreground(styles.DefaultTheme.MainText).
+			Foreground(styles.DefaultTheme.PrimaryText).
 			Bold(true).
 			Background(styles.DefaultTheme.SelectedBackground)
 
 	viewsSeparator = lipgloss.NewStyle().
-			BorderForeground(styles.DefaultTheme.Border).
+			BorderForeground(styles.DefaultTheme.PrimaryBorder).
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderRight(true)
 

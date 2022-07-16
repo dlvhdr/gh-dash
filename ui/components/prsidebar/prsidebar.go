@@ -97,14 +97,14 @@ func (m *Model) renderChecksPill() string {
 	} else if status == "PENDING" {
 		return pillStyle.Copy().
 			Background(styles.DefaultTheme.FaintText).
-			Foreground(styles.DefaultTheme.MainText).
+			Foreground(styles.DefaultTheme.PrimaryText).
 			Faint(true).
 			Render(" Checks")
 	}
 
 	return pillStyle.Copy().
 		Background(styles.DefaultTheme.SuccessText).
-		Foreground(styles.DefaultTheme.SubleMainText).
+		Foreground(styles.DefaultTheme.InvertedText).
 		Render(" Checks")
 }
 

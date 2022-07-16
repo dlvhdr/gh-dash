@@ -13,5 +13,5 @@ var (
 			Height(FooterHeight - 1).
 			BorderTop(true).
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(styles.DefaultTheme.Border)
+			BorderForeground(styles.DefaultTheme.PrimaryBorder)
 )
