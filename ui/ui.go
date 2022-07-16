@@ -17,6 +17,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/ui/components/tabs"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -39,7 +40,7 @@ func NewModel() Model {
 	return Model{
 		keys:          utils.Keys,
 		help:          help.NewModel(),
-		currSectionId: 0,
+		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
 	}
@@ -69,6 +70,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if currSection != nil && currSection.IsSearchFocused() {
+			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
+			return m, cmd
+		}
+
 		switch {
 		case m.isUserDefinedKeybinding(msg):
 			m.executeKeybinding(msg.String())
@@ -76,7 +82,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			if prevSection != nil {
-				m.setCurrSectionId(prevSection.Id())
+				m.setCurrSectionId(prevSection.GetId())
 				m.onViewedRowChanged()
 			}
 
@@ -84,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			nextSectionId := m.getNextSectionId()
 			nextSection := m.getSectionAt(nextSectionId)
 			if nextSection != nil {
-				m.setCurrSectionId(nextSection.Id())
+				m.setCurrSectionId(nextSection.GetId())
 				m.onViewedRowChanged()
 			}
 
@@ -115,12 +121,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Refresh):
+			currSection.ResetFilters()
 			cmd = currSection.FetchSectionRows()
 
 		case key.Matches(msg, m.keys.SwitchView):
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
-			m.setCurrSectionId(0)
+			m.setCurrSectionId(1)
 
 			currSections := m.getCurrentViewSections()
 			if len(currSections) == 0 {
@@ -129,6 +136,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd = fetchSectionsCmds
 			}
 			m.onViewedRowChanged()
+
+		case key.Matches(msg, m.keys.Search):
+			if currSection != nil {
+				cmd = currSection.SetIsSearching(true)
+				return m, cmd
+			}
 
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
@@ -147,8 +160,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case section.SectionMsg:
 		cmd = m.updateRelevantSection(msg)
 
-		if msg.GetSectionId() == m.currSectionId {
-			switch msg.GetSectionType() {
+		if msg.Id == m.currSectionId {
+			switch msg.Type {
 			case prssection.SectionType:
 				m.onViewedRowChanged()
 			}
@@ -162,9 +175,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.syncProgramContext()
+
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 	m.help, helpCmd = m.help.Update(msg)
-	cmds = append(cmds, cmd, sidebarCmd, helpCmd)
+	sectionCmd := m.updateCurrentSection(msg)
+	cmds = append(cmds, cmd, sidebarCmd, helpCmd, sectionCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -220,7 +235,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.help.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - help.FooterHeight
+	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - styles.FooterHeight
 	m.syncMainContentWidth()
 }
 
@@ -231,19 +246,30 @@ func (m *Model) syncProgramContext() {
 	m.sidebar.UpdateProgramContext(&m.ctx)
 }
 
-func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
+func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
-
-	switch msg.GetSectionType() {
+	switch sType {
 	case prssection.SectionType:
-		updatedSection, cmd = m.prs[msg.GetSectionId()].Update(msg)
-		m.prs[msg.GetSectionId()] = updatedSection
+		updatedSection, cmd = m.prs[id].Update(msg)
+		m.prs[id] = updatedSection
 	case issuessection.SectionType:
-		updatedSection, cmd = m.issues[msg.GetSectionId()].Update(msg)
-		m.issues[msg.GetSectionId()] = updatedSection
+		updatedSection, cmd = m.issues[id].Update(msg)
+		m.issues[id] = updatedSection
 	}
 
 	return cmd
+}
+
+func (m *Model) updateRelevantSection(msg section.SectionMsg) (cmd tea.Cmd) {
+	return m.updateSection(msg.Id, msg.Type, msg)
+}
+
+func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
+	section := m.getCurrSection()
+	if section == nil {
+		return nil
+	}
+	return m.updateSection(section.GetId(), section.GetType(), msg)
 }
 
 func (m *Model) syncMainContentWidth() {
@@ -258,12 +284,17 @@ func (m *Model) syncSidebarPr() {
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 
-	switch data := currRowData.(type) {
+	if currRowData == nil {
+		m.sidebar.SetContent("")
+		return
+	}
+
+	switch row := currRowData.(type) {
 	case *data.PullRequestData:
-		content := prsidebar.NewModel(data, width).View()
+		content := prsidebar.NewModel(row, width).View()
 		m.sidebar.SetContent(content)
 	case *data.IssueData:
-		content := issuesidebar.NewModel(data, width).View()
+		content := issuesidebar.NewModel(row, width).View()
 		m.sidebar.SetContent(content)
 	}
 }
@@ -286,9 +317,19 @@ func (m *Model) getCurrentViewSections() []section.Section {
 
 func (m *Model) setCurrentViewSections(newSections []section.Section) {
 	if m.ctx.View == config.PRsView {
-		m.prs = newSections
+		search := prssection.NewModel(
+			0,
+			&m.ctx,
+			config.SectionConfig{Title: "", Filters: "archived:false"},
+		)
+		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
-		m.issues = newSections
+		search := issuessection.NewModel(
+			0,
+			&m.ctx,
+			config.SectionConfig{Title: "", Filters: ""},
+		)
+		m.issues = append([]section.Section{&search}, newSections...)
 	}
 }
 

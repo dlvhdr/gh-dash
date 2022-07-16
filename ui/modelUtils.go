@@ -12,7 +12,7 @@ import (
 
 func (m *Model) getCurrSection() section.Section {
 	sections := m.getCurrentViewSections()
-	if len(sections) == 0 {
+	if len(sections) == 0 || m.currSectionId >= len(sections) {
 		return nil
 	}
 	return sections[m.currSectionId]

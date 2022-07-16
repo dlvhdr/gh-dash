@@ -15,6 +15,7 @@ type KeyMap struct {
 	NextSection   key.Binding
 	PrevSection   key.Binding
 	SwitchView    key.Binding
+	Search        key.Binding
 	Help          key.Binding
 	Quit          key.Binding
 }
@@ -31,6 +32,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		{k.PageDown, k.PageUp},
 		{k.TogglePreview, k.OpenGithub},
 		{k.Refresh, k.SwitchView},
+		{k.Search},
 		{k.Help, k.Quit},
 	}
 }
@@ -83,6 +85,10 @@ var Keys = KeyMap{
 	SwitchView: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "switch view"),
+	),
+	Search: key.NewBinding(
+		key.WithKeys("/"),
+		key.WithHelp("/", "search"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),

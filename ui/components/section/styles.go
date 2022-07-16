@@ -1,6 +1,9 @@
 package section
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/ui/styles"
+)
 
 var (
 	ciCellWidth        = lipgloss.Width(" CI ")
@@ -19,4 +22,6 @@ var (
 			Faint(true).
 			PaddingLeft(1).
 			MarginBottom(1)
+
+	keyStyle = lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText).Background(styles.DefaultTheme.SelectedBackground).Padding(0, 1)
 )

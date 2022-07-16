@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect

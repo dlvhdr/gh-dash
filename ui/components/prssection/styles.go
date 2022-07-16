@@ -1,6 +1,8 @@
 package prssection
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+)
 
 var (
 	ciCellWidth        = lipgloss.Width(" CI ")
@@ -8,15 +10,4 @@ var (
 	updatedAtCellWidth = lipgloss.Width("2mo ago")
 	prRepoCellWidth    = 15
 	prAuthorCellWidth  = 15
-	ContainerPadding   = 1
-
-	containerStyle = lipgloss.NewStyle().
-			Padding(0, ContainerPadding)
-
-	spinnerStyle = lipgloss.NewStyle().Padding(0, 1)
-
-	emptyStateStyle = lipgloss.NewStyle().
-			Faint(true).
-			PaddingLeft(1).
-			MarginBottom(1)
 )

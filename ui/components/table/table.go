@@ -172,7 +172,9 @@ func (m *Model) renderHeader() string {
 
 func (m *Model) renderBody(spinnerText *string) string {
 	bodyStyle := lipgloss.NewStyle().
-		Height(m.dimensions.Height)
+		Height(m.dimensions.Height).
+		MaxWidth(m.dimensions.Width)
+
 	if spinnerText != nil {
 		return bodyStyle.Render(*spinnerText)
 	} else if len(m.Rows) == 0 && m.EmptyState != nil {

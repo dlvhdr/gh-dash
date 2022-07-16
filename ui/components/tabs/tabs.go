@@ -1,6 +1,8 @@
 package tabs
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
@@ -13,7 +15,7 @@ type Model struct {
 
 func NewModel() Model {
 	return Model{
-		CurrSectionId: 0,
+		CurrSectionId: 1,
 	}
 }
 
@@ -42,7 +44,7 @@ func (m Model) View(ctx context.ProgramContext) string {
 	renderedTabs := lipgloss.NewStyle().
 		Width(tabsWidth).
 		MaxWidth(tabsWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, tabs...))
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, tabSeparator.Render("|"))))
 
 	return tabsRow.Copy().
 		Width(ctx.ScreenWidth).
