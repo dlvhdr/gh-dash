@@ -8,6 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/ui"
+	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/muesli/termenv"
 )
 
 func createModel(debug bool) (ui.Model, *os.File) {
@@ -31,6 +33,9 @@ func main() {
 		"passing this flag will allow writing debug output to debug.log",
 	)
 	flag.Parse()
+
+	// see https://github.com/charmbracelet/lipgloss/issues/73
+	markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
 
 	model, logger := createModel(*debug)
 	if logger != nil {
