@@ -131,6 +131,10 @@ func (m *Model) BuildRows() []table.Row {
 		rows = append(rows, prModel.ToTableRow())
 	}
 
+	if rows == nil {
+		rows = []table.Row{}
+	}
+
 	return rows
 }
 
