@@ -11,8 +11,7 @@ import (
 )
 
 type Issue struct {
-	Data  data.IssueData
-	Width int
+	Data data.IssueData
 }
 
 func (issue *Issue) ToTableRow() table.Row {

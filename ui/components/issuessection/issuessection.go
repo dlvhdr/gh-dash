@@ -126,7 +126,7 @@ func GetSectionColumns() []table.Column {
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currIssue := range m.Issues {
-		issueModel := issue.Issue{Data: currIssue, Width: m.GetDimensions().Width}
+		issueModel := issue.Issue{Data: currIssue}
 		rows = append(rows, issueModel.ToTableRow())
 	}
 
