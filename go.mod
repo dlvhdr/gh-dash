@@ -9,6 +9,8 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cli/go-gh v0.0.3
 	github.com/cli/shurcooL-graphql v0.0.1
+	github.com/go-playground/validator/v10 v10.11.0
+	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -21,7 +23,6 @@ require (
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/henvic/httpretty v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -31,7 +32,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/yuin/goldmark v1.4.12 // indirect
