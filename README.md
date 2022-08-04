@@ -57,7 +57,7 @@
 
 Configuration is provided within a `config.yml` file under the extension's directory (usually `~/.config/gh-dash/`)
 
-The default `config.yml` file contains:
+An example `config.yml` file contains:
 
 ```yml
 prSections:
@@ -82,7 +82,8 @@ defaults:
     open: true
     width: 60
 repoPaths:
-  dlvhdr/gh-dash: ~/code/gh-dash
+  dlvhdr/*: ~/code/repos/*       # will match dlvhdr/repo-name to ~/code/repos/repo-name
+  dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 keybindings: # optional
   prs:
     - key: c
@@ -120,7 +121,9 @@ repoPaths:
 
 The `RepoName` and `RepoPath` keybinding arguments are fully expanded when sent to the command.
 
-For example, to review a PR with either Neovim or VSCode, include this in your `config.yml` file:
+### Keybindings Examples
+
+To review a PR with either Neovim or VSCode, include this in your `config.yml` file:
 
 ```yaml
 repoPaths:
