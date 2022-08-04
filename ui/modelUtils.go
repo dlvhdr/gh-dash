@@ -2,8 +2,10 @@ package ui
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os/exec"
+	"strings"
 	"text/template"
 
 	"github.com/dlvhdr/gh-dash/data"
@@ -48,6 +50,35 @@ func (m *Model) getNextSectionId() int {
 	return (m.currSectionId + 1) % len(m.ctx.GetViewSectionsConfig())
 }
 
+// support [user|org]/* matching for repositories
+// and local path mapping to [partial path prefix]/*
+// prioritize full repo mapping if it exists
+func getRepoLocalPath(repoName string, cfgPaths map[string]string ) string {
+	exactMatchPath, ok := cfgPaths[repoName]
+	// prioritize full repo to path mapping in config
+	if ok { return exactMatchPath	}
+
+	var repoPath string
+
+	owner, repo, repoValid := func() (string, string, bool) {
+		repoParts := strings.Split(repoName, "/")
+		// return repo owner, repo, and indicate properly owner/repo format
+		return repoParts[0], repoParts[len(repoParts)-1], len(repoParts) == 2
+	}()
+
+	if repoValid {
+		// match config:repoPath values of {owner}/* as map key
+		wildcardPath, wildcarded := cfgPaths[fmt.Sprintf("%s/*", owner)]
+
+		if wildcarded {
+			// adjust wildcard match to wildcard path - ~/somepath/* to ~/somepath/{repo}
+			repoPath = fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo)
+		}
+	}
+
+	return repoPath
+}
+
 type CommandTemplateInput struct {
 	RepoName    string
 	RepoPath    string
@@ -75,7 +106,7 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 		log.Fatal(err)
 	}
 	repoName := prData.GetRepoNameWithOwner()
-	repoPath := m.ctx.Config.RepoPaths[repoName]
+	repoPath := getRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, CommandTemplateInput{
