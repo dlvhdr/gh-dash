@@ -48,7 +48,7 @@
 
 <details>
    <summary><strong>🌈 How do I get these exact colors and font?</strong></summary>
-   
+
    > I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
    > For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
 </details>
@@ -106,11 +106,26 @@ The available arguments are:
 | `PrNumber`    | The PR number                                                                   |
 | `HeadRefName` | The PR's remote branch name                                                     |
 
+#### Repo Path Matching
+
+Repo name to path mappings can be exact match (full name, full path) or wildcard matched using the `owner` and partial path.
+
+An exact match for the full repo name to a full path takes priority over a matching wildcard, and wildcard matches must match to a wildcard path.
+
+```yaml
+repoPaths:
+  dlvhdr/*: ~/code/repos/*       # will match dlvhdr/repo-name to ~/code/repos/repo-name
+  dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
+```
+
+The `RepoName` and `RepoPath` keybinding arguments are fully expanded when sent to the command.
+
 For example, to review a PR with either Neovim or VSCode, include this in your `config.yml` file:
 
 ```yaml
 repoPaths:
   dlvhdr/gh-dash: ~/code/gh-dash
+
 keybindings:
   prs:
     - key: c
