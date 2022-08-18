@@ -37,7 +37,11 @@ func (pr PullRequest) renderState() string {
 	mergeCellStyle := lipgloss.NewStyle()
 	switch pr.Data.State {
 	case "OPEN":
-		return mergeCellStyle.Foreground(openPR).Render("")
+		if pr.Data.IsDraft {
+			return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("")
+		} else {
+			return mergeCellStyle.Foreground(openPR).Render("")
+		}
 	case "CLOSED":
 		return mergeCellStyle.Foreground(closedPR).Render("")
 	case "MERGED":
@@ -139,7 +143,11 @@ func (pr PullRequest) renderUpdateAt() string {
 func (pr PullRequest) RenderState() string {
 	switch pr.Data.State {
 	case "OPEN":
-		return " Open"
+		if pr.Data.IsDraft {
+			return " Draft"
+		} else {
+			return " Open"
+		}
 	case "CLOSED":
 		return "﫧Closed"
 	case "MERGED":
