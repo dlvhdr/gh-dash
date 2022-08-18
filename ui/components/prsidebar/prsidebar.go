@@ -61,7 +61,11 @@ func (m *Model) renderStatusPill() string {
 	bgColor := ""
 	switch m.pr.Data.State {
 	case "OPEN":
-		bgColor = openPR.Dark
+		if m.pr.Data.IsDraft {
+			bgColor = styles.DefaultTheme.FaintText.Dark
+		} else {
+			bgColor = openPR.Dark
+		}
 	case "CLOSED":
 		bgColor = closedPR.Dark
 	case "MERGED":
