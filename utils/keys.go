@@ -16,6 +16,15 @@ type KeyMap struct {
 	PrevSection   key.Binding
 	SwitchView    key.Binding
 	Search        key.Binding
+	Diff          key.Binding
+	Checkout      key.Binding
+	Close         key.Binding
+	Comment       key.Binding
+	Edit          key.Binding
+	Merge         key.Binding
+	Ready         key.Binding
+	Reopen        key.Binding
+	Review        key.Binding
 	Help          key.Binding
 	Quit          key.Binding
 }
@@ -26,13 +35,9 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down},
-		{k.FirstLine, k.LastLine},
-		{k.PrevSection, k.NextSection},
-		{k.PageDown, k.PageUp},
-		{k.TogglePreview, k.OpenGithub},
-		{k.Refresh, k.SwitchView},
-		{k.Search},
+		{k.Up, k.Down, k.PrevSection, k.NextSection, k.FirstLine, k.LastLine, k.PageDown, k.PageUp},
+		{k.Refresh, k.SwitchView, k.TogglePreview, k.Search},
+		{k.OpenGithub, k.Diff, k.Checkout, k.Close, k.Comment, k.Edit, k.Merge, k.Ready, k.Reopen, k.Review},
 		{k.Help, k.Quit},
 	}
 }
@@ -89,6 +94,42 @@ var Keys = KeyMap{
 	Search: key.NewBinding(
 		key.WithKeys("/"),
 		key.WithHelp("/", "search"),
+	),
+	Diff: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "diff"),
+	),
+	Checkout: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "checkout"),
+	),
+	Close: key.NewBinding(
+		key.WithKeys("x"),
+		key.WithHelp("x", "close"),
+	),
+	Comment: key.NewBinding(
+		key.WithKeys("m"),
+		key.WithHelp("m", "comment"),
+	),
+	Edit: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "edit"),
+	),
+	Merge: key.NewBinding(
+		key.WithKeys("M"),
+		key.WithHelp("M", "merge"),
+	),
+	Ready: key.NewBinding(
+		key.WithKeys("w"),
+		key.WithHelp("w", "ready for review"),
+	),
+	Reopen: key.NewBinding(
+		key.WithKeys("O"),
+		key.WithHelp("O", "reopen"),
+	),
+	Review: key.NewBinding(
+		key.WithKeys("W"),
+		key.WithHelp("W", "review"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),

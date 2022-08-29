@@ -146,6 +146,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
+		case key.Matches(msg, utils.Keys.Help):
+			if !m.help.ShowAll {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.FooterHeight - styles.ExpandedHelpHeight
+			} else {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.ExpandedHelpHeight - styles.FooterHeight
+			}
+
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
 

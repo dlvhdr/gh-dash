@@ -10,17 +10,18 @@ import (
 )
 
 type Model struct {
-	help bbHelp.Model
+	help    bbHelp.Model
+	ShowAll bool
 }
 
 func NewModel() Model {
 	help := bbHelp.NewModel()
 	help.Styles = bbHelp.Styles{
-		ShortDesc:      helpTextStyle.Copy(),
+		ShortDesc:      helpTextStyle.Copy().Foreground(styles.DefaultTheme.FaintText),
 		FullDesc:       helpTextStyle.Copy(),
-		ShortSeparator: helpTextStyle.Copy(),
+		ShortSeparator: helpTextStyle.Copy().Foreground(styles.DefaultTheme.SecondaryBorder),
 		FullSeparator:  helpTextStyle.Copy(),
-		FullKey:        helpTextStyle.Copy(),
+		FullKey:        helpTextStyle.Copy().Foreground(styles.DefaultTheme.PrimaryText),
 		ShortKey:       helpTextStyle.Copy(),
 		Ellipsis:       helpTextStyle.Copy(),
 	}
@@ -36,6 +37,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, utils.Keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
+			m.ShowAll = m.help.ShowAll
 		}
 	}
 
@@ -43,6 +45,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View(ctx context.ProgramContext) string {
+	if m.help.ShowAll {
+		return styles.FooterStyle.Copy().
+			Height(styles.ExpandedHelpHeight - 1).
+			Width(ctx.ScreenWidth).
+			Render(m.help.View(utils.Keys))
+	}
+
 	return styles.FooterStyle.Copy().
 		Width(ctx.ScreenWidth).
 		Render(m.help.View(utils.Keys))
