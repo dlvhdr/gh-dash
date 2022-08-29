@@ -14,4 +14,8 @@ var (
 			BorderTop(true).
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderForeground(DefaultTheme.PrimaryBorder)
+
+	ErrorStyle = FooterStyle.Copy().
+			Foreground(DefaultTheme.WarningText).
+			MaxHeight(FooterHeight)
 )

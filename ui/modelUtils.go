@@ -2,12 +2,17 @@ package ui
 
 import (
 	"bytes"
+	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"text/template"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
+	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
 func (m *Model) getCurrSection() section.Section {
@@ -55,7 +60,7 @@ type CommandTemplateInput struct {
 	HeadRefName string
 }
 
-func (m *Model) executeKeybinding(key string) {
+func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
 	for _, keybinding := range m.ctx.Config.Keybindings.Prs {
 		if keybinding.Key != key {
@@ -64,12 +69,13 @@ func (m *Model) executeKeybinding(key string) {
 
 		switch data := currRowData.(type) {
 		case *data.PullRequestData:
-			m.runCustomCommand(keybinding.Command, data)
+			return m.runCustomCommand(keybinding.Command, data)
 		}
 	}
+	return nil
 }
 
-func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullRequestData) {
+func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
 		log.Fatal(err)
@@ -88,9 +94,31 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 		log.Fatal(err)
 	}
 
-	job := exec.Command("/bin/sh", "-c", buff.String())
-	out, err := job.CombinedOutput()
-	if err != nil {
-		log.Fatalf("Got an error while executing command: %s. \nError: %v\n%s", job, err, out)
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "sh"
 	}
+	c := exec.Command(shell, "-c", buff.String())
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		if err != nil {
+			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth)
+			md, mdErr := mdRenderer.Render(fmt.Sprintf("While running: `%s`", buff.String()))
+			if mdErr != nil {
+				return errMsg{mdErr}
+			}
+			return errMsg{fmt.Errorf(
+				lipgloss.JoinVertical(lipgloss.Left,
+					fmt.Sprintf("Whoops, got an error: %s", err),
+					md,
+				),
+			)}
+		}
+		return nil
+	})
+
+	// job := exec.Command("/bin/sh", "-c", buff.String())
+	// out, err := job.CombinedOutput()
+	// if err != nil {
+	// 	log.Fatalf("Got an error while executing command: %s. \nError: %v\n%s", job, err, out)
+	// }
 }
