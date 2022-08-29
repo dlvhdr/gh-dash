@@ -125,8 +125,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Filters: "is:open review-requested:@me",
 			},
 			{
-				Title:   "Subscribed",
-				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-dash",
+				Title:   "Involved",
+				Filters: "is:open involves:@me -author:@me",
 			},
 		},
 		IssuesSections: []SectionConfig{
@@ -139,8 +139,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Filters: "is:open assignee:@me",
 			},
 			{
-				Title:   "Subscribed",
-				Filters: "is:open -author:@me repo:cli/cli repo:dlvhdr/gh-dash",
+				Title:   "Involved",
+				Filters: "is:open involves:@me -author:@me",
 			},
 		},
 		Keybindings: Keybindings{
