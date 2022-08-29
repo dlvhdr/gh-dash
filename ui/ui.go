@@ -70,6 +70,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		m.err = nil
+
 		if currSection != nil && currSection.IsSearchFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 			return m, cmd
@@ -77,7 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch {
 		case m.isUserDefinedKeybinding(msg):
-			m.executeKeybinding(msg.String())
+			cmd = m.executeKeybinding(msg.String())
+			return m, cmd
 
 		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
@@ -184,10 +187,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.err != nil {
-		return m.err.Error()
-	}
-
 	if m.ctx.Config == nil {
 		return "Reading config...\n"
 	}
@@ -208,7 +207,12 @@ func (m Model) View() string {
 	}
 	s.WriteString(mainContent)
 	s.WriteString("\n")
-	s.WriteString(m.help.View(m.ctx))
+	if m.err != nil {
+		s.WriteString(styles.ErrorStyle.Render(m.err.Error()))
+	} else {
+		s.WriteString(m.help.View(m.ctx))
+	}
+
 	return s.String()
 }
 
