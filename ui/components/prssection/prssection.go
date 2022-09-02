@@ -52,7 +52,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.PRKeys.Diff):
 			cmd = m.diff()
 
-
+		case key.Matches(msg, keys.PRKeys.Checkout):
+			cmd, err = m.checkout()
+			if err != nil {
+				m.Ctx.Error = err
+			}
 
 		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()

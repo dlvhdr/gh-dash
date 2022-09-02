@@ -423,9 +423,13 @@ func (m *Model) renderRunningTask() string {
 	case context.TaskStart:
 		status = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
 	case context.TaskError:
-		status = task.Error.Error()
+		status = lipgloss.NewStyle().
+			Foreground(styles.DefaultTheme.WarningText).
+			Render(fmt.Sprintf(" %s", task.Error.Error()))
 	case context.TaskFinished:
-		status = task.FinishedText
+		status = lipgloss.NewStyle().
+			Foreground(styles.DefaultTheme.SuccessText).
+			Render(fmt.Sprintf(" %s", task.FinishedText))
 	}
 
 	return styles.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
