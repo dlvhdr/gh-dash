@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
+	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
@@ -134,9 +135,9 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth)
 			md, mdErr := mdRenderer.Render(fmt.Sprintf("While running: `%s`", buff.String()))
 			if mdErr != nil {
-				return errMsg{mdErr}
+				return constants.ErrMsg{Err: mdErr}
 			}
-			return errMsg{fmt.Errorf(
+			return constants.ErrMsg{Err: fmt.Errorf(
 				lipgloss.JoinVertical(lipgloss.Left,
 					fmt.Sprintf("Whoops, got an error: %s", err),
 					md,

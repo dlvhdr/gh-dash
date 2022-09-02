@@ -117,7 +117,7 @@ func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
 		Width:  m.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight - 2 - styles.SearchHeight,
+		Height: m.Ctx.MainContentHeight - styles.SearchHeight,
 	}
 }
 
@@ -125,7 +125,11 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	oldDimensions := m.GetDimensions()
 	m.Ctx = ctx
 	newDimensions := m.GetDimensions()
-	m.Table.SetDimensions(newDimensions)
+	tableDimensions := constants.Dimensions{
+		Height: newDimensions.Height - 2,
+		Width:  newDimensions.Width,
+	}
+	m.Table.SetDimensions(tableDimensions)
 
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()

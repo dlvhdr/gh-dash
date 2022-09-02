@@ -1,9 +1,11 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
@@ -16,14 +18,15 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/ui/components/tabs"
+	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {
-	keys          utils.KeyMap
-	err           error
+	keys          keys.KeyMap
 	sidebar       sidebar.Model
 	currSectionId int
 	help          help.Model
@@ -37,19 +40,21 @@ type Model struct {
 
 func NewModel() Model {
 	tabsModel := tabs.NewModel()
-	return Model{
-		keys:          utils.Keys,
+	m := Model{
+		keys:          keys.Keys,
 		help:          help.NewModel(),
 		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
 	}
+
+	return m
 }
 
 func initScreen() tea.Msg {
 	config, err := config.ParseConfig()
 	if err != nil {
-		return errMsg{err}
+		log.Fatal(err)
 	}
 
 	return initMsg{Config: config}
@@ -70,7 +75,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		m.err = nil
+		m.ctx.Error = nil
 
 		if currSection != nil && currSection.IsSearchFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
@@ -146,6 +151,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
+		case key.Matches(msg, m.keys.Help):
+			if !m.help.ShowAll {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.FooterHeight - styles.ExpandedHelpHeight
+			} else {
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.ExpandedHelpHeight - styles.FooterHeight
+			}
+
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit
 
@@ -173,8 +185,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
 
-	case errMsg:
-		m.err = msg
+	case constants.ErrMsg:
+		m.ctx.Error = msg.Err
 	}
 
 	m.syncProgramContext()
@@ -207,8 +219,17 @@ func (m Model) View() string {
 	}
 	s.WriteString(mainContent)
 	s.WriteString("\n")
-	if m.err != nil {
-		s.WriteString(styles.ErrorStyle.Render(m.err.Error()))
+	if m.ctx.Error != nil {
+		s.WriteString(
+			styles.ErrorStyle.
+				Width(m.ctx.ScreenWidth).
+				Render(fmt.Sprintf("%s %s",
+					constants.FailureGlyph,
+					lipgloss.NewStyle().
+						Foreground(styles.DefaultTheme.WarningText).
+						Render(m.ctx.Error.Error()),
+				)),
+		)
 	} else {
 		s.WriteString(m.help.View(m.ctx))
 	}
@@ -219,12 +240,6 @@ func (m Model) View() string {
 type initMsg struct {
 	Config config.Config
 }
-
-type errMsg struct {
-	error
-}
-
-func (e errMsg) Error() string { return e.error.Error() }
 
 func (m *Model) setCurrSectionId(newSectionId int) {
 	m.currSectionId = newSectionId

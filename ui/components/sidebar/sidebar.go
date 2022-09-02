@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/keys"
 )
 
 type Model struct {
@@ -36,10 +36,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, constants.Keys.PageDown):
+		case key.Matches(msg, keys.Keys.PageDown):
 			m.viewport.HalfViewDown()
 
-		case key.Matches(msg, constants.Keys.PageUp):
+		case key.Matches(msg, keys.Keys.PageUp):
 			m.viewport.HalfViewUp()
 		}
 	}
