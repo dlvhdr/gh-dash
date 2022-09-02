@@ -52,6 +52,10 @@ type Keybindings struct {
 	Prs []Keybinding `yaml:"prs"`
 }
 
+type Pager struct {
+	Diff string `yaml:"diff"`
+}
+
 type HexColor string
 
 type ColorThemeText struct {
@@ -94,6 +98,7 @@ type Config struct {
 	Keybindings    Keybindings       `yaml:"keybindings"`
 	RepoPaths      map[string]string `yaml:"repoPaths"`
 	Theme          *ThemeConfig      `yaml:"theme,omitempty" validate:"omitempty,dive"`
+	Pager          Pager             `yaml:"pager"`
 }
 
 type configError struct {

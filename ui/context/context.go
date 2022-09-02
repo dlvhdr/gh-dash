@@ -11,6 +11,7 @@ type ProgramContext struct {
 	MainContentHeight int
 	Config            *config.Config
 	View              config.ViewType
+	Error             error
 }
 
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {

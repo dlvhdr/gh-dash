@@ -3,6 +3,7 @@ package prssection
 import (
 	"sort"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -40,19 +42,24 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Mod
 
 func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
+	var err error
 
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
+		switch {
 
-		switch msg.Type {
+		case key.Matches(msg, keys.PRKeys.Diff):
+			cmd = m.diff()
 
-		case tea.KeyEnter:
+
+
+		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
 			return &m, m.FetchSectionRows()
 
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
 			m.SearchBar.SetValue(m.SearchValue)
 			blinkCmd := m.SetIsSearching(false)
 			return &m, blinkCmd
@@ -116,6 +123,7 @@ func GetSectionColumns() []table.Column {
 		{
 			Title: "",
 			Width: &ciCellWidth,
+			Grow:  new(bool),
 		},
 		{
 			Title: "",
