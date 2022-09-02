@@ -2,7 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"log"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -36,6 +39,8 @@ type Model struct {
 	isSidebarOpen bool
 	tabs          tabs.Model
 	ctx           context.ProgramContext
+	taskSpinner   spinner.Model
+	tasks         map[string]context.Task
 }
 
 func NewModel() Model {
@@ -46,8 +51,15 @@ func NewModel() Model {
 		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
+		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
+		tasks:         map[string]context.Task{},
 	}
 
+	m.ctx = context.ProgramContext{StartTask: func(task context.Task) tea.Cmd {
+		task.StartTime = time.Now()
+		m.tasks[task.Id] = task
+		return m.taskSpinner.Tick
+	}}
 	return m
 }
 
@@ -172,6 +184,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.setCurrentViewSections(newSections)
 		cmd = fetchSectionsCmds
 
+	case constants.TaskFinishedMsg:
+		task, ok := m.tasks[msg.TaskId]
+		if ok {
+			task.State = context.TaskFinished
+			m.tasks[msg.TaskId] = task
+			cmd = tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+				return constants.ClearTaskMsg{TaskId: msg.TaskId}
+			})
+		}
+
+	case spinner.TickMsg:
+		if len(m.tasks) > 0 {
+			taskSpinner, internalTickCmd := m.taskSpinner.Update(msg)
+			m.taskSpinner = taskSpinner
+			cmd = internalTickCmd
+		}
+
+	case constants.ClearTaskMsg:
+		delete(m.tasks, msg.TaskId)
+
 	case section.SectionMsg:
 		cmd = m.updateRelevantSection(msg)
 
@@ -230,6 +262,8 @@ func (m Model) View() string {
 						Render(m.ctx.Error.Error()),
 				)),
 		)
+	} else if len(m.tasks) > 0 {
+		s.WriteString(m.renderRunningTask())
 	} else {
 		s.WriteString(m.help.View(m.ctx))
 	}
@@ -372,4 +406,27 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 	}
 
 	return false
+}
+
+func (m *Model) renderRunningTask() string {
+	tasks := make([]context.Task, 0, len(m.tasks))
+	for _, value := range m.tasks {
+		tasks = append(tasks, value)
+	}
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].StartTime.After(tasks[j].StartTime)
+	})
+	task := tasks[0]
+
+	var status string
+	switch task.State {
+	case context.TaskStart:
+		status = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
+	case context.TaskError:
+		status = task.Error.Error()
+	case context.TaskFinished:
+		status = task.FinishedText
+	}
+
+	return styles.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
 }
