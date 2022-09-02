@@ -1,8 +1,28 @@
 package context
 
 import (
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
 )
+
+type State = int
+
+const (
+	TaskStart State = iota
+	TaskFinished
+	TaskError
+)
+
+type Task struct {
+	Id           string
+	StartText    string
+	FinishedText string
+	State        State
+	Error        error
+	StartTime    time.Time
+}
 
 type ProgramContext struct {
 	ScreenHeight      int
@@ -12,6 +32,7 @@ type ProgramContext struct {
 	Config            *config.Config
 	View              config.ViewType
 	Error             error
+	StartTask         func(task Task) tea.Cmd
 }
 
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
