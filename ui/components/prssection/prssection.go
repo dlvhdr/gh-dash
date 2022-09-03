@@ -49,6 +49,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 
+		// case key.Matches(msg, keys.PRKeys.Comment):
+		// 	cmd = m.comment("body")
+
 		case key.Matches(msg, keys.PRKeys.Diff):
 			cmd = m.diff()
 
@@ -78,6 +81,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if currPr.Number == msg.PrNumber {
 				if msg.IsClosed {
 					currPr.State = "CLOSED"
+				}
+				if msg.NewComment != nil {
+					currPr.Comments.Nodes = append(currPr.Comments.Nodes, *msg.NewComment)
 				}
 				m.Prs[i] = currPr
 				m.Table.SetRows(m.BuildRows())
@@ -225,4 +231,10 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
+}
+
+type UpdatePRMsg struct {
+	PrNumber   int
+	IsClosed   bool
+	NewComment *data.Comment
 }

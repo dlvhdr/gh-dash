@@ -25,6 +25,7 @@ type Task struct {
 }
 
 type ProgramContext struct {
+	User              string
 	ScreenHeight      int
 	ScreenWidth       int
 	MainContentWidth  int

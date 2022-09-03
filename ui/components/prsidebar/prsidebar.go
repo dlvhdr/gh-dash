@@ -4,29 +4,94 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/textarea"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
-	pr    *pr.PullRequest
-	width int
+	ctx          *context.ProgramContext
+	sectionId    int
+	pr           *pr.PullRequest
+	width        int
+	isCommenting bool
+	textArea     textarea.Model
+	commentHelp  help.Model
 }
 
-func NewModel(data *data.PullRequestData, width int) Model {
-	var p *pr.PullRequest
-	if data == nil {
-		p = nil
-	} else {
-		p = &pr.PullRequest{Data: *data}
+func NewModel() Model {
+	ta := textarea.New()
+	ta.ShowLineNumbers = true
+	ta.Prompt = ""
+	ta.FocusedStyle.Base = lipgloss.NewStyle()
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
+		Background(styles.DefaultTheme.FaintBorder).
+		Foreground(styles.DefaultTheme.PrimaryText)
+	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
+	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SecondaryText)
+	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
+	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText)
+	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
+	ta.Focus()
+
+	helpTextStyle := lipgloss.NewStyle().Foreground(styles.DefaultTheme.SecondaryText)
+	h := help.NewModel()
+	h.Styles = help.Styles{
+		ShortDesc:      helpTextStyle.Copy().Foreground(styles.DefaultTheme.FaintText),
+		FullDesc:       helpTextStyle.Copy(),
+		ShortSeparator: helpTextStyle.Copy().Foreground(styles.DefaultTheme.SecondaryBorder),
+		FullSeparator:  helpTextStyle.Copy(),
+		FullKey:        helpTextStyle.Copy().Foreground(styles.DefaultTheme.PrimaryText),
+		ShortKey:       helpTextStyle.Copy(),
+		Ellipsis:       helpTextStyle.Copy(),
 	}
+
 	return Model{
-		pr:    p,
-		width: width,
+		pr:           nil,
+		isCommenting: false,
+		textArea:     ta,
+		commentHelp:  h,
 	}
+}
+
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var (
+		cmds  []tea.Cmd
+		cmd   tea.Cmd
+		taCmd tea.Cmd
+	)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+
+		if !m.isCommenting {
+			return m, nil
+		}
+
+		switch msg.Type {
+
+		case tea.KeyCtrlD:
+			cmd = m.comment(m.textArea.Value())
+			m.textArea.Blur()
+			m.isCommenting = false
+			return m, cmd
+
+		case tea.KeyEsc, tea.KeyCtrlC:
+			m.textArea.Blur()
+			m.isCommenting = false
+			return m, nil
+		}
+	}
+
+	m.textArea, taCmd = m.textArea.Update(msg)
+	cmds = append(cmds, cmd, taCmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
@@ -42,6 +107,10 @@ func (m Model) View() string {
 	s.WriteString(m.renderChecks())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
+
+	if m.isCommenting {
+		s.WriteString(m.renderCommentBox())
+	}
 
 	return s.String()
 }
@@ -143,6 +212,43 @@ func (m *Model) renderDescription() string {
 		MaxWidth(width).
 		Align(lipgloss.Left).
 		Render(rendered)
+}
+
+func (m *Model) SetSectionId(id int) {
+	m.sectionId = id
+}
+
+func (m *Model) SetRow(data *data.PullRequestData) {
+	if data == nil {
+		m.pr = nil
+	} else {
+		m.pr = &pr.PullRequest{Data: *data}
+	}
+}
+
+func (m *Model) SetWidth(width int) {
+	m.width = width
+	m.textArea.SetWidth(width)
+}
+
+func (m *Model) GetIsCommenting() bool {
+	return m.isCommenting
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+}
+
+func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
+	if m.isCommenting == false && isCommenting == true {
+		m.textArea.Reset()
+	}
+	m.isCommenting = isCommenting
+
+	if isCommenting == true {
+		return tea.Sequentially(textarea.Blink, m.textArea.Focus())
+	}
+	return nil
 }
 
 func (m *Model) getIndentedContentWidth() int {

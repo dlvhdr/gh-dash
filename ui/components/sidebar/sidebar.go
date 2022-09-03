@@ -84,6 +84,10 @@ func (m *Model) GetSidebarContentWidth() int {
 	return m.ctx.Config.Defaults.Preview.Width - 2*contentPadding - borderWidth
 }
 
+func (m *Model) ScrollToBottom() {
+	m.viewport.GotoBottom()
+}
+
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	if ctx == nil {
 		return
