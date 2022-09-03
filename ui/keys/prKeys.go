@@ -21,5 +21,6 @@ var PRKeys = PRKeyMap{
 func PRFullHelp() []key.Binding {
 	return []key.Binding{
 		PRKeys.Diff,
+		PRKeys.Checkout,
 	}
 }
