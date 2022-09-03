@@ -31,6 +31,7 @@ import (
 type Model struct {
 	keys          keys.KeyMap
 	sidebar       sidebar.Model
+	prSidebar     prsidebar.Model
 	currSectionId int
 	help          help.Model
 	prs           []section.Section
@@ -51,6 +52,7 @@ func NewModel() Model {
 		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
+		prSidebar:     prsidebar.NewModel(),
 		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
 		tasks:         map[string]context.Task{},
 	}
@@ -64,6 +66,8 @@ func NewModel() Model {
 }
 
 func initScreen() tea.Msg {
+	var err error
+
 	config, err := config.ParseConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -78,11 +82,12 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd         tea.Cmd
-		sidebarCmd  tea.Cmd
-		helpCmd     tea.Cmd
-		cmds        []tea.Cmd
-		currSection = m.getCurrSection()
+		cmd          tea.Cmd
+		sidebarCmd   tea.Cmd
+		prSidebarCmd tea.Cmd
+		helpCmd      tea.Cmd
+		cmds         []tea.Cmd
+		currSection  = m.getCurrSection()
 	)
 
 	switch msg := msg.(type) {
@@ -91,6 +96,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if currSection != nil && currSection.IsSearchFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
+			return m, cmd
+		}
+
+		if m.prSidebar.GetIsCommenting() {
+			m.prSidebar, cmd = m.prSidebar.Update(msg)
+			m.syncSidebarPr()
 			return m, cmd
 		}
 
@@ -163,6 +174,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
+		case key.Matches(msg, keys.PRKeys.Comment):
+			m.isSidebarOpen = true
+			cmd = m.prSidebar.SetIsCommenting(true)
+			m.syncSidebarPr()
+			m.sidebar.ScrollToBottom()
+			return m, cmd
+
 		case key.Matches(msg, m.keys.Help):
 			if !m.help.ShowAll {
 				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.FooterHeight - styles.ExpandedHelpHeight
@@ -182,7 +200,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmd = fetchSectionsCmds
+		cmds = append(cmds, fetchSectionsCmds, fetchUser)
+
+	case userFetchedMsg:
+		m.ctx.User = msg.user
 
 	case constants.TaskFinishedMsg:
 		task, ok := m.tasks[msg.TaskId]
@@ -230,9 +251,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.syncProgramContext()
 
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
+
+	if m.prSidebar.GetIsCommenting() {
+		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
+		m.syncSidebarPr()
+	}
+
 	m.help, helpCmd = m.help.Update(msg)
 	sectionCmd := m.updateCurrentSection(msg)
-	cmds = append(cmds, cmd, sidebarCmd, helpCmd, sectionCmd)
+	cmds = append(cmds, cmd, sidebarCmd, helpCmd, sectionCmd, prSidebarCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -303,6 +330,7 @@ func (m *Model) syncProgramContext() {
 		section.UpdateProgramContext(&m.ctx)
 	}
 	m.sidebar.UpdateProgramContext(&m.ctx)
+	m.prSidebar.UpdateProgramContext(&m.ctx)
 }
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
@@ -350,8 +378,10 @@ func (m *Model) syncSidebarPr() {
 
 	switch row := currRowData.(type) {
 	case *data.PullRequestData:
-		content := prsidebar.NewModel(row, width).View()
-		m.sidebar.SetContent(content)
+		m.prSidebar.SetSectionId(m.currSectionId)
+		m.prSidebar.SetRow(row)
+		m.prSidebar.SetWidth(width)
+		m.sidebar.SetContent(m.prSidebar.View())
 	case *data.IssueData:
 		content := issuesidebar.NewModel(row, width).View()
 		m.sidebar.SetContent(content)
@@ -439,4 +469,21 @@ func (m *Model) renderRunningTask() string {
 	}
 
 	return styles.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
+}
+
+type userFetchedMsg struct {
+	user string
+}
+
+func fetchUser() tea.Msg {
+	user, err := data.CurrentLoginName()
+	if err != nil {
+		return constants.ErrMsg{
+			Err: err,
+		}
+	}
+
+	return userFetchedMsg{
+		user: user,
+	}
 }
