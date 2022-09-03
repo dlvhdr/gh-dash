@@ -58,6 +58,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Ctx.Error = err
 			}
 
+		case key.Matches(msg, keys.PRKeys.Close):
+			cmd = m.close()
+
 		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
@@ -68,6 +71,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			blinkCmd := m.SetIsSearching(false)
 			return &m, blinkCmd
 
+		}
+
+	case UpdatePRMsg:
+		for i, currPr := range m.Prs {
+			if currPr.Number == msg.PrNumber {
+				if msg.IsClosed {
+					currPr.State = "CLOSED"
+				}
+				m.Prs[i] = currPr
+				m.Table.SetRows(m.BuildRows())
+				break
+			}
 		}
 
 	case section.SectionMsg:
