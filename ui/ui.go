@@ -192,6 +192,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 				return constants.ClearTaskMsg{TaskId: msg.TaskId}
 			})
+
+			switch msg.SectionType {
+			case prssection.SectionType:
+				m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
+				m.syncSidebarPr()
+			}
 		}
 
 	case spinner.TickMsg:

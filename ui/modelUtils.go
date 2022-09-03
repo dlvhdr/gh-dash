@@ -58,10 +58,12 @@ func (m *Model) getNextSectionId() int {
 // support [user|org]/* matching for repositories
 // and local path mapping to [partial path prefix]/*
 // prioritize full repo mapping if it exists
-func getRepoLocalPath(repoName string, cfgPaths map[string]string ) string {
+func getRepoLocalPath(repoName string, cfgPaths map[string]string) string {
 	exactMatchPath, ok := cfgPaths[repoName]
 	// prioritize full repo to path mapping in config
-	if ok { return exactMatchPath	}
+	if ok {
+		return exactMatchPath
+	}
 
 	var repoPath string
 
@@ -146,10 +148,4 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 		}
 		return nil
 	})
-
-	// job := exec.Command("/bin/sh", "-c", buff.String())
-	// out, err := job.CombinedOutput()
-	// if err != nil {
-	// 	log.Fatalf("Got an error while executing command: %s. \nError: %v\n%s", job, err, out)
-	// }
 }
