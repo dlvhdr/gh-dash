@@ -49,9 +49,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 
-		// case key.Matches(msg, keys.PRKeys.Comment):
-		// 	cmd = m.comment("body")
-
 		case key.Matches(msg, keys.PRKeys.Diff):
 			cmd = m.diff()
 
