@@ -77,7 +77,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		switch msg.Type {
 
 		case tea.KeyCtrlD:
-			cmd = m.comment(m.textArea.Value())
+			if len(strings.Trim(m.textArea.Value(), " ")) != 0 {
+				cmd = m.comment(m.textArea.Value())
+			}
 			m.textArea.Blur()
 			m.isCommenting = false
 			return m, cmd
