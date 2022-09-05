@@ -7,6 +7,7 @@ type PRKeyMap struct {
 	Diff     key.Binding
 	Checkout key.Binding
 	Close    key.Binding
+	Ready    key.Binding
 	Reopen   key.Binding
 }
 
@@ -31,6 +32,10 @@ var PRKeys = PRKeyMap{
 		key.WithKeys("X"),
 		key.WithHelp("X", "reopen"),
 	),
+	Ready: key.NewBinding(
+		key.WithKeys("w"),
+		key.WithHelp("w", "ready for review"),
+	),
 }
 
 func PRFullHelp() []key.Binding {
@@ -39,6 +44,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Diff,
 		PRKeys.Checkout,
 		PRKeys.Close,
+		PRKeys.Ready,
 		PRKeys.Reopen,
 	}
 }

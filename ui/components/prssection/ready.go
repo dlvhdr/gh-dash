@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 func (m *Model) ready() tea.Cmd {
@@ -39,7 +40,7 @@ func (m *Model) ready() tea.Cmd {
 			Err:         err,
 			Msg: UpdatePRMsg{
 				PrNumber:       prNumber,
-				ReadyForReview: true,
+				ReadyForReview: utils.BoolPtr(true),
 			},
 		}
 	})
