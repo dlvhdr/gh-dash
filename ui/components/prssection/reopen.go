@@ -10,14 +10,14 @@ import (
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
-func (m *Model) close() tea.Cmd {
+func (m *Model) reopen() tea.Cmd {
 	pr := m.GetCurrRow()
 	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("close_%d", prNumber)
+	taskId := fmt.Sprintf("reopen_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Closing PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("PR #%d has been closed", prNumber),
+		StartText:    fmt.Sprintf("Reopening PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("PR #%d has been reopened", prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -26,7 +26,7 @@ func (m *Model) close() tea.Cmd {
 		c := exec.Command(
 			"gh",
 			"pr",
-			"close",
+			"reopen",
 			fmt.Sprint(m.GetCurrRow().GetNumber()),
 			"-R",
 			m.GetCurrRow().GetRepoNameWithOwner(),
@@ -40,7 +40,7 @@ func (m *Model) close() tea.Cmd {
 			Err:         err,
 			Msg: UpdatePRMsg{
 				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(true),
+				IsClosed: utils.BoolPtr(false),
 			},
 		}
 	})
