@@ -61,6 +61,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.PRKeys.Close):
 			cmd = m.close()
 
+		case key.Matches(msg, keys.PRKeys.Ready):
+			cmd = m.ready()
+
 		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
@@ -81,6 +84,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				}
 				if msg.NewComment != nil {
 					currPr.Comments.Nodes = append(currPr.Comments.Nodes, *msg.NewComment)
+				}
+				if msg.ReadyForReview {
+					currPr.IsDraft = false
 				}
 				m.Prs[i] = currPr
 				m.Table.SetRows(m.BuildRows())
@@ -231,7 +237,8 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 }
 
 type UpdatePRMsg struct {
-	PrNumber   int
-	IsClosed   bool
-	NewComment *data.Comment
+	PrNumber       int
+	IsClosed       bool
+	NewComment     *data.Comment
+	ReadyForReview bool
 }
