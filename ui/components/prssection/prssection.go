@@ -64,6 +64,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.PRKeys.Ready):
 			cmd = m.ready()
 
+		case key.Matches(msg, keys.PRKeys.Merge):
+			cmd = m.merge()
+
 		case key.Matches(msg, keys.PRKeys.Reopen):
 			cmd = m.reopen()
 
@@ -94,6 +97,10 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				}
 				if msg.ReadyForReview != nil && *msg.ReadyForReview {
 					currPr.IsDraft = false
+				}
+				if msg.IsMerged != nil && *msg.IsMerged {
+					currPr.State = "MERGED"
+					currPr.Mergeable = ""
 				}
 				m.Prs[i] = currPr
 				m.Table.SetRows(m.BuildRows())
@@ -248,4 +255,5 @@ type UpdatePRMsg struct {
 	IsClosed       *bool
 	NewComment     *data.Comment
 	ReadyForReview *bool
+	IsMerged       *bool
 }
