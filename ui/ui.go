@@ -208,7 +208,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case constants.TaskFinishedMsg:
 		task, ok := m.tasks[msg.TaskId]
 		if ok {
-			task.State = context.TaskFinished
+			if msg.Err != nil {
+				task.State = context.TaskError
+				task.Error = msg.Err
+			} else {
+				task.State = context.TaskFinished
+			}
 			m.tasks[msg.TaskId] = task
 			cmd = tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 				return constants.ClearTaskMsg{TaskId: msg.TaskId}
