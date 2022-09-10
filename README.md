@@ -85,9 +85,8 @@ repoPaths:
   dlvhdr/*: ~/code/repos/*       # will match dlvhdr/repo-name to ~/code/repos/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 keybindings: # optional
-  prs:
-    - key: c
-      command: cd {{.RepoPath}}; gh pr checkout {{.PrNumber}}
+pager:
+  diff: less # or delta for example
 ```
 
 Adding a PR or issue section is as easy as adding to the list of `prSections` or `issueSections` respectively:
