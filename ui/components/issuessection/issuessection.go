@@ -3,6 +3,7 @@ package issuessection
 import (
 	"sort"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -45,14 +47,16 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case tea.KeyMsg:
 
-		switch msg.Type {
+		switch {
+		case key.Matches(msg, keys.IssueKeys.Close):
+			cmd = m.close()
 
-		case tea.KeyEnter:
+		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
 			return &m, m.FetchSectionRows()
 
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
 			m.SearchBar.SetValue(m.SearchValue)
 			blinkCmd := m.SetIsSearching(false)
 			return &m, blinkCmd
@@ -62,6 +66,13 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case UpdateIssueMsg:
 		for i, currIssue := range m.Issues {
 			if currIssue.Number == msg.IssueNumber {
+				if msg.IsClosed != nil {
+					if *msg.IsClosed == true {
+						currIssue.State = "CLOSED"
+					} else {
+						currIssue.State = "OPEN"
+					}
+				}
 				if msg.NewComment != nil {
 					currIssue.Comments.Nodes = append(currIssue.Comments.Nodes, *msg.NewComment)
 				}
@@ -225,4 +236,5 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 type UpdateIssueMsg struct {
 	IssueNumber int
 	NewComment  *data.Comment
+	IsClosed    *bool
 }
