@@ -59,6 +59,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 		}
 
+	case UpdateIssueMsg:
+		for i, currIssue := range m.Issues {
+			if currIssue.Number == msg.IssueNumber {
+				if msg.NewComment != nil {
+					currIssue.Comments.Nodes = append(currIssue.Comments.Nodes, *msg.NewComment)
+				}
+				m.Issues[i] = currIssue
+				m.Table.SetRows(m.BuildRows())
+				break
+			}
+		}
+
 	case section.SectionMsg:
 		if msg.Id != m.Id || msg.Type != m.Type {
 			return &m, nil
@@ -208,4 +220,9 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchSectionRows())
 	}
 	return sections, tea.Batch(fetchIssuesCmds...)
+}
+
+type UpdateIssueMsg struct {
+	IssueNumber int
+	NewComment  *data.Comment
 }

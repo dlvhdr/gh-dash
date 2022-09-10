@@ -39,7 +39,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	if k.viewType == config.PRsView {
 		additionalKeys = PRFullHelp()
 	} else {
-		additionalKeys = []key.Binding{}
+		additionalKeys = IssueFullHelp()
 	}
 
 	return [][]key.Binding{

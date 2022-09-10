@@ -1,4 +1,4 @@
-package prsidebar
+package issuesidebar
 
 import (
 	"fmt"
@@ -7,19 +7,19 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/components/prssection"
+	"github.com/dlvhdr/gh-dash/ui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
 func (m *Model) comment(body string) tea.Cmd {
-	pr := m.pr.Data
-	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_comment_%d", prNumber)
+	issue := m.issue.Data
+	issueNumber := issue.GetNumber()
+	taskId := fmt.Sprintf("issue_comment_%d", issueNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Commenting on PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("Commented on PR #%d", prNumber),
+		StartText:    fmt.Sprintf("Commenting on issue #%d", issueNumber),
+		FinishedText: fmt.Sprintf("Commented on issue #%d", issueNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -27,11 +27,11 @@ func (m *Model) comment(body string) tea.Cmd {
 	return tea.Batch(startCmd, func() tea.Msg {
 		c := exec.Command(
 			"gh",
-			"pr",
+			"issue",
 			"comment",
-			fmt.Sprint(prNumber),
+			fmt.Sprint(issueNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			issue.GetRepoNameWithOwner(),
 			"-b",
 			body,
 		)
@@ -39,11 +39,11 @@ func (m *Model) comment(body string) tea.Cmd {
 		err := c.Run()
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
-			SectionType: prssection.SectionType,
+			SectionType: issuessection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: prssection.UpdatePRMsg{
-				PrNumber: prNumber,
+			Msg: issuessection.UpdateIssueMsg{
+				IssueNumber: issueNumber,
 				NewComment: &data.Comment{
 					Author:    struct{ Login string }{Login: m.ctx.User},
 					Body:      body,

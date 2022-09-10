@@ -32,6 +32,7 @@ type Model struct {
 	keys          keys.KeyMap
 	sidebar       sidebar.Model
 	prSidebar     prsidebar.Model
+	issueSidebar  issuesidebar.Model
 	currSectionId int
 	help          help.Model
 	prs           []section.Section
@@ -53,6 +54,7 @@ func NewModel() Model {
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
 		prSidebar:     prsidebar.NewModel(),
+		issueSidebar:  issuesidebar.NewModel(),
 		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
 		tasks:         map[string]context.Task{},
 	}
@@ -82,12 +84,13 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
-		cmd          tea.Cmd
-		sidebarCmd   tea.Cmd
-		prSidebarCmd tea.Cmd
-		helpCmd      tea.Cmd
-		cmds         []tea.Cmd
-		currSection  = m.getCurrSection()
+		cmd             tea.Cmd
+		sidebarCmd      tea.Cmd
+		prSidebarCmd    tea.Cmd
+		issueSidebarCmd tea.Cmd
+		helpCmd         tea.Cmd
+		cmds            []tea.Cmd
+		currSection     = m.getCurrSection()
 	)
 
 	switch msg := msg.(type) {
@@ -101,7 +104,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.prSidebar.GetIsCommenting() {
 			m.prSidebar, cmd = m.prSidebar.Update(msg)
-			m.syncSidebarPr()
+			m.syncSidebar()
+			return m, cmd
+		}
+
+		if m.issueSidebar.GetIsCommenting() {
+			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
+			m.syncSidebar()
 			return m, cmd
 		}
 
@@ -174,10 +183,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
-		case key.Matches(msg, keys.PRKeys.Comment):
+		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
 			m.isSidebarOpen = true
-			cmd = m.prSidebar.SetIsCommenting(true)
-			m.syncSidebarPr()
+			if m.ctx.View == prssection.SectionType {
+				cmd = m.prSidebar.SetIsCommenting(true)
+			} else {
+				cmd = m.issueSidebar.SetIsCommenting(true)
+			}
+			m.syncSidebar()
 			m.sidebar.ScrollToBottom()
 			return m, cmd
 
@@ -219,11 +232,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return constants.ClearTaskMsg{TaskId: msg.TaskId}
 			})
 
-			switch msg.SectionType {
-			case prssection.SectionType:
-				m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
-				m.syncSidebarPr()
-			}
+			m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
+			m.syncSidebar()
 		}
 
 	case spinner.TickMsg:
@@ -259,12 +269,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.prSidebar.GetIsCommenting() {
 		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
-		m.syncSidebarPr()
+		m.syncSidebar()
+	}
+
+	if m.issueSidebar.GetIsCommenting() {
+		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
+		m.syncSidebar()
 	}
 
 	m.help, helpCmd = m.help.Update(msg)
 	sectionCmd := m.updateCurrentSection(msg)
-	cmds = append(cmds, cmd, sidebarCmd, helpCmd, sectionCmd, prSidebarCmd)
+	cmds = append(
+		cmds,
+		cmd,
+		sidebarCmd,
+		helpCmd,
+		sectionCmd,
+		prSidebarCmd,
+		issueSidebarCmd,
+	)
 	return m, tea.Batch(cmds...)
 }
 
@@ -319,7 +342,7 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() {
-	m.syncSidebarPr()
+	m.syncSidebar()
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
@@ -336,6 +359,7 @@ func (m *Model) syncProgramContext() {
 	}
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
+	m.issueSidebar.UpdateProgramContext(&m.ctx)
 }
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
@@ -372,7 +396,7 @@ func (m *Model) syncMainContentWidth() {
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
 }
 
-func (m *Model) syncSidebarPr() {
+func (m *Model) syncSidebar() {
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 
@@ -388,8 +412,10 @@ func (m *Model) syncSidebarPr() {
 		m.prSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.prSidebar.View())
 	case *data.IssueData:
-		content := issuesidebar.NewModel(row, width).View()
-		m.sidebar.SetContent(content)
+		m.issueSidebar.SetSectionId(m.currSectionId)
+		m.issueSidebar.SetRow(row)
+		m.issueSidebar.SetWidth(width)
+		m.sidebar.SetContent(m.issueSidebar.View())
 	}
 }
 
