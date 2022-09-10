@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -23,7 +22,6 @@ type Model struct {
 	width        int
 	isCommenting bool
 	commentBox   commentbox.Model
-	commentHelp  help.Model
 }
 
 func NewModel() Model {

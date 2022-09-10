@@ -4,29 +4,68 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textarea"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components/commentbox"
 	"github.com/dlvhdr/gh-dash/ui/components/issue"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
-	issue *issue.Issue
-	width int
+	ctx          *context.ProgramContext
+	issue        *issue.Issue
+	sectionId    int
+	width        int
+	isCommenting bool
+	commentBox   commentbox.Model
 }
 
-func NewModel(data *data.IssueData, width int) Model {
-	var s *issue.Issue
-	if data == nil {
-		s = nil
-	} else {
-		s = &issue.Issue{Data: *data}
-	}
+func NewModel() Model {
 	return Model{
-		issue: s,
-		width: width,
+		issue:        nil,
+		isCommenting: false,
+		commentBox:   commentbox.NewModel(),
 	}
+}
+
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var (
+		cmds  []tea.Cmd
+		cmd   tea.Cmd
+		taCmd tea.Cmd
+	)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+
+		if !m.isCommenting {
+			return m, nil
+		}
+
+		switch msg.Type {
+
+		case tea.KeyCtrlD:
+			if len(strings.Trim(m.commentBox.Value(), " ")) != 0 {
+				cmd = m.comment(m.commentBox.Value())
+			}
+			m.commentBox.Blur()
+			m.isCommenting = false
+			return m, cmd
+
+		case tea.KeyEsc, tea.KeyCtrlC:
+			m.commentBox.Blur()
+			m.isCommenting = false
+			return m, nil
+		}
+	}
+
+	m.commentBox, taCmd = m.commentBox.Update(msg)
+	cmds = append(cmds, cmd, taCmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
@@ -45,7 +84,10 @@ func (m Model) View() string {
 	s.WriteString(m.renderBody())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
-	s.WriteString("\n\n")
+
+	if m.isCommenting {
+		s.WriteString(m.commentBox.View())
+	}
 
 	return s.String()
 }
@@ -115,4 +157,41 @@ func (m *Model) renderLabels() string {
 
 func (m *Model) getIndentedContentWidth() int {
 	return m.width - 6
+}
+
+func (m *Model) SetWidth(width int) {
+	m.width = width
+	m.commentBox.SetWidth(width)
+}
+
+func (m *Model) SetSectionId(id int) {
+	m.sectionId = id
+}
+
+func (m *Model) SetRow(data *data.IssueData) {
+	if data == nil {
+		m.issue = nil
+	} else {
+		m.issue = &issue.Issue{Data: *data}
+	}
+}
+
+func (m *Model) GetIsCommenting() bool {
+	return m.isCommenting
+}
+
+func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
+	if m.isCommenting == false && isCommenting == true {
+		m.commentBox.Reset()
+	}
+	m.isCommenting = isCommenting
+
+	if isCommenting == true {
+		return tea.Sequentially(textarea.Blink, m.commentBox.Focus())
+	}
+	return nil
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
 }
