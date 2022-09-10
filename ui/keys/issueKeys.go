@@ -5,6 +5,7 @@ import "github.com/charmbracelet/bubbles/key"
 type IssueKeyMap struct {
 	Comment key.Binding
 	Close   key.Binding
+	Reopen  key.Binding
 }
 
 var IssueKeys = IssueKeyMap{
@@ -16,11 +17,16 @@ var IssueKeys = IssueKeyMap{
 		key.WithKeys("x"),
 		key.WithHelp("x", "close"),
 	),
+	Reopen: key.NewBinding(
+		key.WithKeys("X"),
+		key.WithHelp("X", "reopen"),
+	),
 }
 
 func IssueFullHelp() []key.Binding {
 	return []key.Binding{
 		IssueKeys.Comment,
 		IssueKeys.Close,
+		IssueKeys.Reopen,
 	}
 }

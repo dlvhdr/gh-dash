@@ -1,4 +1,4 @@
-package prssection
+package issuessection
 
 import (
 	"fmt"
@@ -11,13 +11,13 @@ import (
 )
 
 func (m *Model) reopen() tea.Cmd {
-	pr := m.GetCurrRow()
-	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_reopen_%d", prNumber)
+	issue := m.GetCurrRow()
+	issueNumber := issue.GetNumber()
+	taskId := fmt.Sprintf("issue_reopen_%d", issueNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Reopening PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("PR #%d has been reopened", prNumber),
+		StartText:    fmt.Sprintf("Reopening issue #%d", issueNumber),
+		FinishedText: fmt.Sprintf("Issue #%d has been reopened", issueNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -25,7 +25,7 @@ func (m *Model) reopen() tea.Cmd {
 	return tea.Batch(startCmd, func() tea.Msg {
 		c := exec.Command(
 			"gh",
-			"pr",
+			"issue",
 			"reopen",
 			fmt.Sprint(m.GetCurrRow().GetNumber()),
 			"-R",
@@ -38,9 +38,9 @@ func (m *Model) reopen() tea.Cmd {
 			SectionType: SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: UpdatePRMsg{
-				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(false),
+			Msg: UpdateIssueMsg{
+				IssueNumber: issueNumber,
+				IsClosed:    utils.BoolPtr(false),
 			},
 		}
 	})

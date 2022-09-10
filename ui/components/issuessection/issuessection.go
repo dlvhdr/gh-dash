@@ -51,6 +51,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.IssueKeys.Close):
 			cmd = m.close()
 
+		case key.Matches(msg, keys.IssueKeys.Reopen):
+			cmd = m.reopen()
+
 		case msg.Type == tea.KeyEnter:
 			m.SearchValue = m.SearchBar.Value()
 			m.SetIsSearching(false)
