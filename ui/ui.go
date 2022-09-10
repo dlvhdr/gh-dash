@@ -185,7 +185,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
 			m.isSidebarOpen = true
-			if m.ctx.View == prssection.SectionType {
+			if m.ctx.View == config.PRsView {
 				cmd = m.prSidebar.SetIsCommenting(true)
 			} else {
 				cmd = m.issueSidebar.SetIsCommenting(true)
