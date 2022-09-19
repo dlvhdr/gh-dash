@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dylan-rinker/gh-dash/ui/components/ghassection"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -33,6 +35,7 @@ type Model struct {
 	sidebar       sidebar.Model
 	prSidebar     prsidebar.Model
 	issueSidebar  issuesidebar.Model
+	ghasSidebar   ghassidebar.Model
 	currSectionId int
 	help          help.Model
 	prs           []section.Section
@@ -55,6 +58,7 @@ func NewModel() Model {
 		sidebar:       sidebar.NewModel(),
 		prSidebar:     prsidebar.NewModel(),
 		issueSidebar:  issuesidebar.NewModel(),
+		ghasSidebar:   ghassidebar.NewModel(),
 		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
 		tasks:         map[string]context.Task{},
 	}
@@ -88,6 +92,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sidebarCmd      tea.Cmd
 		prSidebarCmd    tea.Cmd
 		issueSidebarCmd tea.Cmd
+		ghasSidebarCmd  tea.Cmd
 		helpCmd         tea.Cmd
 		cmds            []tea.Cmd
 		currSection     = m.getCurrSection()
@@ -110,6 +115,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.issueSidebar.GetIsCommenting() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
+			m.syncSidebar()
+			return m, cmd
+		}
+
+		if m.ghasSidebar.GetIsCommenting() {
+			m.ghasSidebar, cmd = m.ghasSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
@@ -183,12 +194,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
-		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
+		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment), key.Matches(msg, keys.GhasKeys.Comment):
 			m.isSidebarOpen = true
 			if m.ctx.View == config.PRsView {
 				cmd = m.prSidebar.SetIsCommenting(true)
-			} else {
+			} else if m.ctx.View == config.IssuesView {
 				cmd = m.issueSidebar.SetIsCommenting(true)
+			} else if m.ctx.View == config.GhasView {
+				cmd = m.ghasSidebar.SetIsCommenting(true)
 			}
 			m.syncSidebar()
 			m.sidebar.ScrollToBottom()
@@ -277,6 +290,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncSidebar()
 	}
 
+	if m.ghasSidebar.GetIsCommenting() {
+		m.ghasSidebar, ghasSidebarCmd = m.ghasSidebar.Update(msg)
+		m.syncSidebar()
+	}
+
 	m.help, helpCmd = m.help.Update(msg)
 	sectionCmd := m.updateCurrentSection(msg)
 	cmds = append(
@@ -287,6 +305,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sectionCmd,
 		prSidebarCmd,
 		issueSidebarCmd,
+		ghasSidebarCmd,
 	)
 	return m, tea.Batch(cmds...)
 }
@@ -371,6 +390,9 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	case issuessection.SectionType:
 		updatedSection, cmd = m.issues[id].Update(msg)
 		m.issues[id] = updatedSection
+	case ghassection.SectionType:
+		updatedSection, cmd = m.ghas[id].Update(msg)
+		m.ghas[id] = updatedSection
 	}
 
 	return cmd
@@ -422,16 +444,24 @@ func (m *Model) syncSidebar() {
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	if m.ctx.View == config.PRsView {
 		return prssection.FetchAllSections(m.ctx)
-	} else {
+	} else if m.ctx.View == config.IssuesView {
 		return issuessection.FetchAllSections(m.ctx)
+	} else if m.ctx.View == config.GhasView {
+		return ghassection.FetchAllSections(m.ctx)
+	} else {
+		return nil
 	}
 }
 
 func (m *Model) getCurrentViewSections() []section.Section {
 	if m.ctx.View == config.PRsView {
 		return m.prs
-	} else {
+	} else if m.ctx.View == config.IssuesView {
 		return m.issues
+	} else if m.ctx.View == config.GhasView {
+		return m.ghas
+	} else {
+		return nil
 	}
 }
 
@@ -443,24 +473,34 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 			config.SectionConfig{Title: "", Filters: "archived:false"},
 		)
 		m.prs = append([]section.Section{&search}, newSections...)
-	} else {
+	} else if m.ctx.View == config.IssuesView {
 		search := issuessection.NewModel(
 			0,
 			&m.ctx,
 			config.SectionConfig{Title: "", Filters: ""},
 		)
 		m.issues = append([]section.Section{&search}, newSections...)
+	} else if m.ctx.View == config.GhasView {
+		search := ghassection.NewModel(
+			0,
+			&m.ctx,
+			config.SectionConfig{Title: "", Filters: ""},
+		)
+		m.ghas = append([]section.Section{&search}, newSections...)
 	}
 }
 
 func (m *Model) switchSelectedView() config.ViewType {
 	if m.ctx.View == config.PRsView {
 		return config.IssuesView
-	} else {
+	} else if m.ctx.View == config.IssuesView {
 		return config.PRsView
+	} else {
+		return config.GhasView
 	}
 }
 
+// To Do: Make changes here
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 	if m.ctx.View != config.PRsView {
 		return false
