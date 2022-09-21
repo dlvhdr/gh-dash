@@ -251,7 +251,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.Id == m.currSectionId {
 			switch msg.Type {
-			case prssection.SectionType:
+			case prssection.SectionType, issuessection.SectionType:
 				m.onViewedRowChanged()
 			}
 		}
