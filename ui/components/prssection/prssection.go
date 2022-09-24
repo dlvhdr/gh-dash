@@ -30,7 +30,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Mod
 			ctx,
 			cfg,
 			SectionType,
-			GetSectionColumns(),
+			GetSectionColumns(ctx),
 			"PR",
 			"Pull Requests",
 		),
@@ -137,15 +137,16 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns() []table.Column {
+func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
+	layout := ctx.Config.Defaults.Layout.Prs
 	return []table.Column{
 		{
 			Title: "",
-			Width: &updatedAtCellWidth,
+			Width: layout.UpdatedAt.Width,
 		},
 		{
 			Title: "",
-			Width: &prRepoCellWidth,
+			Width: layout.Repo.Width,
 		},
 		{
 			Title: "Title",
@@ -153,7 +154,7 @@ func GetSectionColumns() []table.Column {
 		},
 		{
 			Title: "Author",
-			Width: &prAuthorCellWidth,
+			Width: layout.Author.Width,
 		},
 		{
 			Title: "",
@@ -169,7 +170,7 @@ func GetSectionColumns() []table.Column {
 		},
 		{
 			Title: "",
-			Width: &linesCellWidth,
+			Width: layout.Lines.Width,
 		},
 	}
 }
