@@ -36,11 +36,43 @@ type PreviewConfig struct {
 	Width int
 }
 
+type ColumnConfig struct {
+	width  *int  `yaml:"width" validate:"gt=0"`
+	hidden *bool `yaml:"hidden"`
+	grow   *bool `yaml:"grow"`
+}
+
+type PrsLayoutConfig struct {
+	updatedAt    ColumnConfig `yaml:"updatedAt"`
+	repo         ColumnConfig `yaml:"repo"`
+	title        ColumnConfig `yaml:"title"`
+	reviewStatus ColumnConfig `yaml:"reviewStatus"`
+	state        ColumnConfig `yaml:"state"`
+	ci           ColumnConfig `yaml:"ci"`
+	lines        ColumnConfig `yaml:"lines"`
+}
+
+type IssuesLayoutConfig struct {
+	updatedAt    ColumnConfig `yaml:"updatedAt"`
+	state        ColumnConfig `yaml:"state"`
+	repo         ColumnConfig `yaml:"repo"`
+	creator      ColumnConfig `yaml:"creator"`
+	assignees    ColumnConfig `yaml:"assignees"`
+	numComments  ColumnConfig `yaml:"numComments"`
+	numReactions ColumnConfig `yaml:"numReactions"`
+}
+
+type LayoutConfig struct {
+	Prs    PrsLayoutConfig    `yaml:"prs"`
+	Issues IssuesLayoutConfig `yaml:"issues"`
+}
+
 type Defaults struct {
 	Preview     PreviewConfig `yaml:"preview"`
 	PrsLimit    int           `yaml:"prsLimit"`
 	IssuesLimit int           `yaml:"issuesLimit"`
 	View        ViewType      `yaml:"view"`
+	Layout      LayoutConfig  `yaml:"layout"`
 }
 
 type Keybinding struct {
