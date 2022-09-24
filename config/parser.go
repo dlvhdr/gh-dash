@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/utils"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 )
@@ -37,34 +39,29 @@ type PreviewConfig struct {
 }
 
 type ColumnConfig struct {
-	width  *int  `yaml:"width" validate:"gt=0"`
-	hidden *bool `yaml:"hidden"`
-	grow   *bool `yaml:"grow"`
+	Width *int `yaml:"width,omitempty" validate:"omitempty,gt=0"`
 }
 
 type PrsLayoutConfig struct {
-	updatedAt    ColumnConfig `yaml:"updatedAt"`
-	repo         ColumnConfig `yaml:"repo"`
-	title        ColumnConfig `yaml:"title"`
-	reviewStatus ColumnConfig `yaml:"reviewStatus"`
-	state        ColumnConfig `yaml:"state"`
-	ci           ColumnConfig `yaml:"ci"`
-	lines        ColumnConfig `yaml:"lines"`
+	UpdatedAt ColumnConfig `yaml:"updatedAt,omitempty"`
+	Repo      ColumnConfig `yaml:"repo,omitempty"`
+	Author    ColumnConfig `yaml:"author,omitempty"`
+	Title     ColumnConfig `yaml:"title,omitempty"`
+	Lines     ColumnConfig `yaml:"lines,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
-	updatedAt    ColumnConfig `yaml:"updatedAt"`
-	state        ColumnConfig `yaml:"state"`
-	repo         ColumnConfig `yaml:"repo"`
-	creator      ColumnConfig `yaml:"creator"`
-	assignees    ColumnConfig `yaml:"assignees"`
-	numComments  ColumnConfig `yaml:"numComments"`
-	numReactions ColumnConfig `yaml:"numReactions"`
+	UpdatedAt ColumnConfig `yaml:"updatedAt,omitempty"`
+	State     ColumnConfig `yaml:"state,omitempty"`
+	Repo      ColumnConfig `yaml:"repo,omitempty"`
+	Title     ColumnConfig `yaml:"title,omitempty"`
+	Creator   ColumnConfig `yaml:"creator,omitempty"`
+	Assignees ColumnConfig `yaml:"assignees,omitempty"`
 }
 
 type LayoutConfig struct {
-	Prs    PrsLayoutConfig    `yaml:"prs"`
-	Issues IssuesLayoutConfig `yaml:"issues"`
+	Prs    PrsLayoutConfig    `yaml:"prs,omitempty"`
+	Issues IssuesLayoutConfig `yaml:"issues,omitempty"`
 }
 
 type Defaults struct {
@@ -72,7 +69,7 @@ type Defaults struct {
 	PrsLimit    int           `yaml:"prsLimit"`
 	IssuesLimit int           `yaml:"issuesLimit"`
 	View        ViewType      `yaml:"view"`
-	Layout      LayoutConfig  `yaml:"layout"`
+	Layout      LayoutConfig  `yaml:"layout,omitempty"`
 }
 
 type Keybinding struct {
@@ -151,6 +148,36 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			PrsLimit:    20,
 			IssuesLimit: 20,
 			View:        PRsView,
+			Layout: LayoutConfig{
+				Prs: PrsLayoutConfig{
+					UpdatedAt: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("2mo ago")),
+					},
+					Repo: ColumnConfig{
+						Width: utils.IntPtr(15),
+					},
+					Author: ColumnConfig{
+						Width: utils.IntPtr(15),
+					},
+					Lines: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width(" 123450 / -123450 ")),
+					},
+				},
+				Issues: IssuesLayoutConfig{
+					UpdatedAt: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("2mo ago")),
+					},
+					Repo: ColumnConfig{
+						Width: utils.IntPtr(15),
+					},
+					Creator: ColumnConfig{
+						Width: utils.IntPtr(7),
+					},
+					Assignees: ColumnConfig{
+						Width: utils.IntPtr(20),
+					},
+				},
+			},
 		},
 		PRSections: []SectionConfig{
 			{
