@@ -141,36 +141,44 @@ func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
 	layout := ctx.Config.Defaults.Layout.Prs
 	return []table.Column{
 		{
-			Title: "",
-			Width: layout.UpdatedAt.Width,
+			Title:  "",
+			Width:  layout.UpdatedAt.Width,
+			Hidden: layout.UpdatedAt.Hidden,
 		},
 		{
-			Title: "",
-			Width: layout.Repo.Width,
+			Title:  "",
+			Width:  layout.Repo.Width,
+			Hidden: layout.Repo.Hidden,
 		},
 		{
-			Title: "Title",
-			Grow:  utils.BoolPtr(true),
+			Title:  "Title",
+			Grow:   utils.BoolPtr(true),
+			Hidden: layout.Title.Hidden,
 		},
 		{
-			Title: "Author",
-			Width: layout.Author.Width,
+			Title:  "Author",
+			Width:  layout.Author.Width,
+			Hidden: layout.Author.Hidden,
 		},
 		{
-			Title: "",
-			Width: utils.IntPtr(4),
+			Title:  "",
+			Width:  utils.IntPtr(4),
+			Hidden: layout.ReviewStatus.Hidden,
 		},
 		{
-			Title: "",
+			Title:  "",
+			Hidden: layout.State.Hidden,
 		},
 		{
-			Title: "",
-			Width: &ciCellWidth,
-			Grow:  new(bool),
+			Title:  "",
+			Width:  &ciCellWidth,
+			Grow:   new(bool),
+			Hidden: layout.Ci.Hidden,
 		},
 		{
-			Title: "",
-			Width: layout.Lines.Width,
+			Title:  "",
+			Width:  layout.Lines.Width,
+			Hidden: layout.Lines.Hidden,
 		},
 	}
 }

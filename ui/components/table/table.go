@@ -16,9 +16,10 @@ type Model struct {
 }
 
 type Column struct {
-	Title string
-	Width *int
-	Grow  *bool
+	Title  string
+	Hidden *bool
+	Width  *int
+	Grow   *bool
 }
 
 type Row []string
@@ -111,11 +112,24 @@ func (m *Model) OnLineUp() {
 	m.rowsViewport.PrevItem()
 }
 
+func (m *Model) getShownColumns() []Column {
+	shownColumns := make([]Column, 0, len(m.Columns))
+	for _, col := range m.Columns {
+		if col.Hidden != nil && *col.Hidden {
+			continue
+		}
+
+		shownColumns = append(shownColumns, col)
+	}
+	return shownColumns
+}
+
 func (m *Model) renderHeaderColumns() []string {
-	renderedColumns := make([]string, len(m.Columns))
+	shownColumns := m.getShownColumns()
+	renderedColumns := make([]string, len(shownColumns))
 	takenWidth := 0
 	numGrowingColumns := 0
-	for i, column := range m.Columns {
+	for i, column := range shownColumns {
 		if column.Grow != nil && *column.Grow {
 			numGrowingColumns += 1
 			continue
@@ -132,10 +146,11 @@ func (m *Model) renderHeaderColumns() []string {
 
 		if len(column.Title) == 1 {
 			takenWidth += styles.SingleRuneWidth
-			renderedColumns[i] = singleRuneTitleCellStyle.Copy().
-				Width(styles.SingleRuneWidth).
-				MaxWidth(styles.SingleRuneWidth).
-				Render(column.Title)
+			renderedColumns[i] =
+				singleRuneTitleCellStyle.Copy().
+					Width(styles.SingleRuneWidth).
+					MaxWidth(styles.SingleRuneWidth).
+					Render(column.Title)
 			continue
 		}
 
@@ -150,7 +165,7 @@ func (m *Model) renderHeaderColumns() []string {
 	}
 
 	growCellWidth := leftoverWidth / numGrowingColumns
-	for i, column := range m.Columns {
+	for i, column := range shownColumns {
 		if column.Grow == nil || !*column.Grow {
 			continue
 		}
@@ -192,11 +207,17 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		style = cellStyle
 	}
 
-	renderedColumns := make([]string, len(m.Columns))
-	for i, column := range m.Rows[rowId] {
-		colWidth := lipgloss.Width(headerColumns[i])
-		col := style.Copy().Width(colWidth).MaxWidth(colWidth).Render(column)
-		renderedColumns = append(renderedColumns, col)
+	renderedColumns := make([]string, 0, len(m.Columns))
+	headerColId := 0
+	for i, column := range m.Columns {
+		if column.Hidden != nil && *column.Hidden {
+			continue
+		}
+
+		colWidth := lipgloss.Width(headerColumns[headerColId])
+		renderedCol := style.Copy().Width(colWidth).MaxWidth(colWidth).Render(m.Rows[rowId][i])
+		renderedColumns = append(renderedColumns, renderedCol)
+		headerColId++
 	}
 
 	return rowStyle.Copy().Render(
