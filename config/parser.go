@@ -39,15 +39,19 @@ type PreviewConfig struct {
 }
 
 type ColumnConfig struct {
-	Width *int `yaml:"width,omitempty" validate:"omitempty,gt=0"`
+	Width  *int  `yaml:"width,omitempty" validate:"omitempty,gt=0"`
+	Hidden *bool `yaml:"hidden,omitempty"`
 }
 
 type PrsLayoutConfig struct {
-	UpdatedAt ColumnConfig `yaml:"updatedAt,omitempty"`
-	Repo      ColumnConfig `yaml:"repo,omitempty"`
-	Author    ColumnConfig `yaml:"author,omitempty"`
-	Title     ColumnConfig `yaml:"title,omitempty"`
-	Lines     ColumnConfig `yaml:"lines,omitempty"`
+	UpdatedAt    ColumnConfig `yaml:"updatedAt,omitempty"`
+	Repo         ColumnConfig `yaml:"repo,omitempty"`
+	Author       ColumnConfig `yaml:"author,omitempty"`
+	Title        ColumnConfig `yaml:"title,omitempty"`
+	ReviewStatus ColumnConfig `yaml:"reviewStatus,omitempty"`
+	State        ColumnConfig `yaml:"state,omitempty"`
+	Ci           ColumnConfig `yaml:"ci,omitempty"`
+	Lines        ColumnConfig `yaml:"lines,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
