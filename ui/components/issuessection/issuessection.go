@@ -1,6 +1,7 @@
 package issuessection
 
 import (
+	"log"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -30,7 +31,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Mod
 			ctx,
 			cfg,
 			SectionType,
-			GetSectionColumns(),
+			GetSectionColumns(ctx),
 			"Issue",
 			"Issues",
 		),
@@ -114,37 +115,49 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns() []table.Column {
+func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
+	layout := ctx.Config.Defaults.Layout.Issues
+	log.Printf("updated at: %v\n", *layout.UpdatedAt.Width)
 	return []table.Column{
 		{
-			Title: "",
-			Width: &updatedAtCellWidth,
+			Title:  "",
+			Width:  layout.UpdatedAt.Width,
+			Hidden: layout.UpdatedAt.Hidden,
 		},
 		{
-			Title: "",
+			Title:  "",
+			Width:  layout.State.Width,
+			Hidden: layout.State.Hidden,
 		},
 		{
-			Title: "",
-			Width: &issueRepoCellWidth,
+			Title:  "",
+			Width:  layout.Repo.Width,
+			Hidden: layout.Repo.Hidden,
 		},
 		{
-			Title: "Title",
-			Grow:  utils.BoolPtr(true),
+			Title:  "Title",
+			Grow:   utils.BoolPtr(true),
+			Hidden: layout.Title.Hidden,
 		},
 		{
-			Title: "Creator",
+			Title:  "Creator",
+			Width:  layout.Creator.Width,
+			Hidden: layout.Creator.Hidden,
 		},
 		{
-			Title: "Assignees",
-			Width: &issueAssigneesCellWidth,
+			Title:  "Assignees",
+			Width:  layout.Assignees.Width,
+			Hidden: layout.Assignees.Hidden,
 		},
 		{
-			Title: "",
-			Width: &issueNumCommentsCellWidth,
+			Title:  "",
+			Width:  &issueNumCommentsCellWidth,
+			Hidden: layout.Comments.Hidden,
 		},
 		{
-			Title: "",
-			Width: &issueNumCommentsCellWidth,
+			Title:  "",
+			Width:  &issueNumCommentsCellWidth,
+			Hidden: layout.Reactions.Hidden,
 		},
 	}
 }

@@ -61,6 +61,8 @@ type IssuesLayoutConfig struct {
 	Title     ColumnConfig `yaml:"title,omitempty"`
 	Creator   ColumnConfig `yaml:"creator,omitempty"`
 	Assignees ColumnConfig `yaml:"assignees,omitempty"`
+	Comments  ColumnConfig `yaml:"comments,omitempty"`
+	Reactions ColumnConfig `yaml:"reactions,omitempty"`
 }
 
 type LayoutConfig struct {
@@ -175,7 +177,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Width: utils.IntPtr(15),
 					},
 					Creator: ColumnConfig{
-						Width: utils.IntPtr(7),
+						Width: utils.IntPtr(10),
 					},
 					Assignees: ColumnConfig{
 						Width: utils.IntPtr(20),

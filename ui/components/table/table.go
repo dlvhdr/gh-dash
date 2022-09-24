@@ -4,7 +4,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
 	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
@@ -141,16 +140,6 @@ func (m *Model) renderHeaderColumns() []string {
 				MaxWidth(*column.Width).
 				Render(column.Title)
 			takenWidth += *column.Width
-			continue
-		}
-
-		if len(column.Title) == 1 {
-			takenWidth += styles.SingleRuneWidth
-			renderedColumns[i] =
-				singleRuneTitleCellStyle.Copy().
-					Width(styles.SingleRuneWidth).
-					MaxWidth(styles.SingleRuneWidth).
-					Render(column.Title)
 			continue
 		}
 
