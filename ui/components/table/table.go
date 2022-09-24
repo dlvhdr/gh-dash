@@ -148,18 +148,21 @@ func (m *Model) renderHeaderColumns() []string {
 		takenWidth += lipgloss.Width(cell)
 	}
 
-	leftoverWidth := m.dimensions.Width - takenWidth
 	if numGrowingColumns == 0 {
 		return renderedColumns
 	}
 
+	leftoverWidth := m.dimensions.Width - takenWidth
 	growCellWidth := leftoverWidth / numGrowingColumns
 	for i, column := range shownColumns {
 		if column.Grow == nil || !*column.Grow {
 			continue
 		}
 
-		renderedColumns[i] = titleCellStyle.Copy().Width(growCellWidth).MaxWidth(growCellWidth).Render(column.Title)
+		renderedColumns[i] = titleCellStyle.Copy().
+			Width(growCellWidth).
+			MaxWidth(growCellWidth).
+			Render(column.Title)
 	}
 
 	return renderedColumns
@@ -171,6 +174,8 @@ func (m *Model) renderHeader() string {
 	return headerStyle.Copy().
 		Width(m.dimensions.Width).
 		MaxWidth(m.dimensions.Width).
+		Height(2).
+		MaxHeight(2).
 		Render(header)
 }
 
@@ -190,6 +195,7 @@ func (m *Model) renderBody(spinnerText *string) string {
 
 func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	var style lipgloss.Style
+
 	if m.rowsViewport.GetCurrItem() == rowId {
 		style = selectedCellStyle
 	} else {
@@ -197,19 +203,22 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	}
 
 	renderedColumns := make([]string, 0, len(m.Columns))
+
 	headerColId := 0
+
 	for i, column := range m.Columns {
 		if column.Hidden != nil && *column.Hidden {
 			continue
 		}
 
 		colWidth := lipgloss.Width(headerColumns[headerColId])
-		renderedCol := style.Copy().Width(colWidth).MaxWidth(colWidth).Render(m.Rows[rowId][i])
+		renderedCol := style.Copy().Width(colWidth).MaxWidth(colWidth).Height(1).MaxHeight(1).Render(m.Rows[rowId][i])
 		renderedColumns = append(renderedColumns, renderedCol)
 		headerColId++
 	}
 
-	return rowStyle.Copy().Render(
-		lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...),
-	)
+	return rowStyle.Copy().
+		MaxWidth(m.dimensions.Width).
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
+
 }

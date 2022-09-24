@@ -166,7 +166,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Width: utils.IntPtr(15),
 					},
 					Lines: ColumnConfig{
-						Width: utils.IntPtr(lipgloss.Width(" 123450 / -123450 ")),
+						Width: utils.IntPtr(lipgloss.Width("123450 / -123450")),
 					},
 				},
 				Issues: IssuesLayoutConfig{
