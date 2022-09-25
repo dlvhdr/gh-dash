@@ -1,7 +1,6 @@
 package issuessection
 
 import (
-	"log"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -31,7 +30,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfi
 			ctx,
 			cfg.ToSectionConfig(),
 			SectionType,
-			GetSectionColumns(ctx),
+			GetSectionColumns(cfg, ctx),
 			"Issue",
 			"Issues",
 		),
@@ -115,49 +114,59 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
-	layout := ctx.Config.Defaults.Layout.Issues
-	log.Printf("updated at: %v\n", *layout.UpdatedAt.Width)
+func GetSectionColumns(cfg config.IssuesSectionConfig, ctx *context.ProgramContext) []table.Column {
+	dLayout := ctx.Config.Defaults.Layout.Issues
+	sLayout := cfg.Layout
+
+	updatedAtLayout := config.MergeColumnConfigs(dLayout.UpdatedAt, sLayout.UpdatedAt)
+	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
+	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
+	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
+	creatorLayout := config.MergeColumnConfigs(dLayout.Creator, sLayout.Creator)
+	assigneesLayout := config.MergeColumnConfigs(dLayout.Assignees, sLayout.Assignees)
+	commentsLayout := config.MergeColumnConfigs(dLayout.Comments, sLayout.Comments)
+	reactionsLayout := config.MergeColumnConfigs(dLayout.Reactions, sLayout.Reactions)
+
 	return []table.Column{
 		{
 			Title:  "",
-			Width:  layout.UpdatedAt.Width,
-			Hidden: layout.UpdatedAt.Hidden,
+			Width:  updatedAtLayout.Width,
+			Hidden: updatedAtLayout.Hidden,
 		},
 		{
 			Title:  "",
-			Width:  layout.State.Width,
-			Hidden: layout.State.Hidden,
+			Width:  stateLayout.Width,
+			Hidden: stateLayout.Hidden,
 		},
 		{
 			Title:  "",
-			Width:  layout.Repo.Width,
-			Hidden: layout.Repo.Hidden,
+			Width:  repoLayout.Width,
+			Hidden: repoLayout.Hidden,
 		},
 		{
 			Title:  "Title",
 			Grow:   utils.BoolPtr(true),
-			Hidden: layout.Title.Hidden,
+			Hidden: titleLayout.Hidden,
 		},
 		{
 			Title:  "Creator",
-			Width:  layout.Creator.Width,
-			Hidden: layout.Creator.Hidden,
+			Width:  creatorLayout.Width,
+			Hidden: creatorLayout.Hidden,
 		},
 		{
 			Title:  "Assignees",
-			Width:  layout.Assignees.Width,
-			Hidden: layout.Assignees.Hidden,
+			Width:  assigneesLayout.Width,
+			Hidden: assigneesLayout.Hidden,
 		},
 		{
 			Title:  "",
 			Width:  &issueNumCommentsCellWidth,
-			Hidden: layout.Comments.Hidden,
+			Hidden: commentsLayout.Hidden,
 		},
 		{
 			Title:  "",
 			Width:  &issueNumCommentsCellWidth,
-			Hidden: layout.Reactions.Hidden,
+			Hidden: reactionsLayout.Hidden,
 		},
 	}
 }

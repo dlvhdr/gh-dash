@@ -42,3 +42,14 @@ func (cfg IssuesSectionConfig) ToSectionConfig() SectionConfig {
 		Limit:   cfg.Limit,
 	}
 }
+
+func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
+	colCfg := defaultCfg
+	if sectionCfg.Width != nil {
+		colCfg.Width = sectionCfg.Width
+	}
+	if sectionCfg.Hidden != nil {
+		colCfg.Hidden = sectionCfg.Hidden
+	}
+	return colCfg
+}
