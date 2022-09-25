@@ -39,9 +39,13 @@ type ProgramContext struct {
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 	var configs []config.SectionConfig
 	if ctx.View == config.PRsView {
-		configs = ctx.Config.PRSections
+		for _, cfg := range ctx.Config.PRSections {
+			configs = append(configs, cfg.ToSectionConfig())
+		}
 	} else {
-		configs = ctx.Config.IssuesSections
+		for _, cfg := range ctx.Config.IssuesSections {
+			configs = append(configs, cfg.ToSectionConfig())
+		}
 	}
 
 	return append([]config.SectionConfig{{Title: ""}}, configs...)

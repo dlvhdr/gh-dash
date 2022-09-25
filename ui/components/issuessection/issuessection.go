@@ -24,12 +24,12 @@ type Model struct {
 	Issues []data.IssueData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Model {
+func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig) Model {
 	m := Model{
 		section.NewModel(
 			id,
 			ctx,
-			cfg,
+			cfg.ToSectionConfig(),
 			SectionType,
 			GetSectionColumns(ctx),
 			"Issue",

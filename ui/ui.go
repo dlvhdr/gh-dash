@@ -440,14 +440,20 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		search := prssection.NewModel(
 			0,
 			&m.ctx,
-			config.SectionConfig{Title: "", Filters: "archived:false"},
+			config.PrsSectionConfig{
+				Title:   "",
+				Filters: "archived:false",
+			},
 		)
 		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
 		search := issuessection.NewModel(
 			0,
 			&m.ctx,
-			config.SectionConfig{Title: "", Filters: ""},
+			config.IssuesSectionConfig{
+				Title:   "",
+				Filters: "",
+			},
 		)
 		m.issues = append([]section.Section{&search}, newSections...)
 	}
