@@ -33,6 +33,20 @@ type SectionConfig struct {
 	Limit   *int `yaml:"limit,omitempty"`
 }
 
+type PrsSectionConfig struct {
+	Title   string
+	Filters string
+	Limit   *int            `yaml:"limit,omitempty"`
+	Layout  PrsLayoutConfig `yaml:"layout,omitempty"`
+}
+
+type IssuesSectionConfig struct {
+	Title   string
+	Filters string
+	Limit   *int               `yaml:"limit,omitempty"`
+	Layout  IssuesLayoutConfig `yaml:"layout,omitempty"`
+}
+
 type PreviewConfig struct {
 	Open  bool
 	Width int
@@ -127,13 +141,13 @@ type ThemeConfig struct {
 }
 
 type Config struct {
-	PRSections     []SectionConfig   `yaml:"prSections"`
-	IssuesSections []SectionConfig   `yaml:"issuesSections"`
-	Defaults       Defaults          `yaml:"defaults"`
-	Keybindings    Keybindings       `yaml:"keybindings"`
-	RepoPaths      map[string]string `yaml:"repoPaths"`
-	Theme          *ThemeConfig      `yaml:"theme,omitempty" validate:"omitempty,dive"`
-	Pager          Pager             `yaml:"pager"`
+	PRSections     []PrsSectionConfig    `yaml:"prSections"`
+	IssuesSections []IssuesSectionConfig `yaml:"issuesSections"`
+	Defaults       Defaults              `yaml:"defaults"`
+	Keybindings    Keybindings           `yaml:"keybindings"`
+	RepoPaths      map[string]string     `yaml:"repoPaths"`
+	Theme          *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty,dive"`
+	Pager          Pager                 `yaml:"pager"`
 }
 
 type configError struct {
@@ -185,7 +199,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 			},
 		},
-		PRSections: []SectionConfig{
+		PRSections: []PrsSectionConfig{
 			{
 				Title:   "My Pull Requests",
 				Filters: "is:open author:@me",
@@ -199,7 +213,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Filters: "is:open involves:@me -author:@me",
 			},
 		},
-		IssuesSections: []SectionConfig{
+		IssuesSections: []IssuesSectionConfig{
 			{
 				Title:   "My Issues",
 				Filters: "is:open author:@me",

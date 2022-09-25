@@ -26,3 +26,19 @@ func (cfg Config) GetFullScreenDiffPagerEnv() []string {
 
 	return env
 }
+
+func (cfg PrsSectionConfig) ToSectionConfig() SectionConfig {
+	return SectionConfig{
+		Title:   cfg.Title,
+		Filters: cfg.Filters,
+		Limit:   cfg.Limit,
+	}
+}
+
+func (cfg IssuesSectionConfig) ToSectionConfig() SectionConfig {
+	return SectionConfig{
+		Title:   cfg.Title,
+		Filters: cfg.Filters,
+		Limit:   cfg.Limit,
+	}
+}

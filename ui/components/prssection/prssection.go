@@ -23,12 +23,12 @@ type Model struct {
 	Prs []data.PullRequestData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.SectionConfig) Model {
+func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig) Model {
 	m := Model{
 		section.NewModel(
 			id,
 			ctx,
-			cfg,
+			cfg.ToSectionConfig(),
 			SectionType,
 			GetSectionColumns(ctx),
 			"PR",
