@@ -30,7 +30,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig) 
 			ctx,
 			cfg.ToSectionConfig(),
 			SectionType,
-			GetSectionColumns(ctx),
+			GetSectionColumns(cfg, ctx),
 			"PR",
 			"Pull Requests",
 		),
@@ -137,48 +137,59 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
-	layout := ctx.Config.Defaults.Layout.Prs
+func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext) []table.Column {
+	dLayout := ctx.Config.Defaults.Layout.Prs
+	sLayout := cfg.Layout
+
+	updatedAtLayout := config.MergeColumnConfigs(dLayout.UpdatedAt, sLayout.UpdatedAt)
+	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
+	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
+	authorLayout := config.MergeColumnConfigs(dLayout.Author, sLayout.Author)
+	reviewStatusLayout := config.MergeColumnConfigs(dLayout.ReviewStatus, sLayout.ReviewStatus)
+	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
+	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
+	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
+
 	return []table.Column{
 		{
 			Title:  "",
-			Width:  layout.UpdatedAt.Width,
-			Hidden: layout.UpdatedAt.Hidden,
+			Width:  updatedAtLayout.Width,
+			Hidden: updatedAtLayout.Hidden,
 		},
 		{
 			Title:  "",
-			Width:  layout.Repo.Width,
-			Hidden: layout.Repo.Hidden,
+			Width:  repoLayout.Width,
+			Hidden: repoLayout.Hidden,
 		},
 		{
 			Title:  "Title",
 			Grow:   utils.BoolPtr(true),
-			Hidden: layout.Title.Hidden,
+			Hidden: titleLayout.Hidden,
 		},
 		{
 			Title:  "Author",
-			Width:  layout.Author.Width,
-			Hidden: layout.Author.Hidden,
+			Width:  authorLayout.Width,
+			Hidden: authorLayout.Hidden,
 		},
 		{
 			Title:  "",
 			Width:  utils.IntPtr(4),
-			Hidden: layout.ReviewStatus.Hidden,
+			Hidden: reviewStatusLayout.Hidden,
 		},
 		{
 			Title:  "",
-			Hidden: layout.State.Hidden,
+			Hidden: stateLayout.Hidden,
 		},
 		{
 			Title:  "",
 			Width:  &ciCellWidth,
 			Grow:   new(bool),
-			Hidden: layout.Ci.Hidden,
+			Hidden: ciLayout.Hidden,
 		},
 		{
 			Title:  "",
-			Width:  layout.Lines.Width,
-			Hidden: layout.Lines.Hidden,
+			Width:  linesLayout.Width,
+			Hidden: linesLayout.Hidden,
 		},
 	}
 }
