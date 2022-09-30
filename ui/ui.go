@@ -38,7 +38,6 @@ type Model struct {
 	prs           []section.Section
 	issues        []section.Section
 	ready         bool
-	isSidebarOpen bool
 	tabs          tabs.Model
 	ctx           context.ProgramContext
 	taskSpinner   spinner.Model
@@ -184,12 +183,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
-			m.isSidebarOpen = true
+			m.sidebar.IsOpen = true
 			if m.ctx.View == config.PRsView {
 				cmd = m.prSidebar.SetIsCommenting(true)
 			} else {
 				cmd = m.issueSidebar.SetIsCommenting(true)
 			}
+			m.syncMainContentWidth()
 			m.syncSidebar()
 			m.sidebar.ScrollToBottom()
 			return m, cmd
