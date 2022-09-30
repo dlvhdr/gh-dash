@@ -47,22 +47,29 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case tea.KeyMsg:
 
+		if m.IsSearchFocused() {
+			switch {
+
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.SearchBar.SetValue(m.SearchValue)
+				blinkCmd := m.SetIsSearching(false)
+				return &m, blinkCmd
+
+			case msg.Type == tea.KeyEnter:
+				m.SearchValue = m.SearchBar.Value()
+				m.SetIsSearching(false)
+				return &m, m.FetchSectionRows()
+			}
+
+			break
+		}
+
 		switch {
 		case key.Matches(msg, keys.IssueKeys.Close):
 			cmd = m.close()
 
 		case key.Matches(msg, keys.IssueKeys.Reopen):
 			cmd = m.reopen()
-
-		case msg.Type == tea.KeyEnter:
-			m.SearchValue = m.SearchBar.Value()
-			m.SetIsSearching(false)
-			return &m, m.FetchSectionRows()
-
-		case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
-			m.SearchBar.SetValue(m.SearchValue)
-			blinkCmd := m.SetIsSearching(false)
-			return &m, blinkCmd
 
 		}
 
