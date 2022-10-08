@@ -10,6 +10,7 @@ var (
 	SearchHeight       = 3
 	FooterHeight       = 2
 	ExpandedHelpHeight = 11
+	CommentBoxHeight   = 8
 	FooterStyle        = lipgloss.NewStyle().
 				Height(FooterHeight - 1).
 				BorderTop(true).
