@@ -26,6 +26,7 @@ type Model struct {
 
 func NewModel() Model {
 	commentBox := commentbox.NewModel()
+	commentBox.SetHeight(styles.CommentBoxHeight)
 
 	return Model{
 		pr:           nil,
@@ -204,7 +205,7 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
-	m.commentBox.SetWidth(width)
+	m.commentBox.SetWidth(m.width)
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -228,5 +229,5 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) getIndentedContentWidth() int {
-	return m.width - 6
+	return m.width - 4
 }

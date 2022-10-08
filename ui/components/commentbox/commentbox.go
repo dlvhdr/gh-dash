@@ -62,7 +62,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() string {
 	return lipgloss.NewStyle().
-		Width(m.textArea.Width()).
 		BorderTop(true).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(styles.DefaultTheme.SecondaryBorder).
@@ -77,7 +76,6 @@ func (m Model) View() string {
 					Render(m.commentHelp.ShortHelpView(commentKeys)),
 			),
 		)
-
 }
 
 func (m *Model) Value() string {
@@ -94,6 +92,10 @@ func (m *Model) Focus() tea.Cmd {
 
 func (m *Model) SetWidth(width int) {
 	m.textArea.SetWidth(width)
+}
+
+func (m *Model) SetHeight(height int) {
+	m.textArea.SetHeight(height)
 }
 
 func (m *Model) Reset() {

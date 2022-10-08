@@ -25,10 +25,13 @@ type Model struct {
 }
 
 func NewModel() Model {
+	commentBox := commentbox.NewModel()
+	commentBox.SetHeight(styles.CommentBoxHeight)
+
 	return Model{
 		issue:        nil,
 		isCommenting: false,
-		commentBox:   commentbox.NewModel(),
+		commentBox:   commentBox,
 	}
 }
 
