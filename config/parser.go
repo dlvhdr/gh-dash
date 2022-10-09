@@ -92,13 +92,13 @@ type LayoutConfig struct {
 }
 
 type Defaults struct {
-	Preview         PreviewConfig `yaml:"preview"`
-	PrsLimit        int           `yaml:"prsLimit"`
-	DisableSections []ViewType    `yaml:"disableSections"`
-	IssuesLimit     int           `yaml:"issuesLimit"`
-	View            ViewType      `yaml:"view"`
-	Layout          LayoutConfig  `yaml:"layout,omitempty"`
-	Tabs            []Tab         `yaml:"tabs,omitempty"`
+	Preview      PreviewConfig `yaml:"preview"`
+	PrsLimit     int           `yaml:"prsLimit"`
+	DisableViews []ViewType    `yaml:"disableViews"`
+	IssuesLimit  int           `yaml:"issuesLimit"`
+	View         ViewType      `yaml:"view"`
+	Layout       LayoutConfig  `yaml:"layout,omitempty"`
+	Tabs         []Tab         `yaml:"tabs,omitempty"`
 }
 
 type Keybinding struct {
@@ -174,10 +174,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit:        20,
-			IssuesLimit:     20,
-			View:            PRsView,
-			DisableSections: []ViewType{},
+			PrsLimit:     20,
+			IssuesLimit:  20,
+			View:         PRsView,
+			DisableViews: []ViewType{},
 			Tabs: []Tab{
 				{
 					Name:  PRsView,

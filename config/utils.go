@@ -58,7 +58,7 @@ func GetViewTabs(d Defaults) []Tab {
 	tabs := []Tab{}
 
 	for _, tab := range d.Tabs {
-		if isSectionDisabled(d.DisableSections, ViewType(tab.Name)) {
+		if isSectionDisabled(d.DisableViews, ViewType(tab.Name)) {
 			continue
 		}
 		tabs = append(tabs, tab)
