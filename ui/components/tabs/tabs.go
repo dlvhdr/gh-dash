@@ -25,6 +25,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View(ctx context.ProgramContext) string {
 	sectionsConfigs := ctx.GetViewSectionsConfig()
+
 	sectionTitles := make([]string, 0, len(sectionsConfigs))
 	for _, section := range sectionsConfigs {
 		sectionTitles = append(sectionTitles, section.Title)
@@ -57,17 +58,20 @@ func (m *Model) SetCurrSectionId(id int) {
 }
 
 func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
-	var prsStyle, issuesStyle lipgloss.Style
-	if ctx.View == config.PRsView {
-		prsStyle = activeView
-		issuesStyle = inactiveView
-	} else {
-		prsStyle = inactiveView
-		issuesStyle = activeView
+	var view []string
+
+	for _, tab := range config.GetViewTabs(ctx.Config.Defaults) {
+
+		var tabStyle lipgloss.Style
+		if ctx.View == config.ViewType(tab.Name) {
+			tabStyle = activeView
+		} else {
+			tabStyle = inactiveView
+		}
+
+		view = append(view, tabStyle.Render(tab.Label))
 	}
 
-	prs := prsStyle.Render("[ PRs]")
-	issues := issuesStyle.Render("[ Issues]")
 	return viewSwitcher.Copy().
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, prs, issues))
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(view, " ")))
 }

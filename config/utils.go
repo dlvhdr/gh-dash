@@ -14,7 +14,7 @@ func (cfg Config) GetFullScreenDiffPagerEnv() []string {
 		diff = "delta --paging always"
 	}
 
-	var env = os.Environ()
+	env := os.Environ()
 	env = append(
 		env,
 		"LESS=CRX",
@@ -52,4 +52,26 @@ func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
 		colCfg.Hidden = sectionCfg.Hidden
 	}
 	return colCfg
+}
+
+func GetViewTabs(d Defaults) []Tab {
+	tabs := []Tab{}
+
+	for _, tab := range d.Tabs {
+		if isSectionDisabled(d.DisableSections, ViewType(tab.Name)) {
+			continue
+		}
+		tabs = append(tabs, tab)
+	}
+
+	return tabs
+}
+
+func isSectionDisabled(s []ViewType, str ViewType) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

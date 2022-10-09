@@ -14,9 +14,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const DashDir = "gh-dash"
-const ConfigFileName = "config.yml"
-const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
+const (
+	DashDir                    = "gh-dash"
+	ConfigFileName             = "config.yml"
+	DEFAULT_XDG_CONFIG_DIRNAME = ".config"
+)
 
 var validate *validator.Validate
 
@@ -26,6 +28,11 @@ const (
 	PRsView    ViewType = "prs"
 	IssuesView ViewType = "issues"
 )
+
+type Tab struct {
+	Name  ViewType `yaml:"name"`
+	Label string   `yaml:"label"`
+}
 
 type SectionConfig struct {
 	Title   string
@@ -53,7 +60,7 @@ type PreviewConfig struct {
 }
 
 type ColumnConfig struct {
-	Width  *int  `yaml:"width,omitempty" validate:"omitempty,gt=0"`
+	Width  *int  `yaml:"width,omitempty"  validate:"omitempty,gt=0"`
 	Hidden *bool `yaml:"hidden,omitempty"`
 }
 
@@ -85,11 +92,13 @@ type LayoutConfig struct {
 }
 
 type Defaults struct {
-	Preview     PreviewConfig `yaml:"preview"`
-	PrsLimit    int           `yaml:"prsLimit"`
-	IssuesLimit int           `yaml:"issuesLimit"`
-	View        ViewType      `yaml:"view"`
-	Layout      LayoutConfig  `yaml:"layout,omitempty"`
+	Preview         PreviewConfig `yaml:"preview"`
+	PrsLimit        int           `yaml:"prsLimit"`
+	DisableSections []ViewType    `yaml:"disableSections"`
+	IssuesLimit     int           `yaml:"issuesLimit"`
+	View            ViewType      `yaml:"view"`
+	Layout          LayoutConfig  `yaml:"layout,omitempty"`
+	Tabs            []Tab         `yaml:"tabs,omitempty"`
 }
 
 type Keybinding struct {
@@ -108,18 +117,18 @@ type Pager struct {
 type HexColor string
 
 type ColorThemeText struct {
-	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary"   validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Inverted  HexColor `yaml:"inverted" validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
-	Warning   HexColor `yaml:"warning" validate:"hexcolor"`
-	Success   HexColor `yaml:"success" validate:"hexcolor"`
+	Inverted  HexColor `yaml:"inverted"  validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
+	Warning   HexColor `yaml:"warning"   validate:"hexcolor"`
+	Success   HexColor `yaml:"success"   validate:"hexcolor"`
 }
 
 type ColorThemeBorder struct {
-	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary"   validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
 }
 
 type ColorThemeBackground struct {
@@ -127,9 +136,9 @@ type ColorThemeBackground struct {
 }
 
 type ColorTheme struct {
-	Text       ColorThemeText       `yaml:"text" validate:"required,dive"`
+	Text       ColorThemeText       `yaml:"text"       validate:"required,dive"`
 	Background ColorThemeBackground `yaml:"background" validate:"required,dive"`
-	Border     ColorThemeBorder     `yaml:"border" validate:"required,dive"`
+	Border     ColorThemeBorder     `yaml:"border"     validate:"required,dive"`
 }
 
 type ColorThemeConfig struct {
@@ -165,9 +174,19 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit:    20,
-			IssuesLimit: 20,
-			View:        PRsView,
+			PrsLimit:        20,
+			IssuesLimit:     20,
+			View:            PRsView,
+			DisableSections: []ViewType{},
+			Tabs: []Tab{
+				{
+					Name:  PRsView,
+					Label: "[ PRs]",
+				}, {
+					Name:  IssuesView,
+					Label: "[ Issues]",
+				},
+			},
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{
@@ -261,7 +280,6 @@ Original error: %v`,
 
 func (parser ConfigParser) writeDefaultConfigContents(newConfigFile *os.File) error {
 	_, err := newConfigFile.WriteString(parser.getDefaultConfigYamlContents())
-
 	if err != nil {
 		return err
 	}
