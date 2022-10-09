@@ -343,6 +343,8 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 
 func (m *Model) onViewedRowChanged() {
 	m.syncSidebar()
+	m.sidebar.ScrollToTop()
+
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
