@@ -44,7 +44,7 @@ var DefaultTheme = func() Theme {
 			FaintBorder:        lipgloss.AdaptiveColor{Light: "254", Dark: "000"},
 			PrimaryText:        lipgloss.AdaptiveColor{Light: "000", Dark: "015"},
 			SecondaryText:      lipgloss.AdaptiveColor{Light: "244", Dark: "251"},
-			FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "249"},
+			FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
 			InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
 			SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
 			WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},

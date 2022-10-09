@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/styles"
@@ -20,20 +21,30 @@ type sectionPullRequestsFetchedMsg struct {
 	Prs       []PullRequest
 }
 
-func (pr PullRequest) renderReviewStatus() string {
-	reviewCellStyle := lipgloss.NewStyle()
+func (pr *PullRequest) getTextStyle() lipgloss.Style {
+	return components.GetIssueTextStyle(pr.Data.State)
+}
+
+func (pr *PullRequest) renderReviewStatus() string {
+	reviewCellStyle := pr.getTextStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
-		return reviewCellStyle.Foreground(successText).Render("")
+		if pr.Data.State == "OPEN" {
+			reviewCellStyle = reviewCellStyle.Foreground(successText)
+		}
+		return reviewCellStyle.Render("")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
-		return reviewCellStyle.Foreground(styles.DefaultTheme.WarningText).Render("")
+		if pr.Data.State == "OPEN" {
+			reviewCellStyle = reviewCellStyle.Foreground(styles.DefaultTheme.WarningText)
+		}
+		return reviewCellStyle.Render("")
 	}
 
 	return reviewCellStyle.Render(constants.WaitingGlyph)
 }
 
-func (pr PullRequest) renderState() string {
+func (pr *PullRequest) renderState() string {
 	mergeCellStyle := lipgloss.NewStyle()
 	switch pr.Data.State {
 	case "OPEN":
@@ -51,7 +62,7 @@ func (pr PullRequest) renderState() string {
 	}
 }
 
-func (pr PullRequest) GetStatusChecksRollup() string {
+func (pr *PullRequest) GetStatusChecksRollup() string {
 	if pr.Data.Mergeable == "CONFLICTING" {
 		return "FAILURE"
 	}
@@ -87,60 +98,57 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 	return accStatus
 }
 
-func (pr PullRequest) renderCiStatus() string {
+func (pr *PullRequest) renderCiStatus() string {
 
 	accStatus := pr.GetStatusChecksRollup()
-	ciCellStyle := lipgloss.NewStyle()
+	ciCellStyle := pr.getTextStyle()
 	if accStatus == "SUCCESS" {
-		return ciCellStyle.Render(constants.SuccessGlyph)
+		if pr.Data.State == "OPEN" {
+			ciCellStyle = ciCellStyle.Foreground(styles.DefaultTheme.SuccessText)
+		}
+		return ciCellStyle.Render(constants.SuccessIcon)
 	}
 
 	if accStatus == "PENDING" {
 		return ciCellStyle.Render(constants.WaitingGlyph)
 	}
 
-	return ciCellStyle.Render(constants.FailureGlyph)
+	if pr.Data.State == "OPEN" {
+		ciCellStyle = ciCellStyle.Foreground(styles.DefaultTheme.WarningText)
+	}
+	return ciCellStyle.Render(constants.FailureIcon)
 }
 
-func (pr PullRequest) renderLines() string {
+func (pr *PullRequest) renderLines() string {
 	deletions := 0
 	if pr.Data.Deletions > 0 {
 		deletions = pr.Data.Deletions
 	}
 
-	return lipgloss.NewStyle().Render(
+	return pr.getTextStyle().Render(
 		fmt.Sprintf("%d / -%d", pr.Data.Additions, deletions),
 	)
 }
 
-func (pr PullRequest) renderTitle() string {
-	return lipgloss.NewStyle().
-		Inline(true).
-		Foreground(styles.DefaultTheme.SecondaryText).
-		Render(
-			fmt.Sprintf("#%d %s",
-				pr.Data.Number,
-				titleText.Copy().Render(pr.Data.Title),
-			),
-		)
+func (pr *PullRequest) renderTitle() string {
+	return components.RenderIssueTitle(pr.Data.State, pr.Data.Title, pr.Data.Number)
 }
 
-func (pr PullRequest) renderAuthor() string {
-	return lipgloss.NewStyle().Render(pr.Data.Author.Login)
+func (pr *PullRequest) renderAuthor() string {
+	return pr.getTextStyle().Render(pr.Data.Author.Login)
 }
 
-func (pr PullRequest) renderRepoName() string {
+func (pr *PullRequest) renderRepoName() string {
 	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
-	return lipgloss.NewStyle().
-		Render(repoName)
+	return pr.getTextStyle().Render(repoName)
 }
 
-func (pr PullRequest) renderUpdateAt() string {
-	return lipgloss.NewStyle().
+func (pr *PullRequest) renderUpdateAt() string {
+	return pr.getTextStyle().
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
 
-func (pr PullRequest) RenderState() string {
+func (pr *PullRequest) RenderState() string {
 	switch pr.Data.State {
 	case "OPEN":
 		if pr.Data.IsDraft {
@@ -157,14 +165,14 @@ func (pr PullRequest) RenderState() string {
 	}
 }
 
-func (pr PullRequest) ToTableRow() table.Row {
+func (pr *PullRequest) ToTableRow() table.Row {
 	return table.Row{
 		pr.renderUpdateAt(),
+		pr.renderState(),
 		pr.renderRepoName(),
 		pr.renderTitle(),
 		pr.renderAuthor(),
 		pr.renderReviewStatus(),
-		pr.renderState(),
 		pr.renderCiStatus(),
 		pr.renderLines(),
 	}
