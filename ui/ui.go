@@ -154,7 +154,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
-			var currRow = m.getCurrRowData()
+			currRow := m.getCurrRowData()
 			if currRow != nil {
 				utils.OpenBrowser(currRow.GetUrl())
 			}
@@ -460,11 +460,18 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 }
 
 func (m *Model) switchSelectedView() config.ViewType {
-	if m.ctx.View == config.PRsView {
-		return config.IssuesView
-	} else {
-		return config.PRsView
+	// get the view excluding the disabled tabs
+	tabs := config.GetViewTabs(m.ctx.Config.Defaults)
+
+	for i, tab := range tabs {
+		// if there are tabs after the selected tab then return it
+		if m.ctx.View == tab.Name && len(tabs)-1 > i {
+			return tabs[i+1].Name
+		}
 	}
+
+	// if there is only one valid tab then return it(no tab switching)
+	return tabs[0].Name
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
