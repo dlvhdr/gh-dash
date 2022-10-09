@@ -165,6 +165,10 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 			Hidden: updatedAtLayout.Hidden,
 		},
 		{
+			Title:  "",
+			Hidden: stateLayout.Hidden,
+		},
+		{
 			Title:  "",
 			Width:  repoLayout.Width,
 			Hidden: repoLayout.Hidden,
@@ -183,10 +187,6 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 			Title:  "",
 			Width:  utils.IntPtr(4),
 			Hidden: reviewStatusLayout.Hidden,
-		},
-		{
-			Title:  "",
-			Hidden: stateLayout.Hidden,
 		},
 		{
 			Title:  "",

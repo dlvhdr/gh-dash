@@ -27,8 +27,14 @@ type Dimensions struct {
 	Height int
 }
 
+const (
+	WaitingIcon = ""
+	FailureIcon = ""
+	SuccessIcon = ""
+)
+
 var (
-	WaitingGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("")
-	FailureGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.WarningText).Render("")
-	SuccessGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SuccessText).Render("")
+	WaitingGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render(WaitingIcon)
+	FailureGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.WarningText).Render(FailureIcon)
+	SuccessGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SuccessText).Render(SuccessIcon)
 )
