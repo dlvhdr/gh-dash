@@ -58,9 +58,9 @@ func (m *Model) SetCurrSectionId(id int) {
 }
 
 func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
-	var view []string
+	var views []string
 
-	for _, tab := range config.GetViewTabs(ctx.Config.Defaults) {
+	for _, tab := range config.GetViewTypes(ctx.Config.Defaults) {
 
 		var tabStyle lipgloss.Style
 		if ctx.View == config.ViewType(tab.Name) {
@@ -69,9 +69,9 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 			tabStyle = inactiveView
 		}
 
-		view = append(view, tabStyle.Render(tab.Label))
+		views = append(views, tabStyle.Render(tab.Label))
 	}
 
 	return viewSwitcher.Copy().
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(view, " ")))
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, views...))
 }

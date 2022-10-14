@@ -30,8 +30,18 @@ const (
 )
 
 type Tab struct {
-	Name  ViewType `yaml:"name"`
-	Label string   `yaml:"label"`
+	Name  ViewType
+	Label string
+}
+
+var Tabs = []Tab{
+	{
+		Name:  PRsView,
+		Label: "[ PRs]",
+	}, {
+		Name:  IssuesView,
+		Label: "[ Issues]",
+	},
 }
 
 type SectionConfig struct {
@@ -92,13 +102,12 @@ type LayoutConfig struct {
 }
 
 type Defaults struct {
-	Preview      PreviewConfig `yaml:"preview"`
-	PrsLimit     int           `yaml:"prsLimit"`
-	DisableViews []ViewType    `yaml:"disableViews"`
-	IssuesLimit  int           `yaml:"issuesLimit"`
-	View         ViewType      `yaml:"view"`
-	Layout       LayoutConfig  `yaml:"layout,omitempty"`
-	Tabs         []Tab         `yaml:"tabs,omitempty"`
+	Preview       PreviewConfig `yaml:"preview"`
+	PrsLimit      int           `yaml:"prsLimit"`
+	DisabledViews []ViewType    `yaml:"disabledViews"`
+	IssuesLimit   int           `yaml:"issuesLimit"`
+	View          ViewType      `yaml:"view"`
+	Layout        LayoutConfig  `yaml:"layout,omitempty"`
 }
 
 type Keybinding struct {
@@ -174,19 +183,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit:     20,
-			IssuesLimit:  20,
-			View:         PRsView,
-			DisableViews: []ViewType{},
-			Tabs: []Tab{
-				{
-					Name:  PRsView,
-					Label: "[ PRs]",
-				}, {
-					Name:  IssuesView,
-					Label: "[ Issues]",
-				},
-			},
+			PrsLimit:      20,
+			IssuesLimit:   20,
+			View:          PRsView,
+			DisabledViews: []ViewType{},
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{

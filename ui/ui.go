@@ -461,7 +461,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 
 func (m *Model) switchSelectedView() config.ViewType {
 	// get the view excluding the disabled tabs
-	tabs := config.GetViewTabs(m.ctx.Config.Defaults)
+	tabs := config.GetViewTypes(m.ctx.Config.Defaults)
 
 	for i, tab := range tabs {
 		// if there are tabs after the selected tab then return it

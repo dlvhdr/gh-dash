@@ -81,7 +81,7 @@ defaults:
   preview:
     open: true
     width: 60
-  disableViews: [] # disable a particular view, allowed values "prs", "issues"
+  disabledViews: []              # disable a particular view, allowed values "prs", "issues"
 repoPaths:
   dlvhdr/*: ~/code/repos/*       # will match dlvhdr/repo-name to ~/code/repos/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path

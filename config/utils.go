@@ -54,11 +54,11 @@ func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
 	return colCfg
 }
 
-func GetViewTabs(d Defaults) []Tab {
+func GetViewTypes(d Defaults) []Tab {
 	tabs := []Tab{}
 
-	for _, tab := range d.Tabs {
-		if isSectionDisabled(d.DisableViews, ViewType(tab.Name)) {
+	for _, tab := range Tabs {
+		if isSectionDisabled(d.DisabledViews, ViewType(tab.Name)) {
 			continue
 		}
 		tabs = append(tabs, tab)
