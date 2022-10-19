@@ -56,6 +56,10 @@ func (m *Model) GetCurrItem() int {
 	return m.currId
 }
 
+func (m *Model) GetLastItem() int {
+	return m.NumItems
+}
+
 func (m *Model) NextItem() int {
 	atBottomOfViewport := m.currId >= m.bottomBoundId
 	if atBottomOfViewport {

@@ -29,6 +29,11 @@ type IssueData struct {
 	Labels    IssueLabels    `graphql:"labels(first: 3)"`
 }
 
+type PageInfo struct {
+	HasNextPage bool   `graphql:"hasNextPage"`
+	EndCursor   string `graphql:"endCursor"`
+}
+
 type Assignees struct {
 	Nodes []Assignee
 }
@@ -70,12 +75,12 @@ func makeIssuesQuery(query string) string {
 	return fmt.Sprintf("is:issue %s", query)
 }
 
-func FetchIssues(query string, limit int) ([]IssueData, error) {
+func FetchIssues(query string, limit int, cursor PageInfo) ([]IssueData, PageInfo, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
+		return nil, PageInfo{}, err
 	}
 
 	var queryResult struct {
@@ -83,20 +88,29 @@ func FetchIssues(query string, limit int) ([]IssueData, error) {
 			Nodes []struct {
 				Issue IssueData `graphql:"... on Issue"`
 			}
-		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
+			Cursor PageInfo `graphql:"pageInfo"`
+		} `graphql:"search(type: ISSUE, first: $limit, after: $endCursor, query: $query)"`
 	}
+
 	variables := map[string]interface{}{
-		"query": graphql.String(makeIssuesQuery(query)),
-		"limit": graphql.Int(limit),
+		"query":     graphql.String(makeIssuesQuery(query)),
+		"limit":     graphql.Int(limit),
+		"endCursor": (*graphql.String)(nil),
 	}
+
+	if cursor.HasNextPage {
+		variables["endCursor"] = graphql.String(cursor.EndCursor)
+	}
+
 	err = client.Query("SearchIssues", &queryResult, variables)
 	if err != nil {
-		return nil, err
+		return nil, PageInfo{}, err
 	}
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
 		issues = append(issues, node.Issue)
 	}
-	return issues, nil
+
+	return issues, queryResult.Search.Cursor, nil
 }

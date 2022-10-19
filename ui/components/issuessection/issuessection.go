@@ -21,6 +21,7 @@ const SectionType = "issue"
 type Model struct {
 	section.Model
 	Issues []data.IssueData
+	Cursor data.PageInfo
 }
 
 func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig) Model {
@@ -35,6 +36,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfi
 			"Issues",
 		),
 		[]data.IssueData{},
+		data.PageInfo{},
 	}
 
 	return m
@@ -58,10 +60,17 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
+
+				// reset the cursor position when fetching the for the new filter
+				m.Cursor = data.PageInfo{}
 				return &m, m.FetchSectionRows()
 			}
 
 			break
+			// when the cursor is on the 5th last item load more items
+			// TODO: Add functionality for customizing this number
+		} else if msg.Type == tea.KeyDown && m.Table.GetCurrItem()+5 == m.Table.GetLastItem() {
+			return &m, m.FetchSectionRows()
 		}
 
 		switch {
@@ -101,6 +110,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 		case SectionIssuesFetchedMsg:
 			m.Issues = iMsg.Issues
+			m.Cursor = iMsg.Cursor
 			m.IsLoading = false
 			m.Table.SetRows(m.BuildRows())
 
@@ -200,6 +210,7 @@ type SectionIssuesFetchedMsg struct {
 	SectionId int
 	Issues    []data.IssueData
 	Err       error
+	Cursor    data.PageInfo
 }
 
 func (msg SectionIssuesFetchedMsg) GetSectionId() int {
@@ -222,10 +233,14 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	if m == nil {
 		return nil
 	}
-	m.Issues = nil
-	m.Table.ResetCurrItem()
-	m.Table.Rows = nil
-	m.IsLoading = true
+
+	if !m.Cursor.HasNextPage {
+
+		m.Issues = nil
+		m.Table.ResetCurrItem()
+		m.Table.Rows = nil
+		m.IsLoading = true
+	}
 	var cmds []tea.Cmd
 	cmds = append(cmds, m.CreateNextTickCmd(spinner.Tick))
 
@@ -234,20 +249,29 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.IssuesLimit
 		}
-		fetchedIssues, err := data.FetchIssues(m.GetFilters(), *limit)
+		fetchedIssues, cursor, err := data.FetchIssues(m.GetFilters(), *limit, m.Cursor)
 		if err != nil {
 			return SectionIssuesFetchedMsg{
 				Issues: []data.IssueData{},
 			}
 		}
 
+		// append the newely fetched issues list to the already fetched list
+		// only when paginating request is request
+		if m.Issues != nil {
+			fetchedIssues = append(m.Issues, fetchedIssues...)
+		}
+
 		sort.Slice(fetchedIssues, func(i, j int) bool {
-			return fetchedIssues[i].UpdatedAt.After(fetchedIssues[j].UpdatedAt)
+			return fetchedIssues[i].Number > fetchedIssues[j].Number
 		})
+
 		return SectionIssuesFetchedMsg{
 			Issues: fetchedIssues,
+			Cursor: cursor,
 		}
 	}
+
 	cmds = append(cmds, m.MakeSectionCmd(cmd))
 
 	return tea.Batch(cmds...)

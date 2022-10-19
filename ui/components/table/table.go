@@ -56,6 +56,10 @@ func (m *Model) GetCurrItem() int {
 	return m.rowsViewport.GetCurrItem()
 }
 
+func (m *Model) GetLastItem() int {
+	return m.rowsViewport.GetLastItem()
+}
+
 func (m *Model) PrevItem() int {
 	currItem := m.rowsViewport.PrevItem()
 	m.SyncViewPortContent()
@@ -220,5 +224,4 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	return rowStyle.Copy().
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
-
 }
