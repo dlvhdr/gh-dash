@@ -55,7 +55,7 @@ func (k KeyMap) NavigationKeys() []key.Binding {
 }
 
 func (k KeyMap) AppKeys() []key.Binding {
-	return []key.Binding{k.Refresh, k.SwitchView, k.TogglePreview, k.Search}
+	return []key.Binding{k.Refresh, k.SwitchView, k.TogglePreview, k.OpenGithub, k.Search}
 }
 
 func (k KeyMap) QuitAndHelpKeys() []key.Binding {
