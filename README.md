@@ -2,7 +2,7 @@
 
 ✨ A GitHub (`gh`) CLI extension to display a dashboard with **pull requests** and **issues** by filters you care about.
 
-<img src="https://user-images.githubusercontent.com/6196971/198700810-42b5370e-95f8-454b-abaa-5955a855c04d.gif" />
+<img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
 
 ## Installation
 
