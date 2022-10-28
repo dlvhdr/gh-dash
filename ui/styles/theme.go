@@ -34,7 +34,7 @@ var DefaultTheme = func() Theme {
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
 
-	cfg, _ := config.ParseConfig()
+	cfg, _ := config.ParseConfig("")
 
 	if cfg.Theme == nil {
 		theme = &Theme{

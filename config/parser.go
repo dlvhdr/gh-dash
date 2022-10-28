@@ -314,22 +314,22 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 	return nil, nil
 }
 
-func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
+func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
 	var err error
 
 	existingConfigFile, err := parser.getExistingConfigFile()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if existingConfigFile != nil {
-		return existingConfigFile, nil
+		return *existingConfigFile, nil
 	}
 
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
@@ -337,16 +337,16 @@ func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
 	dashConfigDir := filepath.Join(configDir, DashDir)
 	err = os.MkdirAll(dashConfigDir, os.ModePerm)
 	if err != nil {
-		return nil, configError{parser: parser, configDir: configDir, err: err}
+		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
 	configFilePath := filepath.Join(dashConfigDir, ConfigFileName)
 	err = parser.createConfigFileIfMissing(configFilePath)
 	if err != nil {
-		return nil, configError{parser: parser, configDir: configDir, err: err}
+		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
-	return &configFilePath, nil
+	return configFilePath, nil
 }
 
 type parsingError struct {
@@ -387,18 +387,23 @@ func initParser() ConfigParser {
 	return ConfigParser{}
 }
 
-func ParseConfig() (Config, error) {
+func ParseConfig(path string) (Config, error) {
 	parser := initParser()
 
 	var config Config
 	var err error
+	var configFilePath string
 
-	configFilePath, err := parser.getConfigFileOrCreateIfMissing()
-	if err != nil {
-		return config, parsingError{err: err}
+	if path == "" {
+		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing()
+		if err != nil {
+			return config, parsingError{err: err}
+		}
+	} else {
+		configFilePath = path
 	}
 
-	config, err = parser.readConfigFile(*configFilePath)
+	config, err = parser.readConfigFile(configFilePath)
 	if err != nil {
 		return config, parsingError{err: err}
 	}

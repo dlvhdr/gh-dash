@@ -44,7 +44,7 @@ type Model struct {
 	tasks         map[string]context.Task
 }
 
-func NewModel() Model {
+func NewModel(configPath string) Model {
 	tabsModel := tabs.NewModel()
 	m := Model{
 		keys:          keys.Keys,
@@ -58,18 +58,21 @@ func NewModel() Model {
 		tasks:         map[string]context.Task{},
 	}
 
-	m.ctx = context.ProgramContext{StartTask: func(task context.Task) tea.Cmd {
-		task.StartTime = time.Now()
-		m.tasks[task.Id] = task
-		return m.taskSpinner.Tick
-	}}
+	m.ctx = context.ProgramContext{
+		ConfigPath: configPath,
+		StartTask: func(task context.Task) tea.Cmd {
+			task.StartTime = time.Now()
+			m.tasks[task.Id] = task
+			return m.taskSpinner.Tick
+		},
+	}
 	return m
 }
 
-func initScreen() tea.Msg {
+func (m *Model) initScreen() tea.Msg {
 	var err error
 
-	config, err := config.ParseConfig()
+	config, err := config.ParseConfig(m.ctx.ConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,7 +81,7 @@ func initScreen() tea.Msg {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(initScreen, tea.EnterAltScreen)
+	return tea.Batch(m.initScreen, tea.EnterAltScreen)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
