@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/ui"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 )
@@ -78,6 +79,7 @@ func init() {
 		// see https://github.com/charmbracelet/lipgloss/issues/73
 		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
 
+		styles.ParseTheme(cfgFile)
 		model, logger := createModel(cfgFile, debug)
 		if logger != nil {
 			defer logger.Close()

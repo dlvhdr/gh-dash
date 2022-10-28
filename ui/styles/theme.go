@@ -23,34 +23,27 @@ type Theme struct {
 	WarningText        lipgloss.AdaptiveColor // config.Theme.Colors.Text.Warning
 }
 
-var theme *Theme
+var DefaultTheme = &Theme{
+	PrimaryBorder:      lipgloss.AdaptiveColor{Light: "013", Dark: "008"},
+	SecondaryBorder:    lipgloss.AdaptiveColor{Light: "008", Dark: "007"},
+	SelectedBackground: lipgloss.AdaptiveColor{Light: "006", Dark: "008"},
+	FaintBorder:        lipgloss.AdaptiveColor{Light: "254", Dark: "000"},
+	PrimaryText:        lipgloss.AdaptiveColor{Light: "000", Dark: "015"},
+	SecondaryText:      lipgloss.AdaptiveColor{Light: "244", Dark: "251"},
+	FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
+	InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
+	SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
+	WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
+}
 
-var DefaultTheme = func() Theme {
-	if theme != nil {
-		return *theme
-	}
-
+func ParseTheme(cfgFile string) Theme {
 	_shimHex := func(hex config.HexColor) lipgloss.AdaptiveColor {
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
 
-	cfg, _ := config.ParseConfig("")
-
-	if cfg.Theme == nil {
-		theme = &Theme{
-			PrimaryBorder:      lipgloss.AdaptiveColor{Light: "013", Dark: "008"},
-			SecondaryBorder:    lipgloss.AdaptiveColor{Light: "008", Dark: "007"},
-			SelectedBackground: lipgloss.AdaptiveColor{Light: "006", Dark: "008"},
-			FaintBorder:        lipgloss.AdaptiveColor{Light: "254", Dark: "000"},
-			PrimaryText:        lipgloss.AdaptiveColor{Light: "000", Dark: "015"},
-			SecondaryText:      lipgloss.AdaptiveColor{Light: "244", Dark: "251"},
-			FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
-			InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
-			SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
-			WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
-		}
-	} else {
-		theme = &Theme{
+	cfg, _ := config.ParseConfig(cfgFile)
+	if cfg.Theme != nil {
+		DefaultTheme = &Theme{
 			SelectedBackground: _shimHex(cfg.Theme.Colors.Inline.Background.Selected),
 			PrimaryBorder:      _shimHex(cfg.Theme.Colors.Inline.Border.Primary),
 			FaintBorder:        _shimHex(cfg.Theme.Colors.Inline.Border.Faint),
@@ -64,5 +57,5 @@ var DefaultTheme = func() Theme {
 		}
 	}
 
-	return *theme
-}()
+	return *DefaultTheme
+}
