@@ -15,7 +15,8 @@ import (
 )
 
 const DashDir = "gh-dash"
-const ConfigFileName = "config.yml"
+const ConfigYmlFileName = "config.yml"
+const ConfigYamlFileName = "config.yaml"
 const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
 
 var validate *validator.Validate
@@ -243,7 +244,7 @@ func (parser ConfigParser) getDefaultConfigYamlContents() string {
 
 func (e configError) Error() string {
 	return fmt.Sprintf(
-		`Couldn't find a config.yml configuration file.
+		`Couldn't find a config.yml or a config.yaml configuration file.
 Create one under: %s
 
 Example of a config.yml file:
@@ -253,7 +254,7 @@ For more info, go to https://github.com/dlvhdr/gh-dash
 press q to exit.
 
 Original error: %v`,
-		path.Join(e.configDir, DashDir, ConfigFileName),
+		path.Join(e.configDir, DashDir, ConfigYmlFileName),
 		string(e.parser.getDefaultConfigYamlContents()),
 		e.err,
 	)
@@ -296,7 +297,12 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		xdgConfigDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
 
-	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigFileName)
+	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName)
+	if _, err := os.Stat(dashConfigFile); err == nil {
+		return &dashConfigFile, nil
+	}
+
+	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName)
 	if _, err := os.Stat(dashConfigFile); err == nil {
 		return &dashConfigFile, nil
 	}
@@ -306,7 +312,12 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		return nil, err
 	}
 
-	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigFileName)
+	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYmlFileName)
+	if _, err := os.Stat(dashConfigFile); err == nil {
+		return &dashConfigFile, nil
+	}
+
+	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYamlFileName)
 	if _, err := os.Stat(dashConfigFile); err == nil {
 		return &dashConfigFile, nil
 	}
@@ -340,7 +351,7 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, erro
 		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
-	configFilePath := filepath.Join(dashConfigDir, ConfigFileName)
+	configFilePath := filepath.Join(dashConfigDir, ConfigYmlFileName)
 	err = parser.createConfigFileIfMissing(configFilePath)
 	if err != nil {
 		return "", configError{parser: parser, configDir: configDir, err: err}
