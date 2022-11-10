@@ -33,6 +33,7 @@ type PullRequestData struct {
 	}
 	Repository struct {
 		NameWithOwner string
+		IsArchived    bool
 	}
 	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
