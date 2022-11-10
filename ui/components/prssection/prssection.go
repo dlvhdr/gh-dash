@@ -255,16 +255,29 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 			}
 		}
 
-		sort.Slice(fetchedPrs, func(i, j int) bool {
-			return fetchedPrs[i].UpdatedAt.After(fetchedPrs[j].UpdatedAt)
+		filteredPrs := m.excludeArchivedPullRequests(fetchedPrs)
+
+		sort.Slice(filteredPrs, func(i, j int) bool {
+			return filteredPrs[i].UpdatedAt.After(filteredPrs[j].UpdatedAt)
 		})
 		return SectionPullRequestsFetchedMsg{
-			Prs: fetchedPrs,
+			Prs: filteredPrs,
 		}
 	}
 	cmds = append(cmds, m.MakeSectionCmd(cmd))
 
 	return tea.Batch(cmds...)
+}
+
+func (m *Model) excludeArchivedPullRequests(fetchedPrs []data.PullRequestData) []data.PullRequestData {
+	prs := make([]data.PullRequestData, 0)
+	for _, v := range fetchedPrs {
+		if v.Repository.IsArchived {
+			continue
+		}
+		prs = append(prs, v)
+	}
+	return prs
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
