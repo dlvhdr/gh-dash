@@ -5,11 +5,14 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {
+	ctx            context.ProgramContext
 	viewport       viewport.Model
 	topBoundId     int
 	bottomBoundId  int
@@ -19,14 +22,14 @@ type Model struct {
 	ItemTypeLabel  string
 }
 
-func NewModel(dimensions constants.Dimensions, itemTypeLabel string, numItems, listItemHeight int) Model {
+func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, itemTypeLabel string, numItems, listItemHeight int) Model {
 	model := Model{
 		NumItems:       numItems,
 		ListItemHeight: listItemHeight,
 		currId:         0,
 		viewport: viewport.Model{
 			Width:  dimensions.Width,
-			Height: dimensions.Height - pagerHeight,
+			Height: dimensions.Height - common.ListPagerHeight,
 		},
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
@@ -95,7 +98,7 @@ func (m *Model) LastItem() int {
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
-	m.viewport.Height = dimensions.Height - pagerHeight
+	m.viewport.Height = dimensions.Height - common.ListPagerHeight
 	m.viewport.Width = dimensions.Width
 }
 
@@ -110,7 +113,7 @@ func (m *Model) View() string {
 		)
 	}
 	viewport := m.viewport.View()
-	pager := pagerStyle.Copy().Render(pagerContent)
+	pager := m.ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
 	return lipgloss.NewStyle().
 		Width(m.viewport.Width).
 		MaxWidth(m.viewport.Width).

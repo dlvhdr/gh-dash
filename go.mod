@@ -11,6 +11,7 @@ require (
 	github.com/cli/shurcooL-graphql v0.0.1
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/muesli/termenv v0.12.0
+	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -37,7 +38,6 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
-	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/thlib/go-timezone-local v0.0.0-20210907160436-ef149e42d28e // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect

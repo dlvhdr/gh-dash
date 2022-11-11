@@ -2,11 +2,14 @@ package table
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
 	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
 type Model struct {
+	ctx          context.ProgramContext
 	Columns      []Column
 	Rows         []Row
 	EmptyState   *string
@@ -23,13 +26,14 @@ type Column struct {
 
 type Row []string
 
-func NewModel(dimensions constants.Dimensions, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
+func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
 	return Model{
+		ctx:          ctx,
 		Columns:      columns,
 		Rows:         rows,
 		EmptyState:   emptyState,
 		dimensions:   dimensions,
-		rowsViewport: listviewport.NewModel(dimensions, itemTypeLabel, len(rows), 2),
+		rowsViewport: listviewport.NewModel(ctx, dimensions, itemTypeLabel, len(rows), 2),
 	}
 }
 
@@ -135,7 +139,7 @@ func (m *Model) renderHeaderColumns() []string {
 		}
 
 		if column.Width != nil {
-			renderedColumns[i] = titleCellStyle.Copy().
+			renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.Copy().
 				Width(*column.Width).
 				MaxWidth(*column.Width).
 				Render(column.Title)
@@ -143,7 +147,7 @@ func (m *Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		cell := titleCellStyle.Copy().Render(column.Title)
+		cell := m.ctx.Styles.Table.TitleCellStyle.Copy().Render(column.Title)
 		renderedColumns[i] = cell
 		takenWidth += lipgloss.Width(cell)
 	}
@@ -159,7 +163,7 @@ func (m *Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		renderedColumns[i] = titleCellStyle.Copy().
+		renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.Copy().
 			Width(growCellWidth).
 			MaxWidth(growCellWidth).
 			Render(column.Title)
@@ -171,11 +175,11 @@ func (m *Model) renderHeaderColumns() []string {
 func (m *Model) renderHeader() string {
 	headerColumns := m.renderHeaderColumns()
 	header := lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...)
-	return headerStyle.Copy().
+	return m.ctx.Styles.Table.HeaderStyle.Copy().
 		Width(m.dimensions.Width).
 		MaxWidth(m.dimensions.Width).
-		Height(2).
-		MaxHeight(2).
+		Height(common.TableHeaderHeight).
+		MaxHeight(common.TableHeaderHeight).
 		Render(header)
 }
 
@@ -197,9 +201,9 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	var style lipgloss.Style
 
 	if m.rowsViewport.GetCurrItem() == rowId {
-		style = selectedCellStyle
+		style = m.ctx.Styles.Table.SelectedCellStyle
 	} else {
-		style = cellStyle
+		style = m.ctx.Styles.Table.CellStyle
 	}
 
 	renderedColumns := make([]string, 0, len(m.Columns))
@@ -217,7 +221,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		headerColId++
 	}
 
-	return rowStyle.Copy().
+	return m.ctx.Styles.Table.RowStyle.Copy().
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
 

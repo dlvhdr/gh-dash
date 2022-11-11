@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -24,7 +23,7 @@ func (m *Model) renderActivity() string {
 
 	var activity []RenderedActivity
 	for _, comment := range m.issue.Data.Comments.Nodes {
-		renderedComment, err := renderComment(comment, markdownRenderer)
+		renderedComment, err := m.renderComment(comment, markdownRenderer)
 		if err != nil {
 			continue
 		}
@@ -50,11 +49,11 @@ func (m *Model) renderActivity() string {
 		body = lipgloss.JoinVertical(lipgloss.Left, renderedActivities...)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, renderTitle(), bodyStyle.Render(body))
+	return lipgloss.JoinVertical(lipgloss.Left, m.renderActivitiesTitle(), bodyStyle.Render(body))
 }
 
-func renderTitle() string {
-	return styles.MainTextStyle.Copy().
+func (m Model) renderActivitiesTitle() string {
+	return m.ctx.Styles.Common.MainTextStyle.Copy().
 		MarginBottom(1).
 		Underline(true).
 		Render(" Comments")
@@ -64,11 +63,11 @@ func renderEmptyState() string {
 	return lipgloss.NewStyle().Italic(true).Render("No comments...")
 }
 
-func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
 	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		styles.MainTextStyle.Copy().Render(comment.Author.Login),
+		m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
 
 	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)

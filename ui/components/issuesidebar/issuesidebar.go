@@ -8,11 +8,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/commentbox"
 	"github.com/dlvhdr/gh-dash/ui/components/issue"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
@@ -24,9 +24,9 @@ type Model struct {
 	commentBox   commentbox.Model
 }
 
-func NewModel() Model {
-	commentBox := commentbox.NewModel()
-	commentBox.SetHeight(styles.CommentBoxHeight)
+func NewModel(ctx context.ProgramContext) Model {
+	commentBox := commentbox.NewModel(ctx)
+	commentBox.SetHeight(common.CommentBoxHeight)
 
 	return Model{
 		issue:        nil,
@@ -96,7 +96,7 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderTitle() string {
-	return styles.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
+	return m.ctx.Styles.Common.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
 		Render(m.issue.Data.Title)
 }
 
@@ -105,14 +105,14 @@ func (m *Model) renderStatusPill() string {
 	content := ""
 	switch m.issue.Data.State {
 	case "OPEN":
-		bgColor = issue.OpenIssue.Dark
+		bgColor = m.ctx.Styles.Colors.OpenIssue.Dark
 		content = " Open"
 	case "CLOSED":
-		bgColor = issue.ClosedIssue.Dark
+		bgColor = m.ctx.Styles.Colors.ClosedIssue.Dark
 		content = " Closed"
 	}
 
-	return pillStyle.
+	return m.ctx.Styles.PrSidebar.PillStyle.Copy().
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
 }
@@ -148,7 +148,7 @@ func (m *Model) renderLabels() string {
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(
 			labels,
-			pillStyle.
+			m.ctx.Styles.PrSidebar.PillStyle.Copy().
 				Background(lipgloss.Color("#"+label.Color)).
 				Render(label.Name),
 		)
@@ -175,7 +175,7 @@ func (m *Model) SetRow(data *data.IssueData) {
 	if data == nil {
 		m.issue = nil
 	} else {
-		m.issue = &issue.Issue{Data: *data}
+		m.issue = &issue.Issue{Ctx: m.ctx, Data: *data}
 	}
 }
 

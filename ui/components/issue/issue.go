@@ -8,10 +8,12 @@ import (
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Issue struct {
+	Ctx  *context.ProgramContext
 	Data data.IssueData
 }
 
@@ -29,7 +31,7 @@ func (issue *Issue) ToTableRow() table.Row {
 }
 
 func (issue *Issue) getTextStyle() lipgloss.Style {
-	return components.GetIssueTextStyle(issue.Data.State)
+	return components.GetIssueTextStyle(issue.Ctx, issue.Data.State)
 }
 
 func (issue *Issue) renderUpdateAt() string {
@@ -42,7 +44,7 @@ func (issue *Issue) renderRepoName() string {
 }
 
 func (issue *Issue) renderTitle() string {
-	return components.RenderIssueTitle(issue.Data.State, issue.Data.Title, issue.Data.Number)
+	return components.RenderIssueTitle(issue.Ctx, issue.Data.State, issue.Data.Title, issue.Data.Number)
 }
 
 func (issue *Issue) renderOpenedBy() string {
@@ -59,7 +61,7 @@ func (issue *Issue) renderAssignees() string {
 
 func (issue *Issue) renderStatus() string {
 	if issue.Data.State == "OPEN" {
-		return lipgloss.NewStyle().Foreground(OpenIssue).Render("")
+		return lipgloss.NewStyle().Foreground(issue.Ctx.Styles.Colors.OpenIssue).Render("")
 	} else {
 		return issue.getTextStyle().Render("")
 	}
