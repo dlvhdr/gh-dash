@@ -245,7 +245,7 @@ func (m *Model) GetMainContent() string {
 
 func (m *Model) GetSpinnerText() *string {
 	var spinnerText *string
-	if m.IsLoading {
+	if len(m.Table.Rows) == 0 && m.IsLoading {
 		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
 			m.Ctx.Styles.Section.SpinnerStyle.Copy().Render(m.Spinner.View()),
 			fmt.Sprintf("Fetching %s...", m.PluralForm),
