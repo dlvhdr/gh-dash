@@ -15,6 +15,7 @@ type KeyMap struct {
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
 	Refresh       key.Binding
+	RefreshAll    key.Binding
 	PageDown      key.Binding
 	PageUp        key.Binding
 	NextSection   key.Binding
@@ -55,7 +56,7 @@ func (k KeyMap) NavigationKeys() []key.Binding {
 }
 
 func (k KeyMap) AppKeys() []key.Binding {
-	return []key.Binding{k.Refresh, k.SwitchView, k.TogglePreview, k.OpenGithub, k.Search}
+	return []key.Binding{k.Refresh, k.RefreshAll, k.SwitchView, k.TogglePreview, k.OpenGithub, k.Search}
 }
 
 func (k KeyMap) QuitAndHelpKeys() []key.Binding {
@@ -70,6 +71,7 @@ var Keys = KeyMap{
 	TogglePreview: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "open in Preview")),
 	OpenGithub:    key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open in GitHub")),
 	Refresh:       key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
+	RefreshAll:    key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh all")),
 	PageDown:      key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "preview page down")),
 	PageUp:        key.NewBinding(key.WithKeys("ctrl+u"), key.WithHelp("Ctrl+u", "preview page up")),
 	NextSection:   key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("/l", "next section")),
