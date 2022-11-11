@@ -2,6 +2,7 @@ package section
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,6 +40,7 @@ func NewModel(
 	sType string,
 	columns []table.Column,
 	singular, plural string,
+	lastUpdated time.Time,
 ) Model {
 	m := Model{
 		Id:           id,
@@ -57,6 +59,7 @@ func NewModel(
 	m.Table = table.NewModel(
 		*ctx,
 		m.GetDimensions(),
+		lastUpdated,
 		m.Columns,
 		nil,
 		m.SingularForm,
@@ -74,6 +77,7 @@ type Section interface {
 	Search
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
+	UpdatedLastUpdated(time.Time)
 }
 
 type Identifier interface {
@@ -131,6 +135,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		Width:  newDimensions.Width,
 	}
 	m.Table.SetDimensions(tableDimensions)
+	m.Table.UpdateProgramContext(ctx)
 
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
@@ -260,4 +265,8 @@ func (m *Model) View() string {
 			m.GetMainContent(),
 		),
 	)
+}
+
+func (m *Model) UpdatedLastUpdated(t time.Time) {
+	m.Table.UpdateLastUpdated(t)
 }

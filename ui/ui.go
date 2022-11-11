@@ -335,7 +335,7 @@ func (m Model) View() string {
 	} else if len(m.tasks) > 0 {
 		s.WriteString(m.renderRunningTask())
 	} else {
-		s.WriteString(m.help.View(m.ctx))
+		s.WriteString(m.help.View())
 	}
 
 	return s.String()
@@ -368,6 +368,7 @@ func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
 		section.UpdateProgramContext(&m.ctx)
 	}
+	m.help.UpdateProgramContext(&m.ctx)
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
 	m.issueSidebar.UpdateProgramContext(&m.ctx)
@@ -455,6 +456,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 				Title:   "",
 				Filters: "archived:false",
 			},
+			time.Now(),
 		)
 		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
@@ -465,6 +467,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 				Title:   "",
 				Filters: "",
 			},
+			time.Now(),
 		)
 		m.issues = append([]section.Section{&search}, newSections...)
 	}
