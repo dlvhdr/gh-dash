@@ -5,27 +5,27 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
-func GetIssueTextStyle(state string) lipgloss.Style {
+func GetIssueTextStyle(ctx *context.ProgramContext, state string) lipgloss.Style {
 	if state == "OPEN" {
-		return lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText)
+		return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
 	}
-	return lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
+	return lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
 }
 
-func RenderIssueTitle(state string, title string, number int) string {
+func RenderIssueTitle(ctx *context.ProgramContext, state string, title string, number int) string {
 	prNumber := fmt.Sprintf("#%d", number)
 	var prNumberFg lipgloss.AdaptiveColor
 	if state != "OPEN" {
-		prNumberFg = styles.DefaultTheme.FaintText
+		prNumberFg = ctx.Theme.FaintText
 	} else {
-		prNumberFg = styles.DefaultTheme.SecondaryText
+		prNumberFg = ctx.Theme.SecondaryText
 	}
 	prNumber = lipgloss.NewStyle().Foreground(prNumberFg).Render(prNumber)
 
-	rTitle := GetIssueTextStyle(state).Render(title)
+	rTitle := GetIssueTextStyle(ctx, state).Render(title)
 
 	// TODO: hack - see issue https://github.com/charmbracelet/lipgloss/issues/144
 	// Provide ability to prevent insertion of Reset sequence #144

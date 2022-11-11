@@ -8,9 +8,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -25,7 +23,7 @@ func (m *Model) renderActivity() string {
 
 	var activity []RenderedActivity
 	for _, comment := range m.pr.Data.Comments.Nodes {
-		renderedComment, err := renderComment(comment, markdownRenderer)
+		renderedComment, err := m.renderComment(comment, markdownRenderer)
 		if err != nil {
 			continue
 		}
@@ -36,7 +34,7 @@ func (m *Model) renderActivity() string {
 	}
 
 	for _, review := range m.pr.Data.LatestReviews.Nodes {
-		renderedReview, err := renderReview(review, markdownRenderer)
+		renderedReview, err := m.renderReview(review, markdownRenderer)
 		if err != nil {
 			continue
 		}
@@ -62,11 +60,11 @@ func (m *Model) renderActivity() string {
 		body = lipgloss.JoinVertical(lipgloss.Left, renderedActivities...)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, renderTitle(), bodyStyle.Render(body))
+	return lipgloss.JoinVertical(lipgloss.Left, m.renderActivityTitle(), bodyStyle.Render(body))
 }
 
-func renderTitle() string {
-	return styles.MainTextStyle.Copy().
+func (m *Model) renderActivityTitle() string {
+	return m.ctx.Styles.Common.MainTextStyle.Copy().
 		MarginBottom(1).
 		Underline(true).
 		Render(" Comments")
@@ -76,11 +74,11 @@ func renderEmptyState() string {
 	return lipgloss.NewStyle().Italic(true).Render("No comments...")
 }
 
-func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
 	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		styles.MainTextStyle.Copy().Render(comment.Author.Login),
+		m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
 
 	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
@@ -94,8 +92,8 @@ func renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) 
 	), err
 }
 
-func renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (string, error) {
-	header := renderReviewHeader(review)
+func (m *Model) renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (string, error) {
+	header := m.renderReviewHeader(review)
 	body, err := markdownRenderer.Render(review.Body)
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -104,26 +102,26 @@ func renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (st
 	), err
 }
 
-func renderReviewHeader(review data.Review) string {
+func (m *Model) renderReviewHeader(review data.Review) string {
 	return lipgloss.JoinHorizontal(lipgloss.Top,
-		renderReviewDecision(review.State),
+		m.renderReviewDecision(review.State),
 		" ",
-		styles.MainTextStyle.Copy().Render(review.Author.Login),
+		m.ctx.Styles.Common.MainTextStyle.Copy().Render(review.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
 	)
 }
 
-func renderReviewDecision(decision string) string {
+func (m *Model) renderReviewDecision(decision string) string {
 	switch decision {
 	case "PENDING":
-		return constants.WaitingGlyph
+		return m.ctx.Styles.Common.WaitingGlyph
 	case "COMMENTED":
-		return lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("")
 	case "APPROVED":
-		return constants.SuccessGlyph
+		return m.ctx.Styles.Common.SuccessGlyph
 	case "CHANGES_REQUESTED":
-		return constants.FailureGlyph
+		return m.ctx.Styles.Common.FailureGlyph
 	}
 
 	return ""

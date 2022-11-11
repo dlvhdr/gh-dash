@@ -33,9 +33,9 @@ func (m Model) View(ctx context.ProgramContext) string {
 	var tabs []string
 	for i, sectionTitle := range sectionTitles {
 		if m.CurrSectionId == i {
-			tabs = append(tabs, activeTab.Render(sectionTitle))
+			tabs = append(tabs, ctx.Styles.Tabs.ActiveTab.Render(sectionTitle))
 		} else {
-			tabs = append(tabs, tab.Render(sectionTitle))
+			tabs = append(tabs, ctx.Styles.Tabs.Tab.Render(sectionTitle))
 		}
 	}
 
@@ -44,9 +44,9 @@ func (m Model) View(ctx context.ProgramContext) string {
 	renderedTabs := lipgloss.NewStyle().
 		Width(tabsWidth).
 		MaxWidth(tabsWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, tabSeparator.Render("|"))))
+		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
 
-	return tabsRow.Copy().
+	return ctx.Styles.Tabs.TabsRow.Copy().
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs, viewSwitcher))
@@ -59,15 +59,15 @@ func (m *Model) SetCurrSectionId(id int) {
 func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 	var prsStyle, issuesStyle lipgloss.Style
 	if ctx.View == config.PRsView {
-		prsStyle = activeView
-		issuesStyle = inactiveView
+		prsStyle = ctx.Styles.Tabs.ActiveView
+		issuesStyle = ctx.Styles.Tabs.InactiveView
 	} else {
-		prsStyle = inactiveView
-		issuesStyle = activeView
+		prsStyle = ctx.Styles.Tabs.InactiveView
+		issuesStyle = ctx.Styles.Tabs.ActiveView
 	}
 
 	prs := prsStyle.Render("[ PRs]")
 	issues := issuesStyle.Render("[ Issues]")
-	return viewSwitcher.Copy().
+	return ctx.Styles.Tabs.ViewSwitcher.Copy().
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, prs, issues))
 }

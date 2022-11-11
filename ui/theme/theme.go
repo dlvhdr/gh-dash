@@ -1,13 +1,8 @@
-package styles
+package theme
 
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
-)
-
-var (
-	SingleRuneWidth    = 4
-	MainContentPadding = 1
 )
 
 type Theme struct {
@@ -36,12 +31,11 @@ var DefaultTheme = &Theme{
 	WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
 }
 
-func ParseTheme(cfgFile string) Theme {
+func ParseTheme(cfg *config.Config) Theme {
 	_shimHex := func(hex config.HexColor) lipgloss.AdaptiveColor {
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
 
-	cfg, _ := config.ParseConfig(cfgFile)
 	if cfg.Theme != nil {
 		DefaultTheme = &Theme{
 			SelectedBackground: _shimHex(cfg.Theme.Colors.Inline.Background.Selected),

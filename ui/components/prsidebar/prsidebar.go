@@ -8,11 +8,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/commentbox"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
@@ -24,9 +24,9 @@ type Model struct {
 	commentBox   commentbox.Model
 }
 
-func NewModel() Model {
-	commentBox := commentbox.NewModel()
-	commentBox.SetHeight(styles.CommentBoxHeight)
+func NewModel(ctx context.ProgramContext) Model {
+	commentBox := commentbox.NewModel(ctx)
+	commentBox.SetHeight(common.CommentBoxHeight)
 
 	return Model{
 		pr:           nil,
@@ -93,13 +93,13 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderTitle() string {
-	return styles.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
+	return m.ctx.Styles.Common.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
 		Render(m.pr.Data.Title)
 }
 
 func (m *Model) renderBranches() string {
 	return lipgloss.NewStyle().
-		Foreground(styles.DefaultTheme.SecondaryText).
+		Foreground(m.ctx.Theme.SecondaryText).
 		Render(m.pr.Data.BaseRefName + "  " + m.pr.Data.HeadRefName)
 }
 
@@ -108,17 +108,17 @@ func (m *Model) renderStatusPill() string {
 	switch m.pr.Data.State {
 	case "OPEN":
 		if m.pr.Data.IsDraft {
-			bgColor = styles.DefaultTheme.FaintText.Dark
+			bgColor = m.ctx.Theme.FaintText.Dark
 		} else {
-			bgColor = openPR.Dark
+			bgColor = m.ctx.Styles.Colors.OpenPR.Dark
 		}
 	case "CLOSED":
-		bgColor = closedPR.Dark
+		bgColor = m.ctx.Styles.Colors.ClosedPR.Dark
 	case "MERGED":
-		bgColor = mergedPR.Dark
+		bgColor = m.ctx.Styles.Colors.MergedPR.Dark
 	}
 
-	return pillStyle.
+	return m.ctx.Styles.PrSidebar.PillStyle.
 		Background(lipgloss.Color(bgColor)).
 		Render(m.pr.RenderState())
 }
@@ -126,12 +126,12 @@ func (m *Model) renderStatusPill() string {
 func (m *Model) renderMergeablePill() string {
 	status := m.pr.Data.Mergeable
 	if status == "CONFLICTING" {
-		return pillStyle.Copy().
-			Background(styles.DefaultTheme.WarningText).
+		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
+			Background(m.ctx.Theme.WarningText).
 			Render(" Merge Conflicts")
 	} else if status == "MERGEABLE" {
-		return pillStyle.Copy().
-			Background(styles.DefaultTheme.SuccessText).
+		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
+			Background(m.ctx.Theme.SuccessText).
 			Render(" Mergeable")
 	}
 
@@ -139,22 +139,25 @@ func (m *Model) renderMergeablePill() string {
 }
 
 func (m *Model) renderChecksPill() string {
+	s := m.ctx.Styles.PrSidebar.PillStyle
+	t := m.ctx.Theme
+
 	status := m.pr.GetStatusChecksRollup()
 	if status == "FAILURE" {
-		return pillStyle.Copy().
-			Background(styles.DefaultTheme.WarningText).
+		return s.Copy().
+			Background(t.WarningText).
 			Render(" Checks")
 	} else if status == "PENDING" {
-		return pillStyle.Copy().
-			Background(styles.DefaultTheme.FaintText).
-			Foreground(styles.DefaultTheme.PrimaryText).
+		return s.Copy().
+			Background(t.FaintText).
+			Foreground(t.PrimaryText).
 			Faint(true).
 			Render(" Checks")
 	}
 
-	return pillStyle.Copy().
-		Background(styles.DefaultTheme.SuccessText).
-		Foreground(styles.DefaultTheme.InvertedText).
+	return s.Copy().
+		Background(t.SuccessText).
+		Foreground(t.InvertedText).
 		Render(" Checks")
 }
 
@@ -199,7 +202,7 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 	if data == nil {
 		m.pr = nil
 	} else {
-		m.pr = &pr.PullRequest{Data: *data}
+		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: *data}
 	}
 }
 

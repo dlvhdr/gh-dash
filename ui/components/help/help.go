@@ -4,9 +4,9 @@ import (
 	bbHelp "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
@@ -14,16 +14,16 @@ type Model struct {
 	ShowAll bool
 }
 
-func NewModel() Model {
+func NewModel(ctx context.ProgramContext) Model {
 	help := bbHelp.NewModel()
 	help.Styles = bbHelp.Styles{
-		ShortDesc:      helpTextStyle.Copy().Foreground(styles.DefaultTheme.FaintText),
-		FullDesc:       helpTextStyle.Copy(),
-		ShortSeparator: helpTextStyle.Copy().Foreground(styles.DefaultTheme.SecondaryBorder),
-		FullSeparator:  helpTextStyle.Copy(),
-		FullKey:        helpTextStyle.Copy().Foreground(styles.DefaultTheme.PrimaryText),
-		ShortKey:       helpTextStyle.Copy(),
-		Ellipsis:       helpTextStyle.Copy(),
+		ShortDesc:      ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.FaintText),
+		FullDesc:       ctx.Styles.Help.Text.Copy(),
+		ShortSeparator: ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.SecondaryBorder),
+		FullSeparator:  ctx.Styles.Help.Text.Copy(),
+		FullKey:        ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.PrimaryText),
+		ShortKey:       ctx.Styles.Help.Text.Copy(),
+		Ellipsis:       ctx.Styles.Help.Text.Copy(),
 	}
 
 	return Model{
@@ -47,13 +47,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View(ctx context.ProgramContext) string {
 	keymap := keys.GetKeyMap(ctx.View)
 	if m.help.ShowAll {
-		return styles.FooterStyle.Copy().
-			Height(styles.ExpandedHelpHeight - 1).
+		return ctx.Styles.Common.FooterStyle.Copy().
+			Height(common.ExpandedHelpHeight - 1).
 			Width(ctx.ScreenWidth).
 			Render(m.help.View(keymap))
 	}
 
-	return styles.FooterStyle.Copy().
+	return ctx.Styles.Common.FooterStyle.Copy().
 		Width(ctx.ScreenWidth).
 		Render(m.help.View(keymap))
 }

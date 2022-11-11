@@ -181,7 +181,7 @@ func GetSectionColumns(cfg config.IssuesSectionConfig, ctx *context.ProgramConte
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currIssue := range m.Issues {
-		issueModel := issue.Issue{Data: currIssue}
+		issueModel := issue.Issue{Ctx: m.Ctx, Data: currIssue}
 		rows = append(rows, issueModel.ToTableRow())
 	}
 

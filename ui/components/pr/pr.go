@@ -8,11 +8,12 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type PullRequest struct {
+	Ctx  *context.ProgramContext
 	Data data.PullRequestData
 }
 
@@ -22,26 +23,26 @@ type sectionPullRequestsFetchedMsg struct {
 }
 
 func (pr *PullRequest) getTextStyle() lipgloss.Style {
-	return components.GetIssueTextStyle(pr.Data.State)
+	return components.GetIssueTextStyle(pr.Ctx, pr.Data.State)
 }
 
 func (pr *PullRequest) renderReviewStatus() string {
 	reviewCellStyle := pr.getTextStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
 		if pr.Data.State == "OPEN" {
-			reviewCellStyle = reviewCellStyle.Foreground(successText)
+			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
 		}
 		return reviewCellStyle.Render("")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
 		if pr.Data.State == "OPEN" {
-			reviewCellStyle = reviewCellStyle.Foreground(styles.DefaultTheme.WarningText)
+			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.WarningText)
 		}
 		return reviewCellStyle.Render("")
 	}
 
-	return reviewCellStyle.Render(constants.WaitingGlyph)
+	return reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
 }
 
 func (pr *PullRequest) renderState() string {
@@ -49,16 +50,16 @@ func (pr *PullRequest) renderState() string {
 	switch pr.Data.State {
 	case "OPEN":
 		if pr.Data.IsDraft {
-			return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("")
+			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("")
 		} else {
-			return mergeCellStyle.Foreground(openPR).Render("")
+			return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR).Render("")
 		}
 	case "CLOSED":
-		return mergeCellStyle.Foreground(closedPR).Render("")
+		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).Render("")
 	case "MERGED":
-		return mergeCellStyle.Foreground(mergedPR).Render("")
+		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).Render("")
 	default:
-		return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("-")
+		return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("-")
 	}
 }
 
@@ -104,17 +105,17 @@ func (pr *PullRequest) renderCiStatus() string {
 	ciCellStyle := pr.getTextStyle()
 	if accStatus == "SUCCESS" {
 		if pr.Data.State == "OPEN" {
-			ciCellStyle = ciCellStyle.Foreground(styles.DefaultTheme.SuccessText)
+			ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
 		}
 		return ciCellStyle.Render(constants.SuccessIcon)
 	}
 
 	if accStatus == "PENDING" {
-		return ciCellStyle.Render(constants.WaitingGlyph)
+		return ciCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
 	}
 
 	if pr.Data.State == "OPEN" {
-		ciCellStyle = ciCellStyle.Foreground(styles.DefaultTheme.WarningText)
+		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.WarningText)
 	}
 	return ciCellStyle.Render(constants.FailureIcon)
 }
@@ -131,7 +132,7 @@ func (pr *PullRequest) renderLines() string {
 }
 
 func (pr *PullRequest) renderTitle() string {
-	return components.RenderIssueTitle(pr.Data.State, pr.Data.Title, pr.Data.Number)
+	return components.RenderIssueTitle(pr.Ctx, pr.Data.State, pr.Data.Title, pr.Data.Number)
 }
 
 func (pr *PullRequest) renderAuthor() string {

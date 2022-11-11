@@ -8,11 +8,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/search"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -55,11 +55,12 @@ func NewModel(
 		IsSearching:  false,
 	}
 	m.Table = table.NewModel(
+		*ctx,
 		m.GetDimensions(),
 		m.Columns,
 		nil,
 		m.SingularForm,
-		utils.StringPtr(emptyStateStyle.Render(
+		utils.StringPtr(m.Ctx.Styles.Section.EmptyStateStyle.Render(
 			fmt.Sprintf("No %s were found that match the given filters", m.PluralForm),
 		)),
 	)
@@ -116,8 +117,8 @@ func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight - styles.SearchHeight,
+		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		Height: m.Ctx.MainContentHeight - common.SearchHeight,
 	}
 }
 
@@ -228,8 +229,8 @@ func (m *Model) GetMainContent() string {
 			lipgloss.Center,
 			fmt.Sprintf(
 				"Enter a query to the search bar above by pressing %s and submit it with %s.",
-				keyStyle.Render("/"),
-				keyStyle.Render("Enter"),
+				m.Ctx.Styles.Section.KeyStyle.Render("/"),
+				m.Ctx.Styles.Section.KeyStyle.Render("Enter"),
 			),
 		)
 	} else {
@@ -241,7 +242,7 @@ func (m *Model) GetSpinnerText() *string {
 	var spinnerText *string
 	if m.IsLoading {
 		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
-			spinnerStyle.Copy().Render(m.Spinner.View()),
+			m.Ctx.Styles.Section.SpinnerStyle.Copy().Render(m.Spinner.View()),
 			fmt.Sprintf("Fetching %s...", m.PluralForm),
 		))
 	}
@@ -252,7 +253,7 @@ func (m *Model) View() string {
 	var search string
 	search = m.SearchBar.View(*m.Ctx)
 
-	return containerStyle.Copy().Render(
+	return m.Ctx.Styles.Section.ContainerStyle.Copy().Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			search,

@@ -190,7 +190,7 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 		},
 		{
 			Title:  "",
-			Width:  &ciCellWidth,
+			Width:  &ctx.Styles.PrSection.CiCellWidth,
 			Grow:   new(bool),
 			Hidden: ciLayout.Hidden,
 		},
@@ -205,7 +205,7 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currPr := range m.Prs {
-		prModel := pr.PullRequest{Data: currPr}
+		prModel := pr.PullRequest{Ctx: m.Ctx, Data: currPr}
 		rows = append(rows, prModel.ToTableRow())
 	}
 

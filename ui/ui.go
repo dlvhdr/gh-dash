@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/help"
 	"github.com/dlvhdr/gh-dash/ui/components/issuesidebar"
 	"github.com/dlvhdr/gh-dash/ui/components/issuessection"
@@ -24,7 +25,7 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
-	"github.com/dlvhdr/gh-dash/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/theme"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -47,13 +48,11 @@ type Model struct {
 func NewModel(configPath string) Model {
 	tabsModel := tabs.NewModel()
 	m := Model{
-		keys:          keys.Keys,
-		help:          help.NewModel(),
+		keys: keys.Keys,
+
 		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
-		prSidebar:     prsidebar.NewModel(),
-		issueSidebar:  issuesidebar.NewModel(),
 		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
 		tasks:         map[string]context.Task{},
 	}
@@ -66,6 +65,10 @@ func NewModel(configPath string) Model {
 			return m.taskSpinner.Tick
 		},
 	}
+	m.help = help.NewModel(m.ctx)
+	m.prSidebar = prsidebar.NewModel(m.ctx)
+	m.issueSidebar = issuesidebar.NewModel(m.ctx)
+
 	return m
 }
 
@@ -199,9 +202,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Help):
 			if !m.help.ShowAll {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.FooterHeight - styles.ExpandedHelpHeight
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.FooterHeight - common.ExpandedHelpHeight
 			} else {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight + styles.ExpandedHelpHeight - styles.FooterHeight
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.ExpandedHelpHeight - common.FooterHeight
 			}
 
 		case key.Matches(msg, m.keys.Quit):
@@ -211,6 +214,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case initMsg:
 		m.ctx.Config = &msg.Config
+		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
+		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.syncMainContentWidth()
@@ -291,6 +296,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		prSidebarCmd,
 		issueSidebarCmd,
 	)
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -317,12 +323,12 @@ func (m Model) View() string {
 	s.WriteString("\n")
 	if m.ctx.Error != nil {
 		s.WriteString(
-			styles.ErrorStyle.
+			m.ctx.Styles.Common.ErrorStyle.
 				Width(m.ctx.ScreenWidth).
 				Render(fmt.Sprintf("%s %s",
-					constants.FailureGlyph,
+					m.ctx.Styles.Common.FailureGlyph,
 					lipgloss.NewStyle().
-						Foreground(styles.DefaultTheme.WarningText).
+						Foreground(m.ctx.Theme.WarningText).
 						Render(m.ctx.Error.Error()),
 				)),
 		)
@@ -354,7 +360,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.help.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentHeight = msg.Height - tabs.TabsHeight - styles.FooterHeight
+	m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
 	m.syncMainContentWidth()
 }
 
@@ -502,15 +508,15 @@ func (m *Model) renderRunningTask() string {
 		status = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
 	case context.TaskError:
 		status = lipgloss.NewStyle().
-			Foreground(styles.DefaultTheme.WarningText).
+			Foreground(m.ctx.Theme.WarningText).
 			Render(fmt.Sprintf(" %s", task.Error.Error()))
 	case context.TaskFinished:
 		status = lipgloss.NewStyle().
-			Foreground(styles.DefaultTheme.SuccessText).
+			Foreground(m.ctx.Theme.SuccessText).
 			Render(fmt.Sprintf(" %s", task.FinishedText))
 	}
 
-	return styles.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
+	return m.ctx.Styles.Common.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
 }
 
 type userFetchedMsg struct {

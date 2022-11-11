@@ -5,12 +5,10 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 func (sidebar *Model) renderChecks() string {
-	title := styles.MainTextStyle.Copy().MarginBottom(1).Underline(true).Render(" Checks")
+	title := sidebar.ctx.Styles.Common.MainTextStyle.Copy().MarginBottom(1).Underline(true).Render(" Checks")
 
 	commits := sidebar.pr.Data.Commits.Nodes
 	if len(commits) == 0 {
@@ -19,19 +17,19 @@ func (sidebar *Model) renderChecks() string {
 
 	var checks []string
 	for _, review := range sidebar.pr.Data.LatestReviews.Nodes {
-		checks = append(checks, renderReviewHeader(review))
+		checks = append(checks, sidebar.renderReviewHeader(review))
 	}
 
 	lastCommit := commits[0]
 	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
 		if node.Typename == "CheckRun" {
 			checkRun := node.CheckRun
-			renderedStatus := renderCheckRunConclusion(checkRun)
+			renderedStatus := sidebar.renderCheckRunConclusion(checkRun)
 			name := renderCheckRunName(checkRun)
 			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Top, renderedStatus, " ", name))
 		} else if node.Typename == "StatusContext" {
 			statusContext := node.StatusContext
-			status := renderStatusContextConclusion(statusContext)
+			status := sidebar.renderStatusContextConclusion(statusContext)
 			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext)))
 		}
 	}
@@ -56,30 +54,30 @@ func (sidebar *Model) renderChecks() string {
 	)
 }
 
-func renderCheckRunConclusion(checkRun data.CheckRun) string {
+func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) string {
 	conclusionStr := string(checkRun.Conclusion)
 	if data.IsStatusWaiting(string(checkRun.Status)) {
-		return constants.WaitingGlyph
+		return m.ctx.Styles.Common.WaitingGlyph
 	}
 
 	if data.IsConclusionAFailure(conclusionStr) {
-		return constants.FailureGlyph
+		return m.ctx.Styles.Common.FailureGlyph
 	}
 
-	return constants.SuccessGlyph
+	return m.ctx.Styles.Common.SuccessGlyph
 }
 
-func renderStatusContextConclusion(statusContext data.StatusContext) string {
+func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) string {
 	conclusionStr := string(statusContext.State)
 	if data.IsStatusWaiting(conclusionStr) {
-		return constants.WaitingGlyph
+		return m.ctx.Styles.Common.WaitingGlyph
 	}
 
 	if data.IsConclusionAFailure(conclusionStr) {
-		return constants.FailureGlyph
+		return m.ctx.Styles.Common.FailureGlyph
 	}
 
-	return constants.SuccessGlyph
+	return m.ctx.Styles.Common.SuccessGlyph
 }
 
 func renderCheckRunName(checkRun data.CheckRun) string {
