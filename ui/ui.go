@@ -170,8 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = currSection.FetchSectionRows()
 
 		case key.Matches(msg, m.keys.RefreshAll):
-			newSections, fetchSectionsCmds := m.fetchAllViewSections()
-			m.setCurrentViewSections(newSections)
+			_, fetchSectionsCmds := m.fetchAllViewSections()
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.SwitchView):
@@ -226,7 +225,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser)
+		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
+
+	case intervalRefresh:
+		_, fetchSectionsCmds := m.fetchAllViewSections()
+		cmds = append(cmds, fetchSectionsCmds, m.doRefreshAtInterval())
 
 	case userFetchedMsg:
 		m.ctx.User = msg.user
@@ -542,4 +545,15 @@ func fetchUser() tea.Msg {
 	return userFetchedMsg{
 		user: user,
 	}
+}
+
+type intervalRefresh time.Time
+
+func (m *Model) doRefreshAtInterval() tea.Cmd {
+	return tea.Tick(
+		time.Minute*time.Duration(m.ctx.Config.Defaults.RefetchIntervalMinutes),
+		func(t time.Time) tea.Msg {
+			return intervalRefresh(t)
+		},
+	)
 }

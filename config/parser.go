@@ -86,11 +86,12 @@ type LayoutConfig struct {
 }
 
 type Defaults struct {
-	Preview     PreviewConfig `yaml:"preview"`
-	PrsLimit    int           `yaml:"prsLimit"`
-	IssuesLimit int           `yaml:"issuesLimit"`
-	View        ViewType      `yaml:"view"`
-	Layout      LayoutConfig  `yaml:"layout,omitempty"`
+	Preview                PreviewConfig `yaml:"preview"`
+	PrsLimit               int           `yaml:"prsLimit"`
+	IssuesLimit            int           `yaml:"issuesLimit"`
+	View                   ViewType      `yaml:"view"`
+	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
+	RefetchIntervalMinutes int           `yaml:"refetchIntervalMinutes,omitempty"`
 }
 
 type Keybinding struct {
@@ -166,9 +167,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit:    20,
-			IssuesLimit: 20,
-			View:        PRsView,
+			PrsLimit:               20,
+			IssuesLimit:            20,
+			View:                   PRsView,
+			RefetchIntervalMinutes: 30,
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{
