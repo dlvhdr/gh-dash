@@ -169,6 +169,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			currSection.ResetFilters()
 			cmd = currSection.FetchSectionRows()
 
+		case key.Matches(msg, m.keys.RefreshAll):
+			newSections, fetchSectionsCmds := m.fetchAllViewSections()
+			m.setCurrentViewSections(newSections)
+			cmds = append(cmds, fetchSectionsCmds, fetchUser)
+
 		case key.Matches(msg, m.keys.SwitchView):
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
