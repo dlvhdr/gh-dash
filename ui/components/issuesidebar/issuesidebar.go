@@ -25,7 +25,7 @@ type Model struct {
 }
 
 func NewModel(ctx context.ProgramContext) Model {
-	commentBox := commentbox.NewModel(ctx)
+	commentBox := commentbox.NewModel(&ctx)
 	commentBox.SetHeight(common.CommentBoxHeight)
 
 	return Model{
@@ -197,4 +197,5 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
+	m.commentBox.UpdateProgramContext(ctx)
 }

@@ -2,6 +2,7 @@ package issuessection
 
 import (
 	"sort"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -23,7 +24,7 @@ type Model struct {
 	Issues []data.IssueData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig) Model {
+func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig, lastUpdated time.Time) Model {
 	m := Model{
 		section.NewModel(
 			id,
@@ -33,6 +34,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfi
 			GetSectionColumns(cfg, ctx),
 			"Issue",
 			"Issues",
+			lastUpdated,
 		),
 		[]data.IssueData{},
 	}
@@ -103,6 +105,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.Issues = iMsg.Issues
 			m.IsLoading = false
 			m.Table.SetRows(m.BuildRows())
+			m.UpdateLastUpdated(time.Now())
 
 		case section.SectionTickMsg:
 			if !m.IsLoading {
@@ -253,12 +256,16 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (m *Model) UpdateLastUpdated(t time.Time) {
+	m.Table.UpdateLastUpdated(t)
+}
+
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	sectionConfigs := ctx.Config.IssuesSections
 	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
 	sections = make([]section.Section, 0, len(sectionConfigs))
 	for i, sectionConfig := range sectionConfigs {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig) // 0 is the search section
+		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
 		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchSectionRows())
 	}

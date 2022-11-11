@@ -12,7 +12,7 @@ import (
 )
 
 type Model struct {
-	ctx         context.ProgramContext
+	ctx         *context.ProgramContext
 	textArea    textarea.Model
 	commentHelp help.Model
 }
@@ -22,7 +22,7 @@ var commentKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
 }
 
-func NewModel(ctx context.ProgramContext) Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
@@ -38,17 +38,9 @@ func NewModel(ctx context.ProgramContext) Model {
 	ta.Focus()
 
 	h := help.NewModel()
-	h.Styles = help.Styles{
-		ShortDesc:      ctx.Styles.CommentBox.Text.Copy().Foreground(ctx.Theme.FaintText),
-		FullDesc:       ctx.Styles.CommentBox.Text.Copy(),
-		ShortSeparator: ctx.Styles.CommentBox.Text.Copy().Foreground(ctx.Theme.SecondaryBorder),
-		FullSeparator:  ctx.Styles.CommentBox.Text.Copy(),
-		FullKey:        ctx.Styles.CommentBox.Text.Copy().Foreground(ctx.Theme.PrimaryText),
-		ShortKey:       ctx.Styles.CommentBox.Text.Copy(),
-		Ellipsis:       ctx.Styles.CommentBox.Text.Copy(),
-	}
-
+	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
+		ctx:         ctx,
 		textArea:    ta,
 		commentHelp: h,
 	}
@@ -100,4 +92,9 @@ func (m *Model) SetHeight(height int) {
 
 func (m *Model) Reset() {
 	m.textArea.Reset()
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.commentHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
