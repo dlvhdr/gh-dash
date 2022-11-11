@@ -10,23 +10,16 @@ import (
 )
 
 type Model struct {
+	ctx     *context.ProgramContext
 	help    bbHelp.Model
 	ShowAll bool
 }
 
 func NewModel(ctx context.ProgramContext) Model {
 	help := bbHelp.NewModel()
-	help.Styles = bbHelp.Styles{
-		ShortDesc:      ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.FaintText),
-		FullDesc:       ctx.Styles.Help.Text.Copy(),
-		ShortSeparator: ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.SecondaryBorder),
-		FullSeparator:  ctx.Styles.Help.Text.Copy(),
-		FullKey:        ctx.Styles.Help.Text.Copy().Foreground(ctx.Theme.PrimaryText),
-		ShortKey:       ctx.Styles.Help.Text.Copy(),
-		Ellipsis:       ctx.Styles.Help.Text.Copy(),
-	}
-
+	help.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
+		ctx:  &ctx,
 		help: help,
 	}
 }
@@ -44,20 +37,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View(ctx context.ProgramContext) string {
-	keymap := keys.GetKeyMap(ctx.View)
+func (m Model) View() string {
+	keymap := keys.GetKeyMap(m.ctx.View)
 	if m.help.ShowAll {
-		return ctx.Styles.Common.FooterStyle.Copy().
+		return m.ctx.Styles.Common.FooterStyle.Copy().
 			Height(common.ExpandedHelpHeight - 1).
-			Width(ctx.ScreenWidth).
+			Width(m.ctx.ScreenWidth).
 			Render(m.help.View(keymap))
 	}
 
-	return ctx.Styles.Common.FooterStyle.Copy().
-		Width(ctx.ScreenWidth).
+	return m.ctx.Styles.Common.FooterStyle.Copy().
+		Width(m.ctx.ScreenWidth).
 		Render(m.help.View(keymap))
 }
 
 func (m *Model) SetWidth(width int) {
 	m.help.Width = width
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.help.Styles = ctx.Styles.Help.BubbleStyles
 }

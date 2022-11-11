@@ -1,6 +1,8 @@
 package table
 
 import (
+	"time"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
@@ -26,14 +28,14 @@ type Column struct {
 
 type Row []string
 
-func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
+func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastUpdated time.Time, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
 	return Model{
 		ctx:          ctx,
 		Columns:      columns,
 		Rows:         rows,
 		EmptyState:   emptyState,
 		dimensions:   dimensions,
-		rowsViewport: listviewport.NewModel(ctx, dimensions, itemTypeLabel, len(rows), 2),
+		rowsViewport: listviewport.NewModel(ctx, dimensions, lastUpdated, itemTypeLabel, len(rows), 2),
 	}
 }
 
@@ -225,4 +227,13 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
 
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = *ctx
+	m.rowsViewport.UpdateProgramContext(ctx)
+}
+
+func (m *Model) UpdateLastUpdated(t time.Time) {
+	m.rowsViewport.LastUpdated = t
 }

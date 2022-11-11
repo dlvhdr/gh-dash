@@ -2,6 +2,7 @@ package listviewport
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
@@ -19,10 +20,11 @@ type Model struct {
 	currId         int
 	ListItemHeight int
 	NumItems       int
+	LastUpdated    time.Time
 	ItemTypeLabel  string
 }
 
-func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, itemTypeLabel string, numItems, listItemHeight int) Model {
+func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastUpdated time.Time, itemTypeLabel string, numItems, listItemHeight int) Model {
 	model := Model{
 		NumItems:       numItems,
 		ListItemHeight: listItemHeight,
@@ -33,6 +35,7 @@ func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, itemT
 		},
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
+		LastUpdated:   lastUpdated,
 	}
 	model.bottomBoundId = utils.Min(model.NumItems-1, model.getNumPrsPerPage()-1)
 	return model
@@ -106,7 +109,9 @@ func (m *Model) View() string {
 	pagerContent := ""
 	if m.NumItems > 0 {
 		pagerContent = fmt.Sprintf(
-			"%v %v/%v",
+			"%v %v • %v %v/%v",
+			constants.WaitingIcon,
+			m.LastUpdated.Format("01/02 15:04:05"),
 			m.ItemTypeLabel,
 			m.currId+1,
 			m.NumItems,
@@ -122,4 +127,8 @@ func (m *Model) View() string {
 			viewport,
 			pager,
 		))
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = *ctx
 }

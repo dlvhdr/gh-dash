@@ -2,6 +2,7 @@ package prssection
 
 import (
 	"sort"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -23,7 +24,7 @@ type Model struct {
 	Prs []data.PullRequestData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig) Model {
+func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig, lastUpdated time.Time) Model {
 	m := Model{
 		section.NewModel(
 			id,
@@ -33,6 +34,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig) 
 			GetSectionColumns(cfg, ctx),
 			"PR",
 			"Pull Requests",
+			lastUpdated,
 		),
 		[]data.PullRequestData{},
 	}
@@ -127,6 +129,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.Prs = iMsg.Prs
 			m.IsLoading = false
 			m.Table.SetRows(m.BuildRows())
+			m.UpdatedLastUpdated(time.Now())
 
 		case section.SectionTickMsg:
 			if !m.IsLoading {
@@ -271,7 +274,7 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig) // 0 is the search section
+		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
 	}

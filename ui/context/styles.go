@@ -1,6 +1,7 @@
 package context
 
 import (
+	bbHelp "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/theme"
@@ -22,7 +23,9 @@ type Styles struct {
 		PillStyle lipgloss.Style
 	}
 	Help struct {
-		Text lipgloss.Style
+		Text         lipgloss.Style
+		KeyText      lipgloss.Style
+		BubbleStyles bbHelp.Styles
 	}
 	CommentBox struct {
 		Text lipgloss.Style
@@ -94,6 +97,17 @@ func InitStyles(theme theme.Theme) Styles {
 		PaddingRight(1)
 
 	s.Help.Text = lipgloss.NewStyle().Foreground(theme.SecondaryText)
+	s.Help.KeyText = lipgloss.NewStyle().Foreground(theme.PrimaryText)
+	s.Help.BubbleStyles = bbHelp.Styles{
+		ShortDesc:      s.Help.Text.Copy().Foreground(theme.FaintText),
+		FullDesc:       s.Help.Text.Copy().Foreground(theme.FaintText),
+		ShortSeparator: s.Help.Text.Copy().Foreground(theme.SecondaryBorder),
+		FullSeparator:  s.Help.Text.Copy(),
+		FullKey:        s.Help.KeyText.Copy(),
+		ShortKey:       s.Help.KeyText.Copy(),
+		Ellipsis:       s.Help.Text.Copy(),
+	}
+
 	s.CommentBox.Text = s.Help.Text.Copy()
 
 	s.Pager.Height = 2
@@ -149,7 +163,6 @@ func InitStyles(theme theme.Theme) Styles {
 		Height(common.ListPagerHeight).
 		MaxHeight(common.ListPagerHeight).
 		PaddingTop(1).
-		Bold(true).
 		Foreground(theme.FaintText)
 
 	s.Table.CellStyle = lipgloss.NewStyle().PaddingLeft(1).
