@@ -18,18 +18,12 @@ func Test_excludeArchivedPullRequests(t *testing.T) {
 			name: "Not all pull requests are archived",
 			prs: []data.PullRequestData{
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: false,
 					},
 				},
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: false,
 					},
 				},
@@ -40,18 +34,12 @@ func Test_excludeArchivedPullRequests(t *testing.T) {
 			name: "All pull requests are archived",
 			prs: []data.PullRequestData{
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: true,
 					},
 				},
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: true,
 					},
 				},
@@ -62,18 +50,12 @@ func Test_excludeArchivedPullRequests(t *testing.T) {
 			name: "There is only one archived pull request",
 			prs: []data.PullRequestData{
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: false,
 					},
 				},
 				{
-					Repository: struct {
-						NameWithOwner string
-						IsArchived    bool
-					}{
+					Repository: data.Repository{
 						IsArchived: true,
 					},
 				},

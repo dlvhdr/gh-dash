@@ -31,14 +31,16 @@ type PullRequestData struct {
 	HeadRef struct {
 		Name string
 	}
-	Repository struct {
-		NameWithOwner string
-		IsArchived    bool
-	}
+	Repository    Repository
 	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
+}
+
+type Repository struct {
+	NameWithOwner string
+	IsArchived    bool
 }
 
 type CheckRun struct {
