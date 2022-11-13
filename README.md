@@ -7,14 +7,15 @@
 <img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
 
 ## ✨ Features
-* 🌅 fully configurable - define sections using GitHub filters
-* 🔍 search for both Pull Requests and Issues
+* 🌅 fully configurable - define sections using github filters
+* 🔍 search for both prs and issues
 * 📝 customize columns with `hidden`, `width` and `grow` props
 * ⚡️ act on prs and issues with checkout, comment, open, merge, diff, etc...
 * ⌨️ set custom actions with new keybindings
 * 💅 use custom themes
-* 🔭 view details about a PR/Issue with a detailed sidebar
+* 🔭 view details about a pr/issue with a detailed sidebar
 * 🪟 write multiple configuration files to easily switch between completely different dashboards
+* ♻️ set an interval for auto refreshing the dashboard
 
 ## 📦 Installation
 
@@ -128,6 +129,7 @@ defaults:
   preview:
     open: true # wether to have the preview pane open by default
     width: 60 # width in columns
+  refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
   dlvhdr/*: ~/code/repos/* # will match dlvhdr/repo-name to ~/code/repos/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
