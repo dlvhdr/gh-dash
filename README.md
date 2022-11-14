@@ -60,13 +60,13 @@
    </details>
 
 <details>
-   <summary>🌈 How do I get these exact colors and font?</summary>
+   <summary>How do I get these exact colors and font?</summary>
 
    > I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
    > For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
 </details>
 
-## Usage
+## ⚡️ Usage
 
 Run
 ```sh
@@ -146,7 +146,7 @@ You can run `gh dash --config <path-to-file>` to run `gh-dash` against another c
 This lets you easily define multiple dashboards with different sections.<br>
 It can be useful if you want to have a 🧳 work and 👩‍💻 personal dashboards, or if you want to view multiple dashboards at the same time.
 
-### Keybindings
+### ⌨️ Keybindings
 
 Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
 The available arguments are:
@@ -216,7 +216,7 @@ theme:
       faint: "#2B2B40"
 ```
 
-### Layout
+### 🪟 Layout
 
 You can customize each section's layout as well as the global layout.
 
