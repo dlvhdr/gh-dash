@@ -21,8 +21,9 @@ var (
 	cfgFile string
 
 	rootCmd = &cobra.Command{
-		Use:   "gh dash",
-		Short: "A gh extension that shows a configurable dashboard of pull requests and issues.",
+		Use:     "gh dash",
+		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
+		Version: "3.5.1",
 	}
 )
 
@@ -57,6 +58,7 @@ func init() {
 	)
 	rootCmd.MarkFlagFilename("config", "yaml", "yml")
 
+	rootCmd.SetVersionTemplate(`gh dash {{printf "version %s\n" .Version}}`)
 	rootCmd.Flags().Bool(
 		"debug",
 		false,
