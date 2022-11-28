@@ -250,7 +250,7 @@ defaults:
         hidden: true
 ```
 
-- For `prs` the column names are: `updatedAt, repo, author, title, reviewStatus, state, ci, lines`.
+- For `prs` the column names are: `updatedAt, repo, author, title, reviewStatus, state, ci, lines, base`.
 - For `issues` the column names are: `updatedAt, state, repo, title, creator, assignees, comments, reactions`.
 - The available properties to control are: `grow` (false, true), `width` (number of cells), and `hidden` (false, true).
 
