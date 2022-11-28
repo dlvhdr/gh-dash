@@ -158,6 +158,10 @@ func (pr *PullRequest) renderUpdateAt() string {
 		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
 }
 
+func (pr *PullRequest) renderBaseName() string {
+	return pr.getTextStyle().Render(pr.Data.BaseRefName)
+}
+
 func (pr *PullRequest) RenderState() string {
 	switch pr.Data.State {
 	case "OPEN":
@@ -183,6 +187,7 @@ func (pr *PullRequest) ToTableRow() table.Row {
 		pr.renderTitle(),
 		pr.renderAuthor(),
 		pr.renderAssignees(),
+		pr.renderBaseName(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
 		pr.renderLines(),

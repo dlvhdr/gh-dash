@@ -147,6 +147,7 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
 	authorLayout := config.MergeColumnConfigs(dLayout.Author, sLayout.Author)
 	assigneesLayout := config.MergeColumnConfigs(dLayout.Assignees, sLayout.Assignees)
+	baseLayout := config.MergeColumnConfigs(dLayout.Base, sLayout.Base)
 	reviewStatusLayout := config.MergeColumnConfigs(dLayout.ReviewStatus, sLayout.ReviewStatus)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
@@ -181,6 +182,11 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 			Title:  "Assignees",
 			Width:  assigneesLayout.Width,
 			Hidden: assigneesLayout.Hidden,
+		},
+		{
+			Title:  "Base",
+			Width:  baseLayout.Width,
+			Hidden: baseLayout.Hidden,
 		},
 		{
 			Title:  "",
