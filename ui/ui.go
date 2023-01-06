@@ -168,7 +168,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
-			cmd = currSection.FetchSectionRows()
+			cmds = append(cmds, currSection.FetchSectionRows()...)
 
 		case key.Matches(msg, m.keys.RefreshAll):
 			_, fetchSectionsCmds := m.fetchAllViewSections()
@@ -256,6 +256,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				task.State = context.TaskFinished
 			}
+			now := time.Now()
+			task.FinishedTime = &now
 			m.tasks[msg.TaskId] = task
 			cmd = tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 				return constants.ClearTaskMsg{TaskId: msg.TaskId}
@@ -522,25 +524,47 @@ func (m *Model) renderRunningTask() string {
 		tasks = append(tasks, value)
 	}
 	sort.Slice(tasks, func(i, j int) bool {
+		if tasks[i].FinishedTime != nil && tasks[j].FinishedTime == nil {
+			return false
+		}
+		if tasks[j].FinishedTime != nil && tasks[i].FinishedTime == nil {
+			return true
+		}
+		if tasks[j].FinishedTime != nil && tasks[i].FinishedTime != nil {
+			return tasks[i].FinishedTime.After(*tasks[j].FinishedTime)
+		}
+
 		return tasks[i].StartTime.After(tasks[j].StartTime)
 	})
 	task := tasks[0]
 
-	var status string
+	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		status = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
+		currTaskStatus = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
 	case context.TaskError:
-		status = lipgloss.NewStyle().
+		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.WarningText).
 			Render(fmt.Sprintf(" %s", task.Error.Error()))
 	case context.TaskFinished:
-		status = lipgloss.NewStyle().
+		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SuccessText).
 			Render(fmt.Sprintf(" %s", task.FinishedText))
 	}
 
-	return m.ctx.Styles.Common.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(status)
+	var numProcessing int
+	for _, task := range m.tasks {
+		if task.State == context.TaskStart {
+			numProcessing += 1
+		}
+	}
+
+	stats := ""
+	if numProcessing > 1 {
+		stats = lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("[ %d] ", numProcessing))
+	}
+
+	return m.ctx.Styles.Common.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(lipgloss.JoinHorizontal(lipgloss.Left, stats, currTaskStatus))
 }
 
 type userFetchedMsg struct {

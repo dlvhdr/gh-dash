@@ -1,17 +1,18 @@
 package prssection
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
+	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/utils"
@@ -61,7 +62,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
-				return &m, m.FetchSectionRows()
+				return &m, tea.Batch(m.FetchSectionRows()...)
 			}
 
 			break
@@ -118,29 +119,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 		}
 
-	case section.SectionMsg:
-		if msg.Id != m.Id || msg.Type != m.Type {
-			return &m, nil
-		}
+	case SectionPullRequestsFetchedMsg:
+		m.Prs = msg.Prs
+		m.Table.SetRows(m.BuildRows())
+		m.UpdatedLastUpdated(time.Now())
 
-		switch iMsg := msg.InternalMsg.(type) {
-
-		case SectionPullRequestsFetchedMsg:
-			m.Prs = iMsg.Prs
-			m.IsLoading = false
-			m.Table.SetRows(m.BuildRows())
-			m.UpdatedLastUpdated(time.Now())
-
-		case section.SectionTickMsg:
-			if !m.IsLoading {
-				return &m, nil
-			}
-
-			var internalTickCmd tea.Cmd
-			m.Spinner, internalTickCmd = m.Spinner.Update(iMsg.InternalTickMsg)
-			cmd = m.CreateNextTickCmd(internalTickCmd)
-
-		}
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -235,26 +218,35 @@ func (m *Model) GetCurrRow() data.RowData {
 	return &pr
 }
 
-func (m *Model) FetchSectionRows() tea.Cmd {
+func (m *Model) FetchSectionRows() []tea.Cmd {
 	if m == nil {
 		return nil
 	}
-	m.Prs = nil
-	m.Table.ResetCurrItem()
-	m.Table.Rows = nil
-	m.IsLoading = true
 	var cmds []tea.Cmd
-	cmds = append(cmds, m.CreateNextTickCmd(spinner.Tick))
 
-	cmd := func() tea.Msg {
+	taskId := fmt.Sprintf("fetching_prs_%d", m.Id)
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
+		FinishedText: fmt.Sprintf(`PRs for "%s" have been fetched`, m.Config.Title),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	cmds = append(cmds, startCmd)
+
+	fetchCmd := func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
 		fetchedPrs, err := data.FetchPullRequests(m.GetFilters(), *limit)
 		if err != nil {
-			return SectionPullRequestsFetchedMsg{
-				Prs: []data.PullRequestData{},
+			return constants.TaskFinishedMsg{
+				SectionId:   m.Id,
+				SectionType: m.Type,
+				TaskId:      taskId,
+				Err:         err,
 			}
 		}
 
@@ -263,13 +255,19 @@ func (m *Model) FetchSectionRows() tea.Cmd {
 		sort.Slice(filteredPrs, func(i, j int) bool {
 			return filteredPrs[i].UpdatedAt.After(filteredPrs[j].UpdatedAt)
 		})
-		return SectionPullRequestsFetchedMsg{
-			Prs: filteredPrs,
+
+		return constants.TaskFinishedMsg{
+			SectionId:   m.Id,
+			SectionType: m.Type,
+			TaskId:      taskId,
+			Msg: SectionPullRequestsFetchedMsg{
+				Prs: filteredPrs,
+			},
 		}
 	}
-	cmds = append(cmds, m.MakeSectionCmd(cmd))
+	cmds = append(cmds, fetchCmd)
 
-	return tea.Batch(cmds...)
+	return cmds
 }
 
 func (m *Model) excludeArchivedPullRequests(fetchedPrs []data.PullRequestData) []data.PullRequestData {
@@ -289,7 +287,7 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	for i, sectionConfig := range ctx.Config.PRSections {
 		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows())
+		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows()...)
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
 }
