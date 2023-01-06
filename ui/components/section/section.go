@@ -22,7 +22,6 @@ type Model struct {
 	Config       config.SectionConfig
 	Ctx          *context.ProgramContext
 	Spinner      spinner.Model
-	IsLoading    bool
 	SearchBar    search.Model
 	IsSearching  bool
 	SearchValue  string
@@ -51,7 +50,6 @@ func NewModel(
 		Columns:      columns,
 		SingularForm: singular,
 		PluralForm:   plural,
-		IsLoading:    false,
 		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
 		SearchValue:  cfg.Filters,
 		IsSearching:  false,
@@ -97,7 +95,7 @@ type Table interface {
 	PrevRow() int
 	FirstItem() int
 	LastItem() int
-	FetchSectionRows() tea.Cmd
+	FetchSectionRows() []tea.Cmd
 	BuildRows() []table.Row
 }
 
@@ -225,33 +223,24 @@ func (m *Model) GetFilters() string {
 }
 
 func (m *Model) GetMainContent() string {
-	if m.Table.Rows == nil && m.IsLoading == false {
+	if m.Table.Rows == nil {
 		d := m.GetDimensions()
 		return lipgloss.Place(
 			d.Width,
 			d.Height,
 			lipgloss.Center,
 			lipgloss.Center,
+
 			fmt.Sprintf(
-				"Enter a query to the search bar above by pressing %s and submit it with %s.",
+				"%s you can change the search query by pressing %s and submitting it with %s",
+				lipgloss.NewStyle().Bold(true).Render(" Tip:"),
 				m.Ctx.Styles.Section.KeyStyle.Render("/"),
 				m.Ctx.Styles.Section.KeyStyle.Render("Enter"),
 			),
 		)
 	} else {
-		return m.Table.View(m.GetSpinnerText())
+		return m.Table.View()
 	}
-}
-
-func (m *Model) GetSpinnerText() *string {
-	var spinnerText *string
-	if len(m.Table.Rows) == 0 && m.IsLoading {
-		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
-			m.Ctx.Styles.Section.SpinnerStyle.Copy().Render(m.Spinner.View()),
-			fmt.Sprintf("Fetching %s...", m.PluralForm),
-		))
-	}
-	return spinnerText
 }
 
 func (m *Model) View() string {

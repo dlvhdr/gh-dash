@@ -23,6 +23,7 @@ type Task struct {
 	State        State
 	Error        error
 	StartTime    time.Time
+	FinishedTime *time.Time
 }
 
 type ProgramContext struct {

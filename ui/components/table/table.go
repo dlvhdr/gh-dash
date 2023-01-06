@@ -39,9 +39,9 @@ func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastU
 	}
 }
 
-func (m Model) View(spinnerText *string) string {
+func (m Model) View() string {
 	header := m.renderHeader()
-	body := m.renderBody(spinnerText)
+	body := m.renderBody()
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, body)
 }
@@ -185,14 +185,12 @@ func (m *Model) renderHeader() string {
 		Render(header)
 }
 
-func (m *Model) renderBody(spinnerText *string) string {
+func (m *Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
 		Height(m.dimensions.Height).
 		MaxWidth(m.dimensions.Width)
 
-	if spinnerText != nil {
-		return bodyStyle.Render(*spinnerText)
-	} else if len(m.Rows) == 0 && m.EmptyState != nil {
+	if len(m.Rows) == 0 && m.EmptyState != nil {
 		return bodyStyle.Render(*m.EmptyState)
 	}
 

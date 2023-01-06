@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -141,7 +140,6 @@ func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
 	client, err := gh.GQLClient(nil)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -158,7 +156,6 @@ func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
 	}
 	err = client.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
