@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -210,6 +211,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.ExpandedHelpHeight - common.FooterHeight
 			}
+
+		case key.Matches(msg, m.keys.CopyNumber):
+			number := fmt.Sprint(m.getCurrRowData().GetNumber())
+			clipboard.WriteAll(number)
+			cmd := m.notify(fmt.Sprintf("Copied %s to clipboard", number))
+			return m, cmd
+
+		case key.Matches(msg, m.keys.CopyUrl):
+			url := m.getCurrRowData().GetUrl()
+			clipboard.WriteAll(url)
+			cmd := m.notify(fmt.Sprintf("Copied %s to clipboard", url))
+			return m, cmd
 
 		case key.Matches(msg, m.keys.Quit):
 			cmd = tea.Quit

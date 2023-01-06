@@ -8,12 +8,14 @@ import (
 	"os/exec"
 	"strings"
 	"text/template"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
@@ -148,4 +150,21 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 		}
 		return nil
 	})
+}
+
+func (m *Model) notify(text string) tea.Cmd {
+	id := fmt.Sprint(time.Now().Unix())
+	m.tasks[id] = context.Task{
+		Id:           id,
+		FinishedText: text,
+		State:        context.TaskFinished,
+	}
+	return func() tea.Msg {
+		return constants.TaskFinishedMsg{
+			SectionId:   m.getCurrSection().GetId(),
+			SectionType: m.getCurrSection().GetType(),
+			TaskId:      id,
+			Err:         nil,
+		}
+	}
 }
