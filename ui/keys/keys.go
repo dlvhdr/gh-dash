@@ -22,6 +22,8 @@ type KeyMap struct {
 	PrevSection   key.Binding
 	SwitchView    key.Binding
 	Search        key.Binding
+	CopyUrl       key.Binding
+	CopyNumber    key.Binding
 	Help          key.Binding
 	Quit          key.Binding
 }
@@ -56,7 +58,7 @@ func (k KeyMap) NavigationKeys() []key.Binding {
 }
 
 func (k KeyMap) AppKeys() []key.Binding {
-	return []key.Binding{k.Refresh, k.RefreshAll, k.SwitchView, k.TogglePreview, k.OpenGithub, k.Search}
+	return []key.Binding{k.Refresh, k.RefreshAll, k.SwitchView, k.TogglePreview, k.OpenGithub, k.CopyNumber, k.CopyUrl, k.Search}
 }
 
 func (k KeyMap) QuitAndHelpKeys() []key.Binding {
@@ -78,6 +80,8 @@ var Keys = KeyMap{
 	PrevSection:   key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("/h", "previous section")),
 	SwitchView:    key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "switch view")),
 	Search:        key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
+	CopyNumber:    key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "copy number")),
+	CopyUrl:       key.NewBinding(key.WithKeys("Y"), key.WithHelp("Y", "copy url")),
 	Help:          key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 	Quit:          key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q", "quit")),
 }
