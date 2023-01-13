@@ -97,10 +97,16 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionIssuesFetchedMsg:
-		m.Issues = msg.Issues
+		if m.PageInfo != nil {
+			m.Issues = append(m.Issues, msg.Issues...)
+		} else {
+			m.Issues = msg.Issues
+		}
+		m.TotalCount = msg.TotalCount
+		m.PageInfo = &msg.PageInfo
 		m.Table.SetRows(m.BuildRows())
 		m.UpdateLastUpdated(time.Now())
-
+		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -183,20 +189,6 @@ func (m *Model) NumRows() int {
 	return len(m.Issues)
 }
 
-type SectionIssuesFetchedMsg struct {
-	SectionId int
-	Issues    []data.IssueData
-	Err       error
-}
-
-func (msg SectionIssuesFetchedMsg) GetSectionId() int {
-	return msg.SectionId
-}
-
-func (msg SectionIssuesFetchedMsg) GetSectionType() string {
-	return SectionType
-}
-
 func (m *Model) GetCurrRow() data.RowData {
 	if len(m.Issues) == 0 {
 		return nil
@@ -209,11 +201,18 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	if m == nil {
 		return nil
 	}
-	m.Issues = nil
-	m.Table.Rows = nil
+
+	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
+		return nil
+	}
+
 	var cmds []tea.Cmd
 
-	taskId := fmt.Sprintf("fetching_issues_%d", m.Id)
+	startCursor := time.Now().String()
+	if m.PageInfo != nil {
+		startCursor = m.PageInfo.StartCursor
+	}
+	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
 	task := context.Task{
 		Id:           taskId,
 		StartText:    fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
@@ -229,7 +228,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.IssuesLimit
 		}
-		fetchedIssues, err := data.FetchIssues(m.GetFilters(), *limit)
+		res, err := data.FetchIssues(m.GetFilters(), *limit, m.PageInfo)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
@@ -238,9 +237,10 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Err:         err,
 			}
 		}
+		issues := res.Issues
 
-		sort.Slice(fetchedIssues, func(i, j int) bool {
-			return fetchedIssues[i].UpdatedAt.After(fetchedIssues[j].UpdatedAt)
+		sort.Slice(issues, func(i, j int) bool {
+			return issues[i].UpdatedAt.After(issues[j].UpdatedAt)
 		})
 
 		return constants.TaskFinishedMsg{
@@ -248,7 +248,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			SectionType: m.Type,
 			TaskId:      taskId,
 			Msg: SectionIssuesFetchedMsg{
-				Issues: fetchedIssues,
+				Issues:     issues,
+				TotalCount: res.TotalCount,
+				PageInfo:   res.PageInfo,
 			},
 		}
 
@@ -279,6 +281,12 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchIssuesCmds...)
+}
+
+type SectionIssuesFetchedMsg struct {
+	Issues     []data.IssueData
+	TotalCount int
+	PageInfo   data.PageInfo
 }
 
 type UpdateIssueMsg struct {
