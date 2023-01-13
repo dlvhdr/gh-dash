@@ -30,6 +30,8 @@ type Model struct {
 	SingularForm string
 	PluralForm   string
 	Columns      []table.Column
+	TotalCount   int
+	PageInfo     *data.PageInfo
 }
 
 func NewModel(
@@ -53,6 +55,8 @@ func NewModel(
 		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
 		SearchValue:  cfg.Filters,
 		IsSearching:  false,
+		TotalCount:   0,
+		PageInfo:     nil,
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -75,7 +79,7 @@ type Section interface {
 	Search
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
-	UpdatedLastUpdated(time.Time)
+	UpdateLastUpdated(time.Time)
 }
 
 type Identifier interface {
@@ -91,12 +95,14 @@ type Component interface {
 type Table interface {
 	NumRows() int
 	GetCurrRow() data.RowData
+	CurrRow() int
 	NextRow() int
 	PrevRow() int
 	FirstItem() int
 	LastItem() int
-	FetchSectionRows() []tea.Cmd
+	FetchNextPageSectionRows() []tea.Cmd
 	BuildRows() []table.Row
+	ResetRows()
 }
 
 type Search interface {
@@ -104,6 +110,7 @@ type Search interface {
 	IsSearchFocused() bool
 	ResetFilters()
 	GetFilters() string
+	ResetPageInfo()
 }
 
 func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
@@ -162,6 +169,10 @@ func (m *Model) GetType() string {
 	return m.Type
 }
 
+func (m *Model) CurrRow() int {
+	return m.Table.GetCurrItem()
+}
+
 func (m *Model) NextRow() int {
 	return m.Table.NextItem()
 }
@@ -195,6 +206,10 @@ func (m *Model) SetIsSearching(val bool) tea.Cmd {
 
 func (m *Model) ResetFilters() {
 	m.SearchBar.SetValue(m.Config.Filters)
+}
+
+func (m *Model) ResetPageInfo() {
+	m.PageInfo = nil
 }
 
 type SectionMsg struct {
@@ -256,6 +271,10 @@ func (m *Model) View() string {
 	)
 }
 
-func (m *Model) UpdatedLastUpdated(t time.Time) {
+func (m *Model) UpdateLastUpdated(t time.Time) {
 	m.Table.UpdateLastUpdated(t)
+}
+
+func (m *Model) UpdateTotalItemsCount(count int) {
+	m.Table.UpdateTotalItemsCount(count)
 }

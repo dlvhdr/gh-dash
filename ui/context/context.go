@@ -37,6 +37,7 @@ type ProgramContext struct {
 	View              config.ViewType
 	Error             error
 	StartTask         func(task Task) tea.Cmd
+	DidTaskFinish     func(taskId string) bool
 	Theme             theme.Theme
 	Styles            Styles
 }

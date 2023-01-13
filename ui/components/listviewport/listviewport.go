@@ -13,22 +13,23 @@ import (
 )
 
 type Model struct {
-	ctx            context.ProgramContext
-	viewport       viewport.Model
-	topBoundId     int
-	bottomBoundId  int
-	currId         int
-	ListItemHeight int
-	NumItems       int
-	LastUpdated    time.Time
-	ItemTypeLabel  string
+	ctx             context.ProgramContext
+	viewport        viewport.Model
+	topBoundId      int
+	bottomBoundId   int
+	currId          int
+	ListItemHeight  int
+	NumCurrentItems int
+	NumTotalItems   int
+	LastUpdated     time.Time
+	ItemTypeLabel   string
 }
 
 func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastUpdated time.Time, itemTypeLabel string, numItems, listItemHeight int) Model {
 	model := Model{
-		NumItems:       numItems,
-		ListItemHeight: listItemHeight,
-		currId:         0,
+		NumCurrentItems: numItems,
+		ListItemHeight:  listItemHeight,
+		currId:          0,
 		viewport: viewport.Model{
 			Width:  dimensions.Width,
 			Height: dimensions.Height - common.ListPagerHeight,
@@ -37,13 +38,17 @@ func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastU
 		ItemTypeLabel: itemTypeLabel,
 		LastUpdated:   lastUpdated,
 	}
-	model.bottomBoundId = utils.Min(model.NumItems-1, model.getNumPrsPerPage()-1)
+	model.bottomBoundId = utils.Min(model.NumCurrentItems-1, model.getNumPrsPerPage()-1)
 	return model
 }
 
 func (m *Model) SetNumItems(numItems int) {
-	m.NumItems = numItems
-	m.bottomBoundId = utils.Min(m.NumItems-1, m.getNumPrsPerPage()-1)
+	m.NumCurrentItems = numItems
+	m.bottomBoundId = utils.Min(m.NumCurrentItems-1, m.getNumPrsPerPage()-1)
+}
+
+func (m *Model) SetTotalItems(total int) {
+	m.NumTotalItems = total
 }
 
 func (m *Model) SyncViewPort(content string) {
@@ -56,6 +61,7 @@ func (m *Model) getNumPrsPerPage() int {
 
 func (m *Model) ResetCurrItem() {
 	m.currId = 0
+	m.viewport.GotoTop()
 }
 
 func (m *Model) GetCurrItem() int {
@@ -70,7 +76,7 @@ func (m *Model) NextItem() int {
 		m.viewport.LineDown(m.ListItemHeight)
 	}
 
-	newId := utils.Min(m.currId+1, m.NumItems-1)
+	newId := utils.Min(m.currId+1, m.NumCurrentItems-1)
 	newId = utils.Max(newId, 0)
 	m.currId = newId
 	return m.currId
@@ -95,7 +101,7 @@ func (m *Model) FirstItem() int {
 }
 
 func (m *Model) LastItem() int {
-	m.currId = m.NumItems - 1
+	m.currId = m.NumCurrentItems - 1
 	m.viewport.GotoBottom()
 	return m.currId
 }
@@ -107,14 +113,15 @@ func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 
 func (m *Model) View() string {
 	pagerContent := ""
-	if m.NumItems > 0 {
+	if m.NumTotalItems > 0 {
 		pagerContent = fmt.Sprintf(
-			"%v %v • %v %v/%v",
+			"%v %v • %v %v/%v • Fetched %v",
 			constants.WaitingIcon,
 			m.LastUpdated.Format("01/02 15:04:05"),
 			m.ItemTypeLabel,
 			m.currId+1,
-			m.NumItems,
+			m.NumTotalItems,
+			m.NumCurrentItems,
 		)
 	}
 	viewport := m.viewport.View()

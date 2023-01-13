@@ -104,8 +104,7 @@ func (m *Model) SyncViewPortContent() {
 
 func (m *Model) SetRows(rows []Row) {
 	m.Rows = rows
-
-	m.rowsViewport.SetNumItems(len(rows))
+	m.rowsViewport.SetNumItems(len(m.Rows))
 	m.SyncViewPortContent()
 }
 
@@ -234,4 +233,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func (m *Model) UpdateLastUpdated(t time.Time) {
 	m.rowsViewport.LastUpdated = t
+}
+
+func (m *Model) UpdateTotalItemsCount(count int) {
+	m.rowsViewport.SetTotalItems(count)
 }

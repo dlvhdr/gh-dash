@@ -65,6 +65,10 @@ func NewModel(configPath string) Model {
 			m.tasks[task.Id] = task
 			return m.taskSpinner.Tick
 		},
+		DidTaskFinish: func(taskId string) bool {
+			task, ok := m.tasks[taskId]
+			return !ok || task.State == context.TaskFinished
+		},
 	}
 	m.help = help.NewModel(m.ctx)
 	m.prSidebar = prsidebar.NewModel(m.ctx)
@@ -141,7 +145,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Down):
-			currSection.NextRow()
+			prevRow := currSection.CurrRow()
+			nextRow := currSection.NextRow()
+			if prevRow != nextRow && nextRow == currSection.NumRows()-1 {
+				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			}
 			m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Up):
@@ -153,6 +161,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.LastLine):
+			if currSection.CurrRow()+1 < currSection.NumRows() {
+				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			}
 			currSection.LastItem()
 			m.onViewedRowChanged()
 
@@ -168,10 +179,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
-			cmds = append(cmds, currSection.FetchSectionRows()...)
+			currSection.ResetRows()
+			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 		case key.Matches(msg, m.keys.RefreshAll):
-			_, fetchSectionsCmds := m.fetchAllViewSections()
+			newSections, fetchSectionsCmds := m.fetchAllViewSections()
+			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.SwitchView):
@@ -241,7 +254,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
 
 	case intervalRefresh:
-		_, fetchSectionsCmds := m.fetchAllViewSections()
+		newSections, fetchSectionsCmds := m.fetchAllViewSections()
+		m.setCurrentViewSections(newSections)
 		cmds = append(cmds, fetchSectionsCmds, m.doRefreshAtInterval())
 
 	case userFetchedMsg:
@@ -376,7 +390,6 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 func (m *Model) onViewedRowChanged() {
 	m.syncSidebar()
 	m.sidebar.ScrollToTop()
-
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
