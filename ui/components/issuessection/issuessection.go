@@ -61,7 +61,8 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
-				return &m, tea.Batch(m.FetchSectionRows()...)
+				m.ResetRows()
+				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
 
 			break
@@ -204,12 +205,11 @@ func (m *Model) GetCurrRow() data.RowData {
 	return &issue
 }
 
-func (m *Model) FetchSectionRows() []tea.Cmd {
+func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	if m == nil {
 		return nil
 	}
 	m.Issues = nil
-	m.Table.ResetCurrItem()
 	m.Table.Rows = nil
 	var cmds []tea.Cmd
 
@@ -262,6 +262,13 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 	m.Table.UpdateLastUpdated(t)
 }
 
+func (m *Model) ResetRows() {
+	m.Issues = nil
+	m.Table.Rows = nil
+	m.ResetPageInfo()
+	m.Table.ResetCurrItem()
+}
+
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	sectionConfigs := ctx.Config.IssuesSections
 	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
@@ -269,7 +276,7 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	for i, sectionConfig := range sectionConfigs {
 		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchSectionRows()...)
+		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchIssuesCmds...)
 }

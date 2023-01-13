@@ -2,6 +2,7 @@ package prssection
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -62,7 +63,8 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
-				return &m, tea.Batch(m.FetchSectionRows()...)
+				m.ResetRows()
+				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
 
 			break
@@ -120,10 +122,16 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		m.Prs = msg.Prs
+		if m.PageInfo != nil {
+			m.Prs = append(m.Prs, msg.Prs...)
+		} else {
+			m.Prs = msg.Prs
+		}
+		m.TotalCount = msg.TotalCount
+		m.PageInfo = &msg.PageInfo
 		m.Table.SetRows(m.BuildRows())
-		m.UpdatedLastUpdated(time.Now())
-
+		m.UpdateLastUpdated(time.Now())
+		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -207,7 +215,9 @@ func (m *Model) NumRows() int {
 }
 
 type SectionPullRequestsFetchedMsg struct {
-	Prs []data.PullRequestData
+	Prs        []data.PullRequestData
+	TotalCount int
+	PageInfo   data.PageInfo
 }
 
 func (m *Model) GetCurrRow() data.RowData {
@@ -218,13 +228,22 @@ func (m *Model) GetCurrRow() data.RowData {
 	return &pr
 }
 
-func (m *Model) FetchSectionRows() []tea.Cmd {
+func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	if m == nil {
 		return nil
 	}
+
+	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
+		return nil
+	}
+
 	var cmds []tea.Cmd
 
-	taskId := fmt.Sprintf("fetching_prs_%d", m.Id)
+	startCursor := time.Now().String()
+	if m.PageInfo != nil {
+		startCursor = m.PageInfo.StartCursor
+	}
+	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
 	task := context.Task{
 		Id:           taskId,
 		StartText:    fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
@@ -240,8 +259,9 @@ func (m *Model) FetchSectionRows() []tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		fetchedPrs, err := data.FetchPullRequests(m.GetFilters(), *limit)
+		res, err := data.FetchPullRequests(m.GetFilters(), *limit, m.PageInfo)
 		if err != nil {
+			log.Printf("err %v", err)
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
 				SectionType: m.Type,
@@ -250,7 +270,7 @@ func (m *Model) FetchSectionRows() []tea.Cmd {
 			}
 		}
 
-		filteredPrs := m.excludeArchivedPullRequests(fetchedPrs)
+		filteredPrs := m.excludeArchivedPullRequests(res.Prs)
 
 		sort.Slice(filteredPrs, func(i, j int) bool {
 			return filteredPrs[i].UpdatedAt.After(filteredPrs[j].UpdatedAt)
@@ -261,7 +281,9 @@ func (m *Model) FetchSectionRows() []tea.Cmd {
 			SectionType: m.Type,
 			TaskId:      taskId,
 			Msg: SectionPullRequestsFetchedMsg{
-				Prs: filteredPrs,
+				Prs:        filteredPrs,
+				TotalCount: res.TotalCount,
+				PageInfo:   res.PageInfo,
 			},
 		}
 	}
@@ -281,13 +303,20 @@ func (m *Model) excludeArchivedPullRequests(fetchedPrs []data.PullRequestData) [
 	return prs
 }
 
+func (m *Model) ResetRows() {
+	m.Prs = nil
+	m.Table.Rows = nil
+	m.ResetPageInfo()
+	m.Table.ResetCurrItem()
+}
+
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
 		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchSectionRows()...)
+		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
 }
