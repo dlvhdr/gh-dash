@@ -68,32 +68,6 @@ func OpenBrowser(url string) {
 	}
 }
 
-func TruncateString(str string, num int) string {
-	truncated := str
-	if num <= 3 {
-		return str
-	}
-	if len(str) > num {
-		if num > 3 {
-			num -= 3
-		}
-		truncated = str[0:num] + "…"
-	}
-	return truncated
-}
-
-func TruncateStringTrailing(str string, num int) string {
-	truncated := str
-	if len(str) > num {
-		if num > 3 {
-			num -= 3
-		}
-		skipped := len(str) - num
-		truncated = "..." + str[skipped:]
-	}
-	return truncated
-}
-
 func TimeElapsed(then time.Time) string {
 	var parts []string
 	var text string

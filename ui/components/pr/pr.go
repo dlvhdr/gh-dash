@@ -140,7 +140,7 @@ func (pr *PullRequest) renderAuthor() string {
 }
 
 func (pr *PullRequest) renderRepoName() string {
-	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
+	repoName := pr.Data.HeadRepository.Name
 	return pr.getTextStyle().Render(repoName)
 }
 
