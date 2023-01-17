@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -35,11 +36,6 @@ type PullRequestData struct {
 	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
-}
-
-type Repository struct {
-	NameWithOwner string
-	IsArchived    bool
 }
 
 type CheckRun struct {
@@ -180,8 +176,16 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
+		if node.PullRequest.Repository.IsArchived {
+			continue
+		}
 		prs = append(prs, node.PullRequest)
 	}
+
+	sort.Slice(prs, func(i, j int) bool {
+		return prs[i].UpdatedAt.After(prs[j].UpdatedAt)
+	})
+
 	return PullRequestsResponse{
 		Prs:        prs,
 		TotalCount: queryResult.Search.IssueCount,

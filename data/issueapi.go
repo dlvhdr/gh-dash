@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -18,14 +19,11 @@ type IssueData struct {
 	}
 	UpdatedAt  time.Time
 	Url        string
-	Repository struct {
-		Name          string
-		NameWithOwner string
-	}
-	Assignees Assignees      `graphql:"assignees(first: 3)"`
-	Comments  Comments       `graphql:"comments(first: 15)"`
-	Reactions IssueReactions `graphql:"reactions(first: 1)"`
-	Labels    IssueLabels    `graphql:"labels(first: 3)"`
+	Repository Repository
+	Assignees  Assignees      `graphql:"assignees(first: 3)"`
+	Comments   Comments       `graphql:"comments(first: 15)"`
+	Reactions  IssueReactions `graphql:"reactions(first: 1)"`
+	Labels     IssueLabels    `graphql:"labels(first: 3)"`
 }
 
 type Assignees struct {
@@ -101,8 +99,16 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
+		if node.Issue.Repository.IsArchived {
+			continue
+		}
 		issues = append(issues, node.Issue)
 	}
+
+	sort.Slice(issues, func(i, j int) bool {
+		return issues[i].UpdatedAt.After(issues[j].UpdatedAt)
+	})
+
 	return IssuesResponse{
 		Issues:     issues,
 		TotalCount: queryResult.Search.IssueCount,

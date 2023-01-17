@@ -3,7 +3,6 @@ package prssection
 import (
 	"fmt"
 	"log"
-	"sort"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -270,18 +269,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			}
 		}
 
-		filteredPrs := m.excludeArchivedPullRequests(res.Prs)
-
-		sort.Slice(filteredPrs, func(i, j int) bool {
-			return filteredPrs[i].UpdatedAt.After(filteredPrs[j].UpdatedAt)
-		})
-
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
 			SectionType: m.Type,
 			TaskId:      taskId,
 			Msg: SectionPullRequestsFetchedMsg{
-				Prs:        filteredPrs,
+				Prs:        res.Prs,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
 			},
@@ -290,17 +283,6 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	cmds = append(cmds, fetchCmd)
 
 	return cmds
-}
-
-func (m *Model) excludeArchivedPullRequests(fetchedPrs []data.PullRequestData) []data.PullRequestData {
-	prs := make([]data.PullRequestData, 0)
-	for _, v := range fetchedPrs {
-		if v.Repository.IsArchived {
-			continue
-		}
-		prs = append(prs, v)
-	}
-	return prs
 }
 
 func (m *Model) ResetRows() {
