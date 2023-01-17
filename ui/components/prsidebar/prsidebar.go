@@ -1,6 +1,7 @@
 package prsidebar
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -73,6 +74,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() string {
 	s := strings.Builder{}
+
+	s.WriteString(m.renderFullNameAndNumber())
+	s.WriteString("\n")
+
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n")
 	s.WriteString(m.renderBranches())
@@ -90,6 +95,12 @@ func (m Model) View() string {
 	}
 
 	return s.String()
+}
+
+func (m *Model) renderFullNameAndNumber() string {
+	return lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.SecondaryText).
+		Render(fmt.Sprintf("%s #%d", m.pr.Data.GetRepoNameWithOwner(), m.pr.Data.GetNumber()))
 }
 
 func (m *Model) renderTitle() string {
