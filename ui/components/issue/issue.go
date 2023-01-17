@@ -39,7 +39,7 @@ func (issue *Issue) renderUpdateAt() string {
 }
 
 func (issue *Issue) renderRepoName() string {
-	repoName := utils.TruncateString(issue.Data.Repository.Name, 18)
+	repoName := issue.Data.Repository.Name
 	return issue.getTextStyle().Render(repoName)
 }
 
