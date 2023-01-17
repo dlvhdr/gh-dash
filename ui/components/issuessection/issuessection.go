@@ -2,7 +2,6 @@ package issuessection
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -237,18 +236,13 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Err:         err,
 			}
 		}
-		issues := res.Issues
-
-		sort.Slice(issues, func(i, j int) bool {
-			return issues[i].UpdatedAt.After(issues[j].UpdatedAt)
-		})
 
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
 			SectionType: m.Type,
 			TaskId:      taskId,
 			Msg: SectionIssuesFetchedMsg{
-				Issues:     issues,
+				Issues:     res.Issues,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
 			},
