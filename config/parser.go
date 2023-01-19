@@ -62,6 +62,7 @@ type PrsLayoutConfig struct {
 	UpdatedAt    ColumnConfig `yaml:"updatedAt,omitempty"`
 	Repo         ColumnConfig `yaml:"repo,omitempty"`
 	Author       ColumnConfig `yaml:"author,omitempty"`
+	Assignees    ColumnConfig `yaml:"assignees,omitempty"`
 	Title        ColumnConfig `yaml:"title,omitempty"`
 	ReviewStatus ColumnConfig `yaml:"reviewStatus,omitempty"`
 	State        ColumnConfig `yaml:"state,omitempty"`
@@ -181,6 +182,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Author: ColumnConfig{
 						Width: utils.IntPtr(15),
+					},
+					Assignees: ColumnConfig{
+						Width: utils.IntPtr(20),
 					},
 					Lines: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width("123450 / -123450")),

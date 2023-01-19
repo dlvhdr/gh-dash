@@ -2,6 +2,7 @@ package pr
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
@@ -139,6 +140,14 @@ func (pr *PullRequest) renderAuthor() string {
 	return pr.getTextStyle().Render(pr.Data.Author.Login)
 }
 
+func (pr *PullRequest) renderAssignees() string {
+	assignees := make([]string, 0, len(pr.Data.Assignees.Nodes))
+	for _, assignee := range pr.Data.Assignees.Nodes {
+		assignees = append(assignees, assignee.Login)
+	}
+	return pr.getTextStyle().Render(strings.Join(assignees, ","))
+}
+
 func (pr *PullRequest) renderRepoName() string {
 	repoName := pr.Data.HeadRepository.Name
 	return pr.getTextStyle().Render(repoName)
@@ -173,6 +182,7 @@ func (pr *PullRequest) ToTableRow() table.Row {
 		pr.renderRepoName(),
 		pr.renderTitle(),
 		pr.renderAuthor(),
+		pr.renderAssignees(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
 		pr.renderLines(),

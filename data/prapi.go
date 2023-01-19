@@ -31,8 +31,9 @@ type PullRequestData struct {
 		Name string
 	}
 	Repository    Repository
-	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
+	Assignees     Assignees `graphql:"assignees(first: 3)"`
+	Comments      Comments  `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews Reviews   `graphql:"latestReviews(last: 3)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
 }
