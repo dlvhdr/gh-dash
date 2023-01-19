@@ -101,7 +101,8 @@ type Keybinding struct {
 }
 
 type Keybindings struct {
-	Prs []Keybinding `yaml:"prs"`
+	Issues []Keybinding `yaml:"issues"`
+	Prs    []Keybinding `yaml:"prs"`
 }
 
 type Pager struct {
@@ -235,7 +236,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 		},
 		Keybindings: Keybindings{
-			Prs: []Keybinding{},
+			Issues: []Keybinding{},
+			Prs:    []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
 	}

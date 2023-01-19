@@ -518,13 +518,19 @@ func (m *Model) switchSelectedView() config.ViewType {
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
-	if m.ctx.View != config.PRsView {
-		return false
+	if m.ctx.View == config.IssuesView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+			if keybinding.Key == msg.String() {
+				return true
+			}
+		}
 	}
 
-	for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-		if keybinding.Key == msg.String() {
-			return true
+	if m.ctx.View == config.PRsView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+			if keybinding.Key == msg.String() {
+				return true
+			}
 		}
 	}
 
