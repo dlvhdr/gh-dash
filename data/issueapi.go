@@ -25,14 +25,6 @@ type IssueData struct {
 	Labels     IssueLabels    `graphql:"labels(first: 3)"`
 }
 
-type Assignees struct {
-	Nodes []Assignee
-}
-
-type Assignee struct {
-	Login string
-}
-
 type IssueReactions struct {
 	TotalCount int
 }
