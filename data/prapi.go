@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -134,7 +133,7 @@ func (data PullRequestData) GetUpdatedAt() time.Time {
 }
 
 func makePullRequestsQuery(query string) string {
-	return fmt.Sprintf("is:pr %s", query)
+	return fmt.Sprintf("is:pr %s sort:updated", query)
 }
 
 type PullRequestsResponse struct {
@@ -181,10 +180,6 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		}
 		prs = append(prs, node.PullRequest)
 	}
-
-	sort.Slice(prs, func(i, j int) bool {
-		return prs[i].UpdatedAt.After(prs[j].UpdatedAt)
-	})
 
 	return PullRequestsResponse{
 		Prs:        prs,
