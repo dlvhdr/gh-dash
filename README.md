@@ -149,16 +149,28 @@ It can be useful if you want to have a 🧳 work and 👩‍💻 personal dashbo
 ### ⌨️ Keybindings
 
 Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
-The available arguments are:
+This is available for both PRs and Issues.
 
-| Arguement     | Description                                                                     |
+For PRs, the available arguments are:
+
+| Argument      | Description                                                                     |
 | ------------- | ------------------------------------------------------------------------------- |
 | `RepoName`    | The full name of the repo (e.g. `dlvhdr/gh-dash`)                               |
 | `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
 | `PrNumber`    | The PR number                                                                   |
 | `HeadRefName` | The PR's remote branch name                                                     |
 
-For example, to review a PR with either Neovim or VSCode, include this in your `config.yml` file:
+For Issues, the available arguments are:
+
+| Argument      | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `RepoName`    | The full name of the repo (e.g. `dlvhdr/gh-dash`)                               |
+| `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
+| `IssueNumber` | The Issue number                                                                |
+
+#### Examples
+
+To review a PR with either Neovim or VSCode include the following in your `config.yml` file:
 
 ```yaml
 repoPaths:
@@ -177,6 +189,15 @@ keybindings:
         cd {{.RepoPath}} &&
         code . &&
         gh pr checkout {{.PrNumber}}
+```
+
+To pin an issue include the following in your `config.yml` file:
+
+```yaml
+keybindings:
+  issues:
+    - key: P
+      command: gh issue pin {{.IssueNumber}} --repo {.RepoName}
 ```
 
 ### 🚥 Repo Path Matching
