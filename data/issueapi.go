@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -64,7 +63,7 @@ func (data IssueData) GetUpdatedAt() time.Time {
 }
 
 func makeIssuesQuery(query string) string {
-	return fmt.Sprintf("is:issue %s", query)
+	return fmt.Sprintf("is:issue %s sort:updated", query)
 }
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
@@ -104,10 +103,6 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 		}
 		issues = append(issues, node.Issue)
 	}
-
-	sort.Slice(issues, func(i, j int) bool {
-		return issues[i].UpdatedAt.After(issues[j].UpdatedAt)
-	})
 
 	return IssuesResponse{
 		Issues:     issues,
