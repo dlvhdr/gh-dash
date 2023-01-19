@@ -103,7 +103,7 @@ func (m Model) View() string {
 func (m *Model) renderFullNameAndNumber() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("%s #%d", m.issue.Data.GetRepoNameWithOwner(), m.issue.Data.GetNumber()))
+		Render(fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
 }
 
 func (m *Model) renderTitle() string {

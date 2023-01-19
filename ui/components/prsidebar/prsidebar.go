@@ -100,7 +100,7 @@ func (m Model) View() string {
 func (m *Model) renderFullNameAndNumber() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("%s #%d", m.pr.Data.GetRepoNameWithOwner(), m.pr.Data.GetNumber()))
+		Render(fmt.Sprintf("#%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner()))
 }
 
 func (m *Model) renderTitle() string {
