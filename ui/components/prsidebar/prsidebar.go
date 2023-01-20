@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
+	"github.com/dlvhdr/gh-dash/ui/components/assignbox"
 	"github.com/dlvhdr/gh-dash/ui/components/commentbox"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/ui/context"
@@ -23,16 +24,27 @@ type Model struct {
 	width        int
 	isCommenting bool
 	commentBox   commentbox.Model
+
+	isAssigning   bool
+	isUnassigning bool
+	assignBox     assignbox.Model
 }
 
 func NewModel(ctx context.ProgramContext) Model {
 	commentBox := commentbox.NewModel(&ctx)
 	commentBox.SetHeight(common.CommentBoxHeight)
 
+	assignBox := assignbox.NewModel(&ctx)
+	assignBox.SetHeight(common.AssignBoxHeight)
+
 	return Model{
 		pr:           nil,
 		isCommenting: false,
 		commentBox:   commentBox,
+
+		isAssigning:   false,
+		isUnassigning: false,
+		assignBox:     assignBox,
 	}
 }
 
@@ -45,26 +57,67 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.isCommenting {
 
-		if !m.isCommenting {
-			return m, nil
-		}
+			switch msg.Type {
 
-		switch msg.Type {
+			case tea.KeyCtrlD:
+				if len(strings.Trim(m.commentBox.Value(), " ")) != 0 {
+					cmd = m.comment(m.commentBox.Value())
+				}
+				m.commentBox.Blur()
+				m.isCommenting = false
+				return m, cmd
 
-		case tea.KeyCtrlD:
-			if len(strings.Trim(m.commentBox.Value(), " ")) != 0 {
-				cmd = m.comment(m.commentBox.Value())
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.commentBox.Blur()
+				m.isCommenting = false
+				return m, nil
 			}
-			m.commentBox.Blur()
-			m.isCommenting = false
-			return m, cmd
+		} else if m.isAssigning {
+			switch msg.Type {
 
-		case tea.KeyEsc, tea.KeyCtrlC:
-			m.commentBox.Blur()
-			m.isCommenting = false
+			case tea.KeyCtrlD:
+				usernames := strings.Fields(m.assignBox.Value())
+				if len(usernames) > 0 {
+					cmd = m.assign(usernames)
+				}
+				m.assignBox.Blur()
+				m.isAssigning = false
+				return m, cmd
+
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.assignBox.Blur()
+				m.isAssigning = false
+				return m, nil
+			}
+
+			m.assignBox, taCmd = m.assignBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
+		} else if m.isUnassigning {
+			switch msg.Type {
+
+			case tea.KeyCtrlD:
+				usernames := strings.Fields(m.assignBox.Value())
+				if len(usernames) > 0 {
+					cmd = m.unassign(usernames)
+				}
+				m.assignBox.Blur()
+				m.isUnassigning = false
+				return m, cmd
+
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.assignBox.Blur()
+				m.isUnassigning = false
+				return m, nil
+			}
+
+			m.assignBox, taCmd = m.assignBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
+		} else {
 			return m, nil
 		}
+
 	}
 
 	m.commentBox, taCmd = m.commentBox.Update(msg)
@@ -92,6 +145,14 @@ func (m Model) View() string {
 
 	if m.isCommenting {
 		s.WriteString(m.commentBox.View())
+	}
+
+	if m.isAssigning {
+		s.WriteString(m.assignBox.View(true))
+	}
+
+	if m.isUnassigning {
+		s.WriteString(m.assignBox.View(false))
 	}
 
 	return s.String()
@@ -220,6 +281,7 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.commentBox.SetWidth(m.width)
+	m.assignBox.SetWidth(width)
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -245,4 +307,35 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 func (m *Model) getIndentedContentWidth() int {
 	return m.width - 4
+}
+func (m *Model) GetIsAssigning() bool {
+	return m.isAssigning
+}
+
+func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
+	if m.isAssigning == false && isAssigning == true {
+		m.assignBox.Reset()
+	}
+	m.isAssigning = isAssigning
+
+	if isAssigning == true {
+		return tea.Sequentially(textarea.Blink, m.assignBox.Focus())
+	}
+	return nil
+}
+
+func (m *Model) GetIsUnassigning() bool {
+	return m.isUnassigning
+}
+
+func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
+	if m.isUnassigning == false && isUnassigning == true {
+		m.assignBox.Reset()
+	}
+	m.isUnassigning = isUnassigning
+
+	if isUnassigning == true {
+		return tea.Sequentially(textarea.Blink, m.assignBox.Focus())
+	}
+	return nil
 }

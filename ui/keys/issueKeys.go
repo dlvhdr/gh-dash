@@ -3,12 +3,22 @@ package keys
 import "github.com/charmbracelet/bubbles/key"
 
 type IssueKeyMap struct {
-	Comment key.Binding
-	Close   key.Binding
-	Reopen  key.Binding
+	Assign   key.Binding
+	Unassign key.Binding
+	Comment  key.Binding
+	Close    key.Binding
+	Reopen   key.Binding
 }
 
 var IssueKeys = IssueKeyMap{
+	Assign: key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "assign"),
+	),
+	Unassign: key.NewBinding(
+		key.WithKeys("A"),
+		key.WithHelp("A", "unassign"),
+	),
 	Comment: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "comment"),
@@ -25,6 +35,8 @@ var IssueKeys = IssueKeyMap{
 
 func IssueFullHelp() []key.Binding {
 	return []key.Binding{
+		IssueKeys.Assign,
+		IssueKeys.Unassign,
 		IssueKeys.Comment,
 		IssueKeys.Close,
 		IssueKeys.Reopen,

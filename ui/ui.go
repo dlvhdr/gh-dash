@@ -118,7 +118,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		if m.prSidebar.GetIsAssigning() {
+			m.prSidebar, cmd = m.prSidebar.Update(msg)
+			m.syncSidebar()
+			return m, cmd
+		}
+
+		if m.prSidebar.GetIsUnassigning() {
+			m.prSidebar, cmd = m.prSidebar.Update(msg)
+			m.syncSidebar()
+			return m, cmd
+		}
+
 		if m.issueSidebar.GetIsCommenting() {
+			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
+			m.syncSidebar()
+			return m, cmd
+		}
+
+		if m.issueSidebar.GetIsAssigning() {
+			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
+			m.syncSidebar()
+			return m, cmd
+		}
+
+		if m.issueSidebar.GetIsUnassigning() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
@@ -212,6 +236,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd = m.prSidebar.SetIsCommenting(true)
 			} else {
 				cmd = m.issueSidebar.SetIsCommenting(true)
+			}
+			m.syncMainContentWidth()
+			m.syncSidebar()
+			m.sidebar.ScrollToBottom()
+			return m, cmd
+
+		case key.Matches(msg, keys.IssueKeys.Assign), key.Matches(msg, keys.PRKeys.Assign):
+			m.sidebar.IsOpen = true
+			if m.ctx.View == config.PRsView {
+				cmd = m.prSidebar.SetIsAssigning(true)
+			} else {
+				cmd = m.issueSidebar.SetIsAssigning(true)
+			}
+			m.syncMainContentWidth()
+			m.syncSidebar()
+			m.sidebar.ScrollToBottom()
+			return m, cmd
+
+		case key.Matches(msg, keys.IssueKeys.Unassign), key.Matches(msg, keys.PRKeys.Unassign):
+			m.sidebar.IsOpen = true
+			if m.ctx.View == config.PRsView {
+				cmd = m.prSidebar.SetIsUnassigning(true)
+			} else {
+				cmd = m.issueSidebar.SetIsUnassigning(true)
 			}
 			m.syncMainContentWidth()
 			m.syncSidebar()
@@ -317,7 +365,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncSidebar()
 	}
 
+	if m.prSidebar.GetIsAssigning() {
+		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
+		m.syncSidebar()
+	}
+
+	if m.issueSidebar.GetIsUnassigning() {
+		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
+		m.syncSidebar()
+	}
+
 	if m.issueSidebar.GetIsCommenting() {
+		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
+		m.syncSidebar()
+	}
+
+	if m.issueSidebar.GetIsAssigning() {
+		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
+		m.syncSidebar()
+	}
+
+	if m.issueSidebar.GetIsUnassigning() {
 		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
 		m.syncSidebar()
 	}
