@@ -11,6 +11,7 @@ var (
 	FooterHeight       = 2
 	ExpandedHelpHeight = 11
 	CommentBoxHeight   = 8
+	AssignBoxHeight    = 4
 	SingleRuneWidth    = 4
 	MainContentPadding = 1
 	TabsBorderHeight   = 1

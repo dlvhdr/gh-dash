@@ -107,6 +107,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				if msg.NewComment != nil {
 					currPr.Comments.Nodes = append(currPr.Comments.Nodes, *msg.NewComment)
 				}
+				if msg.AddedAssignees != nil {
+					currPr.Assignees.Nodes = append(currPr.Assignees.Nodes, msg.AddedAssignees.Nodes...)
+				}
+				if msg.RemovedAssignees != nil {
+					currPr.Assignees.Nodes = removeAssignees(currPr.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+				}
 				if msg.ReadyForReview != nil && *msg.ReadyForReview {
 					currPr.IsDraft = false
 				}
@@ -316,9 +322,31 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 }
 
 type UpdatePRMsg struct {
-	PrNumber       int
-	IsClosed       *bool
-	NewComment     *data.Comment
-	ReadyForReview *bool
-	IsMerged       *bool
+	PrNumber         int
+	IsClosed         *bool
+	NewComment       *data.Comment
+	ReadyForReview   *bool
+	IsMerged         *bool
+	AddedAssignees   *data.Assignees
+	RemovedAssignees *data.Assignees
+}
+
+func removeAssignees(assignees, removedAssignees []data.Assignee) []data.Assignee {
+	newAssignees := []data.Assignee{}
+	for _, assignee := range assignees {
+		if !assigneesContains(removedAssignees, assignee) {
+			newAssignees = append(newAssignees, assignee)
+		}
+	}
+
+	return newAssignees
+}
+
+func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
+	for _, a := range assignees {
+		if assignee == a {
+			return true
+		}
+	}
+	return false
 }

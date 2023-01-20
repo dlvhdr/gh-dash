@@ -89,6 +89,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				if msg.NewComment != nil {
 					currIssue.Comments.Nodes = append(currIssue.Comments.Nodes, *msg.NewComment)
 				}
+				if msg.AddedAssignees != nil {
+					currIssue.Assignees.Nodes = append(currIssue.Assignees.Nodes, msg.AddedAssignees.Nodes...)
+				}
+				if msg.RemovedAssignees != nil {
+					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+				}
 				m.Issues[i] = currIssue
 				m.Table.SetRows(m.BuildRows())
 				break
@@ -284,7 +290,29 @@ type SectionIssuesFetchedMsg struct {
 }
 
 type UpdateIssueMsg struct {
-	IssueNumber int
-	NewComment  *data.Comment
-	IsClosed    *bool
+	IssueNumber      int
+	NewComment       *data.Comment
+	IsClosed         *bool
+	AddedAssignees   *data.Assignees
+	RemovedAssignees *data.Assignees
+}
+
+func removeAssignees(assignees, removedAssignees []data.Assignee) []data.Assignee {
+	newAssignees := []data.Assignee{}
+	for _, assignee := range assignees {
+		if !assigneesContains(removedAssignees, assignee) {
+			newAssignees = append(newAssignees, assignee)
+		}
+	}
+
+	return newAssignees
+}
+
+func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
+	for _, a := range assignees {
+		if assignee == a {
+			return true
+		}
+	}
+	return false
 }
