@@ -2,8 +2,6 @@ package constants
 
 import (
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type KeyMap struct {
@@ -27,8 +25,8 @@ type Dimensions struct {
 	Height int
 }
 
-var (
-	WaitingGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText).Render("")
-	FailureGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.WarningText).Render("")
-	SuccessGlyph = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SuccessText).Render("")
+const (
+	WaitingIcon = ""
+	FailureIcon = ""
+	SuccessIcon = ""
 )

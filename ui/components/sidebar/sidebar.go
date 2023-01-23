@@ -53,7 +53,7 @@ func (m Model) View() string {
 	}
 
 	height := m.ctx.MainContentHeight
-	style := sideBarStyle.Copy().
+	style := m.ctx.Styles.Sidebar.Root.Copy().
 		Height(height).
 		MaxHeight(height).
 		Width(m.ctx.Config.Defaults.Preview.Width).
@@ -68,7 +68,7 @@ func (m Model) View() string {
 	return style.Copy().Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		pagerStyle.Copy().Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		m.ctx.Styles.Sidebar.PagerStyle.Copy().Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
 	))
 }
 
@@ -81,7 +81,11 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.Config.Defaults.Preview.Width - 2*contentPadding - borderWidth
+	return m.ctx.Config.Defaults.Preview.Width - 2*m.ctx.Styles.Sidebar.ContentPadding - m.ctx.Styles.Sidebar.BorderWidth
+}
+
+func (m *Model) ScrollToTop() {
+	m.viewport.GotoTop()
 }
 
 func (m *Model) ScrollToBottom() {
@@ -93,6 +97,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		return
 	}
 	m.ctx = ctx
-	m.viewport.Height = m.ctx.MainContentHeight - pagerHeight
+	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
 	m.viewport.Width = m.GetSidebarContentWidth()
 }

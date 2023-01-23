@@ -1,16 +1,17 @@
 package issuessection
 
 import (
-	"sort"
+	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/issue"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
+	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/utils"
@@ -23,7 +24,7 @@ type Model struct {
 	Issues []data.IssueData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig) Model {
+func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig, lastUpdated time.Time) Model {
 	m := Model{
 		section.NewModel(
 			id,
@@ -33,6 +34,7 @@ func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfi
 			GetSectionColumns(cfg, ctx),
 			"Issue",
 			"Issues",
+			lastUpdated,
 		),
 		[]data.IssueData{},
 	}
@@ -58,7 +60,8 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
-				return &m, m.FetchSectionRows()
+				m.ResetRows()
+				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
 
 			break
@@ -92,28 +95,17 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 		}
 
-	case section.SectionMsg:
-		if msg.Id != m.Id || msg.Type != m.Type {
-			return &m, nil
+	case SectionIssuesFetchedMsg:
+		if m.PageInfo != nil {
+			m.Issues = append(m.Issues, msg.Issues...)
+		} else {
+			m.Issues = msg.Issues
 		}
-
-		switch iMsg := msg.InternalMsg.(type) {
-
-		case SectionIssuesFetchedMsg:
-			m.Issues = iMsg.Issues
-			m.IsLoading = false
-			m.Table.SetRows(m.BuildRows())
-
-		case section.SectionTickMsg:
-			if !m.IsLoading {
-				return &m, nil
-			}
-
-			var internalTickCmd tea.Cmd
-			m.Spinner, internalTickCmd = m.Spinner.Update(iMsg.InternalTickMsg)
-			cmd = m.CreateNextTickCmd(internalTickCmd)
-
-		}
+		m.TotalCount = msg.TotalCount
+		m.PageInfo = &msg.PageInfo
+		m.Table.SetRows(m.BuildRows())
+		m.UpdateLastUpdated(time.Now())
+		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -181,7 +173,7 @@ func GetSectionColumns(cfg config.IssuesSectionConfig, ctx *context.ProgramConte
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currIssue := range m.Issues {
-		issueModel := issue.Issue{Data: currIssue}
+		issueModel := issue.Issue{Ctx: m.Ctx, Data: currIssue}
 		rows = append(rows, issueModel.ToTableRow())
 	}
 
@@ -196,20 +188,6 @@ func (m *Model) NumRows() int {
 	return len(m.Issues)
 }
 
-type SectionIssuesFetchedMsg struct {
-	SectionId int
-	Issues    []data.IssueData
-	Err       error
-}
-
-func (msg SectionIssuesFetchedMsg) GetSectionId() int {
-	return msg.SectionId
-}
-
-func (msg SectionIssuesFetchedMsg) GetSectionType() string {
-	return SectionType
-}
-
 func (m *Model) GetCurrRow() data.RowData {
 	if len(m.Issues) == 0 {
 		return nil
@@ -218,39 +196,73 @@ func (m *Model) GetCurrRow() data.RowData {
 	return &issue
 }
 
-func (m *Model) FetchSectionRows() tea.Cmd {
+func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	if m == nil {
 		return nil
 	}
-	m.Issues = nil
-	m.Table.ResetCurrItem()
-	m.Table.Rows = nil
-	m.IsLoading = true
-	var cmds []tea.Cmd
-	cmds = append(cmds, m.CreateNextTickCmd(spinner.Tick))
 
-	cmd := func() tea.Msg {
+	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
+		return nil
+	}
+
+	var cmds []tea.Cmd
+
+	startCursor := time.Now().String()
+	if m.PageInfo != nil {
+		startCursor = m.PageInfo.StartCursor
+	}
+	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
+		FinishedText: fmt.Sprintf(`Issues for "%s" have been fetched`, m.Config.Title),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	cmds = append(cmds, startCmd)
+
+	fetchCmd := func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.IssuesLimit
 		}
-		fetchedIssues, err := data.FetchIssues(m.GetFilters(), *limit)
+		res, err := data.FetchIssues(m.GetFilters(), *limit, m.PageInfo)
 		if err != nil {
-			return SectionIssuesFetchedMsg{
-				Issues: []data.IssueData{},
+			return constants.TaskFinishedMsg{
+				SectionId:   m.Id,
+				SectionType: m.Type,
+				TaskId:      taskId,
+				Err:         err,
 			}
 		}
 
-		sort.Slice(fetchedIssues, func(i, j int) bool {
-			return fetchedIssues[i].UpdatedAt.After(fetchedIssues[j].UpdatedAt)
-		})
-		return SectionIssuesFetchedMsg{
-			Issues: fetchedIssues,
+		return constants.TaskFinishedMsg{
+			SectionId:   m.Id,
+			SectionType: m.Type,
+			TaskId:      taskId,
+			Msg: SectionIssuesFetchedMsg{
+				Issues:     res.Issues,
+				TotalCount: res.TotalCount,
+				PageInfo:   res.PageInfo,
+			},
 		}
-	}
-	cmds = append(cmds, m.MakeSectionCmd(cmd))
 
-	return tea.Batch(cmds...)
+	}
+	cmds = append(cmds, fetchCmd)
+
+	return cmds
+}
+
+func (m *Model) UpdateLastUpdated(t time.Time) {
+	m.Table.UpdateLastUpdated(t)
+}
+
+func (m *Model) ResetRows() {
+	m.Issues = nil
+	m.Table.Rows = nil
+	m.ResetPageInfo()
+	m.Table.ResetCurrItem()
 }
 
 func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
@@ -258,11 +270,17 @@ func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, f
 	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
 	sections = make([]section.Section, 0, len(sectionConfigs))
 	for i, sectionConfig := range sectionConfigs {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig) // 0 is the search section
+		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchSectionRows())
+		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchIssuesCmds...)
+}
+
+type SectionIssuesFetchedMsg struct {
+	Issues     []data.IssueData
+	TotalCount int
+	PageInfo   data.PageInfo
 }
 
 type UpdateIssueMsg struct {

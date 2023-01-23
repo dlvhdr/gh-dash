@@ -8,10 +8,11 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/ui/styles"
+	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
 type Model struct {
+	ctx         *context.ProgramContext
 	textArea    textarea.Model
 	commentHelp help.Model
 }
@@ -21,34 +22,25 @@ var commentKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
 }
 
-func NewModel() Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
 	ta.FocusedStyle.Base = lipgloss.NewStyle()
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
-		Background(styles.DefaultTheme.FaintBorder).
-		Foreground(styles.DefaultTheme.PrimaryText)
-	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
-	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(styles.DefaultTheme.SecondaryText)
-	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(styles.DefaultTheme.PrimaryText)
-	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(styles.DefaultTheme.FaintText)
+		Background(ctx.Theme.FaintBorder).
+		Foreground(ctx.Theme.PrimaryText)
+	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
+	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
+	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
 	ta.Focus()
 
-	helpTextStyle := lipgloss.NewStyle().Foreground(styles.DefaultTheme.SecondaryText)
 	h := help.NewModel()
-	h.Styles = help.Styles{
-		ShortDesc:      helpTextStyle.Copy().Foreground(styles.DefaultTheme.FaintText),
-		FullDesc:       helpTextStyle.Copy(),
-		ShortSeparator: helpTextStyle.Copy().Foreground(styles.DefaultTheme.SecondaryBorder),
-		FullSeparator:  helpTextStyle.Copy(),
-		FullKey:        helpTextStyle.Copy().Foreground(styles.DefaultTheme.PrimaryText),
-		ShortKey:       helpTextStyle.Copy(),
-		Ellipsis:       helpTextStyle.Copy(),
-	}
-
+	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
+		ctx:         ctx,
 		textArea:    ta,
 		commentHelp: h,
 	}
@@ -62,10 +54,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() string {
 	return lipgloss.NewStyle().
-		Width(m.textArea.Width()).
 		BorderTop(true).
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(styles.DefaultTheme.SecondaryBorder).
+		BorderForeground(m.ctx.Theme.SecondaryBorder).
 		MarginTop(1).
 		Render(
 			lipgloss.JoinVertical(
@@ -77,7 +68,6 @@ func (m Model) View() string {
 					Render(m.commentHelp.ShortHelpView(commentKeys)),
 			),
 		)
-
 }
 
 func (m *Model) Value() string {
@@ -96,6 +86,15 @@ func (m *Model) SetWidth(width int) {
 	m.textArea.SetWidth(width)
 }
 
+func (m *Model) SetHeight(height int) {
+	m.textArea.SetHeight(height)
+}
+
 func (m *Model) Reset() {
 	m.textArea.Reset()
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.commentHelp.Styles = ctx.Styles.Help.BubbleStyles
 }

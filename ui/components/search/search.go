@@ -7,10 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
+	ctx          *context.ProgramContext
 	sectionType  string
 	initialValue string
 	textInput    textinput.Model
@@ -22,7 +22,7 @@ func NewModel(sectionType string, ctx *context.ProgramContext, initialValue stri
 	ti.Placeholder = ""
 	ti.Focus()
 	ti.Width = getInputWidth(ctx, prompt)
-	ti.PromptStyle = ti.PromptStyle.Copy().Foreground(styles.DefaultTheme.SecondaryText)
+	ti.PromptStyle = ti.PromptStyle.Copy().Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Copy().Faint(true)
 	ti.Blur()
@@ -30,6 +30,7 @@ func NewModel(sectionType string, ctx *context.ProgramContext, initialValue stri
 	ti.CursorStart()
 
 	return Model{
+		ctx:          ctx,
 		textInput:    ti,
 		initialValue: initialValue,
 		sectionType:  sectionType,
@@ -52,7 +53,7 @@ func (m Model) View(ctx context.ProgramContext) string {
 		Width(ctx.MainContentWidth - 4).
 		MaxHeight(3).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styles.DefaultTheme.PrimaryBorder).
+		BorderForeground(m.ctx.Theme.PrimaryBorder).
 		Render(m.textInput.View())
 }
 

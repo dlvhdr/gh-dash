@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/config"
+	"github.com/dlvhdr/gh-dash/ui/theme"
 )
 
 type State = int
@@ -22,6 +23,7 @@ type Task struct {
 	State        State
 	Error        error
 	StartTime    time.Time
+	FinishedTime *time.Time
 }
 
 type ProgramContext struct {
@@ -31,9 +33,13 @@ type ProgramContext struct {
 	MainContentWidth  int
 	MainContentHeight int
 	Config            *config.Config
+	ConfigPath        string
 	View              config.ViewType
 	Error             error
 	StartTask         func(task Task) tea.Cmd
+	DidTaskFinish     func(taskId string) bool
+	Theme             theme.Theme
+	Styles            Styles
 }
 
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {

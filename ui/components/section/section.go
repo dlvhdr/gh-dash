@@ -2,17 +2,18 @@ package section
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/search"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -21,7 +22,6 @@ type Model struct {
 	Config       config.SectionConfig
 	Ctx          *context.ProgramContext
 	Spinner      spinner.Model
-	IsLoading    bool
 	SearchBar    search.Model
 	IsSearching  bool
 	SearchValue  string
@@ -30,6 +30,8 @@ type Model struct {
 	SingularForm string
 	PluralForm   string
 	Columns      []table.Column
+	TotalCount   int
+	PageInfo     *data.PageInfo
 }
 
 func NewModel(
@@ -39,6 +41,7 @@ func NewModel(
 	sType string,
 	columns []table.Column,
 	singular, plural string,
+	lastUpdated time.Time,
 ) Model {
 	m := Model{
 		Id:           id,
@@ -49,17 +52,20 @@ func NewModel(
 		Columns:      columns,
 		SingularForm: singular,
 		PluralForm:   plural,
-		IsLoading:    false,
 		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
 		SearchValue:  cfg.Filters,
 		IsSearching:  false,
+		TotalCount:   0,
+		PageInfo:     nil,
 	}
 	m.Table = table.NewModel(
+		*ctx,
 		m.GetDimensions(),
+		lastUpdated,
 		m.Columns,
 		nil,
 		m.SingularForm,
-		utils.StringPtr(emptyStateStyle.Render(
+		utils.StringPtr(m.Ctx.Styles.Section.EmptyStateStyle.Render(
 			fmt.Sprintf("No %s were found that match the given filters", m.PluralForm),
 		)),
 	)
@@ -73,6 +79,7 @@ type Section interface {
 	Search
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
+	UpdateLastUpdated(time.Time)
 }
 
 type Identifier interface {
@@ -88,12 +95,14 @@ type Component interface {
 type Table interface {
 	NumRows() int
 	GetCurrRow() data.RowData
+	CurrRow() int
 	NextRow() int
 	PrevRow() int
 	FirstItem() int
 	LastItem() int
-	FetchSectionRows() tea.Cmd
+	FetchNextPageSectionRows() []tea.Cmd
 	BuildRows() []table.Row
+	ResetRows()
 }
 
 type Search interface {
@@ -101,6 +110,7 @@ type Search interface {
 	IsSearchFocused() bool
 	ResetFilters()
 	GetFilters() string
+	ResetPageInfo()
 }
 
 func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
@@ -116,8 +126,8 @@ func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.Ctx.MainContentWidth - containerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight - styles.SearchHeight,
+		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		Height: m.Ctx.MainContentHeight - common.SearchHeight,
 	}
 }
 
@@ -130,6 +140,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		Width:  newDimensions.Width,
 	}
 	m.Table.SetDimensions(tableDimensions)
+	m.Table.UpdateProgramContext(ctx)
 
 	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
@@ -156,6 +167,10 @@ func (m *Model) GetId() int {
 
 func (m *Model) GetType() string {
 	return m.Type
+}
+
+func (m *Model) CurrRow() int {
+	return m.Table.GetCurrItem()
 }
 
 func (m *Model) NextRow() int {
@@ -193,6 +208,10 @@ func (m *Model) ResetFilters() {
 	m.SearchBar.SetValue(m.Config.Filters)
 }
 
+func (m *Model) ResetPageInfo() {
+	m.PageInfo = nil
+}
+
 type SectionMsg struct {
 	Id          int
 	Type        string
@@ -219,44 +238,43 @@ func (m *Model) GetFilters() string {
 }
 
 func (m *Model) GetMainContent() string {
-	if m.Table.Rows == nil && m.IsLoading == false {
+	if m.Table.Rows == nil {
 		d := m.GetDimensions()
 		return lipgloss.Place(
 			d.Width,
 			d.Height,
 			lipgloss.Center,
 			lipgloss.Center,
+
 			fmt.Sprintf(
-				"Enter a query to the search bar above by pressing %s and submit it with %s.",
-				keyStyle.Render("/"),
-				keyStyle.Render("Enter"),
+				"%s you can change the search query by pressing %s and submitting it with %s",
+				lipgloss.NewStyle().Bold(true).Render(" Tip:"),
+				m.Ctx.Styles.Section.KeyStyle.Render("/"),
+				m.Ctx.Styles.Section.KeyStyle.Render("Enter"),
 			),
 		)
 	} else {
-		return m.Table.View(m.GetSpinnerText())
+		return m.Table.View()
 	}
-}
-
-func (m *Model) GetSpinnerText() *string {
-	var spinnerText *string
-	if m.IsLoading {
-		spinnerText = utils.StringPtr(lipgloss.JoinHorizontal(lipgloss.Top,
-			spinnerStyle.Copy().Render(m.Spinner.View()),
-			fmt.Sprintf("Fetching %s...", m.PluralForm),
-		))
-	}
-	return spinnerText
 }
 
 func (m *Model) View() string {
 	var search string
 	search = m.SearchBar.View(*m.Ctx)
 
-	return containerStyle.Copy().Render(
+	return m.Ctx.Styles.Section.ContainerStyle.Copy().Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			search,
 			m.GetMainContent(),
 		),
 	)
+}
+
+func (m *Model) UpdateLastUpdated(t time.Time) {
+	m.Table.UpdateLastUpdated(t)
+}
+
+func (m *Model) UpdateTotalItemsCount(count int) {
+	m.Table.UpdateTotalItemsCount(count)
 }

@@ -4,29 +4,22 @@ import (
 	bbHelp "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
-	"github.com/dlvhdr/gh-dash/ui/styles"
 )
 
 type Model struct {
+	ctx     *context.ProgramContext
 	help    bbHelp.Model
 	ShowAll bool
 }
 
-func NewModel() Model {
+func NewModel(ctx context.ProgramContext) Model {
 	help := bbHelp.NewModel()
-	help.Styles = bbHelp.Styles{
-		ShortDesc:      helpTextStyle.Copy().Foreground(styles.DefaultTheme.FaintText),
-		FullDesc:       helpTextStyle.Copy(),
-		ShortSeparator: helpTextStyle.Copy().Foreground(styles.DefaultTheme.SecondaryBorder),
-		FullSeparator:  helpTextStyle.Copy(),
-		FullKey:        helpTextStyle.Copy().Foreground(styles.DefaultTheme.PrimaryText),
-		ShortKey:       helpTextStyle.Copy(),
-		Ellipsis:       helpTextStyle.Copy(),
-	}
-
+	help.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
+		ctx:  &ctx,
 		help: help,
 	}
 }
@@ -44,20 +37,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View(ctx context.ProgramContext) string {
-	keymap := keys.GetKeyMap(ctx.View)
+func (m Model) View() string {
+	keymap := keys.GetKeyMap(m.ctx.View)
 	if m.help.ShowAll {
-		return styles.FooterStyle.Copy().
-			Height(styles.ExpandedHelpHeight - 1).
-			Width(ctx.ScreenWidth).
+		return m.ctx.Styles.Common.FooterStyle.Copy().
+			Height(common.ExpandedHelpHeight - 1).
+			Width(m.ctx.ScreenWidth).
 			Render(m.help.View(keymap))
 	}
 
-	return styles.FooterStyle.Copy().
-		Width(ctx.ScreenWidth).
+	return m.ctx.Styles.Common.FooterStyle.Copy().
+		Width(m.ctx.ScreenWidth).
 		Render(m.help.View(keymap))
 }
 
 func (m *Model) SetWidth(width int) {
 	m.help.Width = width
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.help.Styles = ctx.Styles.Help.BubbleStyles
 }

@@ -14,11 +14,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	DashDir                    = "gh-dash"
-	ConfigFileName             = "config.yml"
-	DEFAULT_XDG_CONFIG_DIRNAME = ".config"
-)
+const DashDir = "gh-dash"
+const ConfigYmlFileName = "config.yml"
+const ConfigYamlFileName = "config.yaml"
+const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
 
 var validate *validator.Validate
 
@@ -78,7 +77,9 @@ type PrsLayoutConfig struct {
 	UpdatedAt    ColumnConfig `yaml:"updatedAt,omitempty"`
 	Repo         ColumnConfig `yaml:"repo,omitempty"`
 	Author       ColumnConfig `yaml:"author,omitempty"`
+	Assignees    ColumnConfig `yaml:"assignees,omitempty"`
 	Title        ColumnConfig `yaml:"title,omitempty"`
+	Base         ColumnConfig `yaml:"base,omitempty"`
 	ReviewStatus ColumnConfig `yaml:"reviewStatus,omitempty"`
 	State        ColumnConfig `yaml:"state,omitempty"`
 	Ci           ColumnConfig `yaml:"ci,omitempty"`
@@ -102,12 +103,13 @@ type LayoutConfig struct {
 }
 
 type Defaults struct {
-	Preview       PreviewConfig `yaml:"preview"`
-	PrsLimit      int           `yaml:"prsLimit"`
-	DisabledViews []ViewType    `yaml:"disabledViews"`
-	IssuesLimit   int           `yaml:"issuesLimit"`
-	View          ViewType      `yaml:"view"`
-	Layout        LayoutConfig  `yaml:"layout,omitempty"`
+	Preview                PreviewConfig `yaml:"preview"`
+	PrsLimit               int           `yaml:"prsLimit"`
+	DisabledViews          []ViewType    `yaml:"disabledViews"`
+	IssuesLimit            int           `yaml:"issuesLimit"`
+	View                   ViewType      `yaml:"view"`
+	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
+	RefetchIntervalMinutes int           `yaml:"refetchIntervalMinutes,omitempty"`
 }
 
 type Keybinding struct {
@@ -116,7 +118,8 @@ type Keybinding struct {
 }
 
 type Keybindings struct {
-	Prs []Keybinding `yaml:"prs"`
+	Issues []Keybinding `yaml:"issues"`
+	Prs    []Keybinding `yaml:"prs"`
 }
 
 type Pager struct {
@@ -183,10 +186,11 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Open:  true,
 				Width: 50,
 			},
-			PrsLimit:      20,
-			IssuesLimit:   20,
-			View:          PRsView,
-			DisabledViews: []ViewType{},
+			PrsLimit:               20,
+			IssuesLimit:            20,
+			View:                   PRsView,
+			DisabledViews:          []ViewType{},
+			RefetchIntervalMinutes: 30,
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{
@@ -197,6 +201,13 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Author: ColumnConfig{
 						Width: utils.IntPtr(15),
+					},
+					Assignees: ColumnConfig{
+						Width: utils.IntPtr(20),
+					},
+					Base: ColumnConfig{
+						Width:  utils.IntPtr(15),
+						Hidden: utils.BoolPtr(true),
 					},
 					Lines: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width("123450 / -123450")),
@@ -247,7 +258,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 		},
 		Keybindings: Keybindings{
-			Prs: []Keybinding{},
+			Issues: []Keybinding{},
+			Prs:    []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
 	}
@@ -262,7 +274,7 @@ func (parser ConfigParser) getDefaultConfigYamlContents() string {
 
 func (e configError) Error() string {
 	return fmt.Sprintf(
-		`Couldn't find a config.yml configuration file.
+		`Couldn't find a config.yml or a config.yaml configuration file.
 Create one under: %s
 
 Example of a config.yml file:
@@ -272,7 +284,7 @@ For more info, go to https://github.com/dlvhdr/gh-dash
 press q to exit.
 
 Original error: %v`,
-		path.Join(e.configDir, DashDir, ConfigFileName),
+		path.Join(e.configDir, DashDir, ConfigYmlFileName),
 		string(e.parser.getDefaultConfigYamlContents()),
 		e.err,
 	)
@@ -314,7 +326,12 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		xdgConfigDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
 
-	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigFileName)
+	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName)
+	if _, err := os.Stat(dashConfigFile); err == nil {
+		return &dashConfigFile, nil
+	}
+
+	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName)
 	if _, err := os.Stat(dashConfigFile); err == nil {
 		return &dashConfigFile, nil
 	}
@@ -324,7 +341,12 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		return nil, err
 	}
 
-	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigFileName)
+	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYmlFileName)
+	if _, err := os.Stat(dashConfigFile); err == nil {
+		return &dashConfigFile, nil
+	}
+
+	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYamlFileName)
 	if _, err := os.Stat(dashConfigFile); err == nil {
 		return &dashConfigFile, nil
 	}
@@ -332,22 +354,22 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 	return nil, nil
 }
 
-func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
+func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
 	var err error
 
 	existingConfigFile, err := parser.getExistingConfigFile()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if existingConfigFile != nil {
-		return existingConfigFile, nil
+		return *existingConfigFile, nil
 	}
 
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
@@ -355,16 +377,16 @@ func (parser ConfigParser) getConfigFileOrCreateIfMissing() (*string, error) {
 	dashConfigDir := filepath.Join(configDir, DashDir)
 	err = os.MkdirAll(dashConfigDir, os.ModePerm)
 	if err != nil {
-		return nil, configError{parser: parser, configDir: configDir, err: err}
+		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
-	configFilePath := filepath.Join(dashConfigDir, ConfigFileName)
+	configFilePath := filepath.Join(dashConfigDir, ConfigYmlFileName)
 	err = parser.createConfigFileIfMissing(configFilePath)
 	if err != nil {
-		return nil, configError{parser: parser, configDir: configDir, err: err}
+		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
-	return &configFilePath, nil
+	return configFilePath, nil
 }
 
 type parsingError struct {
@@ -405,18 +427,23 @@ func initParser() ConfigParser {
 	return ConfigParser{}
 }
 
-func ParseConfig() (Config, error) {
+func ParseConfig(path string) (Config, error) {
 	parser := initParser()
 
 	var config Config
 	var err error
+	var configFilePath string
 
-	configFilePath, err := parser.getConfigFileOrCreateIfMissing()
-	if err != nil {
-		return config, parsingError{err: err}
+	if path == "" {
+		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing()
+		if err != nil {
+			return config, parsingError{err: err}
+		}
+	} else {
+		configFilePath = path
 	}
 
-	config, err = parser.readConfigFile(*configFilePath)
+	config, err = parser.readConfigFile(configFilePath)
 	if err != nil {
 		return config, parsingError{err: err}
 	}

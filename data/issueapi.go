@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -19,22 +18,11 @@ type IssueData struct {
 	}
 	UpdatedAt  time.Time
 	Url        string
-	Repository struct {
-		Name          string
-		NameWithOwner string
-	}
-	Assignees Assignees      `graphql:"assignees(first: 3)"`
-	Comments  Comments       `graphql:"comments(first: 15)"`
-	Reactions IssueReactions `graphql:"reactions(first: 1)"`
-	Labels    IssueLabels    `graphql:"labels(first: 3)"`
-}
-
-type Assignees struct {
-	Nodes []Assignee
-}
-
-type Assignee struct {
-	Login string
+	Repository Repository
+	Assignees  Assignees      `graphql:"assignees(first: 3)"`
+	Comments   Comments       `graphql:"comments(first: 15)"`
+	Reactions  IssueReactions `graphql:"reactions(first: 1)"`
+	Labels     IssueLabels    `graphql:"labels(first: 3)"`
 }
 
 type IssueReactions struct {
@@ -67,15 +55,14 @@ func (data IssueData) GetUpdatedAt() time.Time {
 }
 
 func makeIssuesQuery(query string) string {
-	return fmt.Sprintf("is:issue %s", query)
+	return fmt.Sprintf("is:issue %s sort:updated", query)
 }
 
-func FetchIssues(query string, limit int) ([]IssueData, error) {
+func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		return IssuesResponse{}, err
 	}
 
 	var queryResult struct {
@@ -83,20 +70,41 @@ func FetchIssues(query string, limit int) ([]IssueData, error) {
 			Nodes []struct {
 				Issue IssueData `graphql:"... on Issue"`
 			}
-		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
+			IssueCount int
+			PageInfo   PageInfo
+		} `graphql:"search(type: ISSUE, first: $limit, after: $endCursor, query: $query)"`
+	}
+	var endCursor *string
+	if pageInfo != nil {
+		endCursor = &pageInfo.EndCursor
 	}
 	variables := map[string]interface{}{
-		"query": graphql.String(makeIssuesQuery(query)),
-		"limit": graphql.Int(limit),
+		"query":     graphql.String(makeIssuesQuery(query)),
+		"limit":     graphql.Int(limit),
+		"endCursor": (*graphql.String)(endCursor),
 	}
 	err = client.Query("SearchIssues", &queryResult, variables)
 	if err != nil {
-		return nil, err
+		return IssuesResponse{}, err
 	}
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
+		if node.Issue.Repository.IsArchived {
+			continue
+		}
 		issues = append(issues, node.Issue)
 	}
-	return issues, nil
+
+	return IssuesResponse{
+		Issues:     issues,
+		TotalCount: queryResult.Search.IssueCount,
+		PageInfo:   queryResult.Search.PageInfo,
+	}, nil
+}
+
+type IssuesResponse struct {
+	Issues     []IssueData
+	TotalCount int
+	PageInfo   PageInfo
 }

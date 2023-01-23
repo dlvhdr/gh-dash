@@ -6,11 +6,14 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Issue struct {
+	Ctx  *context.ProgramContext
 	Data data.IssueData
 }
 
@@ -27,32 +30,25 @@ func (issue *Issue) ToTableRow() table.Row {
 	}
 }
 
+func (issue *Issue) getTextStyle() lipgloss.Style {
+	return components.GetIssueTextStyle(issue.Ctx, issue.Data.State)
+}
+
 func (issue *Issue) renderUpdateAt() string {
-	return lipgloss.NewStyle().
-		Render(utils.TimeElapsed(issue.Data.UpdatedAt))
+	return issue.getTextStyle().Render(utils.TimeElapsed(issue.Data.UpdatedAt))
 }
 
 func (issue *Issue) renderRepoName() string {
-	repoName := utils.TruncateString(issue.Data.Repository.Name, 18)
-	return lipgloss.NewStyle().
-		Render(repoName)
+	repoName := issue.Data.Repository.Name
+	return issue.getTextStyle().Render(repoName)
 }
 
 func (issue *Issue) renderTitle() string {
-	title := issue.Data.Title
-	if len(strings.TrimSpace(title)) == 0 {
-		title = "-"
-	}
-	title = fmt.Sprintf("#%d %v",
-		issue.Data.Number,
-		titleText.Copy().Render(title),
-	)
-
-	return title
+	return components.RenderIssueTitle(issue.Ctx, issue.Data.State, issue.Data.Title, issue.Data.Number)
 }
 
 func (issue *Issue) renderOpenedBy() string {
-	return lipgloss.NewStyle().Render(issue.Data.Author.Login)
+	return issue.getTextStyle().Render(issue.Data.Author.Login)
 }
 
 func (issue *Issue) renderAssignees() string {
@@ -60,21 +56,21 @@ func (issue *Issue) renderAssignees() string {
 	for _, assignee := range issue.Data.Assignees.Nodes {
 		assignees = append(assignees, assignee.Login)
 	}
-	return lipgloss.NewStyle().Render(strings.Join(assignees, ","))
+	return issue.getTextStyle().Render(strings.Join(assignees, ","))
 }
 
 func (issue *Issue) renderStatus() string {
 	if issue.Data.State == "OPEN" {
-		return lipgloss.NewStyle().Foreground(OpenIssue).Render("")
+		return lipgloss.NewStyle().Foreground(issue.Ctx.Styles.Colors.OpenIssue).Render("")
 	} else {
-		return lipgloss.NewStyle().Foreground(OpenIssue).Render("")
+		return issue.getTextStyle().Render("")
 	}
 }
 
 func (issue *Issue) renderNumComments() string {
-	return lipgloss.NewStyle().Render(fmt.Sprintf("%d", issue.Data.Comments.TotalCount))
+	return issue.getTextStyle().Render(fmt.Sprintf("%d", issue.Data.Comments.TotalCount))
 }
 
 func (issue *Issue) renderNumReactions() string {
-	return lipgloss.NewStyle().Render(fmt.Sprintf("%d", issue.Data.Reactions.TotalCount))
+	return issue.getTextStyle().Render(fmt.Sprintf("%d", issue.Data.Reactions.TotalCount))
 }

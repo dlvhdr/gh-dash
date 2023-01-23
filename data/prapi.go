@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cli/go-gh"
@@ -31,11 +30,10 @@ type PullRequestData struct {
 	HeadRef struct {
 		Name string
 	}
-	Repository struct {
-		NameWithOwner string
-	}
-	Comments      Comments `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews Reviews  `graphql:"latestReviews(last: 3)"`
+	Repository    Repository
+	Assignees     Assignees `graphql:"assignees(first: 3)"`
+	Comments      Comments  `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews Reviews   `graphql:"latestReviews(last: 3)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
 }
@@ -113,6 +111,12 @@ type Reviews struct {
 	Nodes []Review
 }
 
+type PageInfo struct {
+	HasNextPage bool
+	StartCursor string
+	EndCursor   string
+}
+
 func (data PullRequestData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
 }
@@ -130,16 +134,21 @@ func (data PullRequestData) GetUpdatedAt() time.Time {
 }
 
 func makePullRequestsQuery(query string) string {
-	return fmt.Sprintf("is:pr %s", query)
+	return fmt.Sprintf("is:pr %s sort:updated", query)
 }
 
-func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
+type PullRequestsResponse struct {
+	Prs        []PullRequestData
+	TotalCount int
+	PageInfo   PageInfo
+}
+
+func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
 	client, err := gh.GQLClient(nil)
 
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		return PullRequestsResponse{}, err
 	}
 
 	var queryResult struct {
@@ -147,21 +156,35 @@ func FetchPullRequests(query string, limit int) ([]PullRequestData, error) {
 			Nodes []struct {
 				PullRequest PullRequestData `graphql:"... on PullRequest"`
 			}
-		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
+			IssueCount int
+			PageInfo   PageInfo
+		} `graphql:"search(type: ISSUE, first: $limit, after: $endCursor, query: $query)"`
+	}
+	var endCursor *string
+	if pageInfo != nil {
+		endCursor = &pageInfo.EndCursor
 	}
 	variables := map[string]interface{}{
-		"query": graphql.String(makePullRequestsQuery(query)),
-		"limit": graphql.Int(limit),
+		"query":     graphql.String(makePullRequestsQuery(query)),
+		"limit":     graphql.Int(limit),
+		"endCursor": (*graphql.String)(endCursor),
 	}
 	err = client.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		return PullRequestsResponse{}, err
 	}
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
+		if node.PullRequest.Repository.IsArchived {
+			continue
+		}
 		prs = append(prs, node.PullRequest)
 	}
-	return prs, nil
+
+	return PullRequestsResponse{
+		Prs:        prs,
+		TotalCount: queryResult.Search.IssueCount,
+		PageInfo:   queryResult.Search.PageInfo,
+	}, nil
 }

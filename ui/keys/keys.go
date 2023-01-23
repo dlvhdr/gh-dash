@@ -15,12 +15,15 @@ type KeyMap struct {
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
 	Refresh       key.Binding
+	RefreshAll    key.Binding
 	PageDown      key.Binding
 	PageUp        key.Binding
 	NextSection   key.Binding
 	PrevSection   key.Binding
 	SwitchView    key.Binding
 	Search        key.Binding
+	CopyUrl       key.Binding
+	CopyNumber    key.Binding
 	Help          key.Binding
 	Quit          key.Binding
 }
@@ -55,7 +58,7 @@ func (k KeyMap) NavigationKeys() []key.Binding {
 }
 
 func (k KeyMap) AppKeys() []key.Binding {
-	return []key.Binding{k.Refresh, k.SwitchView, k.TogglePreview, k.Search}
+	return []key.Binding{k.Refresh, k.RefreshAll, k.SwitchView, k.TogglePreview, k.OpenGithub, k.CopyNumber, k.CopyUrl, k.Search}
 }
 
 func (k KeyMap) QuitAndHelpKeys() []key.Binding {
@@ -70,12 +73,15 @@ var Keys = KeyMap{
 	TogglePreview: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "open in Preview")),
 	OpenGithub:    key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open in GitHub")),
 	Refresh:       key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
+	RefreshAll:    key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh all")),
 	PageDown:      key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "preview page down")),
 	PageUp:        key.NewBinding(key.WithKeys("ctrl+u"), key.WithHelp("Ctrl+u", "preview page up")),
 	NextSection:   key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("/l", "next section")),
 	PrevSection:   key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("/h", "previous section")),
 	SwitchView:    key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "switch view")),
 	Search:        key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
+	CopyNumber:    key.NewBinding(key.WithKeys("y"), key.WithHelp("y", "copy number")),
+	CopyUrl:       key.NewBinding(key.WithKeys("Y"), key.WithHelp("Y", "copy url")),
 	Help:          key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
 	Quit:          key.NewBinding(key.WithKeys("q", "esc", "ctrl+c"), key.WithHelp("q", "quit")),
 }

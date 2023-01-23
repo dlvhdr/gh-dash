@@ -8,12 +8,15 @@ import (
 	"os/exec"
 	"strings"
 	"text/template"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/constants"
+	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
@@ -86,7 +89,14 @@ func getRepoLocalPath(repoName string, cfgPaths map[string]string) string {
 	return repoPath
 }
 
-type CommandTemplateInput struct {
+type IssueCommandTemplateInput struct {
+	RepoName    string
+	RepoPath    string
+	IssueNumber int
+	HeadRefName string
+}
+
+type PRCommandTemplateInput struct {
 	RepoName    string
 	RepoPath    string
 	PrNumber    int
@@ -95,47 +105,94 @@ type CommandTemplateInput struct {
 
 func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
-	for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-		if keybinding.Key != key {
-			continue
-		}
 
-		switch data := currRowData.(type) {
-		case *data.PullRequestData:
-			return m.runCustomCommand(keybinding.Command, data)
+	switch m.ctx.View {
+	case config.IssuesView:
+		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+			if keybinding.Key != key {
+				continue
+			}
+
+			switch data := currRowData.(type) {
+			case *data.IssueData:
+				return m.runCustomIssueCommand(keybinding.Command, data)
+			}
 		}
+	case config.PRsView:
+		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+			if keybinding.Key != key {
+				continue
+			}
+
+			switch data := currRowData.(type) {
+			case *data.PullRequestData:
+				return m.runCustomPRCommand(keybinding.Command, data)
+			}
+		}
+	default:
+		// Not a valid case - ignore it
 	}
+
 	return nil
 }
 
-func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
-	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
+func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
 	repoName := prData.GetRepoNameWithOwner()
 	repoPath := getRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
 
-	var buff bytes.Buffer
-	err = cmd.Execute(&buff, CommandTemplateInput{
+	input := PRCommandTemplateInput{
 		RepoName:    repoName,
 		RepoPath:    repoPath,
 		PrNumber:    prData.Number,
 		HeadRefName: prData.HeadRefName,
-	})
+	}
+
+	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var buff bytes.Buffer
+	err = cmd.Execute(&buff, input)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return m.executeCustomCommand(buff.String())
+}
+
+func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {
+	repoName := issueData.GetRepoNameWithOwner()
+	repoPath := getRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+
+	input := IssueCommandTemplateInput{
+		RepoName:    repoName,
+		RepoPath:    repoPath,
+		IssueNumber: issueData.Number,
+	}
+
+	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var buff bytes.Buffer
+	err = cmd.Execute(&buff, input)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return m.executeCustomCommand(buff.String())
+}
+
+func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"
 	}
-	c := exec.Command(shell, "-c", buff.String())
+	c := exec.Command(shell, "-c", cmd)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth)
-			md, mdErr := mdRenderer.Render(fmt.Sprintf("While running: `%s`", buff.String()))
+			md, mdErr := mdRenderer.Render(fmt.Sprintf("While running: `%s`", cmd))
 			if mdErr != nil {
 				return constants.ErrMsg{Err: mdErr}
 			}
@@ -148,4 +205,21 @@ func (m *Model) runCustomCommand(commandTemplate string, prData *data.PullReques
 		}
 		return nil
 	})
+}
+
+func (m *Model) notify(text string) tea.Cmd {
+	id := fmt.Sprint(time.Now().Unix())
+	m.tasks[id] = context.Task{
+		Id:           id,
+		FinishedText: text,
+		State:        context.TaskFinished,
+	}
+	return func() tea.Msg {
+		return constants.TaskFinishedMsg{
+			SectionId:   m.getCurrSection().GetId(),
+			SectionType: m.getCurrSection().GetType(),
+			TaskId:      id,
+			Err:         nil,
+		}
+	}
 }
