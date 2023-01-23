@@ -64,14 +64,14 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 
 		var tabStyle lipgloss.Style
 		if ctx.View == config.ViewType(tab.Name) {
-			tabStyle = activeView
+			tabStyle = ctx.Styles.Tabs.ActiveView
 		} else {
-			tabStyle = inactiveView
+			tabStyle = ctx.Styles.Tabs.InactiveView
 		}
 
 		views = append(views, tabStyle.Render(tab.Label))
 	}
 
-	return viewSwitcher.Copy().
+	return ctx.Styles.Tabs.ViewSwitcher.Copy().
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, views...))
 }
