@@ -1,4 +1,4 @@
-package assignbox
+package inputbox
 
 import (
 	"fmt"
@@ -12,12 +12,13 @@ import (
 )
 
 type Model struct {
-	ctx        *context.ProgramContext
-	textArea   textarea.Model
-	assignHelp help.Model
+	ctx       *context.ProgramContext
+	textArea  textarea.Model
+	inputHelp help.Model
+	prompt    string
 }
 
-var assignKeys = []key.Binding{
+var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
 }
@@ -40,9 +41,10 @@ func NewModel(ctx *context.ProgramContext) Model {
 	h := help.NewModel()
 	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
-		ctx:        ctx,
-		textArea:   ta,
-		assignHelp: h,
+		ctx:       ctx,
+		textArea:  ta,
+		inputHelp: h,
+		prompt:    "",
 	}
 }
 
@@ -52,14 +54,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View(assign bool) string {
-	var instructionText string
-	if assign {
-		instructionText = "Assign users (whitespace-separated)... "
-	} else {
-		instructionText = "Unassign users (whitespace-separated)... "
-	}
-
+func (m Model) View() string {
 	return lipgloss.NewStyle().
 		BorderTop(true).
 		BorderStyle(lipgloss.NormalBorder()).
@@ -68,11 +63,11 @@ func (m Model) View(assign bool) string {
 		Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				fmt.Sprintf("%s\n", instructionText),
+				fmt.Sprintf("%s\n", m.prompt),
 				m.textArea.View(),
 				lipgloss.NewStyle().
 					MarginTop(1).
-					Render(m.assignHelp.ShortHelpView(assignKeys)),
+					Render(m.inputHelp.ShortHelpView(inputKeys)),
 			),
 		)
 }
@@ -97,11 +92,15 @@ func (m *Model) SetHeight(height int) {
 	m.textArea.SetHeight(height)
 }
 
+func (m *Model) SetPrompt(prompt string) {
+	m.prompt = prompt
+}
+
 func (m *Model) Reset() {
 	m.textArea.Reset()
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.assignHelp.Styles = ctx.Styles.Help.BubbleStyles
+	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }

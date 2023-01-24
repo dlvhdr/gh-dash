@@ -112,37 +112,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		if m.prSidebar.GetIsCommenting() {
+		if m.prSidebar.GetIsCommenting() ||
+			m.prSidebar.GetIsAssigning() ||
+			m.prSidebar.GetIsUnassigning() {
+
 			m.prSidebar, cmd = m.prSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
 
-		if m.prSidebar.GetIsAssigning() {
-			m.prSidebar, cmd = m.prSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
-		}
+		if m.issueSidebar.GetIsCommenting() ||
+			m.issueSidebar.GetIsAssigning() ||
+			m.issueSidebar.GetIsUnassigning() {
 
-		if m.prSidebar.GetIsUnassigning() {
-			m.prSidebar, cmd = m.prSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
-		}
-
-		if m.issueSidebar.GetIsCommenting() {
-			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
-		}
-
-		if m.issueSidebar.GetIsAssigning() {
-			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
-		}
-
-		if m.issueSidebar.GetIsUnassigning() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd

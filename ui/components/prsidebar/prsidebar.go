@@ -10,41 +10,37 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/assignbox"
-	"github.com/dlvhdr/gh-dash/ui/components/commentbox"
+	"github.com/dlvhdr/gh-dash/ui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
 type Model struct {
-	ctx          *context.ProgramContext
-	sectionId    int
-	pr           *pr.PullRequest
-	width        int
-	isCommenting bool
-	commentBox   commentbox.Model
+	ctx       *context.ProgramContext
+	sectionId int
+	pr        *pr.PullRequest
+	width     int
 
+	isCommenting  bool
 	isAssigning   bool
 	isUnassigning bool
-	assignBox     assignbox.Model
+
+	inputBox inputbox.Model
 }
 
 func NewModel(ctx context.ProgramContext) Model {
-	commentBox := commentbox.NewModel(&ctx)
-	commentBox.SetHeight(common.CommentBoxHeight)
-
-	assignBox := assignbox.NewModel(&ctx)
-	assignBox.SetHeight(common.AssignBoxHeight)
+	inputBox := inputbox.NewModel(&ctx)
+	inputBox.SetHeight(common.InputBoxHeight)
 
 	return Model{
-		pr:           nil,
-		isCommenting: false,
-		commentBox:   commentBox,
+		pr: nil,
 
+		isCommenting:  false,
 		isAssigning:   false,
 		isUnassigning: false,
-		assignBox:     assignBox,
+
+		inputBox: inputBox,
 	}
 }
 
@@ -58,70 +54,69 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.isCommenting {
-
 			switch msg.Type {
 
 			case tea.KeyCtrlD:
-				if len(strings.Trim(m.commentBox.Value(), " ")) != 0 {
-					cmd = m.comment(m.commentBox.Value())
+				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
+					cmd = m.comment(m.inputBox.Value())
 				}
-				m.commentBox.Blur()
+				m.inputBox.Blur()
 				m.isCommenting = false
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
-				m.commentBox.Blur()
+				m.inputBox.Blur()
 				m.isCommenting = false
 				return m, nil
 			}
+
+			m.inputBox, taCmd = m.inputBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
 		} else if m.isAssigning {
 			switch msg.Type {
 
 			case tea.KeyCtrlD:
-				usernames := strings.Fields(m.assignBox.Value())
+				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					cmd = m.assign(usernames)
 				}
-				m.assignBox.Blur()
+				m.inputBox.Blur()
 				m.isAssigning = false
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
-				m.assignBox.Blur()
+				m.inputBox.Blur()
 				m.isAssigning = false
 				return m, nil
 			}
 
-			m.assignBox, taCmd = m.assignBox.Update(msg)
+			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isUnassigning {
 			switch msg.Type {
 
 			case tea.KeyCtrlD:
-				usernames := strings.Fields(m.assignBox.Value())
+				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					cmd = m.unassign(usernames)
 				}
-				m.assignBox.Blur()
+				m.inputBox.Blur()
 				m.isUnassigning = false
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
-				m.assignBox.Blur()
+				m.inputBox.Blur()
 				m.isUnassigning = false
 				return m, nil
 			}
 
-			m.assignBox, taCmd = m.assignBox.Update(msg)
+			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else {
 			return m, nil
 		}
-
 	}
 
-	m.commentBox, taCmd = m.commentBox.Update(msg)
-	cmds = append(cmds, cmd, taCmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -143,16 +138,8 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting {
-		s.WriteString(m.commentBox.View())
-	}
-
-	if m.isAssigning {
-		s.WriteString(m.assignBox.View(true))
-	}
-
-	if m.isUnassigning {
-		s.WriteString(m.assignBox.View(false))
+	if m.isCommenting || m.isAssigning || m.isUnassigning {
+		s.WriteString(m.inputBox.View())
 	}
 
 	return s.String()
@@ -280,8 +267,8 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
-	m.commentBox.SetWidth(m.width)
-	m.assignBox.SetWidth(width)
+	m.inputBox.SetWidth(m.width)
+	m.inputBox.SetWidth(width)
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -290,17 +277,18 @@ func (m *Model) GetIsCommenting() bool {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.commentBox.UpdateProgramContext(ctx)
+	m.inputBox.UpdateProgramContext(ctx)
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
-	if m.isCommenting == false && isCommenting == true {
-		m.commentBox.Reset()
+	if !m.isCommenting && isCommenting {
+		m.inputBox.Reset()
 	}
 	m.isCommenting = isCommenting
+	m.inputBox.SetPrompt("Leave a comment...")
 
-	if isCommenting == true {
-		return tea.Sequentially(textarea.Blink, m.commentBox.Focus())
+	if isCommenting {
+		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
@@ -313,13 +301,14 @@ func (m *Model) GetIsAssigning() bool {
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
-	if m.isAssigning == false && isAssigning == true {
-		m.assignBox.Reset()
+	if !m.isAssigning && isAssigning {
+		m.inputBox.Reset()
 	}
 	m.isAssigning = isAssigning
+	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
 
-	if isAssigning == true {
-		return tea.Sequentially(textarea.Blink, m.assignBox.Focus())
+	if isAssigning {
+		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
@@ -329,13 +318,14 @@ func (m *Model) GetIsUnassigning() bool {
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
-	if m.isUnassigning == false && isUnassigning == true {
-		m.assignBox.Reset()
+	if !m.isUnassigning && isUnassigning {
+		m.inputBox.Reset()
 	}
 	m.isUnassigning = isUnassigning
+	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
 
-	if isUnassigning == true {
-		return tea.Sequentially(textarea.Blink, m.assignBox.Focus())
+	if isUnassigning {
+		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
