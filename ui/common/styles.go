@@ -10,8 +10,7 @@ var (
 	SearchHeight       = 3
 	FooterHeight       = 2
 	ExpandedHelpHeight = 11
-	CommentBoxHeight   = 8
-	AssignBoxHeight    = 4
+	InputBoxHeight     = 8
 	SingleRuneWidth    = 4
 	MainContentPadding = 1
 	TabsBorderHeight   = 1
