@@ -186,7 +186,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Width: utils.IntPtr(15),
 					},
 					Assignees: ColumnConfig{
-						Width: utils.IntPtr(20),
+						Width:  utils.IntPtr(20),
+						Hidden: utils.BoolPtr(true),
 					},
 					Base: ColumnConfig{
 						Width:  utils.IntPtr(15),
@@ -207,7 +208,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Width: utils.IntPtr(10),
 					},
 					Assignees: ColumnConfig{
-						Width: utils.IntPtr(20),
+						Width:  utils.IntPtr(20),
+						Hidden: utils.BoolPtr(true),
 					},
 				},
 			},
