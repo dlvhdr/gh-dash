@@ -108,7 +108,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Comments.Nodes = append(currPr.Comments.Nodes, *msg.NewComment)
 				}
 				if msg.AddedAssignees != nil {
-					currPr.Assignees.Nodes = append(currPr.Assignees.Nodes, msg.AddedAssignees.Nodes...)
+					currPr.Assignees.Nodes = addAssignees(currPr.Assignees.Nodes, msg.AddedAssignees.Nodes)
 				}
 				if msg.RemovedAssignees != nil {
 					currPr.Assignees.Nodes = removeAssignees(currPr.Assignees.Nodes, msg.RemovedAssignees.Nodes)
@@ -329,6 +329,17 @@ type UpdatePRMsg struct {
 	IsMerged         *bool
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
+}
+
+func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
+	newAssignees := assignees
+	for _, assignee := range addedAssignees {
+		if !assigneesContains(newAssignees, assignee) {
+			newAssignees = append(newAssignees, assignee)
+		}
+	}
+
+	return newAssignees
 }
 
 func removeAssignees(assignees, removedAssignees []data.Assignee) []data.Assignee {
