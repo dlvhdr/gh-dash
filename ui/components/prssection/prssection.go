@@ -98,7 +98,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		for i, currPr := range m.Prs {
 			if currPr.Number == msg.PrNumber {
 				if msg.IsClosed != nil {
-					if *msg.IsClosed == true {
+					if *msg.IsClosed {
 						currPr.State = "CLOSED"
 					} else {
 						currPr.State = "OPEN"
