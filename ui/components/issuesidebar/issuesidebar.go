@@ -238,6 +238,10 @@ func (m *Model) SetRow(data *data.IssueData) {
 	}
 }
 
+func (m *Model) IsTextInputBoxFocused() bool {
+	return m.isCommenting || m.isAssigning || m.isUnassigning
+}
+
 func (m *Model) GetIsCommenting() bool {
 	return m.isCommenting
 }
