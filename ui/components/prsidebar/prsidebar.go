@@ -267,8 +267,11 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
-	m.inputBox.SetWidth(m.width)
 	m.inputBox.SetWidth(width)
+}
+
+func (m *Model) IsTextInputBoxFocused() bool {
+	return m.isCommenting || m.isAssigning || m.isUnassigning
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -296,6 +299,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 func (m *Model) getIndentedContentWidth() int {
 	return m.width - 4
 }
+
 func (m *Model) GetIsAssigning() bool {
 	return m.isAssigning
 }

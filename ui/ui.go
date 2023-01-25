@@ -112,19 +112,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		if m.prSidebar.GetIsCommenting() ||
-			m.prSidebar.GetIsAssigning() ||
-			m.prSidebar.GetIsUnassigning() {
-
+		if m.prSidebar.IsTextInputBoxFocused() {
 			m.prSidebar, cmd = m.prSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
 
-		if m.issueSidebar.GetIsCommenting() ||
-			m.issueSidebar.GetIsAssigning() ||
-			m.issueSidebar.GetIsUnassigning() {
-
+		if m.issueSidebar.IsTextInputBoxFocused() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
@@ -342,32 +336,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 
-	if m.prSidebar.GetIsCommenting() {
+	if m.prSidebar.IsTextInputBoxFocused() {
 		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
 		m.syncSidebar()
 	}
 
-	if m.prSidebar.GetIsAssigning() {
-		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
-		m.syncSidebar()
-	}
-
-	if m.issueSidebar.GetIsUnassigning() {
-		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
-		m.syncSidebar()
-	}
-
-	if m.issueSidebar.GetIsCommenting() {
-		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
-		m.syncSidebar()
-	}
-
-	if m.issueSidebar.GetIsAssigning() {
-		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
-		m.syncSidebar()
-	}
-
-	if m.issueSidebar.GetIsUnassigning() {
+	if m.issueSidebar.IsTextInputBoxFocused() {
 		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
 		m.syncSidebar()
 	}
