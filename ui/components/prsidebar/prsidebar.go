@@ -310,11 +310,23 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 	}
 	m.isAssigning = isAssigning
 	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
+	if !m.userAssignedToPr(m.ctx.User) {
+		m.inputBox.SetValue(m.ctx.User)
+	}
 
 	if isAssigning {
 		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
+}
+
+func (m *Model) userAssignedToPr(login string) bool {
+	for _, a := range m.pr.Data.Assignees.Nodes {
+		if login == a.Login {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *Model) GetIsUnassigning() bool {
@@ -327,9 +339,18 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 	}
 	m.isUnassigning = isUnassigning
 	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
+	m.inputBox.SetValue(strings.Join(m.prAssignees(), "\n"))
 
 	if isUnassigning {
 		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
+}
+
+func (m *Model) prAssignees() []string {
+	var assignees []string
+	for _, n := range m.pr.Data.Assignees.Nodes {
+		assignees = append(assignees, n.Login)
+	}
+	return assignees
 }
