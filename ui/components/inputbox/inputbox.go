@@ -76,6 +76,10 @@ func (m *Model) Value() string {
 	return m.textArea.Value()
 }
 
+func (m *Model) SetValue(s string) {
+	m.textArea.SetValue(s)
+}
+
 func (m *Model) Blur() {
 	m.textArea.Blur()
 }
