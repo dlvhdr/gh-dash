@@ -2,7 +2,6 @@ package prssection
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -278,7 +277,6 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		}
 		res, err := data.FetchPullRequests(m.GetFilters(), *limit, m.PageInfo)
 		if err != nil {
-			log.Printf("err %v", err)
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
 				SectionType: m.Type,
