@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -8,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -23,7 +23,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:     "gh dash",
 		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
-		Version: "3.5.1",
+		Version: "",
 	}
 )
 
@@ -58,7 +58,11 @@ func init() {
 	)
 	rootCmd.MarkFlagFilename("config", "yaml", "yml")
 
-	rootCmd.SetVersionTemplate(`gh dash {{printf "version %s\n" .Version}}`)
+	fmt.Print(debug.ReadBuildInfo())
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
+		rootCmd.Version = info.Main.Version
+		rootCmd.SetVersionTemplate(`gh dash {{printf "version %s\n" .Version}}`)
+	}
 	rootCmd.Flags().Bool(
 		"debug",
 		false,

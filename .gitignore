@@ -2,3 +2,5 @@ debug.log
 dist
 gh-prs
 gh-dash
+
+dist/
