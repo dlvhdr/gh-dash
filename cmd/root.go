@@ -23,7 +23,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:     "gh dash",
 		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
-		Version: "3.5.1",
+		Version: "3.7.0",
 	}
 )
 
