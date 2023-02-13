@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -8,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
+	"runtime/debug"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,12 +19,19 @@ import (
 )
 
 var (
+	Version = "dev"
+	Commit  = ""
+	Date    = ""
+	BuiltBy = ""
+)
+
+var (
 	cfgFile string
 
 	rootCmd = &cobra.Command{
 		Use:     "gh dash",
 		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
-		Version: "3.5.1",
+		Version: "",
 	}
 )
 
@@ -48,6 +56,25 @@ func createModel(configPath string, debug bool) (ui.Model, *os.File) {
 	return ui.NewModel(configPath), loggerFile
 }
 
+func buildVersion(version, commit, date, builtBy string) string {
+	result := version
+	if commit != "" {
+		result = fmt.Sprintf("%s\ncommit: %s", result, commit)
+	}
+	if date != "" {
+		result = fmt.Sprintf("%s\nbuilt at: %s", result, date)
+	}
+	if builtBy != "" {
+		result = fmt.Sprintf("%s\nbuilt by: %s", result, builtBy)
+	}
+	result = fmt.Sprintf("%s\ngoos: %s\ngoarch: %s", result, runtime.GOOS, runtime.GOARCH)
+	fmt.Printf("version %s %s\n", version, Version)
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
+		result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
+	}
+	return result
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVarP(
 		&cfgFile,
@@ -58,7 +85,9 @@ func init() {
 	)
 	rootCmd.MarkFlagFilename("config", "yaml", "yml")
 
-	rootCmd.SetVersionTemplate(`gh dash {{printf "version %s\n" .Version}}`)
+	rootCmd.Version = buildVersion(Version, Commit, Date, BuiltBy)
+	rootCmd.SetVersionTemplate(`gh-dash {{printf "version %s\n" .Version}}`)
+
 	rootCmd.Flags().Bool(
 		"debug",
 		false,
