@@ -68,7 +68,6 @@ func buildVersion(version, commit, date, builtBy string) string {
 		result = fmt.Sprintf("%s\nbuilt by: %s", result, builtBy)
 	}
 	result = fmt.Sprintf("%s\ngoos: %s\ngoarch: %s", result, runtime.GOOS, runtime.GOARCH)
-	fmt.Printf("version %s %s\n", version, Version)
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
 		result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
 	}
