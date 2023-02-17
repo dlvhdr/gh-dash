@@ -19,6 +19,7 @@ builds:
 
 archives:
   - format: tar.gz
+    name_template: "{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
