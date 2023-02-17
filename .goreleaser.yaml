@@ -18,11 +18,8 @@ builds:
       - -X github.com/dlvhdr/gh-dash/cmd.BuiltBy=goreleaser
 
 archives:
-  - format: tar.gz
-    name_template: "{{ .Os }}_{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
+  - format: binary
+    name_template: "{{ .Os }}-{{ .Arch }}"
 checksum:
   name_template: "checksums.txt"
 snapshot:
