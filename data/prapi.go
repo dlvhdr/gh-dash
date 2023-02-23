@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/cli/go-gh"
 	graphql "github.com/cli/shurcooL-graphql"
 )
@@ -169,10 +170,12 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		"limit":     graphql.Int(limit),
 		"endCursor": (*graphql.String)(endCursor),
 	}
+	log.Debug("Fetching PRs", "query", query, "limit", limit, "endCursor", endCursor)
 	err = client.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}
+	log.Debug("Successfully fetched PRs", "query", query, "count", queryResult.Search.IssueCount)
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {

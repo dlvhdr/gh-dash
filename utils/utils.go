@@ -2,13 +2,14 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/charmbracelet/log"
 )
 
 const (

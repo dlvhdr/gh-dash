@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	log "github.com/charmbracelet/log"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
@@ -61,13 +61,10 @@ func NewModel(configPath string) Model {
 	m.ctx = context.ProgramContext{
 		ConfigPath: configPath,
 		StartTask: func(task context.Task) tea.Cmd {
+			log.Debug("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
 			m.tasks[task.Id] = task
 			return m.taskSpinner.Tick
-		},
-		DidTaskFinish: func(taskId string) bool {
-			task, ok := m.tasks[taskId]
-			return !ok || task.State == context.TaskFinished
 		},
 	}
 	m.help = help.NewModel(m.ctx)
@@ -82,7 +79,7 @@ func (m *Model) initScreen() tea.Msg {
 
 	config, err := config.ParseConfig(m.ctx.ConfigPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error reading config", err)
 	}
 
 	return initMsg{Config: config}
@@ -105,6 +102,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		log.Debug("Key pressed", "key", msg.String())
 		m.ctx.Error = nil
 
 		if currSection != nil && currSection.IsSearchFocused() {
@@ -288,6 +286,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case constants.TaskFinishedMsg:
 		task, ok := m.tasks[msg.TaskId]
 		if ok {
+			log.Debug("Task finished", "id", task.Id)
 			if msg.Err != nil {
 				task.State = context.TaskError
 				task.Error = msg.Err

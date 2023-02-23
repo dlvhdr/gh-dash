@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/cli/go-gh"
 	graphql "github.com/cli/shurcooL-graphql"
 )
@@ -83,10 +84,12 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 		"limit":     graphql.Int(limit),
 		"endCursor": (*graphql.String)(endCursor),
 	}
+	log.Debug("Fetching issues", "query", query, "limit", limit, "endCursor", endCursor)
 	err = client.Query("SearchIssues", &queryResult, variables)
 	if err != nil {
 		return IssuesResponse{}, err
 	}
+	log.Debug("Successfully fetched issues", "query", query, "count", queryResult.Search.IssueCount)
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {

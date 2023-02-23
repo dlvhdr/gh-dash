@@ -5,13 +5,15 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	slog "log"
 	"os"
 	"runtime"
 	"runtime/debug"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/dlvhdr/gh-dash/ui"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/muesli/termenv"
@@ -44,12 +46,19 @@ func Execute() {
 
 func createModel(configPath string, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
-	var err error
 
 	if debug {
-		loggerFile, err = tea.LogToFile("debug.log", "debug")
-		if err != nil {
-			fmt.Println("Error setting up logger")
+		var fileErr error
+		newConfigFile, fileErr := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if fileErr == nil {
+			log.SetOutput(newConfigFile)
+			log.SetTimeFormat(time.Kitchen)
+			log.SetReportCaller(true)
+			log.SetLevel(log.DebugLevel)
+			log.Debug("Logging to debug.log")
+		} else {
+			loggerFile, _ = tea.LogToFile("debug.log", "debug")
+			slog.Print("Failed setting up logging", fileErr)
 		}
 	}
 
@@ -103,7 +112,7 @@ func init() {
 	rootCmd.Run = func(cmd *cobra.Command, args []string) {
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Cannot parse debug flag", err)
 		}
 
 		// see https://github.com/charmbracelet/lipgloss/issues/73
@@ -120,7 +129,7 @@ func init() {
 			tea.WithAltScreen(),
 		)
 		if _, err := p.Run(); err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed starting the TUI", err)
 		}
 	}
 }
