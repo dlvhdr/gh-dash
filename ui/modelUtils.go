@@ -149,13 +149,13 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed parse keybinding template", err)
 	}
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed executing keybinding command", err)
 	}
 	return m.executeCustomCommand(buff.String())
 }
@@ -172,13 +172,13 @@ func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.Is
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed parse keybinding template", err)
 	}
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed executing keybinding command", err)
 	}
 	return m.executeCustomCommand(buff.String())
 }
