@@ -12,12 +12,16 @@ import (
 )
 
 type Model struct {
-	ctx          context.ProgramContext
-	Columns      []Column
-	Rows         []Row
-	EmptyState   *string
-	dimensions   constants.Dimensions
-	rowsViewport listviewport.Model
+	ctx             context.ProgramContext
+	Columns         []Column
+	Rows            []Row
+	EmptyState      *string
+	dimensions      constants.Dimensions
+	rowsViewport    listviewport.Model
+	headerHidden    bool
+	separatorHidden bool
+	IsActive        bool
+	CellStyle       *lipgloss.Style
 }
 
 type Column struct {
@@ -56,22 +60,42 @@ func NewModel(
 			len(rows),
 			itemHeight,
 		),
+		headerHidden: false,
 	}
 }
 
 func (m Model) View() string {
-	header := m.renderHeader()
-	body := m.renderBody()
+	parts := make([]string, 0)
+	if !m.headerHidden {
+		parts = append(parts, m.renderHeader())
+	}
+	parts = append(parts, m.renderBody())
 
-	return lipgloss.JoinVertical(lipgloss.Left, header, body)
+	return lipgloss.JoinVertical(lipgloss.Left, parts...)
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.dimensions = dimensions
+	vpHeight := m.dimensions.Height
+	if !m.headerHidden {
+		vpHeight -= 2
+	}
 	m.rowsViewport.SetDimensions(constants.Dimensions{
 		Width:  m.dimensions.Width,
-		Height: m.dimensions.Height,
+		Height: vpHeight,
 	})
+}
+
+func (m *Model) GetHeaderHidden() bool {
+	return m.headerHidden
+}
+
+func (m *Model) SetHeaderHidden(hidden bool) {
+	m.headerHidden = hidden
+}
+
+func (m *Model) SetFooterHidden(hidden bool) {
+	m.rowsViewport.FooterHidden = hidden
 }
 
 func (m *Model) ResetCurrItem() {
@@ -206,7 +230,6 @@ func (m *Model) renderHeader() string {
 
 func (m *Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
-		Height(m.dimensions.Height).
 		MaxWidth(m.dimensions.Width)
 
 	if len(m.Rows) == 0 && m.EmptyState != nil {
@@ -219,8 +242,10 @@ func (m *Model) renderBody() string {
 func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	var style lipgloss.Style
 
-	if m.rowsViewport.GetCurrItem() == rowId {
+	if m.IsActive && m.rowsViewport.GetCurrItem() == rowId {
 		style = m.ctx.Styles.Table.SelectedCellStyle
+	} else if m.CellStyle != nil {
+		style = *m.CellStyle
 	} else {
 		style = m.ctx.Styles.Table.CellStyle
 	}
@@ -267,4 +292,13 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 
 func (m *Model) UpdateTotalItemsCount(count int) {
 	m.rowsViewport.SetTotalItems(count)
+}
+
+func (m *Model) SetSeparatorHidden(hidden bool) {
+	if hidden {
+		m.rowsViewport.ListItemHeight = 1
+	} else {
+		m.rowsViewport.ListItemHeight = 2
+	}
+	m.separatorHidden = hidden
 }

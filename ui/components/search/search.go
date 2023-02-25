@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
@@ -16,7 +17,11 @@ type Model struct {
 	textInput    textinput.Model
 }
 
-func NewModel(sectionType string, ctx *context.ProgramContext, initialValue string) Model {
+func NewModel(
+	sectionType string,
+	ctx *context.ProgramContext,
+	initialValue string,
+) Model {
 	prompt := fmt.Sprintf(" is:%s ", sectionType)
 	ti := textinput.New()
 	ti.Placeholder = ""

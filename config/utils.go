@@ -43,6 +43,12 @@ func (cfg IssuesSectionConfig) ToSectionConfig() SectionConfig {
 	}
 }
 
+func (cfg DashboardsConfig) ToSectionConfig() SectionConfig {
+	return SectionConfig{
+		Title: cfg.Title,
+	}
+}
+
 func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
 	colCfg := defaultCfg
 	if sectionCfg.Width != nil {

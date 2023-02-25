@@ -22,6 +22,7 @@ type Model struct {
 	NumTotalItems   int
 	LastUpdated     time.Time
 	ItemTypeLabel   string
+	FooterHidden    bool
 }
 
 func NewModel(

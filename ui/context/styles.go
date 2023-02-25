@@ -77,6 +77,13 @@ type Styles struct {
 		ViewsSeparator lipgloss.Style
 		InactiveView   lipgloss.Style
 	}
+	Card struct {
+		Root           lipgloss.Style
+		TitleContainer lipgloss.Style
+		Title          lipgloss.Style
+		Subtitle       lipgloss.Style
+		Content        lipgloss.Style
+	}
 }
 
 func InitStyles(theme theme.Theme) Styles {
@@ -130,7 +137,7 @@ func InitStyles(theme theme.Theme) Styles {
 		Bold(true).
 		Foreground(theme.FaintText)
 
-	s.Section.ContainerPadding = 1
+	s.Section.ContainerPadding = common.MainContentPadding
 	s.Section.ContainerStyle = lipgloss.NewStyle().
 		Padding(0, s.Section.ContainerPadding)
 	s.Section.SpinnerStyle = lipgloss.NewStyle().Padding(0, 1)
@@ -178,6 +185,7 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Table.CellStyle = lipgloss.NewStyle().PaddingLeft(1).
 		PaddingRight(1).
 		MaxHeight(1)
+
 	s.Table.SelectedCellStyle = s.Table.CellStyle.Copy().
 		Background(theme.SelectedBackground)
 	s.Table.TitleCellStyle = s.Table.CellStyle.Copy().
@@ -228,6 +236,60 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Tabs.InactiveView = lipgloss.NewStyle().
 		Background(theme.FaintBorder).
 		Foreground(theme.SecondaryText)
+
+		// innerHalfBlockBorder := lipgloss.Border{
+		// 	Top:         "▄",
+		// 	Bottom:      "▀",
+		// 	Left:        "▐",
+		// 	Right:       "▌",
+		// 	TopLeft:     "▗",
+		// 	TopRight:    "▖",
+		// 	BottomLeft:  "▝",
+		// 	BottomRight: "▘",
+		// }
+	// blockBorder := lipgloss.Border{
+	// 	Top:         "",
+	// 	Bottom:      "█",
+	// 	Left:        "█",
+	// 	Right:       "█",
+	// 	TopLeft:     "",
+	// 	TopRight:    "",
+	// 	BottomLeft:  "█",
+	// 	BottomRight: "█",
+	// }
+	// outerHalfBlockBorder := lipgloss.Border{
+	// 	Top:         "▀",
+	// 	Bottom:      "▄",
+	// 	Left:        "▌",
+	// 	Right:       "▐",
+	// 	TopLeft:     "▛",
+	// 	TopRight:    "▜",
+	// 	BottomLeft:  "▙",
+	// 	BottomRight: "▟",
+	// }
+
+	s.Card.Root = lipgloss.NewStyle().
+		Border(lipgloss.Border{Bottom: lipgloss.InnerHalfBlockBorder().Bottom}, false, false, true, false).
+		BorderForeground(lipgloss.Color("#1f2336")).
+		BorderBottomBackground(lipgloss.Color("#24283b"))
+	s.Card.TitleContainer = lipgloss.NewStyle().
+		Background(lipgloss.Color("#292e42")).
+		Padding(0, 1).
+		Border(lipgloss.Border{Bottom: lipgloss.InnerHalfBlockBorder().Bottom, Top: lipgloss.InnerHalfBlockBorder().Top}, true, false, true, false).
+		BorderBottomForeground(lipgloss.Color("#292e42")).
+		BorderBottomBackground(lipgloss.Color("#1f2336")).
+		BorderTopForeground(lipgloss.Color("#292e42")).
+		BorderTopBackground(lipgloss.Color("#24283b"))
+
+	s.Card.Title = lipgloss.NewStyle().
+		Foreground(theme.PrimaryText).
+		Bold(true)
+	s.Card.Subtitle = lipgloss.NewStyle().
+		Background(lipgloss.Color("#292e42")).
+		Foreground(theme.FaintText).
+		PaddingLeft(1)
+	s.Card.Content = lipgloss.NewStyle().
+		Background(lipgloss.Color("#1f2336"))
 
 	return s
 }

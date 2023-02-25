@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
@@ -20,7 +21,7 @@ type Model struct {
 	emptyState string
 }
 
-func NewModel() Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		IsOpen: false,
 		data:   "",
@@ -28,7 +29,7 @@ func NewModel() Model {
 			Width:  0,
 			Height: 0,
 		},
-		ctx:        nil,
+		ctx:        ctx,
 		emptyState: "Nothing selected...",
 	}
 }
@@ -101,4 +102,15 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
 	m.viewport.Width = m.GetSidebarContentWidth()
+	log.Info(
+		"sideBar.UpdateProgramContext",
+		"width",
+		m.viewport.Width,
+		"height",
+		m.viewport.Height,
+	)
+}
+
+func (m *Model) GetYOffset() int {
+	return m.viewport.YOffset
 }

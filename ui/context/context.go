@@ -38,13 +38,18 @@ type ProgramContext struct {
 	View              config.ViewType
 	Error             error
 	StartTask         func(task Task) tea.Cmd
+	Notify            func(message string) tea.Cmd
 	Theme             theme.Theme
 	Styles            Styles
 }
 
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 	var configs []config.SectionConfig
-	if ctx.View == config.PRsView {
+	if ctx.View == config.DashboardsView {
+		for _, cfg := range ctx.Config.Dashboards {
+			configs = append(configs, cfg.ToSectionConfig())
+		}
+	} else if ctx.View == config.PRsView {
 		for _, cfg := range ctx.Config.PRSections {
 			configs = append(configs, cfg.ToSectionConfig())
 		}

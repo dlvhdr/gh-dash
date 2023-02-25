@@ -21,6 +21,8 @@ type KeyMap struct {
 	PageUp        key.Binding
 	NextSection   key.Binding
 	PrevSection   key.Binding
+	NextCard      key.Binding
+	PrevCard      key.Binding
 	SwitchView    key.Binding
 	Search        key.Binding
 	CopyUrl       key.Binding
@@ -60,6 +62,8 @@ func (k KeyMap) NavigationKeys() []key.Binding {
 		k.Down,
 		k.PrevSection,
 		k.NextSection,
+		k.PrevCard,
+		k.NextCard,
 		k.FirstLine,
 		k.LastLine,
 		k.PageDown,
@@ -133,6 +137,14 @@ var Keys = KeyMap{
 		key.WithKeys("left", "h"),
 		key.WithHelp("󰁍/h", "previous section"),
 	),
+	NextCard: key.NewBinding(
+		key.WithKeys("shift+down", "J"),
+		key.WithHelp("⇪+↓/J", "next card"),
+	),
+	PrevCard: key.NewBinding(
+		key.WithKeys("shift+up", "K"),
+		key.WithHelp("⇪+↓/K", "previous card"),
+	),
 	SwitchView: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "switch view"),
@@ -151,7 +163,7 @@ var Keys = KeyMap{
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
-		key.WithHelp("?", "help"),
+		key.WithHelp("?", "toggle help"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "esc", "ctrl+c"),

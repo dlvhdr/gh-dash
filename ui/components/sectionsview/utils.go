@@ -1,54 +1,37 @@
-package ui
+package sectionsview
 
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"text/template"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	log "github.com/charmbracelet/log"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
+	"github.com/dlvhdr/gh-dash/ui/components/section"
 	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
-func (m *Model) getCurrRowData() data.RowData {
-	return m.sectionsView.GetCurrRow()
-}
-
-func (m *Model) getPrevSectionId() int {
-	sectionsConfigs := m.ctx.GetViewSectionsConfig()
-	m.currSectionId = (m.currSectionId - 1) % len(sectionsConfigs)
-	if m.currSectionId < 0 {
-		m.currSectionId += len(sectionsConfigs)
+func (m *Model) getCurrSection() section.Section {
+	sections := m.getCurrentViewSections()
+	if len(sections) == 0 || m.currSectionId >= len(sections) {
+		return nil
 	}
-
-	return m.currSectionId
+	return sections[m.currSectionId]
 }
 
-func (m *Model) getNextSectionId() int {
-	return (m.currSectionId + 1) % len(m.ctx.GetViewSectionsConfig())
-}
-
-type IssueCommandTemplateInput struct {
-	RepoName    string
-	RepoPath    string
-	IssueNumber int
-	HeadRefName string
-}
-
-type PRCommandTemplateInput struct {
-	RepoName    string
-	RepoPath    string
-	PrNumber    int
-	HeadRefName string
+func (m *Model) getCurrRowData() data.RowData {
+	section := m.getCurrSection()
+	if section == nil {
+		return nil
+	}
+	return section.GetCurrRow()
 }
 
 func (m *Model) executeKeybinding(key string) tea.Cmd {
@@ -82,6 +65,20 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	}
 
 	return nil
+}
+
+type IssueCommandTemplateInput struct {
+	RepoName    string
+	RepoPath    string
+	IssueNumber int
+	HeadRefName string
+}
+
+type PRCommandTemplateInput struct {
+	RepoName    string
+	RepoPath    string
+	PrNumber    int
+	HeadRefName string
 }
 
 func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
@@ -123,7 +120,6 @@ func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.Is
 			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
 		}
 	}
-
 	input := IssueCommandTemplateInput{
 		RepoName:    repoName,
 		RepoPath:    repoPath,
@@ -167,23 +163,24 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 	})
 }
 
-func (m *Model) notify(text string) tea.Cmd {
-	id := fmt.Sprint(time.Now().Unix())
-	m.tasks[id] = context.Task{
-		Id:           id,
-		FinishedText: text,
-		State:        context.TaskFinished,
+func (m *Model) getSectionAt(id int) section.Section {
+	sections := m.getCurrentViewSections()
+	if len(sections) <= id {
+		return nil
 	}
-	return func() tea.Msg {
-		return constants.TaskFinishedMsg{
-			TaskId: id,
-			Err:    nil,
-		}
-	}
+	return sections[id]
 }
 
-func isSameRow(rowA data.RowData, rowB data.RowData) bool {
-	return rowA == nil && rowB != nil ||
-		rowA != nil && rowB == nil ||
-		(rowA != nil && rowB != nil && rowA.GetUrl() != rowB.GetUrl())
+func (m *Model) getPrevSectionId() int {
+	sectionsConfigs := m.ctx.GetViewSectionsConfig()
+	m.currSectionId = (m.currSectionId - 1) % len(sectionsConfigs)
+	if m.currSectionId < 0 {
+		m.currSectionId += len(sectionsConfigs)
+	}
+
+	return m.currSectionId
+}
+
+func (m *Model) getNextSectionId() int {
+	return (m.currSectionId + 1) % len(m.ctx.GetViewSectionsConfig())
 }

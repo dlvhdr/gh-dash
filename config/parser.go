@@ -25,14 +25,20 @@ var validate *validator.Validate
 type ViewType string
 
 const (
-	PRsView    ViewType = "prs"
-	IssuesView ViewType = "issues"
+	DashboardsView ViewType = "dashboards"
+	PRsView        ViewType = "prs"
+	IssuesView     ViewType = "issues"
 )
 
 type SectionConfig struct {
 	Title   string
 	Filters string
-	Limit   *int `yaml:"limit,omitempty"`
+	Limit   *int `yaml:"limit,omitempty" validate:"omitempty,gt=0"`
+}
+
+type DashboardsConfig struct {
+	Title    string
+	Sections []SectionConfig `yaml:"sections"`
 }
 
 type PrsSectionConfig struct {
@@ -156,6 +162,7 @@ type ThemeConfig struct {
 }
 
 type Config struct {
+	Dashboards     []DashboardsConfig    `yaml:"dashboards"`
 	PRSections     []PrsSectionConfig    `yaml:"prSections"`
 	IssuesSections []IssuesSectionConfig `yaml:"issuesSections"`
 	Defaults       Defaults              `yaml:"defaults"`
@@ -182,7 +189,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 			PrsLimit:               20,
 			IssuesLimit:            20,
-			View:                   PRsView,
+			View:                   DashboardsView,
 			RefetchIntervalMinutes: 30,
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{

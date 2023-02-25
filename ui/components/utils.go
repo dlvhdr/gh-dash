@@ -5,17 +5,26 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
-func GetIssueTextStyle(ctx *context.ProgramContext, state string) lipgloss.Style {
+func GetIssueTextStyle(
+	ctx *context.ProgramContext,
+	state string,
+) lipgloss.Style {
 	if state == "OPEN" {
 		return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
 	}
 	return lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
 }
 
-func RenderIssueTitle(ctx *context.ProgramContext, state string, title string, number int) string {
+func RenderIssueTitle(
+	ctx *context.ProgramContext,
+	state string,
+	title string,
+	number int,
+) string {
 	prNumber := fmt.Sprintf("#%d", number)
 	var prNumberFg lipgloss.AdaptiveColor
 	if state != "OPEN" {
@@ -33,4 +42,17 @@ func RenderIssueTitle(ctx *context.ProgramContext, state string, title string, n
 
 	res := fmt.Sprintf("%s %s", prNumber, rTitle)
 	return res
+}
+
+func GetPrevCyclicItem(currItem, totalItems int) int {
+	prevItem := (currItem - 1) % totalItems
+	if prevItem < 0 {
+		prevItem += totalItems
+	}
+
+	return prevItem
+}
+
+func GetNextCyclicItem(currItem, totalItems int) int {
+	return (currItem + 1) % totalItems
 }

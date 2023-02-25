@@ -30,6 +30,7 @@ func NewModel(
 	ctx *context.ProgramContext,
 	cfg config.PrsSectionConfig,
 	lastUpdated time.Time,
+	searchDisabled bool,
 ) Model {
 	m := Model{}
 	m.Model =
@@ -42,6 +43,7 @@ func NewModel(
 			m.GetItemSingularForm(),
 			m.GetItemPluralForm(),
 			lastUpdated,
+			searchDisabled,
 		)
 	m.Prs = []data.PullRequestData{}
 
@@ -132,21 +134,25 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		if m.PageInfo != nil {
-			m.Prs = append(m.Prs, msg.Prs...)
-		} else {
-			m.Prs = msg.Prs
-		}
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetRows(m.BuildRows())
-		m.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
+		m.SetPrs(msg)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
 	m.SearchBar = search
 	return &m, tea.Batch(cmd, searchCmd)
+}
+
+func (m *Model) SetPrs(msg SectionPullRequestsFetchedMsg) {
+	if m.PageInfo != nil {
+		m.Prs = append(m.Prs, msg.Prs...)
+	} else {
+		m.Prs = msg.Prs
+	}
+	m.TotalCount = msg.TotalCount
+	m.PageInfo = &msg.PageInfo
+	m.Table.SetRows(m.BuildRows())
+	m.UpdateLastUpdated(time.Now())
+	m.UpdateTotalItemsCount(m.TotalCount)
 }
 
 func GetSectionColumns(
@@ -329,6 +335,16 @@ func (m *Model) ResetRows() {
 	m.Table.ResetCurrItem()
 }
 
+func (m *Model) Focus() {
+	m.Table.IsActive = true
+	m.Table.SyncViewPortContent()
+}
+
+func (m *Model) Unfocus() {
+	m.Table.IsActive = false
+	m.Table.SyncViewPortContent()
+}
+
 func FetchAllSections(
 	ctx context.ProgramContext,
 ) (sections []section.Section, fetchAllCmd tea.Cmd) {
@@ -340,7 +356,8 @@ func FetchAllSections(
 			&ctx,
 			sectionConfig,
 			time.Now(),
-		) // 0 is the search section
+			false,
+		)
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(
 			fetchPRsCmds,

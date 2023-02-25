@@ -18,21 +18,29 @@ import (
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
+type BaseModel struct {
+	Id     int
+	Config config.SectionConfig
+	Ctx    *context.ProgramContext
+	Type   string
+}
+
 type Model struct {
-	Id           int
-	Config       config.SectionConfig
-	Ctx          *context.ProgramContext
-	Spinner      spinner.Model
-	SearchBar    search.Model
-	IsSearching  bool
-	SearchValue  string
-	Table        table.Model
-	Type         string
-	SingularForm string
-	PluralForm   string
-	Columns      []table.Column
-	TotalCount   int
-	PageInfo     *data.PageInfo
+	BaseModel
+	Spinner        spinner.Model
+	SearchDisabled bool
+	SearchBar      search.Model
+	IsSearching    bool
+	SearchValue    string
+	Table          table.Model
+	SingularForm   string
+	PluralForm     string
+	Columns        []table.Column
+	TotalCount     int
+	PageInfo       *data.PageInfo
+	Width          int
+	Height         int
+	Style          *lipgloss.Style
 }
 
 func NewModel(
@@ -43,25 +51,29 @@ func NewModel(
 	columns []table.Column,
 	singular, plural string,
 	lastUpdated time.Time,
+	searchDisabled bool,
 ) Model {
 	m := Model{
-		Id:           id,
-		Type:         sType,
-		Config:       cfg,
-		Ctx:          ctx,
-		Spinner:      spinner.Model{Spinner: spinner.Dot},
-		Columns:      columns,
-		SingularForm: singular,
-		PluralForm:   plural,
-		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
-		SearchValue:  cfg.Filters,
-		IsSearching:  false,
-		TotalCount:   0,
-		PageInfo:     nil,
+		BaseModel: BaseModel{
+			Id:     id,
+			Type:   sType,
+			Config: cfg,
+			Ctx:    ctx,
+		},
+		Spinner:        spinner.Model{Spinner: spinner.Dot},
+		Columns:        columns,
+		SingularForm:   singular,
+		PluralForm:     plural,
+		SearchBar:      search.NewModel(sType, ctx, cfg.Filters),
+		SearchValue:    cfg.Filters,
+		IsSearching:    false,
+		TotalCount:     0,
+		PageInfo:       nil,
+		SearchDisabled: searchDisabled,
 	}
 	m.Table = table.NewModel(
 		*ctx,
-		m.GetDimensions(),
+		constants.Dimensions{Width: 0, Height: 0},
 		lastUpdated,
 		m.Columns,
 		nil,
@@ -73,7 +85,29 @@ func NewModel(
 			),
 		)),
 	)
+	m.Table.IsActive = true
 	return m
+}
+
+func (m *Model) SetDimensions(width, height int) {
+	oldDimensions := m.GetDimensions()
+	newDimensions := constants.Dimensions{Width: width, Height: height}
+	m.Width = newDimensions.Width
+	m.Height = newDimensions.Height
+	tableHeight := newDimensions.Height
+	if !m.SearchDisabled {
+		tableHeight = utils.Max(tableHeight-common.SearchHeight, 0)
+	}
+
+	m.Table.SetDimensions(constants.Dimensions{
+		Height: tableHeight,
+		Width:  newDimensions.Width,
+	})
+
+	if oldDimensions.Height != newDimensions.Height ||
+		oldDimensions.Width != newDimensions.Width {
+		m.Table.SyncViewPortContent()
+	}
 }
 
 type Section interface {
@@ -88,6 +122,7 @@ type Section interface {
 	GetPagerContent() string
 	GetItemSingularForm() string
 	GetItemPluralForm() string
+	SetDimensions(width int, height int)
 }
 
 type Identifier interface {
@@ -134,27 +169,20 @@ func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
 
 func (m *Model) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight - common.SearchHeight,
+		Height: m.Height,
+		Width:  m.Width,
 	}
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldDimensions := m.GetDimensions()
 	m.Ctx = ctx
-	newDimensions := m.GetDimensions()
-	tableDimensions := constants.Dimensions{
-		Height: newDimensions.Height - 2,
-		Width:  newDimensions.Width,
+	dimensions := constants.Dimensions{
+		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		Height: m.Ctx.MainContentHeight,
 	}
-	m.Table.SetDimensions(tableDimensions)
+	m.SetDimensions(dimensions.Width, dimensions.Height)
+	// log.Debug("section.UpdateProgramContext", "dimensions", dimensions)
 	m.Table.UpdateProgramContext(ctx)
-
-	if oldDimensions.Height != newDimensions.Height ||
-		oldDimensions.Width != newDimensions.Width {
-		m.Table.SyncViewPortContent()
-		m.SearchBar.UpdateProgramContext(ctx)
-	}
 }
 
 type SectionRowsFetchedMsg struct {
@@ -194,8 +222,16 @@ func (m *Model) FirstItem() int {
 	return m.Table.FirstItem()
 }
 
+func (m *Model) AtFirstItem() bool {
+	return m.Table.GetCurrItem() == 0
+}
+
 func (m *Model) LastItem() int {
 	return m.Table.LastItem()
+}
+
+func (m *Model) AtLastItem() bool {
+	return m.Table.GetCurrItem() == len(m.Table.Rows)-1
 }
 
 func (m *Model) IsSearchFocused() bool {
@@ -247,7 +283,7 @@ func (m *Model) GetFilters() string {
 }
 
 func (m *Model) GetMainContent() string {
-	if m.Table.Rows == nil {
+	if m.Table.Rows == nil && !m.SearchDisabled {
 		d := m.GetDimensions()
 		return lipgloss.Place(
 			d.Width,
@@ -268,14 +304,21 @@ func (m *Model) GetMainContent() string {
 }
 
 func (m *Model) View() string {
-	var search string
-	search = m.SearchBar.View(*m.Ctx)
+	parts := make([]string, 0)
+	if !m.SearchDisabled {
+		parts = append(parts, m.SearchBar.View(*m.Ctx))
+	}
 
-	return m.Ctx.Styles.Section.ContainerStyle.Copy().Render(
+	style := m.Ctx.Styles.Section.ContainerStyle.Copy()
+	if m.Style != nil {
+		style = *m.Style
+	}
+
+	parts = append(parts, m.GetMainContent())
+	return style.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			search,
-			m.GetMainContent(),
+			parts...,
 		),
 	)
 }
