@@ -194,7 +194,7 @@ func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext)
 			Hidden: baseLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  "󰯢",
 			Width:  utils.IntPtr(4),
 			Hidden: reviewStatusLayout.Hidden,
 		},

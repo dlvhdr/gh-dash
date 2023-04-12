@@ -27,6 +27,6 @@ type Dimensions struct {
 
 const (
 	WaitingIcon = ""
-	FailureIcon = ""
+	FailureIcon = "󰅙"
 	SuccessIcon = ""
 )
