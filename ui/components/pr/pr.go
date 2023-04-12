@@ -33,14 +33,14 @@ func (pr *PullRequest) renderReviewStatus() string {
 		if pr.Data.State == "OPEN" {
 			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
 		}
-		return reviewCellStyle.Render("")
+		return reviewCellStyle.Render("󰄬")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
 		if pr.Data.State == "OPEN" {
 			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.WarningText)
 		}
-		return reviewCellStyle.Render("")
+		return reviewCellStyle.Render("󰌑")
 	}
 
 	return reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
@@ -171,7 +171,7 @@ func (pr *PullRequest) RenderState() string {
 			return " Open"
 		}
 	case "CLOSED":
-		return "﫧Closed"
+		return "󰗨Closed"
 	case "MERGED":
 		return " Merged"
 	default:

@@ -117,7 +117,7 @@ func (m *Model) renderReviewDecision(decision string) string {
 	case "PENDING":
 		return m.ctx.Styles.Common.WaitingGlyph
 	case "COMMENTED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("󰈈")
 	case "APPROVED":
 		return m.ctx.Styles.Common.SuccessGlyph
 	case "CHANGES_REQUESTED":

@@ -187,11 +187,11 @@ func (m *Model) renderMergeablePill() string {
 	if status == "CONFLICTING" {
 		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
 			Background(m.ctx.Theme.WarningText).
-			Render(" Merge Conflicts")
+			Render("󰅖 Merge Conflicts")
 	} else if status == "MERGEABLE" {
 		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
 			Background(m.ctx.Theme.SuccessText).
-			Render(" Mergeable")
+			Render("󰃸 Mergeable")
 	}
 
 	return ""
@@ -205,19 +205,19 @@ func (m *Model) renderChecksPill() string {
 	if status == "FAILURE" {
 		return s.Copy().
 			Background(t.WarningText).
-			Render(" Checks")
+			Render("󰅖 Checks")
 	} else if status == "PENDING" {
 		return s.Copy().
 			Background(t.FaintText).
 			Foreground(t.PrimaryText).
 			Faint(true).
-			Render(" Checks")
+			Render(" Checks")
 	}
 
 	return s.Copy().
 		Background(t.SuccessText).
 		Foreground(t.InvertedText).
-		Render(" Checks")
+		Render("󰄬 Checks")
 }
 
 func (m *Model) renderPills() string {
