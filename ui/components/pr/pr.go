@@ -171,7 +171,7 @@ func (pr *PullRequest) RenderState() string {
 			return " Open"
 		}
 	case "CLOSED":
-		return "󰗨Closed"
+		return "󰗨 Closed"
 	case "MERGED":
 		return " Merged"
 	default:
