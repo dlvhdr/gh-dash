@@ -107,7 +107,13 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 
 func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
 	repoName := prData.GetRepoNameWithOwner()
-	repoPath, _ := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+
+	if !ok {
+		return func() tea.Msg {
+			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
+		}
+	}
 
 	input := PRCommandTemplateInput{
 		RepoName:    repoName,
@@ -131,7 +137,13 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 
 func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {
 	repoName := issueData.GetRepoNameWithOwner()
-	repoPath, _ := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+
+	if !ok {
+		return func() tea.Msg {
+			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
+		}
+	}
 
 	input := IssueCommandTemplateInput{
 		RepoName:    repoName,
