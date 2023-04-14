@@ -16,9 +16,9 @@ import (
 func (m *Model) checkout() (tea.Cmd, error) {
 	pr := m.GetCurrRow()
 	repoName := pr.GetRepoNameWithOwner()
-	repoPath := common.GetRepoLocalPath(repoName, m.Ctx.Config.RepoPaths)
+	repoPath, ok := common.GetRepoLocalPath(repoName, m.Ctx.Config.RepoPaths)
 
-	if repoPath == "" {
+	if !ok {
 		return nil, errors.New("Local path to repo not specified, set one in your config.yml under repoPaths")
 	}
 

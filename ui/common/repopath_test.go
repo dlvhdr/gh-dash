@@ -15,7 +15,10 @@ var (
 
 func TestGetRepoLocalPathExactMatch(t *testing.T) {
 	want := "/path/to/user/repo"
-	got := common.GetRepoLocalPath("user/repo", configPaths)
+	got, found := common.GetRepoLocalPath("user/repo", configPaths)
+	if !found {
+		t.Errorf("expected to find path for repo 'user/repo'")
+	}
 	if want != got {
 		t.Errorf("want '%s', got '%s'", want, got)
 	}
@@ -23,7 +26,10 @@ func TestGetRepoLocalPathExactMatch(t *testing.T) {
 
 func TestGetRepoLocalPathExactNoMatch(t *testing.T) {
 	want := ""
-	got := common.GetRepoLocalPath("user/other_repo", configPaths)
+	got, found := common.GetRepoLocalPath("user/other_repo", configPaths)
+	if found {
+		t.Errorf("expected to not find path for repo 'user/other_repo'")
+	}
 	if want != got {
 		t.Errorf("want '%s', got '%s'", want, got)
 	}
@@ -31,7 +37,10 @@ func TestGetRepoLocalPathExactNoMatch(t *testing.T) {
 
 func TestGetRepoLocalPathWildcardMatch(t *testing.T) {
 	want := "/path/to/user_2/repo123"
-	got := common.GetRepoLocalPath("user_2/repo123", configPaths)
+	got, found := common.GetRepoLocalPath("user_2/repo123", configPaths)
+	if !found {
+		t.Errorf("expected to find path for repo 'user_2/repo123'")
+	}
 	if want != got {
 		t.Errorf("want '%s', got '%s'", want, got)
 	}
@@ -39,7 +48,10 @@ func TestGetRepoLocalPathWildcardMatch(t *testing.T) {
 
 func TestGetRepoLocalPathBadPath(t *testing.T) {
 	want := ""
-	got := common.GetRepoLocalPath("invalid-lookup", configPaths)
+	got, found := common.GetRepoLocalPath("invalid-lookup", configPaths)
+	if found {
+		t.Errorf("expected to not find path for repo 'invalid-lookup'")
+	}
 	if want != got {
 		t.Errorf("want '%s', got '%s'", want, got)
 	}
