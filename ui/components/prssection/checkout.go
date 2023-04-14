@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
@@ -15,9 +16,9 @@ import (
 func (m *Model) checkout() (tea.Cmd, error) {
 	pr := m.GetCurrRow()
 	repoName := pr.GetRepoNameWithOwner()
-	repoPath, ok := m.Ctx.Config.RepoPaths[repoName]
+	repoPath := common.GetRepoLocalPath(repoName, m.Ctx.Config.RepoPaths)
 
-	if !ok {
+	if repoPath == "" {
 		return nil, errors.New("Local path to repo not specified, set one in your config.yml under repoPaths")
 	}
 
