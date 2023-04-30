@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/cli/go-gh"
+	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 )
 
@@ -146,7 +146,7 @@ type PullRequestsResponse struct {
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
-	client, err := gh.GQLClient(nil)
+	client, err := gh.DefaultGraphQLClient()
 
 	if err != nil {
 		return PullRequestsResponse{}, err

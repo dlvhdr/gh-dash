@@ -1,11 +1,11 @@
 package data
 
 import (
-	"github.com/cli/go-gh"
+	gh "github.com/cli/go-gh/v2/pkg/api"
 )
 
 func CurrentLoginName() (string, error) {
-	client, err := gh.GQLClient(nil)
+	client, err := gh.DefaultGraphQLClient()
 	if err != nil {
 		return "", nil
 	}
