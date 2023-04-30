@@ -1,15 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"math"
-	"os/exec"
-	"runtime"
 	"strconv"
-	"strings"
 	"time"
-
-	log "github.com/charmbracelet/log"
 )
 
 const (
@@ -30,43 +24,6 @@ func Min(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func openInLinuxBrowser(url string) error {
-	var err error
-	providers := []string{"xdg-open", "x-www-browser", "www-browser", "wslview"}
-
-	for _, provider := range providers {
-		if _, err = exec.LookPath(provider); err == nil {
-			err = exec.Command(provider, url).Start()
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-	}
-
-	return &exec.Error{Name: strings.Join(providers, ","), Err: exec.ErrNotFound}
-}
-
-func OpenBrowser(url string) {
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		err = openInLinuxBrowser(url)
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	case "android":
-		err = exec.Command("termux-open-url", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func TimeElapsed(then time.Time) string {

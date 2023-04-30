@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	log "github.com/charmbracelet/log"
+	"github.com/cli/go-gh/v2/pkg/browser"
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
@@ -27,7 +29,6 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/ui/theme"
-	"github.com/dlvhdr/gh-dash/utils"
 )
 
 type Model struct {
@@ -171,8 +172,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.OpenGithub):
 			var currRow = m.getCurrRowData()
+			b := browser.New("", os.Stdout, os.Stdin)
 			if currRow != nil {
-				utils.OpenBrowser(currRow.GetUrl())
+				err := b.Browse(currRow.GetUrl())
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 
 		case key.Matches(msg, m.keys.Refresh):
