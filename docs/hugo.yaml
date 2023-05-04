@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://platen.io/schemas/config/schema.json
 # Update to your own settings for URL/title
-baseURL: https://dlvhdr.github.io/gh-dash
+baseURL: https://dlvhdr.github.io/
 title: gh-dash
 
 markup:
