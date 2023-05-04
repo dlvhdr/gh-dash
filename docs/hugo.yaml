@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://platen.io/schemas/config/schema.json
 # Update to your own settings for URL/title
-baseURL: https://platen-template.netlify.app/
-title:   gh-dash
+baseURL: https://dlvhdr.github.io/gh-dash
+title: gh-dash
 
 markup:
   goldmark:
@@ -17,7 +17,7 @@ markup:
 menu:
   after:
     - name: GitHub Repo
-      url:  https://github.com/dlvhdr/gh-dash
+      url: https://github.com/dlvhdr/gh-dash
       weight: 10
       pre: <sl-icon name="github" library="lucide"></sl-icon>
 
