@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://platen.io/schemas/config/schema.json
+# Update to your own settings for URL/title
+baseURL: https://platen-template.netlify.app/
+title:   gh-dash
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      wrapStandAloneImageWithinParagraph: false
+      attribute:
+        block: true
+  highlight:
+    noClasses: false
+
+menu:
+  after:
+    - name: GitHub Repo
+      url:  https://github.com/dlvhdr/gh-dash
+      weight: 10
+      pre: <sl-icon name="github" library="lucide"></sl-icon>
+
+module:
+  replacements: >-
+    https://github.com/dlvhdr/gh-dash -> ../
+  imports:
+    - path: github.com/platenio/platen/modules/platen
+    - path: github.com/platenio/platen/modules/schematize
+    - path: https://github.com/dlvhdr/gh-dash
+      ignoreConfig: true
+      ignoreImports: true
+
+params:
+  description: >-
+    A GitHub CLI extension to display a dashboard with pull requests and issues
+    by filters you care about.
+  platen:
+    theme:
+      mode: auto
+    display:
+      header:
+        title_as_heading: true

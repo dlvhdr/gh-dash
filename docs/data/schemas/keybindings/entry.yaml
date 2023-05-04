@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: entry.schema.yaml
+title: Valid Keybinding Entry
+description: A keybinding to run a shell command in a view.
+type: object
+schematize:
+  details: |
+    Every valid entry for the [sref:`keybindings.prs`] and [sref:`keybindings.issues`] configuration
+    options must have a [sref:`key`] and [sref:`command`]. When a user presses the key or key
+    combination in the view where those keys are bound, the dashboard shells out and executes the
+    command.
+
+    [sref:`keybindings.prs`]: keybindings.prs
+    [sref:`keybindings.issues`]: keybindings.issues
+    [sref:`key`]: keybindings.entry.key
+    [sref:`command`]: keybindings.entry.command
+required:
+  - key
+  - command
+properties:
+  key:
+    title: Bound Key
+    description: The combination of keys that trigger the command.
+    type: string
+    schematize:
+      weight: 1
+      details: |
+        Specifies one or more keys to bind to the [sref:`command`] for an entry.
+
+        [sref:`command`]: keybindings.entry.command
+  command:
+    title: Bound Command
+    description: The shell command that runs when you press the key combination.
+    type: string
+    schematize:
+      weight: 2
+      details: |
+        Specifies the command bound to the [sref:`key`] for an entry.
+
+        [sref:`key`]: keybindings.entry.key

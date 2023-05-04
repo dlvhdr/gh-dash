@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: defaults.schema.yaml
+title: Default Options
+description: Define options that can be overrridden per-section.
+schematize:
+  details: |
+    These settings define the default behavior for the dashboard. You can override many of these
+    settings on a per-section basis.
+  default:
+    details: |
+      By default, the dashboard is configured to:
+      
+      - Display the preview pane with a width of 50 columns for all work items.
+      - Only fetch 20 PRs and issues at a time for each section.
+      - Display the PRs view when the dashboard loads.
+      - Refetch PRs and issues for each section every 30 minutes.
+
+      For more details on the default layouts, see the documentation for [sref:PR] and [sref:issue]
+      layout definitions.
+
+      [sref:PR]:    layout.pr.default-value
+      [sref:issue]: layout.issue.default-value
+  format: yaml
+type: object
+default:
+  preview:
+    open: true
+    width: 50
+  prsLimit: 20
+  issuesLimit: 20
+  view: prs
+  refetchIntervalMinutes: 30
+properties:
+  layout:
+    title: Layout Options
+    description: Defines the layout for the work item tables in the dashboard.
+    schematize:
+      weight: 1
+      skip_schema_render: true
+      details: |
+        This setting defines the layout for the work item tables in the dashboard. You can override
+        these settings in any section you define in the [sref:`prSections`] or
+        [sref:`issueSections`] settings.
+
+        They determine which columns are displayed and how.
+
+        [sref:`prSections`]: gh-dash.prSections
+        [sref:`issueSections`]: gh-dash.issueSections
+    type: object
+    properties:
+      prs:
+        $ref: ./layout/pr.yaml
+      issues:
+        $ref: ./layout/issue.yaml
+  prsLimit:
+    title: PR Fetch Limit
+    description: Global limit on the number of PRs fetched for the dashboard
+    schematize:
+      weight: 2
+      details: |
+        This setting defines how many PRs the dashboard should fetch for each section when:
+        
+        - The dashboard first loads.
+        - The [sref:fetch interval] elapses.
+        - You navigate to the next PR in a table without another fetched PR to display.
+        - You use the [refresh current section] or [refresh all sections] commands.
+
+        [sref:fetch interval]:     defaults.fetchIntervalMinutes
+        [refresh current section]: /getting-started/keybindings/global/#refresh-current-section
+        [refresh all sections]:    /getting-started/keybindings/global/#refresh-all-sections
+    type: integer
+    minimum: 1
+    default: 20
+  issuesLimit:
+    title: Issue Fetch Limit
+    description: Global limit on the number of issues fetched for the dashboard
+    schematize:
+      weight: 3
+      details: |
+        This setting defines how many issues the dashboard should fetch for each section when:
+        
+        - The dashboard first loads.
+        - The [sref:fetch interval] elapses.
+        - You navigate to the next issue in a table without another fetched issue to display.
+        - You use the [refresh current section] or [refresh all sections] commands.
+
+        [sref:fetch interval]:     defaults.fetchIntervalMinutes
+        [refresh current section]: /getting-started/keybindings/global/#refresh-current-section
+        [refresh all sections]:    /getting-started/keybindings/global/#refresh-all-sections
+    type: integer
+    minimum: 1
+    default: 20
+  preview:
+    title: Preview Pane
+    description: Defaults for the preview pane
+    schematize:
+      weight: 3
+      skip_schema_render: true
+      details: |
+        These settings define the how the preview pane displays in the dashboard. You can specify
+        whether the preview pane is open by default and how many columns wide it should be when
+        displayed.
+    type: object
+    properties:
+      open:
+        title: Open on Load
+        description: Whether to have the preview pane open by default when the dashboard loads.
+        schematize:
+          weight: 1
+          details: |
+            Specifies whether the preview pane should be open by default for the selected work item
+            when the dashboard loads. You can always use the [toggle preview pane] command to
+            toggle the preview pane's visibility.
+
+            By default, the dashboard displays the preview pane.
+
+            [toggle preview pane]: /getting-started/keybindings/preview/#toggle-preview-pane
+        type: boolean
+        default: true
+      width:
+        title: Preview Pane Width
+        description: Specifies the width of the preview pane in columns.
+        schematize:
+          weight: 2
+          details: |
+            Specifies how many columns wide the preview pane should be when displayed.
+
+            By default, the preview pane is 50 columns wide.
+        type: integer
+        minimum: 1
+        default: 50
+  refetchIntervalMinutes:
+    title: Refetch Interval in Minutes
+    description: Specifies how often to refetch PRs and Issues in minutes.
+    schematize:
+      weight: 4
+      details: |
+        This setting defines how often the dashboard should fetch issues and PRs from GitHub. The
+        dashboard fetches work items for every section in the active view when the dashboard loads
+        and the first time you switch to the inactive view.
+
+        After the dashboard fetches the work items for the first time, it waits until this setting's
+        defined interval elapses before fetching the work items again.
+
+        By default, the dashboard refetches work items every 30 minutes.
+
+        You can always use the [refresh current section] or [refresh all sections] command to
+        refetch work items in the current view. If you change the search query for a view, the
+        dashboard fetches results for the updated query immediately.
+
+        [refresh current section]: /getting-started/keybindings/global/#refresh-current-section
+        [refresh all sections]:    /getting-started/keybindings/global/#refresh-all-sections
+    type: integer
+    minimum: 1
+    default: 30
+  view:
+    title: Default View
+    description: Specifies whether the dashboard should display the PRs or Issues view on load.
+    schematize:
+      weight: 5
+      details: |
+        This setting defines whether the dashboard should display the PRs or Issues view when it
+        first loads.
+
+        By default, the dashboard displays the PRs view.
+    type: string
+    enum:
+      - issues
+      - prs
+    default: prs

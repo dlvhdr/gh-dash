@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://platen.io/modules/platen/config/site/config/schema.json
+theme:
+  fonts:
+    settings:
+      body: 
+        family: "'Mona Sans', sans-serif"
+        selector: body
+      code: 
+        family: "'FiraCode NF Retina', monospace"
+        selector: code
+      keys:
+        family: "'FiraCode NF Retina', monospace"
+        selector: kbd
+    styles:
+      - import_name: firacode
+      - import_name: mona-sans
+
+features:
+  shoelace:
+    icons:
+      always_load_libraries:
+        - lucide
+
+markup:
+  details:
+    use_legacy: false
