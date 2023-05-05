@@ -23,11 +23,11 @@ menu:
 
 module:
   replacements: >-
-    https://github.com/dlvhdr/gh-dash -> ../
+    github.com/dlvhdr/gh-dash -> ../
   imports:
     - path: github.com/platenio/platen/modules/platen
     - path: github.com/platenio/platen/modules/schematize
-    - path: https://github.com/dlvhdr/gh-dash
+    - path: github.com/dlvhdr/gh-dash
       ignoreConfig: true
       ignoreImports: true
 
