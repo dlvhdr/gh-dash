@@ -56,7 +56,7 @@ jobs:
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
 
       - name: Setup Hugo modules
-        run: hugo mod get -u
+        run: hugo mod get
         working-directory: ./docs
 
       - name: Build with Hugo
