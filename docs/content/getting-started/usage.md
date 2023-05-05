@@ -1,7 +1,7 @@
 ---
 title: Usage
 linkTitle: >-
-  ![icon:terminal](lucide) Usage
+  ![icon:terminal](lucide)&nbsp;Usage
 summary: >-
   Get started using `gh-dash`.
 weight: 2

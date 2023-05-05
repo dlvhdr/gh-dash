@@ -1,7 +1,7 @@
 ---
 title: Global
 linkTitle: >-
-  ![icon:globe](lucide) Global
+  ![icon:globe](lucide)&nbsp;Global
 weight: 1
 summary: >-
   Lists the default keybindings for controlling the dashboard globally.

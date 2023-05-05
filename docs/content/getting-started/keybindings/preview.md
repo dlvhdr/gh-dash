@@ -1,7 +1,7 @@
 ---
 title: Preview Pane
 linkTitle: >-
-  ![icon:view](lucide) Preview Pane
+  ![icon:view](lucide)&nbsp;Preview Pane
 weight: 6
 summary: >-
   Lists the default keybindings for interacting with the preview pane in the Dashboard.

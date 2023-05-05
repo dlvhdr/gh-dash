@@ -1,7 +1,7 @@
 ---
 title: Selected Item
 linkTitle: >-
-  ![icon:box-select](lucide) Selected Item
+  ![icon:box-select](lucide)&nbsp;Selected Item
 weight: 3
 summary: >-
   Lists the default keybindings for interacting with active items in the dashboard in any view.

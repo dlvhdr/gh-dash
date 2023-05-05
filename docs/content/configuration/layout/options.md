@@ -1,7 +1,7 @@
 ---
 title: Valid Options
 linkTitle: >-
-  ![icon:check-check](lucide) Valid Options
+  ![icon:check-check](lucide)&nbsp;Valid Options
 summary: >-
   Documentation for the valid options of columns in your GitHub dashboard's layout.
 weight: 99

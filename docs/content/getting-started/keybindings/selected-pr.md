@@ -1,7 +1,7 @@
 ---
 title: Selected PR
 linkTitle: >-
-  ![icon:git-pull-request](lucide) Selected PR
+  ![icon:git-pull-request](lucide)&nbsp;Selected PR
 weight: 5
 summary: >-
   Lists the default keybindings for interacting with an actively selected item
