@@ -69,7 +69,7 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL https://dlvhdr.github.io/
+            --baseURL "${{ steps.pages.outputs.base_url }}/"
         working-directory: ./docs
 
       - name: Upload artifact
