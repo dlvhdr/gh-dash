@@ -1,7 +1,7 @@
 ---
 title: Contributing
 linkTitle: >-
-  ![icon:heart-handshake](lucide) Contributing
+  ![icon:heart-handshake](lucide)&nbsp;Contributing
 summary: >-
   Explains how folks can contribute to the `gh-dash` project.
 weight: 3

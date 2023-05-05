@@ -1,7 +1,7 @@
 ---
 title: Defaults
 linkTitle: >-
-  ![icon:settings-2](lucide) Defaults
+  ![icon:settings-2](lucide)&nbsp;Defaults
 summary: >-
   Documentation for the `defaults` setting options for your GitHub dashboard.
 weight: 4

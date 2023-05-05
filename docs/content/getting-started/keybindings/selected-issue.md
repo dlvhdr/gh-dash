@@ -1,7 +1,7 @@
 ---
 title: Selected Issue
 linkTitle: >-
-  ![icon:circle-dot](lucide) Selected Issue
+  ![icon:circle-dot](lucide)&nbsp;Selected Issue
 weight: 4
 summary: >-
   Lists the default keybindings for interacting with an actively selected item

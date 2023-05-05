@@ -1,7 +1,7 @@
 ---
 title: PR Section
 linkTitle: >-
-  ![icon:git-pull-request](lucide) PR Section
+  ![icon:git-pull-request](lucide)&nbsp;PR Section
 summary: >-
   Documentation for configuring the PR sections of your GitHub dashboard.
 weight: 2

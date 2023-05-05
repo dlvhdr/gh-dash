@@ -1,7 +1,7 @@
 ---
 title: Navigation
 linkTitle: >-
-  ![icon:navigation](lucide) Navigation
+  ![icon:navigation](lucide)&nbsp;Navigation
 weight: 2
 summary: >-
   Lists the default keybindings for navigating the dashboard.

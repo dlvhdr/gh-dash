@@ -1,7 +1,7 @@
 ---
 title: Issue Section
 linkTitle: >-
-  ![icon:circle-dot](lucide) Issue Section
+  ![icon:circle-dot](lucide)&nbsp;Issue Section
 summary: >-
   Documentation for configuring the issues sections of your GitHub dashboard.
 weight: 3
