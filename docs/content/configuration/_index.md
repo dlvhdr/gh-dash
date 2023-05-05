@@ -50,7 +50,7 @@ following these steps:
 1. Add the following line to the top of your configuration file:
 
    ```yaml
-   # yaml-language-server: $schema=https://dlvdhr.github.io/gh-dash/configuration/gh-dash/schema.json
+   # yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
    ```
 
 1. Instead of adding a comment to your configuration file, you could create the
@@ -59,7 +59,7 @@ following these steps:
    ```json
    {
        "yaml.schemas": {
-           "https://dlvdhr.github.io/gh-dash/configuration/gh-dash/schema.json": "*.yml"
+           "https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json": "*.yml"
        }
    }
    ```
