@@ -300,8 +300,6 @@ func (parser ConfigParser) createConfigFileIfMissing(configFilePath string) erro
 }
 
 func (parser ConfigParser) getExistingConfigFile() (*string, error) {
-	var err error
-	var dashConfigFile string
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
@@ -312,63 +310,62 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		xdgConfigDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
 
-	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName)
-	if _, err := os.Stat(dashConfigFile); err == nil {
-		return &dashConfigFile, nil
-	}
-
-	dashConfigFile = filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName)
-	if _, err := os.Stat(dashConfigFile); err == nil {
-		return &dashConfigFile, nil
-	}
-
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
 		return nil, err
 	}
 
-	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYmlFileName)
-	if _, err := os.Stat(dashConfigFile); err == nil {
-		return &dashConfigFile, nil
+	configPaths := []string{
+		os.Getenv("GH_DASH_CONFIG"), // If GH_DASH_CONFIG is empty, the os.Stat call fails
+		filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName),
+		filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName),
+		filepath.Join(userConfigDir, DashDir, ConfigYmlFileName),
+		filepath.Join(userConfigDir, DashDir, ConfigYamlFileName),
 	}
 
-	dashConfigFile = filepath.Join(userConfigDir, DashDir, ConfigYamlFileName)
-	if _, err := os.Stat(dashConfigFile); err == nil {
-		return &dashConfigFile, nil
+	// Check if each config file exists, return the first one that does
+	for _, configPath := range configPaths {
+		if configPath == "" {
+			continue // Skip checking if path is empty
+		}
+		if _, err := os.Stat(configPath); err == nil {
+			return &configPath, nil
+		}
 	}
 
 	return nil, nil
 }
 
+
 func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
-	var err error
+	var configFilePath string
 
-	existingConfigFile, err := parser.getExistingConfigFile()
-	if err != nil {
-		return "", err
-	}
-	if existingConfigFile != nil {
-		return *existingConfigFile, nil
-	}
-
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
+	ghDashConfig := os.Getenv("GH_DASH_CONFIG")
+	if ghDashConfig != "" {
+		configFilePath = ghDashConfig
+	} else {
+		configDir := os.Getenv("XDG_CONFIG_HOME")
+		if configDir == "" {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				return "", err
+			}
+			configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 		}
-		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
+
+		dashConfigDir := filepath.Join(configDir, DashDir)
+		configFilePath = filepath.Join(dashConfigDir, ConfigYmlFileName)
 	}
 
-	dashConfigDir := filepath.Join(configDir, DashDir)
-	err = os.MkdirAll(dashConfigDir, os.ModePerm)
-	if err != nil {
-		return "", configError{parser: parser, configDir: configDir, err: err}
+	// Ensure directory exists before attempting to create file
+	configDir := filepath.Dir(configFilePath)
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		if err = os.MkdirAll(configDir, os.ModePerm); err != nil {
+			return "", configError{parser: parser, configDir: configDir, err: err}
+		}
 	}
 
-	configFilePath := filepath.Join(dashConfigDir, ConfigYmlFileName)
-	err = parser.createConfigFileIfMissing(configFilePath)
-	if err != nil {
+	if err := parser.createConfigFileIfMissing(configFilePath); err != nil {
 		return "", configError{parser: parser, configDir: configDir, err: err}
 	}
 
