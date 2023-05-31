@@ -80,7 +80,7 @@ Usage:
   gh dash [flags]
 
 Flags:
-  -c, --config string   use this configuration file (default is $XDG_CONFIG_HOME/gh-dash/config.yml)
+  -c, --config string   use this configuration file (default is $GH_DASH_CONFIG, or if not set, $XDG_CONFIG_HOME/gh-dash/config.yml)
       --debug           passing this flag will allow writing debug output to debug.log
   -h, --help            help for gh-dash
 ```
@@ -91,7 +91,7 @@ A section is defined by a:
 - title - shown in the TUI
 - filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
 
-All configuration is provided within a `config.yml` file under the extension's directory (either `$XDG_CONFIG_HOME/gh-dash` or `~/.config/gh-dash/` or your OS config dir)
+All configuration is provided within a `config.yml` file under the extension's directory (either `$XDG_CONFIG_HOME/gh-dash` or `~/.config/gh-dash/` or your OS config dir) or `$GH_DASH_CONFIG`.
 
 An example `config.yml` file contains:
 

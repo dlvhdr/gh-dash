@@ -89,7 +89,7 @@ func init() {
 		"config",
 		"c",
 		"",
-		"use this configuration file (default is $XDG_CONFIG_HOME/gh-dash/config.yml)",
+		"use this configuration file (default is $GH_DASH_CONFIG, or if not set, \n$XDG_CONFIG_HOME/gh-dash/config.yml)",
 	)
 	rootCmd.MarkFlagFilename("config", "yaml", "yml")
 
