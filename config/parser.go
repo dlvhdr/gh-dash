@@ -319,8 +319,6 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		os.Getenv("GH_DASH_CONFIG"), // If GH_DASH_CONFIG is empty, the os.Stat call fails
 		filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName),
 		filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName),
-		filepath.Join(userConfigDir, DashDir, ConfigYmlFileName),
-		filepath.Join(userConfigDir, DashDir, ConfigYamlFileName),
 	}
 
 	// Check if each config file exists, return the first one that does
