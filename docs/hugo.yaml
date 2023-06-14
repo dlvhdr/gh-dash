@@ -35,9 +35,3 @@ params:
   description: >-
     A GitHub CLI extension to display a dashboard with pull requests and issues
     by filters you care about.
-  platen:
-    theme:
-      mode: auto
-    display:
-      header:
-        title_as_heading: true
