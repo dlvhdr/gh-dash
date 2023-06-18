@@ -3,6 +3,7 @@ package context
 import (
 	bbHelp "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/theme"
 )
@@ -56,8 +57,7 @@ type Styles struct {
 		PagerStyle     lipgloss.Style
 	}
 	ListViewPort struct {
-		PagerHeight int
-		PagerStyle  lipgloss.Style
+		PagerStyle lipgloss.Style
 	}
 	Table struct {
 		CellStyle                lipgloss.Style
@@ -82,12 +82,24 @@ type Styles struct {
 func InitStyles(theme theme.Theme) Styles {
 	var s Styles
 
-	s.Colors.OpenIssue = lipgloss.AdaptiveColor{Light: "#42A0FA", Dark: "#42A0FA"}
-	s.Colors.ClosedIssue = lipgloss.AdaptiveColor{Light: "#C38080", Dark: "#C38080"}
-	s.Colors.SuccessText = lipgloss.AdaptiveColor{Light: "#3DF294", Dark: "#3DF294"}
+	s.Colors.OpenIssue = lipgloss.AdaptiveColor{
+		Light: "#42A0FA",
+		Dark:  "#42A0FA",
+	}
+	s.Colors.ClosedIssue = lipgloss.AdaptiveColor{
+		Light: "#C38080",
+		Dark:  "#C38080",
+	}
+	s.Colors.SuccessText = lipgloss.AdaptiveColor{
+		Light: "#3DF294",
+		Dark:  "#3DF294",
+	}
 	s.Colors.OpenPR = s.Colors.OpenIssue
 	s.Colors.ClosedPR = s.Colors.ClosedIssue
-	s.Colors.MergedPR = lipgloss.AdaptiveColor{Light: "#A371F7", Dark: "#A371F7"}
+	s.Colors.MergedPR = lipgloss.AdaptiveColor{
+		Light: "#A371F7",
+		Dark:  "#A371F7",
+	}
 
 	s.Common = common.BuildStyles(theme)
 
@@ -119,7 +131,8 @@ func InitStyles(theme theme.Theme) Styles {
 		Foreground(theme.FaintText)
 
 	s.Section.ContainerPadding = 1
-	s.Section.ContainerStyle = lipgloss.NewStyle().Padding(0, s.Section.ContainerPadding)
+	s.Section.ContainerStyle = lipgloss.NewStyle().
+		Padding(0, s.Section.ContainerPadding)
 	s.Section.SpinnerStyle = lipgloss.NewStyle().Padding(0, 1)
 	s.Section.EmptyStateStyle = lipgloss.NewStyle().
 		Faint(true).
@@ -137,7 +150,6 @@ func InitStyles(theme theme.Theme) Styles {
 	s.PrSection.PrAuthorCellWidth = 15
 
 	s.Sidebar.BorderWidth = 1
-	s.Sidebar.PagerHeight = 2
 	s.Sidebar.ContentPadding = 2
 	s.Sidebar.Root = lipgloss.NewStyle().
 		Padding(0, s.Sidebar.ContentPadding).
@@ -155,14 +167,12 @@ func InitStyles(theme theme.Theme) Styles {
 		BorderForeground(theme.PrimaryBorder)
 	s.Sidebar.PagerStyle = lipgloss.NewStyle().
 		Height(s.Sidebar.PagerHeight).
-		PaddingTop(1).
 		Bold(true).
 		Foreground(theme.FaintText)
 
 	s.ListViewPort.PagerStyle = lipgloss.NewStyle().
-		Height(common.ListPagerHeight).
-		MaxHeight(common.ListPagerHeight).
-		PaddingTop(1).
+		Padding(0, 1).
+		Background(theme.SelectedBackground).
 		Foreground(theme.FaintText)
 
 	s.Table.CellStyle = lipgloss.NewStyle().PaddingLeft(1).
@@ -173,7 +183,8 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Table.TitleCellStyle = s.Table.CellStyle.Copy().
 		Bold(true).
 		Foreground(theme.PrimaryText)
-	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.Copy().Width(common.SingleRuneWidth)
+	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.Copy().
+		Width(common.SingleRuneWidth)
 	s.Table.HeaderStyle = lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(theme.FaintBorder).
@@ -201,7 +212,12 @@ func InitStyles(theme theme.Theme) Styles {
 		BorderBottom(true).
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderBottomForeground(theme.PrimaryBorder)
-	s.Tabs.ViewSwitcher = lipgloss.NewStyle()
+	s.Tabs.ViewSwitcher = lipgloss.NewStyle().
+		Background(theme.SecondaryText).
+		Foreground(theme.InvertedText).
+		Padding(0, 1).
+		Bold(true)
+
 	s.Tabs.ActiveView = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Bold(true).

@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/config"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
@@ -39,35 +39,17 @@ func (m Model) View(ctx context.ProgramContext) string {
 		}
 	}
 
-	viewSwitcher := m.renderViewSwitcher(ctx)
-	tabsWidth := ctx.ScreenWidth - lipgloss.Width(viewSwitcher)
 	renderedTabs := lipgloss.NewStyle().
-		Width(tabsWidth).
-		MaxWidth(tabsWidth).
+		Width(ctx.ScreenWidth).
+		MaxWidth(ctx.ScreenWidth).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
 
 	return ctx.Styles.Tabs.TabsRow.Copy().
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs, viewSwitcher))
+		Render(renderedTabs)
 }
 
 func (m *Model) SetCurrSectionId(id int) {
 	m.CurrSectionId = id
-}
-
-func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
-	var prsStyle, issuesStyle lipgloss.Style
-	if ctx.View == config.PRsView {
-		prsStyle = ctx.Styles.Tabs.ActiveView
-		issuesStyle = ctx.Styles.Tabs.InactiveView
-	} else {
-		prsStyle = ctx.Styles.Tabs.InactiveView
-		issuesStyle = ctx.Styles.Tabs.ActiveView
-	}
-
-	prs := prsStyle.Render("[ PRs]")
-	issues := issuesStyle.Render("[ Issues]")
-	return ctx.Styles.Tabs.ViewSwitcher.Copy().
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, prs, issues))
 }

@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/utils"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
+
+	"github.com/dlvhdr/gh-dash/utils"
 )
 
 const DashDir = "gh-dash"
@@ -54,7 +55,7 @@ type PreviewConfig struct {
 }
 
 type ColumnConfig struct {
-	Width  *int  `yaml:"width,omitempty" validate:"omitempty,gt=0"`
+	Width  *int  `yaml:"width,omitempty"  validate:"omitempty,gt=0"`
 	Hidden *bool `yaml:"hidden,omitempty"`
 }
 
@@ -113,18 +114,18 @@ type Pager struct {
 type HexColor string
 
 type ColorThemeText struct {
-	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary"   validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Inverted  HexColor `yaml:"inverted" validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
-	Warning   HexColor `yaml:"warning" validate:"hexcolor"`
-	Success   HexColor `yaml:"success" validate:"hexcolor"`
+	Inverted  HexColor `yaml:"inverted"  validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
+	Warning   HexColor `yaml:"warning"   validate:"hexcolor"`
+	Success   HexColor `yaml:"success"   validate:"hexcolor"`
 }
 
 type ColorThemeBorder struct {
-	Primary   HexColor `yaml:"primary" validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary"   validate:"hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint" validate:"hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
 }
 
 type ColorThemeBackground struct {
@@ -132,9 +133,9 @@ type ColorThemeBackground struct {
 }
 
 type ColorTheme struct {
-	Text       ColorThemeText       `yaml:"text" validate:"required,dive"`
+	Text       ColorThemeText       `yaml:"text"       validate:"required,dive"`
 	Background ColorThemeBackground `yaml:"background" validate:"required,dive"`
-	Border     ColorThemeBorder     `yaml:"border" validate:"required,dive"`
+	Border     ColorThemeBorder     `yaml:"border"     validate:"required,dive"`
 }
 
 type ColorThemeConfig struct {
@@ -275,7 +276,9 @@ Original error: %v`,
 	)
 }
 
-func (parser ConfigParser) writeDefaultConfigContents(newConfigFile *os.File) error {
+func (parser ConfigParser) writeDefaultConfigContents(
+	newConfigFile *os.File,
+) error {
 	_, err := newConfigFile.WriteString(parser.getDefaultConfigYamlContents())
 
 	if err != nil {
@@ -285,9 +288,15 @@ func (parser ConfigParser) writeDefaultConfigContents(newConfigFile *os.File) er
 	return nil
 }
 
-func (parser ConfigParser) createConfigFileIfMissing(configFilePath string) error {
+func (parser ConfigParser) createConfigFileIfMissing(
+	configFilePath string,
+) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		newConfigFile, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+		newConfigFile, err := os.OpenFile(
+			configFilePath,
+			os.O_RDWR|os.O_CREATE|os.O_EXCL,
+			0666,
+		)
 		if err != nil {
 			return err
 		}
@@ -310,13 +319,10 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 		xdgConfigDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
 
-	userConfigDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, err
-	}
-
 	configPaths := []string{
-		os.Getenv("GH_DASH_CONFIG"), // If GH_DASH_CONFIG is empty, the os.Stat call fails
+		os.Getenv(
+			"GH_DASH_CONFIG",
+		), // If GH_DASH_CONFIG is empty, the os.Stat call fails
 		filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName),
 		filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName),
 	}
@@ -333,7 +339,6 @@ func (parser ConfigParser) getExistingConfigFile() (*string, error) {
 
 	return nil, nil
 }
-
 
 func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
 	var configFilePath string
@@ -359,7 +364,11 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, erro
 	configDir := filepath.Dir(configFilePath)
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(configDir, os.ModePerm); err != nil {
-			return "", configError{parser: parser, configDir: configDir, err: err}
+			return "", configError{
+				parser:    parser,
+				configDir: configDir,
+				err:       err,
+			}
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
 )
@@ -68,7 +69,8 @@ func (m Model) View() string {
 	return style.Copy().Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		m.ctx.Styles.Sidebar.PagerStyle.Copy().Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		m.ctx.Styles.Sidebar.PagerStyle.Copy().
+			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
 	))
 }
 

@@ -1,12 +1,11 @@
 package listviewport
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/ui/common"
+
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
@@ -25,20 +24,30 @@ type Model struct {
 	ItemTypeLabel   string
 }
 
-func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastUpdated time.Time, itemTypeLabel string, numItems, listItemHeight int) Model {
+func NewModel(
+	ctx context.ProgramContext,
+	dimensions constants.Dimensions,
+	lastUpdated time.Time,
+	itemTypeLabel string,
+	numItems, listItemHeight int,
+) Model {
 	model := Model{
+		ctx:             ctx,
 		NumCurrentItems: numItems,
 		ListItemHeight:  listItemHeight,
 		currId:          0,
 		viewport: viewport.Model{
 			Width:  dimensions.Width,
-			Height: dimensions.Height - common.ListPagerHeight,
+			Height: dimensions.Height,
 		},
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
 		LastUpdated:   lastUpdated,
 	}
-	model.bottomBoundId = utils.Min(model.NumCurrentItems-1, model.getNumPrsPerPage()-1)
+	model.bottomBoundId = utils.Min(
+		model.NumCurrentItems-1,
+		model.getNumPrsPerPage()-1,
+	)
 	return model
 }
 
@@ -107,33 +116,18 @@ func (m *Model) LastItem() int {
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
-	m.viewport.Height = dimensions.Height - common.ListPagerHeight
+	m.viewport.Height = dimensions.Height
 	m.viewport.Width = dimensions.Width
 }
 
 func (m *Model) View() string {
-	pagerContent := ""
-	if m.NumTotalItems > 0 {
-		pagerContent = fmt.Sprintf(
-			"%v %v • %v %v/%v • Fetched %v",
-			constants.WaitingIcon,
-			m.LastUpdated.Format("01/02 15:04:05"),
-			m.ItemTypeLabel,
-			m.currId+1,
-			m.NumTotalItems,
-			m.NumCurrentItems,
-		)
-	}
 	viewport := m.viewport.View()
-	pager := m.ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
 	return lipgloss.NewStyle().
 		Width(m.viewport.Width).
 		MaxWidth(m.viewport.Width).
-		Render(lipgloss.JoinVertical(
-			lipgloss.Left,
+		Render(
 			viewport,
-			pager,
-		))
+		)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {

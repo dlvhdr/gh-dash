@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/issue"
@@ -24,20 +25,24 @@ type Model struct {
 	Issues []data.IssueData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.IssuesSectionConfig, lastUpdated time.Time) Model {
-	m := Model{
-		section.NewModel(
-			id,
-			ctx,
-			cfg.ToSectionConfig(),
-			SectionType,
-			GetSectionColumns(cfg, ctx),
-			"Issue",
-			"Issues",
-			lastUpdated,
-		),
-		[]data.IssueData{},
-	}
+func NewModel(
+	id int,
+	ctx *context.ProgramContext,
+	cfg config.IssuesSectionConfig,
+	lastUpdated time.Time,
+) Model {
+	m := Model{}
+	m.Model = section.NewModel(
+		id,
+		ctx,
+		cfg.ToSectionConfig(),
+		SectionType,
+		GetSectionColumns(cfg, ctx),
+		m.GetItemSingularForm(),
+		m.GetItemPluralForm(),
+		lastUpdated,
+	)
+	m.Issues = []data.IssueData{}
 
 	return m
 }
@@ -119,18 +124,33 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns(cfg config.IssuesSectionConfig, ctx *context.ProgramContext) []table.Column {
+func GetSectionColumns(
+	cfg config.IssuesSectionConfig,
+	ctx *context.ProgramContext,
+) []table.Column {
 	dLayout := ctx.Config.Defaults.Layout.Issues
 	sLayout := cfg.Layout
 
-	updatedAtLayout := config.MergeColumnConfigs(dLayout.UpdatedAt, sLayout.UpdatedAt)
+	updatedAtLayout := config.MergeColumnConfigs(
+		dLayout.UpdatedAt,
+		sLayout.UpdatedAt,
+	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
 	creatorLayout := config.MergeColumnConfigs(dLayout.Creator, sLayout.Creator)
-	assigneesLayout := config.MergeColumnConfigs(dLayout.Assignees, sLayout.Assignees)
-	commentsLayout := config.MergeColumnConfigs(dLayout.Comments, sLayout.Comments)
-	reactionsLayout := config.MergeColumnConfigs(dLayout.Reactions, sLayout.Reactions)
+	assigneesLayout := config.MergeColumnConfigs(
+		dLayout.Assignees,
+		sLayout.Assignees,
+	)
+	commentsLayout := config.MergeColumnConfigs(
+		dLayout.Comments,
+		sLayout.Comments,
+	)
+	reactionsLayout := config.MergeColumnConfigs(
+		dLayout.Reactions,
+		sLayout.Reactions,
+	)
 
 	return []table.Column{
 		{
@@ -219,11 +239,14 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
 	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
-		FinishedText: fmt.Sprintf(`Issues for "%s" have been fetched`, m.Config.Title),
-		State:        context.TaskStart,
-		Error:        nil,
+		Id:        taskId,
+		StartText: fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
+		FinishedText: fmt.Sprintf(
+			`Issues for "%s" have been fetched`,
+			m.Config.Title,
+		),
+		State: context.TaskStart,
+		Error: nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
@@ -271,14 +294,23 @@ func (m *Model) ResetRows() {
 	m.Table.ResetCurrItem()
 }
 
-func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
+func FetchAllSections(
+	ctx context.ProgramContext,
+) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	sectionConfigs := ctx.Config.IssuesSections
 	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
 	sections = make([]section.Section, 0, len(sectionConfigs))
 	for i, sectionConfig := range sectionConfigs {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
+		sectionModel := NewModel(
+			i+1,
+			&ctx,
+			sectionConfig,
+			time.Now(),
+		) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchIssuesCmds = append(fetchIssuesCmds, sectionModel.FetchNextPageSectionRows()...)
+		fetchIssuesCmds = append(
+			fetchIssuesCmds,
+			sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchIssuesCmds...)
 }
@@ -308,7 +340,9 @@ func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
 	return newAssignees
 }
 
-func removeAssignees(assignees, removedAssignees []data.Assignee) []data.Assignee {
+func removeAssignees(
+	assignees, removedAssignees []data.Assignee,
+) []data.Assignee {
 	newAssignees := []data.Assignee{}
 	for _, assignee := range assignees {
 		if !assigneesContains(removedAssignees, assignee) {
@@ -326,4 +360,12 @@ func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
 		}
 	}
 	return false
+}
+
+func (m Model) GetItemSingularForm() string {
+	return "Issue"
+}
+
+func (m Model) GetItemPluralForm() string {
+	return "Issues"
 }

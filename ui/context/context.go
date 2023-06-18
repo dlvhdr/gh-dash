@@ -4,6 +4,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/ui/theme"
 )

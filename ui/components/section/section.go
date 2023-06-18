@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
@@ -66,7 +67,10 @@ func NewModel(
 		nil,
 		m.SingularForm,
 		utils.StringPtr(m.Ctx.Styles.Section.EmptyStateStyle.Render(
-			fmt.Sprintf("No %s were found that match the given filters", m.PluralForm),
+			fmt.Sprintf(
+				"No %s were found that match the given filters",
+				m.PluralForm,
+			),
 		)),
 	)
 	return m
@@ -79,7 +83,11 @@ type Section interface {
 	Search
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
+	LastUpdated() time.Time
 	UpdateLastUpdated(time.Time)
+	GetPagerContent() string
+	GetItemSingularForm() string
+	GetItemPluralForm() string
 }
 
 type Identifier interface {
@@ -142,7 +150,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.Table.SetDimensions(tableDimensions)
 	m.Table.UpdateProgramContext(ctx)
 
-	if oldDimensions.Height != newDimensions.Height || oldDimensions.Width != newDimensions.Width {
+	if oldDimensions.Height != newDimensions.Height ||
+		oldDimensions.Width != newDimensions.Width {
 		m.Table.SyncViewPortContent()
 		m.SearchBar.UpdateProgramContext(ctx)
 	}
@@ -271,10 +280,31 @@ func (m *Model) View() string {
 	)
 }
 
+func (m *Model) LastUpdated() time.Time {
+	return m.Table.LastUpdated()
+}
+
 func (m *Model) UpdateLastUpdated(t time.Time) {
 	m.Table.UpdateLastUpdated(t)
 }
 
 func (m *Model) UpdateTotalItemsCount(count int) {
 	m.Table.UpdateTotalItemsCount(count)
+}
+
+func (m *Model) GetPagerContent() string {
+	pagerContent := ""
+	if m.TotalCount > 0 {
+		pagerContent = fmt.Sprintf(
+			"%v %v • %v %v/%v • Fetched %v",
+			constants.WaitingIcon,
+			m.LastUpdated().Format("01/02 15:04:05"),
+			m.SingularForm,
+			m.Table.GetCurrItem()+1,
+			m.TotalCount,
+			len(m.Table.Rows),
+		)
+	}
+	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
+	return pager
 }
