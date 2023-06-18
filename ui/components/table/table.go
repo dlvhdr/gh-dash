@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
 	"github.com/dlvhdr/gh-dash/ui/constants"
@@ -28,14 +29,29 @@ type Column struct {
 
 type Row []string
 
-func NewModel(ctx context.ProgramContext, dimensions constants.Dimensions, lastUpdated time.Time, columns []Column, rows []Row, itemTypeLabel string, emptyState *string) Model {
+func NewModel(
+	ctx context.ProgramContext,
+	dimensions constants.Dimensions,
+	lastUpdated time.Time,
+	columns []Column,
+	rows []Row,
+	itemTypeLabel string,
+	emptyState *string,
+) Model {
 	return Model{
-		ctx:          ctx,
-		Columns:      columns,
-		Rows:         rows,
-		EmptyState:   emptyState,
-		dimensions:   dimensions,
-		rowsViewport: listviewport.NewModel(ctx, dimensions, lastUpdated, itemTypeLabel, len(rows), 2),
+		ctx:        ctx,
+		Columns:    columns,
+		Rows:       rows,
+		EmptyState: emptyState,
+		dimensions: dimensions,
+		rowsViewport: listviewport.NewModel(
+			ctx,
+			dimensions,
+			lastUpdated,
+			itemTypeLabel,
+			len(rows),
+			2,
+		),
 	}
 }
 
@@ -215,7 +231,12 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		}
 
 		colWidth := lipgloss.Width(headerColumns[headerColId])
-		renderedCol := style.Copy().Width(colWidth).MaxWidth(colWidth).Height(1).MaxHeight(1).Render(m.Rows[rowId][i])
+		renderedCol := style.Copy().
+			Width(colWidth).
+			MaxWidth(colWidth).
+			Height(1).
+			MaxHeight(1).
+			Render(m.Rows[rowId][i])
 		renderedColumns = append(renderedColumns, renderedCol)
 		headerColId++
 	}
@@ -229,6 +250,10 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = *ctx
 	m.rowsViewport.UpdateProgramContext(ctx)
+}
+
+func (m *Model) LastUpdated() time.Time {
+	return m.rowsViewport.LastUpdated
 }
 
 func (m *Model) UpdateLastUpdated(t time.Time) {

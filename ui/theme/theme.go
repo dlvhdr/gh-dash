@@ -2,6 +2,7 @@ package theme
 
 import (
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/config"
 )
 
@@ -38,16 +39,24 @@ func ParseTheme(cfg *config.Config) Theme {
 
 	if cfg.Theme != nil {
 		DefaultTheme = &Theme{
-			SelectedBackground: _shimHex(cfg.Theme.Colors.Inline.Background.Selected),
-			PrimaryBorder:      _shimHex(cfg.Theme.Colors.Inline.Border.Primary),
-			FaintBorder:        _shimHex(cfg.Theme.Colors.Inline.Border.Faint),
-			SecondaryBorder:    _shimHex(cfg.Theme.Colors.Inline.Border.Secondary),
-			FaintText:          _shimHex(cfg.Theme.Colors.Inline.Text.Faint),
-			PrimaryText:        _shimHex(cfg.Theme.Colors.Inline.Text.Primary),
-			SecondaryText:      _shimHex(cfg.Theme.Colors.Inline.Text.Secondary),
-			InvertedText:       _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
-			SuccessText:        _shimHex(cfg.Theme.Colors.Inline.Text.Success),
-			WarningText:        _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
+			SelectedBackground: _shimHex(
+				cfg.Theme.Colors.Inline.Background.Selected,
+			),
+			PrimaryBorder: _shimHex(
+				cfg.Theme.Colors.Inline.Border.Primary,
+			),
+			FaintBorder: _shimHex(cfg.Theme.Colors.Inline.Border.Faint),
+			SecondaryBorder: _shimHex(
+				cfg.Theme.Colors.Inline.Border.Secondary,
+			),
+			FaintText:   _shimHex(cfg.Theme.Colors.Inline.Text.Faint),
+			PrimaryText: _shimHex(cfg.Theme.Colors.Inline.Text.Primary),
+			SecondaryText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Secondary,
+			),
+			InvertedText: _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
+			SuccessText:  _shimHex(cfg.Theme.Colors.Inline.Text.Success),
+			WarningText:  _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
 		}
 	}
 

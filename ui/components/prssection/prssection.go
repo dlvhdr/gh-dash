@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components/pr"
@@ -24,20 +25,25 @@ type Model struct {
 	Prs []data.PullRequestData
 }
 
-func NewModel(id int, ctx *context.ProgramContext, cfg config.PrsSectionConfig, lastUpdated time.Time) Model {
-	m := Model{
+func NewModel(
+	id int,
+	ctx *context.ProgramContext,
+	cfg config.PrsSectionConfig,
+	lastUpdated time.Time,
+) Model {
+	m := Model{}
+	m.Model =
 		section.NewModel(
 			id,
 			ctx,
 			cfg.ToSectionConfig(),
 			SectionType,
 			GetSectionColumns(cfg, ctx),
-			"PR",
-			"Pull Requests",
+			m.GetItemSingularForm(),
+			m.GetItemPluralForm(),
 			lastUpdated,
-		),
-		[]data.PullRequestData{},
-	}
+		)
+	m.Prs = []data.PullRequestData{}
 
 	return m
 }
@@ -143,17 +149,29 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd)
 }
 
-func GetSectionColumns(cfg config.PrsSectionConfig, ctx *context.ProgramContext) []table.Column {
+func GetSectionColumns(
+	cfg config.PrsSectionConfig,
+	ctx *context.ProgramContext,
+) []table.Column {
 	dLayout := ctx.Config.Defaults.Layout.Prs
 	sLayout := cfg.Layout
 
-	updatedAtLayout := config.MergeColumnConfigs(dLayout.UpdatedAt, sLayout.UpdatedAt)
+	updatedAtLayout := config.MergeColumnConfigs(
+		dLayout.UpdatedAt,
+		sLayout.UpdatedAt,
+	)
 	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
 	authorLayout := config.MergeColumnConfigs(dLayout.Author, sLayout.Author)
-	assigneesLayout := config.MergeColumnConfigs(dLayout.Assignees, sLayout.Assignees)
+	assigneesLayout := config.MergeColumnConfigs(
+		dLayout.Assignees,
+		sLayout.Assignees,
+	)
 	baseLayout := config.MergeColumnConfigs(dLayout.Base, sLayout.Base)
-	reviewStatusLayout := config.MergeColumnConfigs(dLayout.ReviewStatus, sLayout.ReviewStatus)
+	reviewStatusLayout := config.MergeColumnConfigs(
+		dLayout.ReviewStatus,
+		sLayout.ReviewStatus,
+	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
@@ -261,11 +279,14 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
 	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
-		FinishedText: fmt.Sprintf(`PRs for "%s" have been fetched`, m.Config.Title),
-		State:        context.TaskStart,
-		Error:        nil,
+		Id:        taskId,
+		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
+		FinishedText: fmt.Sprintf(
+			`PRs for "%s" have been fetched`,
+			m.Config.Title,
+		),
+		State: context.TaskStart,
+		Error: nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
@@ -308,15 +329,32 @@ func (m *Model) ResetRows() {
 	m.Table.ResetCurrItem()
 }
 
-func FetchAllSections(ctx context.ProgramContext) (sections []section.Section, fetchAllCmd tea.Cmd) {
+func FetchAllSections(
+	ctx context.ProgramContext,
+) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(i+1, &ctx, sectionConfig, time.Now()) // 0 is the search section
+		sectionModel := NewModel(
+			i+1,
+			&ctx,
+			sectionConfig,
+			time.Now(),
+		) // 0 is the search section
 		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(fetchPRsCmds, sectionModel.FetchNextPageSectionRows()...)
+		fetchPRsCmds = append(
+			fetchPRsCmds,
+			sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
+}
+
+func (m Model) GetItemSingularForm() string {
+	return "PR"
+}
+
+func (m Model) GetItemPluralForm() string {
+	return "PRs"
 }
 
 type UpdatePRMsg struct {
@@ -340,7 +378,9 @@ func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
 	return newAssignees
 }
 
-func removeAssignees(assignees, removedAssignees []data.Assignee) []data.Assignee {
+func removeAssignees(
+	assignees, removedAssignees []data.Assignee,
+) []data.Assignee {
 	newAssignees := []data.Assignee{}
 	for _, assignee := range assignees {
 		if !assigneesContains(removedAssignees, assignee) {

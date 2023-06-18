@@ -14,10 +14,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	log "github.com/charmbracelet/log"
 	"github.com/cli/go-gh/v2/pkg/browser"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/help"
+	"github.com/dlvhdr/gh-dash/ui/components/footer"
 	"github.com/dlvhdr/gh-dash/ui/components/issuesidebar"
 	"github.com/dlvhdr/gh-dash/ui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/ui/components/prsidebar"
@@ -37,7 +38,7 @@ type Model struct {
 	prSidebar     prsidebar.Model
 	issueSidebar  issuesidebar.Model
 	currSectionId int
-	help          help.Model
+	footer        footer.Model
 	prs           []section.Section
 	issues        []section.Section
 	ready         bool
@@ -49,13 +50,13 @@ type Model struct {
 
 func NewModel(configPath string) Model {
 	tabsModel := tabs.NewModel()
+	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
-		keys: keys.Keys,
-
+		keys:          keys.Keys,
 		currSectionId: 1,
 		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
-		taskSpinner:   spinner.Model{Spinner: spinner.Dot},
+		taskSpinner:   taskSpinner,
 		tasks:         map[string]context.Task{},
 	}
 
@@ -65,10 +66,16 @@ func NewModel(configPath string) Model {
 			log.Debug("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
 			m.tasks[task.Id] = task
+			rTask := m.renderRunningTask()
+			m.footer.SetRightSection(rTask)
 			return m.taskSpinner.Tick
 		},
 	}
-	m.help = help.NewModel(m.ctx)
+	m.taskSpinner.Style = lipgloss.NewStyle().
+		Background(m.ctx.Theme.SelectedBackground)
+
+	footer := footer.NewModel(m.ctx)
+	m.footer = footer
 	m.prSidebar = prsidebar.NewModel(m.ctx)
 	m.issueSidebar = issuesidebar.NewModel(m.ctx)
 
@@ -96,7 +103,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sidebarCmd      tea.Cmd
 		prSidebarCmd    tea.Cmd
 		issueSidebarCmd tea.Cmd
-		helpCmd         tea.Cmd
+		footerCmd       tea.Cmd
 		cmds            []tea.Cmd
 		currSection     = m.getCurrSection()
 	)
@@ -246,7 +253,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 
 		case key.Matches(msg, m.keys.Help):
-			if !m.help.ShowAll {
+			if !m.footer.ShowAll {
 				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.FooterHeight - common.ExpandedHelpHeight
 			} else {
 				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.ExpandedHelpHeight - common.FooterHeight
@@ -313,10 +320,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.tasks) > 0 {
 			taskSpinner, internalTickCmd := m.taskSpinner.Update(msg)
 			m.taskSpinner = taskSpinner
+			rTask := m.renderRunningTask()
+			m.footer.SetRightSection(rTask)
 			cmd = internalTickCmd
 		}
 
 	case constants.ClearTaskMsg:
+		m.footer.SetRightSection("")
 		delete(m.tasks, msg.TaskId)
 
 	case section.SectionMsg:
@@ -350,13 +360,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncSidebar()
 	}
 
-	m.help, helpCmd = m.help.Update(msg)
+	m.footer, footerCmd = m.footer.Update(msg)
+	if currSection != nil {
+		m.footer.SetLeftSection(currSection.GetPagerContent())
+	}
 	sectionCmd := m.updateCurrentSection(msg)
 	cmds = append(
 		cmds,
 		cmd,
 		sidebarCmd,
-		helpCmd,
+		footerCmd,
 		sectionCmd,
 		prSidebarCmd,
 		issueSidebarCmd,
@@ -397,10 +410,8 @@ func (m Model) View() string {
 						Render(m.ctx.Error.Error()),
 				)),
 		)
-	} else if len(m.tasks) > 0 {
-		s.WriteString(m.renderRunningTask())
 	} else {
-		s.WriteString(m.help.View())
+		s.WriteString(m.footer.View())
 	}
 
 	return s.String()
@@ -421,7 +432,7 @@ func (m *Model) onViewedRowChanged() {
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
-	m.help.SetWidth(msg.Width)
+	m.footer.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
 	m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
@@ -432,7 +443,7 @@ func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
 		section.UpdateProgramContext(&m.ctx)
 	}
-	m.help.UpdateProgramContext(&m.ctx)
+	m.footer.UpdateProgramContext(&m.ctx)
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
 	m.issueSidebar.UpdateProgramContext(&m.ctx)
@@ -588,14 +599,25 @@ func (m *Model) renderRunningTask() string {
 	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		currTaskStatus = fmt.Sprintf("%s %s", m.taskSpinner.View(), task.StartText)
+		currTaskStatus =
+
+			lipgloss.NewStyle().
+				Background(m.ctx.Theme.SelectedBackground).
+				Render(
+					fmt.Sprintf(
+						"%s%s",
+						m.taskSpinner.View(),
+						task.StartText,
+					))
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.WarningText).
+			Background(m.ctx.Theme.SelectedBackground).
 			Render(fmt.Sprintf(" %s", task.Error.Error()))
 	case context.TaskFinished:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SuccessText).
+			Background(m.ctx.Theme.SelectedBackground).
 			Render(fmt.Sprintf(" %s", task.FinishedText))
 	}
 
@@ -608,10 +630,16 @@ func (m *Model) renderRunningTask() string {
 
 	stats := ""
 	if numProcessing > 1 {
-		stats = lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("[ %d] ", numProcessing))
+		stats = lipgloss.NewStyle().
+			Foreground(m.ctx.Theme.FaintText).
+			Background(m.ctx.Theme.SelectedBackground).
+			Render(fmt.Sprintf("[ %d] ", numProcessing))
 	}
 
-	return m.ctx.Styles.Common.FooterStyle.Width(m.ctx.ScreenWidth).Copy().Render(lipgloss.JoinHorizontal(lipgloss.Left, stats, currTaskStatus))
+	return lipgloss.NewStyle().
+		Padding(0, 1).
+		Background(m.ctx.Theme.SelectedBackground).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left, stats, currTaskStatus))
 }
 
 type userFetchedMsg struct {
