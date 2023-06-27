@@ -38,6 +38,10 @@ func NewModel(
 	itemTypeLabel string,
 	emptyState *string,
 ) Model {
+	itemHeight := 1
+	if ctx.Config.Theme.Ui.Table.ShowSeparator {
+		itemHeight = 2
+	}
 	return Model{
 		ctx:        ctx,
 		Columns:    columns,
@@ -50,7 +54,7 @@ func NewModel(
 			lastUpdated,
 			itemTypeLabel,
 			len(rows),
-			2,
+			itemHeight,
 		),
 	}
 }
@@ -242,6 +246,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	}
 
 	return m.ctx.Styles.Table.RowStyle.Copy().
+		BorderBottom(m.ctx.Config.Theme.Ui.Table.ShowSeparator).
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
 

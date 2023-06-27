@@ -87,7 +87,23 @@ func (m *Model) initScreen() tea.Msg {
 
 	config, err := config.ParseConfig(m.ctx.ConfigPath)
 	if err != nil {
-		log.Fatal("Error reading config", err)
+		log.KeyStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("1")).
+			Bold(true)
+		log.SeparatorStyle = lipgloss.NewStyle()
+		log.New(
+			log.WithTimeFormat(time.RFC3339),
+			log.WithTimestamp(),
+			log.WithPrefix("Reading config file"),
+			log.WithCaller(),
+		).
+			Fatal(
+				"failed parsing config file",
+				"location",
+				m.ctx.ConfigPath,
+				"err",
+				err,
+			)
 	}
 
 	return initMsg{Config: config}
