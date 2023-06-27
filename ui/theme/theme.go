@@ -37,7 +37,7 @@ func ParseTheme(cfg *config.Config) Theme {
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
 
-	if cfg.Theme != nil {
+	if cfg.Theme.Colors != nil {
 		DefaultTheme = &Theme{
 			SelectedBackground: _shimHex(
 				cfg.Theme.Colors.Inline.Background.Selected,

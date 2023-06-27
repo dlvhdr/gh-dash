@@ -142,8 +142,17 @@ type ColorThemeConfig struct {
 	Inline ColorTheme `yaml:",inline" validate:"dive"`
 }
 
+type TableUIThemeConfig struct {
+	ShowSeparator bool `yaml:"showSeparator" default:"true"`
+}
+
+type UIThemeConfig struct {
+	Table TableUIThemeConfig `yaml:"table"`
+}
+
 type ThemeConfig struct {
-	Colors ColorThemeConfig `yaml:"colors,omitempty" validate:"dive"`
+	Ui     UIThemeConfig     `yaml:"ui,omitempty"     validate:"dive"`
+	Colors *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty,dive"`
 }
 
 type Config struct {
@@ -248,6 +257,13 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			Prs:    []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
+		Theme: &ThemeConfig{
+			Ui: UIThemeConfig{
+				Table: TableUIThemeConfig{
+					ShowSeparator: true,
+				},
+			},
+		},
 	}
 }
 
