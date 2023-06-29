@@ -221,6 +221,9 @@ If you choose to go this route, you need to specify _all_ of the following keys 
 
 ```yaml
 theme:
+  ui:
+    table:
+      showSeparator: true
   colors:
     text:
       primary: "#E2E1ED"

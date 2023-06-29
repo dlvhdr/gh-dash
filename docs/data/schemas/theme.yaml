@@ -37,9 +37,29 @@ schematize:
 required:
   - colors
 properties:
+  ui:
+    title: UI Settings
+    type: object
+    properties:
+      table:
+        title: Table Settings
+        type: object
+        schematize:
+          skip_schema_render: true
+          format: yaml
+        properties:
+          showSeparators:
+            title: Show Separators
+            description: >-
+              Whether to show the separators between lines in the prs/issues tables.
+            type: boolean
+            default: true
+            schematize:
+              skip_schema_render: true
+              format: yaml
   colors:
     title: Theme Colors
-    description: Defines text, background, and border colors for the dashboard. 
+    description: Defines text, background, and border colors for the dashboard.
     type: object
     schematize:
       skip_schema_render: true
@@ -105,7 +125,7 @@ properties:
 
                 The default for dark mode terminals is ![styled:`#ffffff`][dark]. The default for
                 light mode terminals is black ![styled:`#000000`][light].
-                
+
                 [dark]:  . "primary-text dark"
                 [light]: . "primary-text light"
             type: string
@@ -345,17 +365,20 @@ properties:
             default: "#000000"
             pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
 default:
+  ui:
+    table:
+      showSeparators: true
   colors:
     text:
-      primary:   "#ffffff"
+      primary: "#ffffff"
       secondary: "#c6c6c6"
-      inverted:  "#303030"
-      faint:     "#8a8a8a"
-      warning:   "#800000"
-      success:   "#008000"
+      inverted: "#303030"
+      faint: "#8a8a8a"
+      warning: "#800000"
+      success: "#008000"
     background:
-      selected:  "#808080"
+      selected: "#808080"
     border:
-      primary:   "#808080"
+      primary: "#808080"
       secondary: "#c0c0c0"
-      faint:     "#000000"
+      faint: "#000000"
