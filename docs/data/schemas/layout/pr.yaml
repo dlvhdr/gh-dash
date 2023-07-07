@@ -211,7 +211,7 @@ properties:
       details: |
         This column displays the review status of a PR as an icon:
 
-        - When the PR hasn't been reviewed, the icon is ![styled:``](. "faint-text") and the
+        - When the PR hasn't been reviewed, the icon is ![styled:``](. "faint-text") and the
           color is the value of [sref:`theme.colors.text.faint`].
         - When the PR is approved, the icon is ![styled:`󰄬`](. "primary-text") and the color is
           the value of [sref:`theme.colors.text.primary`].
@@ -236,7 +236,7 @@ properties:
       details: |
         This column displays the CI status of a PR as an icon:
 
-        - When the checks haven't finished running, the icon is ![styled:``](. "faint-text") and
+        - When the checks haven't finished running, the icon is ![styled:``](. "faint-text") and
           the color is the value of [sref:`theme.colors.text.faint`].
         - When the checks have all passed, the icon is ![styled:``](. "success-text") and the
           color is the value of [sref:`theme.colors.text.success`].
