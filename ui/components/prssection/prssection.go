@@ -74,6 +74,40 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			break
 		}
 
+		if m.IsPromptConfirmationFocused() {
+			var promptCmd tea.Cmd
+			switch {
+
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.PromptConfirmationBox.Reset()
+				cmd = m.SetIsPromptConfirmationShown(false)
+				return &m, cmd
+
+			case msg.Type == tea.KeyEnter:
+				input := m.PromptConfirmationBox.Value()
+				action := m.GetPromptConfirmationAction()
+				if input == "Y" || input == "y" {
+					switch action {
+					case "close":
+						cmd = m.close()
+					case "reopen":
+						cmd = m.reopen()
+					case "ready":
+						cmd = m.ready()
+					case "merge":
+						cmd = m.merge()
+					}
+				}
+
+				m.PromptConfirmationBox.Reset()
+				blinkCmd := m.SetIsPromptConfirmationShown(false)
+
+				return &m, tea.Batch(cmd, blinkCmd)
+			}
+			m.PromptConfirmationBox, promptCmd = m.PromptConfirmationBox.Update(msg)
+			return &m, promptCmd
+		}
+
 		switch {
 
 		case key.Matches(msg, keys.PRKeys.Diff):
@@ -84,19 +118,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if err != nil {
 				m.Ctx.Error = err
 			}
-
-		case key.Matches(msg, keys.PRKeys.Close):
-			cmd = m.close()
-
-		case key.Matches(msg, keys.PRKeys.Ready):
-			cmd = m.ready()
-
-		case key.Matches(msg, keys.PRKeys.Merge):
-			cmd = m.merge()
-
-		case key.Matches(msg, keys.PRKeys.Reopen):
-			cmd = m.reopen()
-
 		}
 
 	case UpdatePRMsg:

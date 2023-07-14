@@ -129,7 +129,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.Debug("Key pressed", "key", msg.String())
 		m.ctx.Error = nil
 
-		if currSection != nil && currSection.IsSearchFocused() {
+		if currSection != nil && currSection.IsSearchFocused() || currSection.IsPromptConfirmationFocused() {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 			return m, cmd
 		}
@@ -242,6 +242,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 			m.syncSidebar()
 			m.sidebar.ScrollToBottom()
+			return m, cmd
+
+		case key.Matches(msg, keys.PRKeys.Close, keys.PRKeys.Reopen, keys.PRKeys.Ready, keys.PRKeys.Merge, keys.IssueKeys.Close, keys.IssueKeys.Reopen):
+
+			var action string
+			switch {
+			case key.Matches(msg, keys.PRKeys.Close, keys.IssueKeys.Close):
+				action = "close"
+
+			case key.Matches(msg, keys.PRKeys.Reopen, keys.IssueKeys.Reopen):
+				action = "reopen"
+
+			case key.Matches(msg, keys.PRKeys.Ready):
+				action = "ready"
+
+			case key.Matches(msg, keys.PRKeys.Merge):
+				action = "merge"
+			}
+
+			if currSection != nil {
+				currSection.SetPromptConfirmationAction(action)
+				cmd = currSection.SetIsPromptConfirmationShown(true)
+			}
 			return m, cmd
 
 		case key.Matches(msg, keys.IssueKeys.Assign), key.Matches(msg, keys.PRKeys.Assign):

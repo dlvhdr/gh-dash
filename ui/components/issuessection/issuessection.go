@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/config"
@@ -14,7 +13,6 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/keys"
 	"github.com/dlvhdr/gh-dash/utils"
 )
 
@@ -72,13 +70,35 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			break
 		}
 
-		switch {
-		case key.Matches(msg, keys.IssueKeys.Close):
-			cmd = m.close()
+		if m.IsPromptConfirmationFocused() {
 
-		case key.Matches(msg, keys.IssueKeys.Reopen):
-			cmd = m.reopen()
+			var promptCmd tea.Cmd
+			switch {
 
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.PromptConfirmationBox.Reset()
+				cmd = m.SetIsPromptConfirmationShown(false)
+				return &m, cmd
+
+			case msg.Type == tea.KeyEnter:
+				input := m.PromptConfirmationBox.Value()
+				action := m.GetPromptConfirmationAction()
+				if input == "Y" || input == "y" {
+					switch action {
+					case "close":
+						cmd = m.close()
+					case "reopen":
+						cmd = m.reopen()
+					}
+				}
+
+				m.PromptConfirmationBox.Reset()
+				blinkCmd := m.SetIsPromptConfirmationShown(false)
+
+				return &m, tea.Batch(cmd, blinkCmd)
+			}
+			m.PromptConfirmationBox, promptCmd = m.PromptConfirmationBox.Update(msg)
+			return &m, promptCmd
 		}
 
 	case UpdateIssueMsg:
