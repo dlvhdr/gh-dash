@@ -11,6 +11,7 @@ import (
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
+	"github.com/dlvhdr/gh-dash/ui/components/prompt"
 	"github.com/dlvhdr/gh-dash/ui/components/search"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
 	"github.com/dlvhdr/gh-dash/ui/constants"
@@ -19,20 +20,23 @@ import (
 )
 
 type Model struct {
-	Id           int
-	Config       config.SectionConfig
-	Ctx          *context.ProgramContext
-	Spinner      spinner.Model
-	SearchBar    search.Model
-	IsSearching  bool
-	SearchValue  string
-	Table        table.Model
-	Type         string
-	SingularForm string
-	PluralForm   string
-	Columns      []table.Column
-	TotalCount   int
-	PageInfo     *data.PageInfo
+	Id                        int
+	Config                    config.SectionConfig
+	Ctx                       *context.ProgramContext
+	Spinner                   spinner.Model
+	SearchBar                 search.Model
+	IsSearching               bool
+	SearchValue               string
+	Table                     table.Model
+	Type                      string
+	SingularForm              string
+	PluralForm                string
+	Columns                   []table.Column
+	TotalCount                int
+	PageInfo                  *data.PageInfo
+	PromptConfirmationBox     prompt.Model
+	IsPromptConfirmationShown bool
+	PromptConfirmationAction  string
 }
 
 func NewModel(
@@ -45,19 +49,20 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{
-		Id:           id,
-		Type:         sType,
-		Config:       cfg,
-		Ctx:          ctx,
-		Spinner:      spinner.Model{Spinner: spinner.Dot},
-		Columns:      columns,
-		SingularForm: singular,
-		PluralForm:   plural,
-		SearchBar:    search.NewModel(sType, ctx, cfg.Filters),
-		SearchValue:  cfg.Filters,
-		IsSearching:  false,
-		TotalCount:   0,
-		PageInfo:     nil,
+		Id:                    id,
+		Type:                  sType,
+		Config:                cfg,
+		Ctx:                   ctx,
+		Spinner:               spinner.Model{Spinner: spinner.Dot},
+		Columns:               columns,
+		SingularForm:          singular,
+		PluralForm:            plural,
+		SearchBar:             search.NewModel(sType, ctx, cfg.Filters),
+		SearchValue:           cfg.Filters,
+		IsSearching:           false,
+		TotalCount:            0,
+		PageInfo:              nil,
+		PromptConfirmationBox: prompt.NewModel(ctx),
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -81,6 +86,7 @@ type Section interface {
 	Component
 	Table
 	Search
+	PromptConfirmation
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
 	LastUpdated() time.Time
@@ -119,6 +125,14 @@ type Search interface {
 	ResetFilters()
 	GetFilters() string
 	ResetPageInfo()
+}
+
+type PromptConfirmation interface {
+	SetIsPromptConfirmationShown(val bool) tea.Cmd
+	IsPromptConfirmationFocused() bool
+	SetPromptConfirmationAction(action string)
+	GetPromptConfirmationAction() string
+	GetPromptConfirmation() string
 }
 
 func (m *Model) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
@@ -221,6 +235,29 @@ func (m *Model) ResetPageInfo() {
 	m.PageInfo = nil
 }
 
+func (m *Model) IsPromptConfirmationFocused() bool {
+	return m.IsPromptConfirmationShown
+}
+
+func (m *Model) SetIsPromptConfirmationShown(val bool) tea.Cmd {
+	m.IsPromptConfirmationShown = val
+	if val {
+		m.PromptConfirmationBox.Focus()
+		return m.PromptConfirmationBox.Init()
+	}
+
+	m.PromptConfirmationBox.Blur()
+	return nil
+}
+
+func (m *Model) SetPromptConfirmationAction(action string) {
+	m.PromptConfirmationAction = action
+}
+
+func (m *Model) GetPromptConfirmationAction() string {
+	return m.PromptConfirmationAction
+}
+
 type SectionMsg struct {
 	Id          int
 	Type        string
@@ -276,6 +313,7 @@ func (m *Model) View() string {
 			lipgloss.Left,
 			search,
 			m.GetMainContent(),
+			m.GetPromptConfirmation(),
 		),
 	)
 }
@@ -307,4 +345,34 @@ func (m *Model) GetPagerContent() string {
 	}
 	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
 	return pager
+}
+
+func (m *Model) GetPromptConfirmation() string {
+	if m.IsPromptConfirmationShown {
+		var prompt string
+		switch {
+		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to close this PR? (Y/n) "
+
+		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to reopen this PR? (Y/n) "
+
+		case m.PromptConfirmationAction == "ready" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to mark this PR as ready? (Y/n) "
+
+		case m.PromptConfirmationAction == "merge" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to merge this PR? (Y/n) "
+
+		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.IssuesView:
+			prompt = "Are you sure you want to close this issue? (Y/n) "
+
+		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.IssuesView:
+			prompt = "Are you sure you want to reopen this issue? (Y/n) "
+		}
+		m.PromptConfirmationBox.SetPrompt(prompt)
+
+		return m.PromptConfirmationBox.View()
+	}
+
+	return ""
 }
