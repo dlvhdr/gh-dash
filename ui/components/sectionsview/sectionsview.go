@@ -276,7 +276,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 	width, height :=
 		m.ctx.MainContentWidth-m.ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
-		m.ctx.MainContentHeight
+		m.ctx.MainContentHeight-common.SearchHeight
 	for _, section := range m.prs {
 		section.UpdateProgramContext(m.ctx)
 		section.SetDimensions(width, height)

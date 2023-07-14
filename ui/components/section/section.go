@@ -181,8 +181,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		Height: m.Ctx.MainContentHeight,
 	}
 	m.SetDimensions(dimensions.Width, dimensions.Height)
-	// log.Debug("section.UpdateProgramContext", "dimensions", dimensions)
 	m.Table.UpdateProgramContext(ctx)
+	m.SearchBar.UpdateProgramContext(ctx)
 }
 
 type SectionRowsFetchedMsg struct {
@@ -314,7 +314,8 @@ func (m *Model) View() string {
 		style = *m.Style
 	}
 
-	parts = append(parts, m.GetMainContent())
+	mainContent := m.GetMainContent()
+	parts = append(parts, mainContent)
 	return style.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,

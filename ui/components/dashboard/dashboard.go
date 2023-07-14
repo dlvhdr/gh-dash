@@ -127,6 +127,7 @@ func (m *Model) fetchAllDashboards() tea.Cmd {
 					Type:   "prs",
 					Config: sectionConfig,
 				},
+				SearchDisabled: true,
 			}
 			if strings.Contains(sectionModel.Config.Filters, "is:pr") {
 				cmds = append(cmds, sectionModel.FetchSectionRows(nil)...)

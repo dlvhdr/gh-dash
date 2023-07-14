@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/ui/keys"
@@ -102,13 +101,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
 	m.viewport.Width = m.GetSidebarContentWidth()
-	log.Info(
-		"sideBar.UpdateProgramContext",
-		"width",
-		m.viewport.Width,
-		"height",
-		m.viewport.Height,
-	)
 }
 
 func (m *Model) GetYOffset() int {

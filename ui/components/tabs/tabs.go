@@ -5,7 +5,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
@@ -25,9 +24,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View(ctx context.ProgramContext) string {
-	log.Debug("tabs view")
 	sectionsConfigs := ctx.GetViewSectionsConfig()
-	log.Debug("tabs.View", "configs", sectionsConfigs)
 	sectionTitles := make([]string, 0, len(sectionsConfigs))
 	for _, section := range sectionsConfigs {
 		sectionTitles = append(sectionTitles, section.Title)

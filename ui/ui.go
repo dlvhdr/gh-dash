@@ -324,13 +324,6 @@ func (m Model) View() string {
 
 	s := strings.Builder{}
 	tabs := m.tabs.View(m.ctx)
-	log.Debug(
-		"Tabs",
-		"tabs width",
-		lipgloss.Width(tabs),
-		"tabs height",
-		lipgloss.Height(tabs),
-	)
 	s.WriteString(tabs)
 	s.WriteString("\n")
 	mainContent := ""
@@ -344,14 +337,6 @@ func (m Model) View() string {
 		mainContent,
 		m.sidebar.View(),
 	)
-	log.Debug(
-		"rest",
-		"rest width",
-		lipgloss.Width(rest),
-		"rest height",
-		lipgloss.Height(rest),
-	)
-
 	s.WriteString(rest)
 	s.WriteString("\n")
 	if m.ctx.Error != nil {
@@ -369,15 +354,6 @@ func (m Model) View() string {
 		s.WriteString(m.footer.View())
 	}
 
-	all := s.String()
-	log.Debug(
-		"all",
-		"all width",
-		lipgloss.Width(all),
-		"all height",
-		lipgloss.Height(all),
-	)
-
 	return s.String()
 }
 
@@ -390,13 +366,6 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.ctx.ScreenHeight = msg.Height
 	m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
 	m.syncMainContentWidth()
-	log.Debug(
-		"onWindowSizeChanged",
-		"screenWidth", m.ctx.ScreenWidth,
-		"screenHeight", m.ctx.ScreenHeight,
-		"mainContentWidth", m.ctx.MainContentWidth,
-		"mainContentHeight", m.ctx.MainContentHeight,
-	)
 }
 
 func (m *Model) syncProgramContext() {
@@ -422,13 +391,6 @@ func (m *Model) syncMainContentWidth() {
 	}
 
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
-	// log.Debug(
-	// 	"syncMainContentWidth",
-	// 	"mainContentWidth",
-	// 	m.ctx.MainContentWidth,
-	// 	"sideBarOffset",
-	// 	sideBarOffset,
-	// )
 }
 
 func (m *Model) syncSidebar(rowData data.RowData) {
