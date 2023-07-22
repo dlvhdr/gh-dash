@@ -9,6 +9,11 @@ import (
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
+func KeepSameSpacesOnAddDeletions(str string) string {
+    str_as_list := strings.Split(str, " ")
+    return fmt.Sprintf("%7s", str_as_list[0]) + " " + fmt.Sprintf("%7s", str_as_list[1])
+}
+
 func FormatNumber(num int) string {
 	if num >= 1000000 {
 		million := float64(num) / 1000000.0
