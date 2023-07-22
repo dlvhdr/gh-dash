@@ -3,10 +3,23 @@ package components
 import (
 	"fmt"
 	"strings"
+	"strconv"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
+
+func FormatNumber(num int) string {
+	if num >= 1000000 {
+		million := float64(num) / 1000000.0
+		return strconv.FormatFloat(million, 'f', 1, 64) + "M"
+	} else if num >= 1000 {
+		kilo := float64(num) / 1000.0
+		return strconv.FormatFloat(kilo, 'f', 1, 64) + "k"
+	}
+
+	return strconv.Itoa(num)
+}
 
 func GetIssueTextStyle(ctx *context.ProgramContext, state string) lipgloss.Style {
 	if state == "OPEN" {
