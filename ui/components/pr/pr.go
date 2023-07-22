@@ -127,12 +127,13 @@ func (pr *PullRequest) renderLines() string {
 		deletions = pr.Data.Deletions
 	}
 
-	diffs := "\033[32m+%s \033[31m-%s"
-	return pr.getTextStyle().Render(
-        fmt.Sprintf(
-            diffs,
-            components.FormatNumber(pr.Data.Additions),
-            components.FormatNumber(deletions),
+    return pr.getTextStyle().Render(
+        components.KeepSameSpacesOnAddDeletions(
+            fmt.Sprintf(
+                "\033[32m+%s \033[31m-%s",
+                components.FormatNumber(pr.Data.Additions),
+                components.FormatNumber(deletions),
+            ),
         ),
     )
 }
