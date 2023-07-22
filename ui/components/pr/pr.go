@@ -128,7 +128,11 @@ func (pr *PullRequest) renderLines() string {
 	}
 
 	return pr.getTextStyle().Render(
-		fmt.Sprintf("%d / -%d", pr.Data.Additions, deletions),
+		fmt.Sprintf(
+            "\033[0;32m+%d\033[0m \033[0;31m-%d\033[0m",
+            pr.Data.Additions,
+            deletions,
+        ),
 	)
 }
 
