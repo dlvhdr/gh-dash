@@ -127,13 +127,14 @@ func (pr *PullRequest) renderLines() string {
 		deletions = pr.Data.Deletions
 	}
 
+	diffs := "\033[32m+%d \033[31m-%d"
 	return pr.getTextStyle().Render(
-		fmt.Sprintf(
-            "\033[0;32m+%d\033[0m \033[0;31m-%d\033[0m",
+        fmt.Sprintf(
+            diffs,
             pr.Data.Additions,
             deletions,
         ),
-	)
+    )
 }
 
 func (pr *PullRequest) renderTitle() string {
