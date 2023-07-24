@@ -313,7 +313,6 @@ func (m *Model) View() string {
 			lipgloss.Left,
 			search,
 			m.GetMainContent(),
-			m.GetPromptConfirmation(),
 		),
 	)
 }
@@ -346,7 +345,6 @@ func (m *Model) GetPagerContent() string {
 	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
 	return pager
 }
-
 func (m *Model) GetPromptConfirmation() string {
 	if m.IsPromptConfirmationShown {
 		var prompt string
@@ -369,9 +367,10 @@ func (m *Model) GetPromptConfirmation() string {
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.IssuesView:
 			prompt = "Are you sure you want to reopen this issue? (Y/n) "
 		}
+
 		m.PromptConfirmationBox.SetPrompt(prompt)
 
-		return m.PromptConfirmationBox.View()
+		return m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(m.PromptConfirmationBox.View())
 	}
 
 	return ""

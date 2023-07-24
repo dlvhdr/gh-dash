@@ -60,3 +60,7 @@ func (m *Model) SetPrompt(prompt string) {
 func (m *Model) Reset() {
 	m.prompt.Reset()
 }
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+}

@@ -401,8 +401,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.footer, footerCmd = m.footer.Update(msg)
 	if currSection != nil {
-		m.footer.SetLeftSection(currSection.GetPagerContent())
+		if currSection.IsPromptConfirmationFocused() {
+			m.footer.SetLeftSection(currSection.GetPromptConfirmation())
+		}
+
+		if !currSection.IsPromptConfirmationFocused() {
+			m.footer.SetLeftSection(currSection.GetPagerContent())
+		}
 	}
+
 	sectionCmd := m.updateCurrentSection(msg)
 	cmds = append(
 		cmds,
