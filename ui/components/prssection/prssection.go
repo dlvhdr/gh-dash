@@ -75,7 +75,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			var promptCmd tea.Cmd
 			switch {
 
 			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
@@ -104,8 +103,8 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 				return &m, tea.Batch(cmd, blinkCmd)
 			}
-			m.PromptConfirmationBox, promptCmd = m.PromptConfirmationBox.Update(msg)
-			return &m, promptCmd
+
+			break
 		}
 
 		switch {
@@ -167,7 +166,10 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	search, searchCmd := m.SearchBar.Update(msg)
 	m.SearchBar = search
-	return &m, tea.Batch(cmd, searchCmd)
+
+	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
+	m.PromptConfirmationBox = prompt
+	return &m, tea.Batch(cmd, searchCmd, promptCmd)
 }
 
 func GetSectionColumns(
