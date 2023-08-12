@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # golang
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
