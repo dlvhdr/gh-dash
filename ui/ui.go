@@ -91,12 +91,14 @@ func (m *Model) initScreen() tea.Msg {
 			Foreground(lipgloss.Color("1")).
 			Bold(true)
 		log.SeparatorStyle = lipgloss.NewStyle()
-		log.New(
-			log.WithTimeFormat(time.RFC3339),
-			log.WithTimestamp(),
-			log.WithPrefix("Reading config file"),
-			log.WithCaller(),
-		).
+
+		logger := log.New(os.Stderr)
+		logger.SetTimeFormat(time.RFC3339)
+		logger.SetReportTimestamp(true)
+		logger.SetPrefix("Reading config file")
+		logger.SetReportCaller(true)
+
+		logger.
 			Fatal(
 				"failed parsing config file",
 				"location",
@@ -104,6 +106,7 @@ func (m *Model) initScreen() tea.Msg {
 				"err",
 				err,
 			)
+
 	}
 
 	return initMsg{Config: config}
