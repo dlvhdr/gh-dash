@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
@@ -31,14 +32,18 @@ func (pr *PullRequest) renderReviewStatus() string {
 	reviewCellStyle := pr.getTextStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
 		if pr.Data.State == "OPEN" {
-			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
+			reviewCellStyle = reviewCellStyle.Foreground(
+				pr.Ctx.Theme.SuccessText,
+			)
 		}
 		return reviewCellStyle.Render("󰄬")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
 		if pr.Data.State == "OPEN" {
-			reviewCellStyle = reviewCellStyle.Foreground(pr.Ctx.Theme.WarningText)
+			reviewCellStyle = reviewCellStyle.Foreground(
+				pr.Ctx.Theme.WarningText,
+			)
 		}
 		return reviewCellStyle.Render("󰌑")
 	}
@@ -56,9 +61,11 @@ func (pr *PullRequest) renderState() string {
 			return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR).Render("")
 		}
 	case "CLOSED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).Render("")
+		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).
+			Render("")
 	case "MERGED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).Render("")
+		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).
+			Render("")
 	default:
 		return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("-")
 	}
@@ -121,25 +128,63 @@ func (pr *PullRequest) renderCiStatus() string {
 	return ciCellStyle.Render(constants.FailureIcon)
 }
 
-func (pr *PullRequest) renderLines() string {
+func (pr *PullRequest) renderLines(isSelected bool) string {
 	deletions := 0
 	if pr.Data.Deletions > 0 {
 		deletions = pr.Data.Deletions
 	}
 
-    return pr.getTextStyle().Render(
-        components.KeepSameSpacesOnAddDeletions(
-            fmt.Sprintf(
-                "\033[32m+%s \033[31m-%s",
-                components.FormatNumber(pr.Data.Additions),
-                components.FormatNumber(deletions),
-            ),
-        ),
-    )
+	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	state := pr.Data.State
+	if state != "OPEN" {
+		additionsFg = pr.Ctx.Theme.FaintText
+		deletionsFg = pr.Ctx.Theme.FaintText
+	} else {
+		additionsFg = pr.Ctx.Theme.SuccessText
+		deletionsFg = pr.Ctx.Theme.WarningText
+	}
+
+	baseStyle := lipgloss.NewStyle()
+	if isSelected {
+		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
+	}
+
+	additionsText := baseStyle.Copy().
+		Foreground(additionsFg).
+		Render(fmt.Sprintf("+%s", components.FormatNumber(pr.Data.Additions)))
+	deletionsText := baseStyle.Copy().
+		Foreground(deletionsFg).
+		Render(fmt.Sprintf("-%s", components.FormatNumber(deletions)))
+
+	return pr.getTextStyle().Render(
+		keepSameSpacesOnAddDeletions(
+			lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				additionsText,
+				baseStyle.Render(" "),
+				deletionsText,
+			)),
+	)
+}
+
+func keepSameSpacesOnAddDeletions(str string) string {
+	strAsList := strings.Split(str, " ")
+	return fmt.Sprintf(
+		"%7s",
+		strAsList[0],
+	) + " " + fmt.Sprintf(
+		"%7s",
+		strAsList[1],
+	)
 }
 
 func (pr *PullRequest) renderTitle() string {
-	return components.RenderIssueTitle(pr.Ctx, pr.Data.State, pr.Data.Title, pr.Data.Number)
+	return components.RenderIssueTitle(
+		pr.Ctx,
+		pr.Data.State,
+		pr.Data.Title,
+		pr.Data.Number,
+	)
 }
 
 func (pr *PullRequest) renderAuthor() string {
@@ -185,7 +230,7 @@ func (pr *PullRequest) RenderState() string {
 	}
 }
 
-func (pr *PullRequest) ToTableRow() table.Row {
+func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 	return table.Row{
 		pr.renderUpdateAt(),
 		pr.renderState(),
@@ -196,12 +241,13 @@ func (pr *PullRequest) ToTableRow() table.Row {
 		pr.renderBaseName(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
-		pr.renderLines(),
+		pr.renderLines(isSelected),
 	}
 }
 
 func isConclusionAFailure(conclusion string) bool {
-	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE"
+	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" ||
+		conclusion == "STARTUP_FAILURE"
 }
 
 func isStatusWaiting(status string) bool {

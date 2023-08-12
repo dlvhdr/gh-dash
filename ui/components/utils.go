@@ -2,17 +2,13 @@ package components
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
-
-func KeepSameSpacesOnAddDeletions(str string) string {
-    str_as_list := strings.Split(str, " ")
-    return fmt.Sprintf("%7s", str_as_list[0]) + " " + fmt.Sprintf("%7s", str_as_list[1])
-}
 
 func FormatNumber(num int) string {
 	if num >= 1000000 {
@@ -26,14 +22,22 @@ func FormatNumber(num int) string {
 	return strconv.Itoa(num)
 }
 
-func GetIssueTextStyle(ctx *context.ProgramContext, state string) lipgloss.Style {
+func GetIssueTextStyle(
+	ctx *context.ProgramContext,
+	state string,
+) lipgloss.Style {
 	if state == "OPEN" {
 		return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
 	}
 	return lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
 }
 
-func RenderIssueTitle(ctx *context.ProgramContext, state string, title string, number int) string {
+func RenderIssueTitle(
+	ctx *context.ProgramContext,
+	state string,
+	title string,
+	number int,
+) string {
 	prNumber := fmt.Sprintf("#%d", number)
 	var prNumberFg lipgloss.AdaptiveColor
 	if state != "OPEN" {
