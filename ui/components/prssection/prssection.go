@@ -165,6 +165,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
+	m.Table.SetRows(m.BuildRows())
 	m.SearchBar = search
 
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
@@ -255,9 +256,14 @@ func GetSectionColumns(
 
 func (m *Model) BuildRows() []table.Row {
 	var rows []table.Row
-	for _, currPr := range m.Prs {
+	currItem := m.Table.GetCurrItem()
+	for i, currPr := range m.Prs {
+		i := i
 		prModel := pr.PullRequest{Ctx: m.Ctx, Data: currPr}
-		rows = append(rows, prModel.ToTableRow())
+		rows = append(
+			rows,
+			prModel.ToTableRow(currItem == i),
+		)
 	}
 
 	if rows == nil {
