@@ -53,7 +53,13 @@
    cd gh-dash
    ```
 
-3. Install it locally
+3. Build it
+
+   ```bash
+   go build
+   ```
+
+4. Install it locally
    ```bash
    gh extension install .
    ```
