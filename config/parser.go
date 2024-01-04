@@ -133,13 +133,13 @@ type ColorThemeBackground struct {
 }
 
 type ColorTheme struct {
-	Text       ColorThemeText       `yaml:"text"       validate:"required,dive"`
-	Background ColorThemeBackground `yaml:"background" validate:"required,dive"`
-	Border     ColorThemeBorder     `yaml:"border"     validate:"required,dive"`
+	Text       ColorThemeText       `yaml:"text"       validate:"required"`
+	Background ColorThemeBackground `yaml:"background" validate:"required"`
+	Border     ColorThemeBorder     `yaml:"border"     validate:"required"`
 }
 
 type ColorThemeConfig struct {
-	Inline ColorTheme `yaml:",inline" validate:"dive"`
+	Inline ColorTheme `yaml:",inline"`
 }
 
 type TableUIThemeConfig struct {
@@ -151,8 +151,8 @@ type UIThemeConfig struct {
 }
 
 type ThemeConfig struct {
-	Ui     UIThemeConfig     `yaml:"ui,omitempty"     validate:"dive"`
-	Colors *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty,dive"`
+	Ui     UIThemeConfig     `yaml:"ui,omitempty"     validate:"omitempty"`
+	Colors *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty"`
 }
 
 type Config struct {
@@ -161,7 +161,7 @@ type Config struct {
 	Defaults       Defaults              `yaml:"defaults"`
 	Keybindings    Keybindings           `yaml:"keybindings"`
 	RepoPaths      map[string]string     `yaml:"repoPaths"`
-	Theme          *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty,dive"`
+	Theme          *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
 	Pager          Pager                 `yaml:"pager"`
 }
 
