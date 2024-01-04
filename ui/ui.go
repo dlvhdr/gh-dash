@@ -87,12 +87,14 @@ func (m *Model) initScreen() tea.Msg {
 
 	config, err := config.ParseConfig(m.ctx.ConfigPath)
 	if err != nil {
-		log.KeyStyle = lipgloss.NewStyle().
+		styles := log.DefaultStyles()
+		styles.Key = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("1")).
 			Bold(true)
-		log.SeparatorStyle = lipgloss.NewStyle()
+		styles.Separator = lipgloss.NewStyle()
 
 		logger := log.New(os.Stderr)
+		logger.SetStyles(styles)
 		logger.SetTimeFormat(time.RFC3339)
 		logger.SetReportTimestamp(true)
 		logger.SetPrefix("Reading config file")
