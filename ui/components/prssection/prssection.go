@@ -117,6 +117,10 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if err != nil {
 				m.Ctx.Error = err
 			}
+
+		case key.Matches(msg, keys.PRKeys.WatchChecks):
+			cmd = m.watchChecks()
+
 		}
 
 	case UpdatePRMsg:

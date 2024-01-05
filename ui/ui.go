@@ -249,7 +249,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sidebar.ScrollToBottom()
 			return m, cmd
 
-		case key.Matches(msg, keys.PRKeys.Close, keys.PRKeys.Reopen, keys.PRKeys.Ready, keys.PRKeys.Merge, keys.IssueKeys.Close, keys.IssueKeys.Reopen):
+		case key.Matches(
+			msg,
+			keys.PRKeys.Close,
+			keys.PRKeys.Reopen,
+			keys.PRKeys.Ready,
+			keys.PRKeys.Merge,
+			keys.IssueKeys.Close,
+			keys.IssueKeys.Reopen,
+		):
 
 			var action string
 			switch {

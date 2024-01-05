@@ -1,17 +1,20 @@
 package keys
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"github.com/charmbracelet/bubbles/key"
+)
 
 type PRKeyMap struct {
-	Assign   key.Binding
-	Unassign key.Binding
-	Comment  key.Binding
-	Diff     key.Binding
-	Checkout key.Binding
-	Close    key.Binding
-	Ready    key.Binding
-	Reopen   key.Binding
-	Merge    key.Binding
+	Assign      key.Binding
+	Unassign    key.Binding
+	Comment     key.Binding
+	Diff        key.Binding
+	Checkout    key.Binding
+	Close       key.Binding
+	Ready       key.Binding
+	Reopen      key.Binding
+	Merge       key.Binding
+	WatchChecks key.Binding
 }
 
 var PRKeys = PRKeyMap{
@@ -44,12 +47,16 @@ var PRKeys = PRKeyMap{
 		key.WithHelp("X", "reopen"),
 	),
 	Ready: key.NewBinding(
-		key.WithKeys("w"),
-		key.WithHelp("w", "ready for review"),
+		key.WithKeys("W"),
+		key.WithHelp("W", "ready for review"),
 	),
 	Merge: key.NewBinding(
 		key.WithKeys("m"),
 		key.WithHelp("m", "merge"),
+	),
+	WatchChecks: key.NewBinding(
+		key.WithKeys("w"),
+		key.WithHelp("w", "Watch checks"),
 	),
 }
 
@@ -64,5 +71,6 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Ready,
 		PRKeys.Reopen,
 		PRKeys.Merge,
+		PRKeys.WatchChecks,
 	}
 }
