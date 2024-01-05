@@ -6,7 +6,7 @@ builds:
   - env:
       - CGO_ENABLED=0
     flags:
-      - nodbus
+      - -tags=nodbus
     goos:
       - freebsd
       - linux
