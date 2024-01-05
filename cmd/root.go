@@ -14,10 +14,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
-	"github.com/dlvhdr/gh-dash/ui"
-	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
+
+	"github.com/dlvhdr/gh-dash/ui"
+	"github.com/dlvhdr/gh-dash/ui/markdown"
 )
 
 var (
