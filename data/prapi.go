@@ -2,11 +2,13 @@ package data
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
+	"github.com/shurcooL/githubv4"
 )
 
 type PullRequestData struct {
@@ -118,6 +120,10 @@ type PageInfo struct {
 	EndCursor   string
 }
 
+func (data PullRequestData) GetTitle() string {
+	return data.Title
+}
+
 func (data PullRequestData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
 }
@@ -190,4 +196,34 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		TotalCount: queryResult.Search.IssueCount,
 		PageInfo:   queryResult.Search.PageInfo,
 	}, nil
+}
+
+func FetchPullRequest(prUrl string) (PullRequestData, error) {
+	var err error
+	client, err := gh.DefaultGraphQLClient()
+
+	if err != nil {
+		return PullRequestData{}, err
+	}
+
+	var queryResult struct {
+		Resource struct {
+			PullRequest PullRequestData `graphql:"... on PullRequest"`
+		} `graphql:"resource(url: $url)"`
+	}
+	parsedUrl, err := url.Parse(prUrl)
+	if err != nil {
+		return PullRequestData{}, err
+	}
+	variables := map[string]interface{}{
+		"url": githubv4.URI{URL: parsedUrl},
+	}
+	log.Debug("Fetching PR", "url", prUrl)
+	err = client.Query("FetchPullRequest", &queryResult, variables)
+	if err != nil {
+		return PullRequestData{}, err
+	}
+	log.Debug("Successfully fetched PR", "url", prUrl, "data", queryResult.Resource.PullRequest)
+
+	return queryResult.Resource.PullRequest, nil
 }

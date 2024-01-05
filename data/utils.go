@@ -1,9 +1,12 @@
 package data
 
-import "time"
+import (
+	"time"
+)
 
 type RowData interface {
 	GetRepoNameWithOwner() string
+	GetTitle() string
 	GetNumber() int
 	GetUrl() string
 	GetUpdatedAt() time.Time

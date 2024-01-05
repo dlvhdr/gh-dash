@@ -39,6 +39,10 @@ type IssueLabels struct {
 	Nodes []Label
 }
 
+func (data IssueData) GetTitle() string {
+	return data.Title
+}
+
 func (data IssueData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
 }
