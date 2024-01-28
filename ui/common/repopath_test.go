@@ -13,6 +13,12 @@ var configPaths = map[string]string{
 	"user_2/*":  "/path/to/user_2/*",
 }
 
+var configPathsWithDefultPath = map[string]string{
+	"user/repo":    "/path/to/user/repo",
+	"user_2/*":     "/path/to/user_2/*",
+	"default_path": "/path/to/user/dev",
+}
+
 func TestGetRepoLocalPath(t *testing.T) {
 	testCases := map[string]struct {
 		repo        string
@@ -43,6 +49,12 @@ func TestGetRepoLocalPath(t *testing.T) {
 			want:        "",
 			found:       false,
 			configPaths: configPaths,
+		},
+		"default path": {
+			repo:        "user3/repo",
+			want:        "/path/to/user/dev/repo",
+			found:       true,
+			configPaths: configPathsWithDefultPath,
 		},
 	}
 

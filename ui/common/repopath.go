@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -42,11 +43,15 @@ func GetRepoLocalPath(repoName string, cfgPaths map[string]string) (string, bool
 	// match config:repoPath values of {owner}/* as map key
 	wildcardPath, wildcardFound := cfgPaths[fmt.Sprintf("%s/*", owner)]
 
-	if !wildcardFound {
-		return "", false
+	if wildcardFound {
+        // adjust wildcard match to wildcard path - ~/somepath/* to ~/somepath/{repo}
+        return fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo), true
 	}
 
-	// adjust wildcard match to wildcard path - ~/somepath/* to ~/somepath/{repo}
-	return fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo), true
+	if defaultPath, found := cfgPaths["default_path"]; found {
+		p := strings.TrimSuffix(defaultPath, "/*")
+		return filepath.Join(p, repo), true
+	}
 
+	return "", false
 }
