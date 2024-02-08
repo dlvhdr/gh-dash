@@ -137,7 +137,8 @@ defaults:
     width: 60 # width in columns
   refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
-  dlvhdr/*: ~/code/repos/* # will match dlvhdr/repo-name to ~/code/repos/repo-name
+  default_path: ~/code/repos # fallback value if none of the other paths match
+  dlvhdr/*: ~/code/repos/dlvhdr/* # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 keybindings: # optional, define custom keybindings - see more info below
 theme: # optional, see more info below
