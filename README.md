@@ -215,7 +215,8 @@ An exact match for the full repo name to a full path takes priority over a match
 
 ```yaml
 repoPaths:
-  dlvhdr/*: ~/code/repos/*       # will match dlvhdr/repo-name to ~/code/repos/repo-name
+  default_path: ~/code/repos # fallback value if none of the other paths match
+  dlvhdr/*: ~/code/repos/dlvhdr/*       # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 ```
 
