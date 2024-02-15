@@ -204,7 +204,7 @@ To pin an issue include the following in your `config.yml` file:
 keybindings:
   issues:
     - key: P
-      command: gh issue pin {{.IssueNumber}} --repo {.RepoName}
+      command: gh issue pin {{.IssueNumber}} --repo {{.RepoName}}
 ```
 
 ### 🚥 Repo Path Matching
