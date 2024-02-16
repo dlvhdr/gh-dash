@@ -41,7 +41,6 @@ type Model struct {
 	footer        footer.Model
 	prs           []section.Section
 	issues        []section.Section
-	ready         bool
 	tabs          tabs.Model
 	ctx           context.ProgramContext
 	taskSpinner   spinner.Model
@@ -313,14 +312,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.CopyNumber):
 			number := fmt.Sprint(m.getCurrRowData().GetNumber())
-			clipboard.WriteAll(number)
-			cmd := m.notify(fmt.Sprintf("Copied %s to clipboard", number))
+			err := clipboard.WriteAll(number)
+			var cmd tea.Cmd
+			if err != nil {
+				cmd = m.notify(fmt.Sprintf("Failed copying to clipboard %v", err))
+			} else {
+				cmd = m.notify(fmt.Sprintf("Copied %s to clipboard", number))
+			}
 			return m, cmd
 
 		case key.Matches(msg, m.keys.CopyUrl):
 			url := m.getCurrRowData().GetUrl()
-			clipboard.WriteAll(url)
-			cmd := m.notify(fmt.Sprintf("Copied %s to clipboard", url))
+			err := clipboard.WriteAll(url)
+			var cmd tea.Cmd
+			if err != nil {
+				cmd = m.notify(fmt.Sprintf("Failed copying to clipboard %v", err))
+			} else {
+				cmd = m.notify(fmt.Sprintf("Copied %s to clipboard", url))
+			}
 			return m, cmd
 
 		case key.Matches(msg, m.keys.Quit):

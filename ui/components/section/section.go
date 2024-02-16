@@ -305,8 +305,7 @@ func (m *Model) GetMainContent() string {
 }
 
 func (m *Model) View() string {
-	var search string
-	search = m.SearchBar.View(*m.Ctx)
+	search := m.SearchBar.View(*m.Ctx)
 
 	return m.Ctx.Styles.Section.ContainerStyle.Copy().Render(
 		lipgloss.JoinVertical(
@@ -345,6 +344,7 @@ func (m *Model) GetPagerContent() string {
 	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
 	return pager
 }
+
 func (m *Model) GetPromptConfirmation() string {
 	if m.IsPromptConfirmationShown {
 		var prompt string

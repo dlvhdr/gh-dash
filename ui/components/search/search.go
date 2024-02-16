@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/ui/context"
 )
 
@@ -81,20 +82,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func getInputWidth(ctx *context.ProgramContext, prompt string) int {
 	return ctx.MainContentWidth - lipgloss.Width(prompt) - 6
-}
-
-type SearchCancelled struct {
-}
-
-func (m Model) cancelSearch() tea.Msg {
-	return SearchCancelled{}
-}
-
-type SearchSubmitted struct {
-}
-
-func (m Model) submitSearch() tea.Msg {
-	return SearchSubmitted{}
 }
 
 func (m Model) Value() string {
