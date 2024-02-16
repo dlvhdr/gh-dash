@@ -11,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/config"
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
@@ -190,17 +191,19 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 
 func (m *Model) notify(text string) tea.Cmd {
 	id := fmt.Sprint(time.Now().Unix())
-	m.tasks[id] = context.Task{
-		Id:           id,
-		FinishedText: text,
-		State:        context.TaskFinished,
-	}
-	return func() tea.Msg {
+	startCmd := m.ctx.StartTask(
+		context.Task{
+			Id:           id,
+			StartText:    text,
+			FinishedText: text,
+			State:        context.TaskStart,
+		})
+
+	finishCmd := func() tea.Msg {
 		return constants.TaskFinishedMsg{
-			SectionId:   m.getCurrSection().GetId(),
-			SectionType: m.getCurrSection().GetType(),
-			TaskId:      id,
-			Err:         nil,
+			TaskId: id,
 		}
 	}
+
+	return tea.Sequence(startCmd, finishCmd)
 }
