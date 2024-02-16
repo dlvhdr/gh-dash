@@ -16,8 +16,11 @@ import (
 )
 
 const DashDir = "gh-dash"
+
 const ConfigYmlFileName = "config.yml"
+
 const ConfigYamlFileName = "config.yaml"
+
 const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
 
 var validate *validator.Validate
@@ -322,38 +325,6 @@ func (parser ConfigParser) createConfigFileIfMissing(
 	}
 
 	return nil
-}
-
-func (parser ConfigParser) getExistingConfigFile() (*string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-
-	xdgConfigDir := os.Getenv("XDG_CONFIG_HOME")
-	if xdgConfigDir == "" {
-		xdgConfigDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
-	}
-
-	configPaths := []string{
-		os.Getenv(
-			"GH_DASH_CONFIG",
-		), // If GH_DASH_CONFIG is empty, the os.Stat call fails
-		filepath.Join(xdgConfigDir, DashDir, ConfigYmlFileName),
-		filepath.Join(xdgConfigDir, DashDir, ConfigYamlFileName),
-	}
-
-	// Check if each config file exists, return the first one that does
-	for _, configPath := range configPaths {
-		if configPath == "" {
-			continue // Skip checking if path is empty
-		}
-		if _, err := os.Stat(configPath); err == nil {
-			return &configPath, nil
-		}
-	}
-
-	return nil, nil
 }
 
 func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
