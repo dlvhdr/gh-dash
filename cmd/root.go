@@ -92,7 +92,10 @@ func init() {
 		"",
 		"use this configuration file (default is $GH_DASH_CONFIG, or if not set, \n$XDG_CONFIG_HOME/gh-dash/config.yml)",
 	)
-	rootCmd.MarkFlagFilename("config", "yaml", "yml")
+	err := rootCmd.MarkPersistentFlagFilename("config", "yaml", "yml")
+	if err != nil {
+		log.Fatal("Cannot mark config flag as filename", err)
+	}
 
 	rootCmd.Version = buildVersion(Version, Commit, Date, BuiltBy)
 	rootCmd.SetVersionTemplate(`gh-dash {{printf "version %s\n" .Version}}`)
@@ -110,7 +113,7 @@ func init() {
 		"help for gh-dash",
 	)
 
-	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+	rootCmd.Run = func(_ *cobra.Command, _ []string) {
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
 			log.Fatal("Cannot parse debug flag", err)
