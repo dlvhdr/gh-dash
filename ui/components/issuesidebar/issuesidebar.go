@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/common"
 	"github.com/dlvhdr/gh-dash/ui/components/inputbox"
@@ -254,7 +255,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	m.inputBox.SetPrompt("Leave a comment...")
 
 	if isCommenting {
-		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
@@ -274,7 +275,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 	}
 
 	if isAssigning {
-		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
@@ -301,7 +302,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 	m.inputBox.SetValue(strings.Join(m.issueAssignees(), "\n"))
 
 	if isUnassigning {
-		return tea.Sequentially(textarea.Blink, m.inputBox.Focus())
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }

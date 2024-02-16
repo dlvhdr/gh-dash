@@ -19,11 +19,6 @@ type PullRequest struct {
 	Data data.PullRequestData
 }
 
-type sectionPullRequestsFetchedMsg struct {
-	SectionId int
-	Prs       []PullRequest
-}
-
 func (pr *PullRequest) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(pr.Ctx, pr.Data.State)
 }

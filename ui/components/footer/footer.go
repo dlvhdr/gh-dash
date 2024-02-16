@@ -23,7 +23,7 @@ type Model struct {
 }
 
 func NewModel(ctx context.ProgramContext) Model {
-	help := bbHelp.NewModel()
+	help := bbHelp.New()
 	help.ShowAll = true
 	help.Styles = ctx.Styles.Help.BubbleStyles
 	l := ""
