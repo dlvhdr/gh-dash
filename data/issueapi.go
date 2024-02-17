@@ -21,9 +21,22 @@ type IssueData struct {
 	Url        string
 	Repository Repository
 	Assignees  Assignees      `graphql:"assignees(first: 3)"`
-	Comments   Comments       `graphql:"comments(first: 15)"`
+	Comments   IssueComments  `graphql:"comments(first: 15)"`
 	Reactions  IssueReactions `graphql:"reactions(first: 1)"`
 	Labels     IssueLabels    `graphql:"labels(first: 3)"`
+}
+
+type IssueComments struct {
+	Nodes      []IssueComment
+	TotalCount int
+}
+
+type IssueComment struct {
+	Author struct {
+		Login string
+	}
+	Body      string
+	UpdatedAt time.Time
 }
 
 type IssueReactions struct {

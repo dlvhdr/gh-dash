@@ -34,9 +34,10 @@ type PullRequestData struct {
 		Name string
 	}
 	Repository    Repository
-	Assignees     Assignees `graphql:"assignees(first: 3)"`
-	Comments      Comments  `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews Reviews   `graphql:"latestReviews(last: 3)"`
+	Assignees     Assignees     `graphql:"assignees(first: 3)"`
+	Comments      Comments      `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews Reviews       `graphql:"latestReviews(last: 3)"`
+	ReviewThreads ReviewThreads `graphql:"reviewThreads(last: 100)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
 }
@@ -96,6 +97,21 @@ type Comment struct {
 	UpdatedAt time.Time
 }
 
+type ReviewComment struct {
+	Author struct {
+		Login string
+	}
+	Body      string
+	UpdatedAt time.Time
+	StartLine int
+	Line      int
+}
+
+type ReviewComments struct {
+	Nodes      []ReviewComment
+	TotalCount int
+}
+
 type Comments struct {
 	Nodes      []Comment
 	TotalCount int
@@ -112,6 +128,18 @@ type Review struct {
 
 type Reviews struct {
 	Nodes []Review
+}
+
+type ReviewThreads struct {
+	Nodes []struct {
+		Id           string
+		IsOutdated   bool
+		OriginalLine int
+		StartLine    int
+		Line         int
+		Path         string
+		Comments     ReviewComments `graphql:"comments(first: 100)"`
+	}
 }
 
 type PageInfo struct {

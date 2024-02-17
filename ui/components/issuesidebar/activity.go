@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/dlvhdr/gh-dash/utils"
@@ -63,7 +64,7 @@ func renderEmptyState() string {
 	return lipgloss.NewStyle().Italic(true).Render("No comments...")
 }
 
-func (m *Model) renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderComment(comment data.IssueComment, markdownRenderer glamour.TermRenderer) (string, error) {
 	header := lipgloss.JoinHorizontal(lipgloss.Top,
 		m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author.Login),
 		" ",
