@@ -344,7 +344,7 @@ type SectionIssuesFetchedMsg struct {
 
 type UpdateIssueMsg struct {
 	IssueNumber      int
-	NewComment       *data.Comment
+	NewComment       *data.IssueComment
 	IsClosed         *bool
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees

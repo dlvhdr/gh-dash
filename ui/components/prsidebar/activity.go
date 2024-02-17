@@ -1,12 +1,14 @@
 package prsidebar
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"time"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/markdown"
 	"github.com/dlvhdr/gh-dash/utils"
@@ -21,13 +23,37 @@ func (m *Model) renderActivity() string {
 	width := m.getIndentedContentWidth() - 2
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
 
-	var activity []RenderedActivity
-	for _, comment := range m.pr.Data.Comments.Nodes {
+	var activities []RenderedActivity
+	var comments []comment
+
+	for _, review := range m.pr.Data.ReviewThreads.Nodes {
+		path := review.Path
+		line := review.Line
+		for _, c := range review.Comments.Nodes {
+			comments = append(comments, comment{
+				Author:    c.Author.Login,
+				Body:      c.Body,
+				UpdatedAt: c.UpdatedAt,
+				Path:      &path,
+				Line:      &line,
+			})
+		}
+	}
+
+	for _, c := range m.pr.Data.Comments.Nodes {
+		comments = append(comments, comment{
+			Author:    c.Author.Login,
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		})
+	}
+
+	for _, comment := range comments {
 		renderedComment, err := m.renderComment(comment, markdownRenderer)
 		if err != nil {
 			continue
 		}
-		activity = append(activity, RenderedActivity{
+		activities = append(activities, RenderedActivity{
 			UpdatedAt:      comment.UpdatedAt,
 			RenderedString: renderedComment,
 		})
@@ -38,23 +64,23 @@ func (m *Model) renderActivity() string {
 		if err != nil {
 			continue
 		}
-		activity = append(activity, RenderedActivity{
+		activities = append(activities, RenderedActivity{
 			UpdatedAt:      review.UpdatedAt,
 			RenderedString: renderedReview,
 		})
 	}
 
-	sort.Slice(activity, func(i, j int) bool {
-		return activity[i].UpdatedAt.Before(activity[j].UpdatedAt)
+	sort.Slice(activities, func(i, j int) bool {
+		return activities[i].UpdatedAt.Before(activities[j].UpdatedAt)
 	})
 
 	body := ""
 	bodyStyle := lipgloss.NewStyle().PaddingLeft(2)
-	if len(activity) == 0 {
+	if len(activities) == 0 {
 		body = renderEmptyState()
 	} else {
 		var renderedActivities []string
-		for _, activity := range activity {
+		for _, activity := range activities {
 			renderedActivities = append(renderedActivities, activity.RenderedString)
 		}
 		body = lipgloss.JoinVertical(lipgloss.Left, renderedActivities...)
@@ -74,12 +100,39 @@ func renderEmptyState() string {
 	return lipgloss.NewStyle().Italic(true).Render("No comments...")
 }
 
-func (m *Model) renderComment(comment data.Comment, markdownRenderer glamour.TermRenderer) (string, error) {
-	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author.Login),
-		" ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
-	)
+type comment struct {
+	Author    string
+	UpdatedAt time.Time
+	Body      string
+	Path      *string
+	Line      *int
+}
+
+func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRenderer) (string, error) {
+	width := m.getIndentedContentWidth()
+	authorAndTime := lipgloss.NewStyle().
+		Width(width).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(m.ctx.Theme.FaintBorder).Render(
+		lipgloss.JoinHorizontal(lipgloss.Top,
+			m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author),
+			" ",
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		))
+
+	var header string
+	if comment.Path != nil && comment.Line != nil {
+		filePath := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Width(width).Render(
+			fmt.Sprintf(
+				"%s#l%d",
+				*comment.Path,
+				*comment.Line,
+			),
+		)
+		header = lipgloss.JoinVertical(lipgloss.Left, authorAndTime, filePath, "")
+	} else {
+		header = authorAndTime
+	}
 
 	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 	body := regex.ReplaceAllString(comment.Body, "")

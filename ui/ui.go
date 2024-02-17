@@ -361,6 +361,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if ok {
 			log.Debug("Task finished", "id", task.Id)
 			if msg.Err != nil {
+				log.Error("Task finished with error", "id", task.Id, "err", msg.Err)
 				task.State = context.TaskError
 				task.Error = msg.Err
 			} else {
