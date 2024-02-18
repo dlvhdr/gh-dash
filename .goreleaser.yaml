@@ -29,7 +29,7 @@ builds:
 
 archives:
   - format: binary
-    name_template: "{{ .Os }}-{{ .Arch }}"
+    name_template: "gh-dash_{{ .Tag }}_{{ .Os }}-{{ .Arch }}"
 checksum:
   name_template: "checksums.txt"
 snapshot:
