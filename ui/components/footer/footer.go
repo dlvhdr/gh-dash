@@ -101,11 +101,11 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
-	view := ""
+	view := m.ctx.User
 	if ctx.View == config.PRsView {
-		view = " PRs"
+		view += " |  PRs"
 	} else {
-		view = " Issues"
+		view += " |  Issues"
 	}
 
 	return ctx.Styles.Tabs.ViewSwitcher.Copy().
