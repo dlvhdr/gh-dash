@@ -504,7 +504,11 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.footer.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
+	if m.footer.ShowAll {
+		m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.ExpandedHelpHeight
+	} else {
+		m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
+	}
 	m.syncMainContentWidth()
 }
 
