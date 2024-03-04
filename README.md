@@ -137,7 +137,7 @@ defaults:
     width: 60 # width in columns
   refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
-  default_path: ~/code/repos # fallback value if none of the other paths match
+  default_path: ~/code/repos # (deprecated) fallback parent directory if none of the other paths match
   :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone github repos in a consistent location
   dlvhdr/*: ~/code/repos/dlvhdr/* # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
@@ -214,9 +214,13 @@ Repo name to path mappings can be exact match (full name, full path) or wildcard
 
 An exact match for the full repo name to a full path takes priority over a matching wildcard, and wildcard matches must match to a wildcard path.
 
+An `:owner/:repo` template can be specified as a generic fallback. This replaces the deprecated
+`default_path` configuration, which can be achieved using an `:owner/:repo` template that ignores
+the `:owner` substitution.
+
 ```yaml
 repoPaths:
-  default_path: ~/code/repos # fallback value if none of the other paths match
+  default_path: ~/code/repos # (deprecated) fallback parent directory if none of the other paths match
   :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone github repos in a consistent location
   dlvhdr/*: ~/code/repos/dlvhdr/*       # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
