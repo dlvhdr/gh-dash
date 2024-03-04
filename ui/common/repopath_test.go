@@ -13,7 +13,7 @@ var configPaths = map[string]string{
 	"user_2/*":  "/path/to/user_2/*",
 }
 
-var configPathsWithDefultPath = map[string]string{
+var configPathsWithDefaultPath = map[string]string{
 	"user/repo":    "/path/to/user/repo",
 	"user_2/*":     "/path/to/user_2/*",
 	"default_path": "/path/to/user/dev",
@@ -54,7 +54,7 @@ func TestGetRepoLocalPath(t *testing.T) {
 			repo:        "user3/repo",
 			want:        "/path/to/user/dev/repo",
 			found:       true,
-			configPaths: configPathsWithDefultPath,
+			configPaths: configPathsWithDefaultPath,
 		},
 	}
 
