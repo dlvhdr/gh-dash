@@ -44,8 +44,8 @@ func GetRepoLocalPath(repoName string, cfgPaths map[string]string) (string, bool
 	wildcardPath, wildcardFound := cfgPaths[fmt.Sprintf("%s/*", owner)]
 
 	if wildcardFound {
-        // adjust wildcard match to wildcard path - ~/somepath/* to ~/somepath/{repo}
-        return fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo), true
+		// adjust wildcard match to wildcard path - ~/somepath/* to ~/somepath/{repo}
+		return fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo), true
 	}
 
 	if defaultPath, found := cfgPaths["default_path"]; found {
