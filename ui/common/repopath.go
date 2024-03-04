@@ -48,6 +48,10 @@ func GetRepoLocalPath(repoName string, cfgPaths map[string]string) (string, bool
 		return fmt.Sprintf("%s/%s", strings.TrimSuffix(wildcardPath, "/*"), repo), true
 	}
 
+	if template, ok := cfgPaths[":owner/:repo"]; ok {
+		return strings.ReplaceAll(strings.ReplaceAll(template, ":owner", owner), ":repo", repo), true
+	}
+
 	if defaultPath, found := cfgPaths["default_path"]; found {
 		p := strings.TrimSuffix(defaultPath, "/*")
 		return filepath.Join(p, repo), true
