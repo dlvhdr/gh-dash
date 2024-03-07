@@ -13,10 +13,10 @@ var configPaths = map[string]string{
 	"user_2/*":  "/path/to/user_2/*",
 }
 
-var configPathsWithDefaultPath = map[string]string{
+var configPathsWithOwnerRepoTemplateIgnoringOwner = map[string]string{
 	"user/repo":    "/path/to/user/repo",
 	"user_2/*":     "/path/to/user_2/*",
-	"default_path": "/path/to/user/dev",
+	":owner/:repo": "/path/to/user/dev/:repo",
 }
 
 var configPathsWithOwnerRepoTemplate = map[string]string{
@@ -56,11 +56,11 @@ func TestGetRepoLocalPath(t *testing.T) {
 			found:       false,
 			configPaths: configPaths,
 		},
-		"default path": {
+		"with :owner/:repo template: ignoring owner substitution": {
 			repo:        "user3/repo",
 			want:        "/path/to/user/dev/repo",
 			found:       true,
-			configPaths: configPathsWithDefaultPath,
+			configPaths: configPathsWithOwnerRepoTemplateIgnoringOwner,
 		},
 		"with :owner/:repo template: exact match": {
 			repo:        "user/repo",

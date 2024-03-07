@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -50,11 +49,6 @@ func GetRepoLocalPath(repoName string, cfgPaths map[string]string) (string, bool
 
 	if template, ok := cfgPaths[":owner/:repo"]; ok {
 		return strings.ReplaceAll(strings.ReplaceAll(template, ":owner", owner), ":repo", repo), true
-	}
-
-	if defaultPath, found := cfgPaths["default_path"]; found {
-		p := strings.TrimSuffix(defaultPath, "/*")
-		return filepath.Join(p, repo), true
 	}
 
 	return "", false
