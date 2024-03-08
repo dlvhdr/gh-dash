@@ -167,6 +167,7 @@ For PRs, the available arguments are:
 | `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
 | `PrNumber`    | The PR number                                                                   |
 | `HeadRefName` | The PR's remote branch name                                                     |
+| `BaseRefName` | The PR's base branch name                                                       |
 
 For Issues, the available arguments are:
 

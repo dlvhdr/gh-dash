@@ -71,6 +71,7 @@ type PRCommandTemplateInput struct {
 	RepoPath    string
 	PrNumber    int
 	HeadRefName string
+	BaseRefName string
 }
 
 func (m *Model) executeKeybinding(key string) tea.Cmd {
@@ -121,6 +122,7 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 		RepoPath:    repoPath,
 		PrNumber:    prData.Number,
 		HeadRefName: prData.HeadRefName,
+		BaseRefName: prData.BaseRefName,
 	}
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
