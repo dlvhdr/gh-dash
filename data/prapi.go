@@ -37,7 +37,7 @@ type PullRequestData struct {
 	Assignees     Assignees     `graphql:"assignees(first: 3)"`
 	Comments      Comments      `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	LatestReviews Reviews       `graphql:"latestReviews(last: 3)"`
-	ReviewThreads ReviewThreads `graphql:"reviewThreads(last: 100)"`
+	ReviewThreads ReviewThreads `graphql:"reviewThreads(last: 20)"`
 	IsDraft       bool
 	Commits       Commits `graphql:"commits(last: 1)"`
 }
@@ -138,7 +138,7 @@ type ReviewThreads struct {
 		StartLine    int
 		Line         int
 		Path         string
-		Comments     ReviewComments `graphql:"comments(first: 100)"`
+		Comments     ReviewComments `graphql:"comments(first: 10)"`
 	}
 }
 
