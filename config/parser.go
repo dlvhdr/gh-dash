@@ -98,6 +98,7 @@ type Defaults struct {
 	View                   ViewType      `yaml:"view"`
 	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
 	RefetchIntervalMinutes int           `yaml:"refetchIntervalMinutes,omitempty"`
+	DateFormat             string        `yaml:"dateFormat,omitempty"`
 }
 
 type Keybinding struct {
