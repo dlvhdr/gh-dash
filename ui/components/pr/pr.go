@@ -200,8 +200,16 @@ func (pr *PullRequest) renderRepoName() string {
 }
 
 func (pr *PullRequest) renderUpdateAt() string {
-	return pr.getTextStyle().
-		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
+	timeFormat := pr.Ctx.Config.Defaults.DateFormat
+
+	updatedAtOutput := ""
+	if timeFormat == "" || timeFormat == "RELATIVE" {
+		updatedAtOutput = utils.TimeElapsed(pr.Data.UpdatedAt)
+	} else {
+		updatedAtOutput = pr.Data.UpdatedAt.Format(timeFormat)
+	}
+
+	return pr.getTextStyle().Render(updatedAtOutput)
 }
 
 func (pr *PullRequest) renderBaseName() string {

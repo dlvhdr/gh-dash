@@ -35,7 +35,16 @@ func (issue *Issue) getTextStyle() lipgloss.Style {
 }
 
 func (issue *Issue) renderUpdateAt() string {
-	return issue.getTextStyle().Render(utils.TimeElapsed(issue.Data.UpdatedAt))
+	timeFormat := issue.Ctx.Config.Defaults.DateFormat
+
+	updatedAtOutput := ""
+	if timeFormat == "" || timeFormat == "RELATIVE" {
+		updatedAtOutput = utils.TimeElapsed(issue.Data.UpdatedAt)
+	} else {
+		updatedAtOutput = issue.Data.UpdatedAt.Format(timeFormat)
+	}
+
+	return issue.getTextStyle().Render(updatedAtOutput)
 }
 
 func (issue *Issue) renderRepoName() string {
