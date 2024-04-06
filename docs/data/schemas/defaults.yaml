@@ -15,6 +15,7 @@ schematize:
       - Only fetch 20 PRs and issues at a time for each section.
       - Display the PRs view when the dashboard loads.
       - Refetch PRs and issues for each section every 30 minutes.
+      - Display dates using relative values.
 
       For more details on the default layouts, see the documentation for [sref:PR] and [sref:issue]
       layout definitions.
@@ -151,6 +152,24 @@ properties:
 
         [refresh current section]: /getting-started/keybindings/global/#refresh-current-section
         [refresh all sections]:    /getting-started/keybindings/global/#refresh-all-sections
+    type: integer
+    minimum: 1
+    default: 30
+  dateFormat:
+    title: Date format
+    description: Specifies how dates are formatted.
+    schematize:
+      weight: 5
+      details: |
+        This setting defines how dates are formatted. The format can be either be "relative" or a 
+        [go time format].
+
+        By default, the format is "relative" which fits just inside the default column width of
+        updated at in the issues and pull request layouts.
+
+        You may need to adjust the layout column width depending on your format.
+
+        [go time format]: https://pkg.go.dev/time#pkg-constants
     type: integer
     minimum: 1
     default: 30

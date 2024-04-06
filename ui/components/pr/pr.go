@@ -203,7 +203,7 @@ func (pr *PullRequest) renderUpdateAt() string {
 	timeFormat := pr.Ctx.Config.Defaults.DateFormat
 
 	updatedAtOutput := ""
-	if timeFormat == "" || timeFormat == "RELATIVE" {
+	if timeFormat == "" || timeFormat == "relative" {
 		updatedAtOutput = utils.TimeElapsed(pr.Data.UpdatedAt)
 	} else {
 		updatedAtOutput = pr.Data.UpdatedAt.Format(timeFormat)

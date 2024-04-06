@@ -38,7 +38,7 @@ func (issue *Issue) renderUpdateAt() string {
 	timeFormat := issue.Ctx.Config.Defaults.DateFormat
 
 	updatedAtOutput := ""
-	if timeFormat == "" || timeFormat == "RELATIVE" {
+	if timeFormat == "" || timeFormat == "relative" {
 		updatedAtOutput = utils.TimeElapsed(issue.Data.UpdatedAt)
 	} else {
 		updatedAtOutput = issue.Data.UpdatedAt.Format(timeFormat)
