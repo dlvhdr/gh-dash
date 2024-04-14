@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
@@ -102,13 +103,35 @@ type Defaults struct {
 }
 
 type Keybinding struct {
-	Key     string `yaml:"key"`
-	Command string `yaml:"command"`
+	Key     string   `yaml:"key"`
+	Keys    []string `yaml:"keys"`
+	Command string   `yaml:"command"`
+	Builtin string   `yaml:"builtin"`
+}
+
+func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
+	helpDesc := ""
+	if previous != nil {
+		helpDesc = previous.Help().Desc
+	}
+
+	if len(kb.Keys) > 0 {
+		return key.NewBinding(
+			key.WithKeys(kb.Keys...),
+			key.WithHelp(strings.Join(kb.Keys, "/"), helpDesc),
+		)
+	}
+
+	return key.NewBinding(
+		key.WithKeys(kb.Key),
+		key.WithHelp(kb.Key, helpDesc),
+	)
 }
 
 type Keybindings struct {
-	Issues []Keybinding `yaml:"issues"`
-	Prs    []Keybinding `yaml:"prs"`
+	Universal []Keybinding `yaml:"universal"`
+	Issues    []Keybinding `yaml:"issues"`
+	Prs       []Keybinding `yaml:"prs"`
 }
 
 type Pager struct {
@@ -257,8 +280,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 		},
 		Keybindings: Keybindings{
-			Issues: []Keybinding{},
-			Prs:    []Keybinding{},
+			Universal: []Keybinding{},
+			Issues:    []Keybinding{},
+			Prs:       []Keybinding{},
 		},
 		RepoPaths: map[string]string{},
 		Theme: &ThemeConfig{

@@ -2,6 +2,7 @@ package keys
 
 import (
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/dlvhdr/gh-dash/config"
 )
 
 type PRKeyMap struct {
@@ -73,4 +74,46 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Merge,
 		PRKeys.WatchChecks,
 	}
+}
+
+func rebindPRKeys(keys []config.Keybinding) error {
+	for _, prKey := range keys {
+		var k key.Binding
+
+		switch prKey.Builtin {
+		case "assign":
+			k = PRKeys.Assign
+		case "unassign":
+			k = PRKeys.Unassign
+		case "comment":
+			k = PRKeys.Comment
+		case "diff":
+			k = PRKeys.Diff
+		case "checkout":
+			k = PRKeys.Checkout
+		case "close":
+			k = PRKeys.Close
+		case "ready":
+			k = PRKeys.Ready
+		case "reopen":
+			k = PRKeys.Reopen
+		case "merge":
+			k = PRKeys.Merge
+		case "watchchecks":
+			k = PRKeys.WatchChecks
+		default:
+			// TODO: return an error here
+			return nil
+		}
+
+		// Not really sure if this is the best idea but I am not
+		// sure how else we are meant to define alt keys.
+		if len(prKey.Keys) > 0 {
+			k.SetKeys(prKey.Keys...)
+		} else {
+			k.SetKeys(prKey.Key)
+		}
+	}
+
+	return nil
 }

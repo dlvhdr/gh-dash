@@ -33,7 +33,7 @@ import (
 )
 
 type Model struct {
-	keys          keys.KeyMap
+	keys          *keys.KeyMap
 	sidebar       sidebar.Model
 	prSidebar     prsidebar.Model
 	issueSidebar  issuesidebar.Model
@@ -82,10 +82,7 @@ func NewModel(configPath string) Model {
 }
 
 func (m *Model) initScreen() tea.Msg {
-	var err error
-
-	config, err := config.ParseConfig(m.ctx.ConfigPath)
-	if err != nil {
+	showError := func(err error) {
 		styles := log.DefaultStyles()
 		styles.Key = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("1")).
@@ -107,10 +104,24 @@ func (m *Model) initScreen() tea.Msg {
 				"err",
 				err,
 			)
-
 	}
 
-	return initMsg{Config: config}
+	cfg, err := config.ParseConfig(m.ctx.ConfigPath)
+	if err != nil {
+		showError(err)
+		return initMsg{Config: cfg}
+	}
+
+	err = keys.Rebind(
+		cfg.Keybindings.Universal,
+		cfg.Keybindings.Issues,
+		cfg.Keybindings.Prs,
+	)
+	if err != nil {
+		showError(err)
+	}
+
+	return initMsg{Config: cfg}
 }
 
 func (m Model) Init() tea.Cmd {

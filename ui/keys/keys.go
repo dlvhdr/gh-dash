@@ -3,6 +3,7 @@ package keys
 import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	log "github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/config"
 )
@@ -84,7 +85,7 @@ func (k KeyMap) QuitAndHelpKeys() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-var Keys = KeyMap{
+var Keys = &KeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "move up"),
@@ -157,4 +158,53 @@ var Keys = KeyMap{
 		key.WithKeys("q", "esc", "ctrl+c"),
 		key.WithHelp("q", "quit"),
 	),
+}
+
+// Rebind will update our saved keybindings from configuration values.
+func Rebind(universal, issueKeys, prKeys []config.Keybinding) error {
+	err := rebindUniversal(universal)
+	if err != nil {
+		return err
+	}
+
+	err = rebindPRKeys(prKeys)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func rebindUniversal(universal []config.Keybinding) error {
+	for _, kb := range universal {
+		log.Debug("Rebinding key", "builtin", kb.Builtin, "key", kb.Key)
+		switch kb.Builtin {
+		case "up":
+			Keys.Up = kb.NewBinding(&Keys.Up)
+		case "down":
+			Keys.Down = kb.NewBinding(&Keys.Down)
+		case "firstline": // should this be first-line or firstLine?
+		case "lastline":
+		case "togglepreview":
+		case "opengithub":
+		case "refresh":
+		case "refreshall":
+		case "pagedown":
+		case "pageup":
+		case "nextsection":
+		case "prevsection":
+		case "switchview":
+			Keys.SwitchView = kb.NewBinding(&Keys.SwitchView)
+		case "search":
+		case "copyurl":
+		case "copynumber":
+		case "help":
+		case "quit":
+		default:
+			// TODO: return an error here
+			return nil
+		}
+	}
+
+	return nil
 }
