@@ -109,13 +109,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 
 func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
 	repoName := prData.GetRepoNameWithOwner()
-	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
-
-	if !ok {
-		return func() tea.Msg {
-			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
-		}
-	}
+	repoPath, _ := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
 
 	input := PRCommandTemplateInput{
 		RepoName:    repoName,
@@ -129,6 +123,9 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 	if err != nil {
 		log.Fatal("Failed parse keybinding template", err)
 	}
+
+	// Set the command to error out if required input (e.g. repoPath) is missing
+	cmd = cmd.Option("missingkey=error")
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
