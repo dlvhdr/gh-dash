@@ -124,7 +124,7 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 		log.Fatal("Failed parse keybinding template", err)
 	}
 
-	// Set the command to error out if required input (e.g. repoPath) is missing
+	// Set the command to error out if required input (e.g. RepoPath) is missing
 	cmd = cmd.Option("missingkey=error")
 
 	var buff bytes.Buffer
