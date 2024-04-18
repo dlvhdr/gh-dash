@@ -66,14 +66,6 @@ type IssueCommandTemplateInput struct {
 	HeadRefName string
 }
 
-type PRCommandTemplateInput struct {
-	RepoName    string
-	RepoPath    string
-	PrNumber    int
-	HeadRefName string
-	BaseRefName string
-}
-
 func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
 
@@ -108,15 +100,18 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 }
 
 func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
-	repoName := prData.GetRepoNameWithOwner()
-	repoPath, _ := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
+	// for sructured data, existing structs, etc. Especially if holes in the data are expected.
+	input := map[string]any {
+		"RepoName":    prData.GetRepoNameWithOwner(),
+		"PrNumber":    prData.Number,
+		"HeadRefName": prData.HeadRefName,
+		"BaseRefName": prData.BaseRefName,
+	}
 
-	input := PRCommandTemplateInput{
-		RepoName:    repoName,
-		RepoPath:    repoPath,
-		PrNumber:    prData.Number,
-		HeadRefName: prData.HeadRefName,
-		BaseRefName: prData.BaseRefName,
+	// Append in the local RepoPath only if it can be found
+	if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
+		input["RepoPath"] = repoPath
 	}
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
