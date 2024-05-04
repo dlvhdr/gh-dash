@@ -156,16 +156,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		if m.PageInfo != nil {
-			m.Prs = append(m.Prs, msg.Prs...)
-		} else {
-			m.Prs = msg.Prs
+		if m.LastTaskId == msg.TaskId {
+			if m.PageInfo != nil {
+				m.Prs = append(m.Prs, msg.Prs...)
+			} else {
+				m.Prs = msg.Prs
+			}
+			m.TotalCount = msg.TotalCount
+			m.PageInfo = &msg.PageInfo
+			m.Table.SetRows(m.BuildRows())
+			m.UpdateLastUpdated(time.Now())
+			m.UpdateTotalItemsCount(m.TotalCount)
 		}
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetRows(m.BuildRows())
-		m.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -285,6 +287,7 @@ type SectionPullRequestsFetchedMsg struct {
 	Prs        []data.PullRequestData
 	TotalCount int
 	PageInfo   data.PageInfo
+	TaskId     string
 }
 
 func (m *Model) GetCurrRow() data.RowData {
@@ -311,6 +314,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
+	m.LastTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
@@ -347,6 +351,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Prs:        res.Prs,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
+				TaskId:     taskId,
 			},
 		}
 	}

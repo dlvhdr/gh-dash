@@ -125,16 +125,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionIssuesFetchedMsg:
-		if m.PageInfo != nil {
-			m.Issues = append(m.Issues, msg.Issues...)
-		} else {
-			m.Issues = msg.Issues
+		if m.LastTaskId == msg.TaskId {
+			if m.PageInfo != nil {
+				m.Issues = append(m.Issues, msg.Issues...)
+			} else {
+				m.Issues = msg.Issues
+			}
+			m.TotalCount = msg.TotalCount
+			m.PageInfo = &msg.PageInfo
+			m.Table.SetRows(m.BuildRows())
+			m.UpdateLastUpdated(time.Now())
+			m.UpdateTotalItemsCount(m.TotalCount)
 		}
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetRows(m.BuildRows())
-		m.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -259,6 +261,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
+	m.LastTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
@@ -295,6 +298,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Issues:     res.Issues,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
+				TaskId:     taskId,
 			},
 		}
 
@@ -340,6 +344,7 @@ type SectionIssuesFetchedMsg struct {
 	Issues     []data.IssueData
 	TotalCount int
 	PageInfo   data.PageInfo
+	TaskId     string
 }
 
 type UpdateIssueMsg struct {
