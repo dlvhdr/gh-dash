@@ -37,6 +37,7 @@ type Model struct {
 	PromptConfirmationBox     prompt.Model
 	IsPromptConfirmationShown bool
 	PromptConfirmationAction  string
+	LastTaskId                string
 }
 
 func NewModel(
