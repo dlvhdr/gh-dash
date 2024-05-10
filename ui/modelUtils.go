@@ -3,13 +3,13 @@ package ui
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"text/template"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	log "github.com/charmbracelet/log"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/config"
@@ -91,9 +91,11 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 		}
 	case config.PRsView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-			if keybinding.Key != key {
+			if keybinding.Key != key || keybinding.Command == "" {
 				continue
 			}
+
+            log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
 
 			switch data := currRowData.(type) {
 			case *data.PullRequestData:
@@ -127,13 +129,13 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
-		log.Fatal("Failed parse keybinding template", err)
+		log.Fatal("Failed parse keybinding template", "error", err)
 	}
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal("Failed executing keybinding command", err)
+		log.Fatal("Failed executing keybinding command", "error", err)
 	}
 	return m.executeCustomCommand(buff.String())
 }
@@ -156,13 +158,13 @@ func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.Is
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
-		log.Fatal("Failed parse keybinding template", err)
+		log.Fatal("Failed parse keybinding template", "error", err)
 	}
 
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal("Failed executing keybinding command", err)
+		log.Fatal("Failed executing keybinding command", "error", err)
 	}
 	return m.executeCustomCommand(buff.String())
 }

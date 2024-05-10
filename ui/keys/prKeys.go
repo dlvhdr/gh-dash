@@ -1,7 +1,10 @@
 package keys
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
+	log "github.com/charmbracelet/log"
 	"github.com/dlvhdr/gh-dash/config"
 )
 
@@ -78,41 +81,42 @@ func PRFullHelp() []key.Binding {
 
 func rebindPRKeys(keys []config.Keybinding) error {
 	for _, prKey := range keys {
-		var k key.Binding
+		if prKey.Builtin == "" {
+			continue
+		}
+
+		log.Debug("Rebinding PR key", "builtin", prKey.Builtin, "key", prKey.Key)
+
+        var key *key.Binding
 
 		switch prKey.Builtin {
 		case "assign":
-			k = PRKeys.Assign
+			key = &PRKeys.Assign
 		case "unassign":
-			k = PRKeys.Unassign
+			key = &PRKeys.Unassign
 		case "comment":
-			k = PRKeys.Comment
+            PRKeys.Comment = prKey.NewBinding(&PRKeys.Comment)
+            continue
 		case "diff":
-			k = PRKeys.Diff
+			key = &PRKeys.Diff
 		case "checkout":
-			k = PRKeys.Checkout
+			key = &PRKeys.Checkout
 		case "close":
-			k = PRKeys.Close
+			key = &PRKeys.Close
 		case "ready":
-			k = PRKeys.Ready
+			key = &PRKeys.Ready
 		case "reopen":
-			k = PRKeys.Reopen
+			key = &PRKeys.Reopen
 		case "merge":
-			k = PRKeys.Merge
-		case "watchchecks":
-			k = PRKeys.WatchChecks
+			key = &PRKeys.Merge
+		case "watchChecks":
+			key = &PRKeys.WatchChecks
 		default:
-			// TODO: return an error here
-			return nil
+            return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
 		}
 
-		// Not really sure if this is the best idea but I am not
-		// sure how else we are meant to define alt keys.
-		if len(prKey.Keys) > 0 {
-			k.SetKeys(prKey.Keys...)
-		} else {
-			k.SetKeys(prKey.Key)
-		}
+        key.SetKeys(prKey.Key)
+        key.SetHelp(prKey.Key, key.Help().Desc)
 	}
 
 	return nil

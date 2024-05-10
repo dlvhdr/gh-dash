@@ -103,23 +103,15 @@ type Defaults struct {
 }
 
 type Keybinding struct {
-	Key     string   `yaml:"key"`
-	Keys    []string `yaml:"keys"`
-	Command string   `yaml:"command"`
-	Builtin string   `yaml:"builtin"`
+	Key     string `yaml:"key"`
+	Command string `yaml:"command"`
+	Builtin string `yaml:"builtin"`
 }
 
 func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 	helpDesc := ""
 	if previous != nil {
 		helpDesc = previous.Help().Desc
-	}
-
-	if len(kb.Keys) > 0 {
-		return key.NewBinding(
-			key.WithKeys(kb.Keys...),
-			key.WithHelp(strings.Join(kb.Keys, "/"), helpDesc),
-		)
 	}
 
 	return key.NewBinding(

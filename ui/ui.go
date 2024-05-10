@@ -247,7 +247,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 
-		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
+		case key.Matches(msg, keys.PRKeys.Comment, keys.IssueKeys.Comment):
+            log.Debug("pr comment key", "key", msg.String(), "comment keybind", keys.PRKeys.Comment.Keys())
 			m.sidebar.IsOpen = true
 			if m.ctx.View == config.PRsView {
 				cmd = m.prSidebar.SetIsCommenting(true)

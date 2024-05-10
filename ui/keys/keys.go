@@ -1,6 +1,8 @@
 package keys
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	log "github.com/charmbracelet/log"
@@ -172,38 +174,63 @@ func Rebind(universal, issueKeys, prKeys []config.Keybinding) error {
 		return err
 	}
 
-	return nil
+	return rebindIssueKeys(issueKeys)
 }
 
 func rebindUniversal(universal []config.Keybinding) error {
+    log.Debug("Rebinding universal keys", "keys", universal)
 	for _, kb := range universal {
-		log.Debug("Rebinding key", "builtin", kb.Builtin, "key", kb.Key)
+        if kb.Builtin == "" {
+            continue
+        }
+
+		log.Debug("Rebinding universal key", "builtin", kb.Builtin, "key", kb.Key)
+
+        var key *key.Binding
+
 		switch kb.Builtin {
 		case "up":
-			Keys.Up = kb.NewBinding(&Keys.Up)
+            key = &Keys.Up
 		case "down":
-			Keys.Down = kb.NewBinding(&Keys.Down)
-		case "firstline": // should this be first-line or firstLine?
-		case "lastline":
-		case "togglepreview":
-		case "opengithub":
+            key = &Keys.Down
+		case "firstLine":
+            key = &Keys.FirstLine
+		case "lastLine":
+            key = &Keys.LastLine
+		case "togglePreview":
+            key = &Keys.TogglePreview
+		case "openGithub":
+            key = &Keys.OpenGithub
 		case "refresh":
-		case "refreshall":
-		case "pagedown":
-		case "pageup":
-		case "nextsection":
-		case "prevsection":
-		case "switchview":
-			Keys.SwitchView = kb.NewBinding(&Keys.SwitchView)
+            key = &Keys.Refresh
+		case "refreshAll":
+            key = &Keys.RefreshAll
+		case "pageDown":
+            key = &Keys.PageDown
+		case "pageUp":
+            key = &Keys.PageUp
+		case "nextSection":
+            key = &Keys.NextSection
+		case "prevSection":
+            key = &Keys.PrevSection
+		case "switchView":
+            key = &Keys.SwitchView
 		case "search":
+            key = &Keys.Search
 		case "copyurl":
-		case "copynumber":
+            key = &Keys.CopyUrl
+		case "copyNumber":
+            key = &Keys.CopyNumber
 		case "help":
+            key = &Keys.Help
 		case "quit":
+            key = &Keys.Quit
 		default:
-			// TODO: return an error here
-			return nil
+            return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
 		}
+
+        key.SetKeys(kb.Key)
+        key.SetHelp(kb.Key, key.Help().Desc)
 	}
 
 	return nil
