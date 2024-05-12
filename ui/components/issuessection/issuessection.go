@@ -125,7 +125,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionIssuesFetchedMsg:
-		if m.LastTaskId == msg.TaskId {
+		if m.LastFetchTaskId == msg.TaskId {
 			if m.PageInfo != nil {
 				m.Issues = append(m.Issues, msg.Issues...)
 			} else {
@@ -261,7 +261,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
-	m.LastTaskId = taskId
+	m.LastFetchTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
