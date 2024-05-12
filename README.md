@@ -144,6 +144,7 @@ keybindings: # optional, define custom keybindings - see more info below
 theme: # optional, see more info below
 pager:
   diff: less # or delta for example
+confirmQuit: false # show prompt on quit or not
 ```
 
 ### 🗃 Running with a different config file
