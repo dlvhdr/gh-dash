@@ -167,6 +167,7 @@ type Config struct {
 	RepoPaths      map[string]string     `yaml:"repoPaths"`
 	Theme          *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
 	Pager          Pager                 `yaml:"pager"`
+	ConfirmQuit    bool                  `yaml:"confirmQuit"`
 }
 
 type configError struct {
@@ -268,6 +269,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 			},
 		},
+		ConfirmQuit: false,
 	}
 }
 
