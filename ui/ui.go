@@ -333,8 +333,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 
 		case key.Matches(msg, m.keys.Quit):
-			m.footer, cmd = m.footer.Update(msg)
-			return m, cmd
+			if m.ctx.Config.ConfirmQuit {
+				m.footer, cmd = m.footer.Update(msg)
+				return m, cmd
+			}
+			cmd = tea.Quit
 		}
 
 	case initMsg:
