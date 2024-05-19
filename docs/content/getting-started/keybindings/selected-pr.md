@@ -17,7 +17,7 @@ When the unassign input is active, you can specify one or more GitHub usernames 
 PR. By default, the input includes your username if you're not already assigned. If you're already
 assigned, the input is empty by default.
 
-To assign more than one user to the PR, specify additional users after one or more whitspace
+To assign more than one user to the PR, specify additional users after one or more whitespace
 characters, like a space, tab, or newline. We recommend separating the additional users with a
 newline by pressing ![kbd:`Enter`]() after each username.
 

@@ -2,7 +2,7 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: defaults.schema.yaml
 title: Default Options
-description: Define options that can be overrridden per-section.
+description: Define options that can be overridden per-section.
 schematize:
   details: |
     These settings define the default behavior for the dashboard. You can override many of these
