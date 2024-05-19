@@ -105,7 +105,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 // contextData is a map of key-value pairs of data specific to the context the command is being run in.
 func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string]any) tea.Cmd {
 	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
-	// for sructured data, existing structs, etc. Especially if holes in the data are expected.
+	// for structured data, existing structs, etc. Especially if holes in the data are expected.
 	// Common data shared across contexts could be set here.
 	input := map[string]any {
 	}
