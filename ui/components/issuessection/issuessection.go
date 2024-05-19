@@ -119,6 +119,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 				}
 				m.Issues[i] = currIssue
+				m.Table.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
@@ -132,6 +133,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Issues = msg.Issues
 			}
 			m.TotalCount = msg.TotalCount
+			m.Table.SetIsLoading(false)
 			m.PageInfo = &msg.PageInfo
 			m.Table.SetRows(m.BuildRows())
 			m.UpdateLastUpdated(time.Now())

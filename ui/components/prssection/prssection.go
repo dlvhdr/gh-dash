@@ -32,17 +32,16 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{}
-	m.Model =
-		section.NewModel(
-			id,
-			ctx,
-			cfg.ToSectionConfig(),
-			SectionType,
-			GetSectionColumns(cfg, ctx),
-			m.GetItemSingularForm(),
-			m.GetItemPluralForm(),
-			lastUpdated,
-		)
+	m.Model = section.NewModel(
+		id,
+		ctx,
+		cfg.ToSectionConfig(),
+		SectionType,
+		GetSectionColumns(cfg, ctx),
+		m.GetItemSingularForm(),
+		m.GetItemPluralForm(),
+		lastUpdated,
+	)
 	m.Prs = []data.PullRequestData{}
 
 	return m
@@ -150,6 +149,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Mergeable = ""
 				}
 				m.Prs[i] = currPr
+				m.Table.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
@@ -164,6 +164,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 			m.TotalCount = msg.TotalCount
 			m.PageInfo = &msg.PageInfo
+			m.Table.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
 			m.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
@@ -357,6 +358,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	cmds = append(cmds, fetchCmd)
 
+	m.Table.SetIsLoading(true)
 	return cmds
 }
 

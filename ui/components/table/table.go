@@ -12,12 +12,14 @@ import (
 )
 
 type Model struct {
-	ctx          context.ProgramContext
-	Columns      []Column
-	Rows         []Row
-	EmptyState   *string
-	dimensions   constants.Dimensions
-	rowsViewport listviewport.Model
+	ctx            context.ProgramContext
+	Columns        []Column
+	Rows           []Row
+	EmptyState     *string
+	loadingMessage string
+	isLoading      bool
+	dimensions     constants.Dimensions
+	rowsViewport   listviewport.Model
 }
 
 type Column struct {
@@ -37,17 +39,21 @@ func NewModel(
 	rows []Row,
 	itemTypeLabel string,
 	emptyState *string,
+	loadingMessage string,
+	isLoading bool,
 ) Model {
 	itemHeight := 1
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
 		itemHeight = 2
 	}
 	return Model{
-		ctx:        ctx,
-		Columns:    columns,
-		Rows:       rows,
-		EmptyState: emptyState,
-		dimensions: dimensions,
+		ctx:            ctx,
+		Columns:        columns,
+		Rows:           rows,
+		EmptyState:     emptyState,
+		loadingMessage: loadingMessage,
+		isLoading:      isLoading,
+		dimensions:     dimensions,
 		rowsViewport: listviewport.NewModel(
 			ctx,
 			dimensions,
@@ -64,6 +70,10 @@ func (m Model) View() string {
 	body := m.renderBody()
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, body)
+}
+
+func (m *Model) SetIsLoading(isLoading bool) {
+	m.isLoading = isLoading
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
@@ -209,6 +219,10 @@ func (m *Model) renderBody() string {
 		Height(m.dimensions.Height).
 		MaxWidth(m.dimensions.Width)
 
+	if m.isLoading {
+		return bodyStyle.Render(m.loadingMessage)
+	}
+
 	if len(m.Rows) == 0 && m.EmptyState != nil {
 		return bodyStyle.Render(*m.EmptyState)
 	}
@@ -249,7 +263,6 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		BorderBottom(m.ctx.Config.Theme.Ui.Table.ShowSeparator).
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
-
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {

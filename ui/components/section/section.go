@@ -78,6 +78,8 @@ func NewModel(
 				m.PluralForm,
 			),
 		)),
+		"Loading...",
+		true,
 	)
 	return m
 }
