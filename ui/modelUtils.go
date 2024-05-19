@@ -125,7 +125,7 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal("Failed executing keybinding command", err)
+		return func() tea.Msg { return constants.ErrMsg{Err: fmt.Errorf("Failed to parsetemplate %s", commandTemplate)} }
 	}
 	return m.executeCustomCommand(buff.String())
 }
