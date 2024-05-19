@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"text/template"
@@ -99,15 +100,18 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	return nil
 }
 
-func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
+// runCustomCommand executes a user-defined command.
+// commandTemplate is a template string that will be parsed with the input data.
+// contextData is a map of key-value pairs of data specific to the context the command is being run in.
+func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string]any) tea.Cmd {
 	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
 	// for sructured data, existing structs, etc. Especially if holes in the data are expected.
+	// Common data shared across contexts could be set here.
 	input := map[string]any {
-		"RepoName":    prData.GetRepoNameWithOwner(),
-		"PrNumber":    prData.Number,
-		"HeadRefName": prData.HeadRefName,
-		"BaseRefName": prData.BaseRefName,
 	}
+
+	// Merge data specific to the context the command is being run in onto any common data, overwriting duplicate keys.
+	maps.Copy(input, *contextData)
 
 	// Append in the local RepoPath only if it can be found
 	if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
@@ -130,33 +134,23 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 	return m.executeCustomCommand(buff.String())
 }
 
+func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
+	return m.runCustomCommand(commandTemplate,
+		&map[string]any {
+			"RepoName":    prData.GetRepoNameWithOwner(),
+			"PrNumber":    prData.Number,
+			"HeadRefName": prData.HeadRefName,
+			"BaseRefName": prData.BaseRefName,
+		})
+}
+
 func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {
-	repoName := issueData.GetRepoNameWithOwner()
-	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
-
-	if !ok {
-		return func() tea.Msg {
-			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
-		}
-	}
-
-	input := IssueCommandTemplateInput{
-		RepoName:    repoName,
-		RepoPath:    repoPath,
-		IssueNumber: issueData.Number,
-	}
-
-	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
-	if err != nil {
-		log.Fatal("Failed parse keybinding template", err)
-	}
-
-	var buff bytes.Buffer
-	err = cmd.Execute(&buff, input)
-	if err != nil {
-		log.Fatal("Failed executing keybinding command", err)
-	}
-	return m.executeCustomCommand(buff.String())
+	return m.runCustomCommand(commandTemplate,
+		&map[string]any {
+			"RepoName":    issueData.GetRepoNameWithOwner(),
+			"IssueNumber": issueData.Number,
+		},
+	)
 }
 
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
