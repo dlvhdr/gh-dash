@@ -133,7 +133,7 @@ defaults:
   prsLimit: 20 # global limit
   issuesLimit: 20 # global limit
   preview:
-    open: true # wether to have the preview pane open by default
+    open: true # whether to have the preview pane open by default
     width: 60 # width in columns
   refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
