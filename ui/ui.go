@@ -198,7 +198,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
-			var currRow = m.getCurrRowData()
+			currRow := m.getCurrRowData()
 			b := browser.New("", os.Stdout, os.Stdin)
 			if currRow != nil {
 				err := b.Browse(currRow.GetUrl())
@@ -217,7 +217,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
 
-		case key.Matches(msg, m.keys.SwitchView):
+		case key.Matches(msg, keys.PRKeys.ViewIssues, keys.IssueKeys.ViewPRs):
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
 			m.setCurrSectionId(1)
@@ -675,16 +675,14 @@ func (m *Model) renderRunningTask() string {
 	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		currTaskStatus =
-
-			lipgloss.NewStyle().
-				Background(m.ctx.Theme.SelectedBackground).
-				Render(
-					fmt.Sprintf(
-						"%s%s",
-						m.taskSpinner.View(),
-						task.StartText,
-					))
+		currTaskStatus = lipgloss.NewStyle().
+			Background(m.ctx.Theme.SelectedBackground).
+			Render(
+				fmt.Sprintf(
+					"%s%s",
+					m.taskSpinner.View(),
+					task.StartText,
+				))
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.WarningText).
