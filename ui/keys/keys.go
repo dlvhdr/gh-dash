@@ -21,7 +21,6 @@ type KeyMap struct {
 	PageUp        key.Binding
 	NextSection   key.Binding
 	PrevSection   key.Binding
-	SwitchView    key.Binding
 	Search        key.Binding
 	CopyUrl       key.Binding
 	CopyNumber    key.Binding
@@ -71,7 +70,6 @@ func (k KeyMap) AppKeys() []key.Binding {
 	return []key.Binding{
 		k.Refresh,
 		k.RefreshAll,
-		k.SwitchView,
 		k.TogglePreview,
 		k.OpenGithub,
 		k.CopyNumber,
@@ -132,10 +130,6 @@ var Keys = KeyMap{
 	PrevSection: key.NewBinding(
 		key.WithKeys("left", "h"),
 		key.WithHelp("󰁍/h", "previous section"),
-	),
-	SwitchView: key.NewBinding(
-		key.WithKeys("s"),
-		key.WithHelp("s", "switch view"),
 	),
 	Search: key.NewBinding(
 		key.WithKeys("/"),

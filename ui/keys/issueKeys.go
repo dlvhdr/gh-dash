@@ -8,6 +8,7 @@ type IssueKeyMap struct {
 	Comment  key.Binding
 	Close    key.Binding
 	Reopen   key.Binding
+	ViewPRs  key.Binding
 }
 
 var IssueKeys = IssueKeyMap{
@@ -31,6 +32,10 @@ var IssueKeys = IssueKeyMap{
 		key.WithKeys("X"),
 		key.WithHelp("X", "reopen"),
 	),
+	ViewPRs: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "switch to PRs"),
+	),
 }
 
 func IssueFullHelp() []key.Binding {
@@ -40,5 +45,6 @@ func IssueFullHelp() []key.Binding {
 		IssueKeys.Comment,
 		IssueKeys.Close,
 		IssueKeys.Reopen,
+		IssueKeys.ViewPRs,
 	}
 }
