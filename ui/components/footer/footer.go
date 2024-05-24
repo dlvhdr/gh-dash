@@ -115,15 +115,20 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
-	view := m.ctx.User
+	var view string
 	if ctx.View == config.PRsView {
-		view += " |  PRs"
+		view += " PRs"
 	} else {
-		view += " |  Issues"
+		view += " Issues"
 	}
 
-	return ctx.Styles.Tabs.ViewSwitcher.Copy().
-		Render(view)
+	var user string
+	if ctx.User != "" {
+		user = ctx.Styles.Tabs.ViewSwitcher.Copy().Background(ctx.Theme.FaintText).Render("@" + ctx.User)
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, ctx.Styles.Tabs.ViewSwitcher.Copy().
+		Render(view), user)
 }
 
 func (m *Model) SetLeftSection(leftSection string) {
