@@ -3,6 +3,8 @@ package table
 import (
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/ui/common"
@@ -18,6 +20,7 @@ type Model struct {
 	EmptyState     *string
 	loadingMessage string
 	isLoading      bool
+	LoadingSpinner spinner.Model
 	dimensions     constants.Dimensions
 	rowsViewport   listviewport.Model
 }
@@ -46,6 +49,11 @@ func NewModel(
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
 		itemHeight = 2
 	}
+
+	loadingSpinner := spinner.New()
+	loadingSpinner.Spinner = spinner.Dot
+	loadingSpinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+
 	return Model{
 		ctx:            ctx,
 		Columns:        columns,
@@ -53,6 +61,7 @@ func NewModel(
 		EmptyState:     emptyState,
 		loadingMessage: loadingMessage,
 		isLoading:      isLoading,
+		LoadingSpinner: loadingSpinner,
 		dimensions:     dimensions,
 		rowsViewport: listviewport.NewModel(
 			ctx,
@@ -63,6 +72,10 @@ func NewModel(
 			itemHeight,
 		),
 	}
+}
+
+func (m Model) StartLoadingSpinner() tea.Cmd {
+	return m.LoadingSpinner.Tick
 }
 
 func (m Model) View() string {
@@ -220,7 +233,8 @@ func (m *Model) renderBody() string {
 		MaxWidth(m.dimensions.Width)
 
 	if m.isLoading {
-		return bodyStyle.Render(m.loadingMessage)
+		// TODO: center
+		return bodyStyle.Render(m.LoadingSpinner.View(), m.loadingMessage)
 	}
 
 	if len(m.Rows) == 0 && m.EmptyState != nil {

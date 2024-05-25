@@ -177,7 +177,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
 	m.PromptConfirmationBox = prompt
-	return &m, tea.Batch(cmd, searchCmd, promptCmd)
+
+	loadingSpinner, loadingSpinnerCmd := m.Table.LoadingSpinner.Update(msg)
+	m.Table.LoadingSpinner = loadingSpinner
+
+	return &m, tea.Batch(cmd, searchCmd, promptCmd, loadingSpinnerCmd)
 }
 
 func GetSectionColumns(
@@ -359,6 +363,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	cmds = append(cmds, fetchCmd)
 
 	m.Table.SetIsLoading(true)
+	cmds = append(cmds, m.Table.StartLoadingSpinner())
+
 	return cmds
 }
 
