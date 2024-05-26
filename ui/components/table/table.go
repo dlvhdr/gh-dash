@@ -21,7 +21,7 @@ type Model struct {
 	EmptyState     *string
 	loadingMessage string
 	isLoading      bool
-	LoadingSpinner spinner.Model
+	loadingSpinner spinner.Model
 	dimensions     constants.Dimensions
 	rowsViewport   listviewport.Model
 }
@@ -62,7 +62,7 @@ func NewModel(
 		EmptyState:     emptyState,
 		loadingMessage: loadingMessage,
 		isLoading:      isLoading,
-		LoadingSpinner: loadingSpinner,
+		loadingSpinner: loadingSpinner,
 		dimensions:     dimensions,
 		rowsViewport: listviewport.NewModel(
 			ctx,
@@ -75,8 +75,14 @@ func NewModel(
 	}
 }
 
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	return m, cmd
+}
+
 func (m Model) StartLoadingSpinner() tea.Cmd {
-	return m.LoadingSpinner.Tick
+	return m.loadingSpinner.Tick
 }
 
 func (m Model) View() string {
@@ -239,7 +245,7 @@ func (m *Model) renderBody() string {
 			m.dimensions.Height,
 			lipgloss.Center,
 			lipgloss.Center,
-			fmt.Sprintf("%s%s", m.LoadingSpinner.View(), m.loadingMessage),
+			fmt.Sprintf("%s%s", m.loadingSpinner.View(), m.loadingMessage),
 		)
 	}
 
