@@ -147,10 +147,10 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
 	m.PromptConfirmationBox = prompt
 
-	loadingSpinner, loadingSpinnerCmd := m.Table.LoadingSpinner.Update(msg)
-	m.Table.LoadingSpinner = loadingSpinner
+	table, tableCmd := m.Table.Update(msg)
+	m.Table = table
 
-	return &m, tea.Batch(cmd, searchCmd, promptCmd, loadingSpinnerCmd)
+	return &m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
 }
 
 func GetSectionColumns(
