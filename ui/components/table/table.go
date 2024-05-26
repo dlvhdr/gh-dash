@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -233,8 +234,13 @@ func (m *Model) renderBody() string {
 		MaxWidth(m.dimensions.Width)
 
 	if m.isLoading {
-		// TODO: center
-		return bodyStyle.Render(m.LoadingSpinner.View(), m.loadingMessage)
+		return lipgloss.Place(
+			m.dimensions.Width,
+			m.dimensions.Height,
+			lipgloss.Center,
+			lipgloss.Center,
+			fmt.Sprintf("%s%s", m.LoadingSpinner.View(), m.loadingMessage),
+		)
 	}
 
 	if len(m.Rows) == 0 && m.EmptyState != nil {
