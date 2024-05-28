@@ -237,18 +237,42 @@ func (m *Model) renderPills() string {
 }
 
 func (m *Model) renderLabels() string {
-	labels := make([]string, 0, len(m.pr.Data.Labels.Nodes))
-	for _, label := range m.pr.Data.Labels.Nodes {
-		labels = append(
-			labels,
-			m.ctx.Styles.PrSidebar.PillStyle.Copy().
-				Background(lipgloss.Color("#"+label.Color)).
-				Render(label.Name),
-		)
-		labels = append(labels, " ")
+	width := m.getIndentedContentWidth()
+
+	renderedRows := []string{}
+
+	rowContentsWidth := 0
+	currentRowLabels := []string{}
+
+	for _, l := range m.pr.Data.Labels.Nodes {
+		currentLabel := m.ctx.Styles.PrSidebar.PillStyle.Copy().
+			Background(lipgloss.Color("#" + l.Color)).
+			Render(l.Name)
+
+		currentLabelWidth := lipgloss.Width(currentLabel)
+
+		if rowContentsWidth+currentLabelWidth <= width {
+			currentRowLabels = append(
+				currentRowLabels,
+				currentLabel,
+			)
+			rowContentsWidth += currentLabelWidth
+		} else {
+			currentRowLabels = append(currentRowLabels, "\n")
+			renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
+
+			currentRowLabels = []string{currentLabel}
+			rowContentsWidth = currentLabelWidth
+		}
+
+		// +1 for the space between labels
+		currentRowLabels = append(currentRowLabels, " ")
+		rowContentsWidth += 1
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, labels...)
+	renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
+
+	return lipgloss.JoinVertical(lipgloss.Left, renderedRows...)
 }
 
 func (m *Model) renderDescription() string {
