@@ -205,41 +205,10 @@ func (m *Model) renderBody() string {
 
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
+	labels := m.issue.Data.Labels.Nodes
+	style := m.ctx.Styles.PrSidebar.PillStyle
 
-	renderedRows := []string{}
-
-	rowContentsWidth := 0
-	currentRowLabels := []string{}
-
-	for _, l := range m.issue.Data.Labels.Nodes {
-		currentLabel := m.ctx.Styles.PrSidebar.PillStyle.Copy().
-			Background(lipgloss.Color("#" + l.Color)).
-			Render(l.Name)
-
-		currentLabelWidth := lipgloss.Width(currentLabel)
-
-		if rowContentsWidth+currentLabelWidth <= width {
-			currentRowLabels = append(
-				currentRowLabels,
-				currentLabel,
-			)
-			rowContentsWidth += currentLabelWidth
-		} else {
-			currentRowLabels = append(currentRowLabels, "\n")
-			renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
-
-			currentRowLabels = []string{currentLabel}
-			rowContentsWidth = currentLabelWidth
-		}
-
-		// +1 for the space between labels
-		currentRowLabels = append(currentRowLabels, " ")
-		rowContentsWidth += 1
-	}
-
-	renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
-
-	return lipgloss.JoinVertical(lipgloss.Left, renderedRows...)
+	return common.RenderLabels(width, labels, style)
 }
 
 func (m *Model) getIndentedContentWidth() int {
