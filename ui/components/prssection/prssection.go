@@ -179,6 +179,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	return &m, tea.Batch(cmd, searchCmd, promptCmd)
 }
 
+func fromColumnConfig(config config.ColumnConfig) table.Column {
+	return withColumnConfig(table.Column{}, config)
+}
+
+func withColumnConfig(column table.Column, config config.ColumnConfig) table.Column {
+	column.Title = *config.Title
+	column.Width = config.Width
+	column.Hidden = config.Hidden
+
+	return column
+}
+
 func GetSectionColumns(
 	cfg config.PrsSectionConfig,
 	ctx *context.ProgramContext,
@@ -207,56 +219,16 @@ func GetSectionColumns(
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
 
 	return []table.Column{
-		{
-			Title:  "",
-			Width:  updatedAtLayout.Width,
-			Hidden: updatedAtLayout.Hidden,
-		},
-		{
-			Title:  "",
-			Hidden: stateLayout.Hidden,
-		},
-		{
-			Title:  "",
-			Width:  repoLayout.Width,
-			Hidden: repoLayout.Hidden,
-		},
-		{
-			Title:  "Title",
-			Grow:   utils.BoolPtr(true),
-			Hidden: titleLayout.Hidden,
-		},
-		{
-			Title:  "Author",
-			Width:  authorLayout.Width,
-			Hidden: authorLayout.Hidden,
-		},
-		{
-			Title:  "Assignees",
-			Width:  assigneesLayout.Width,
-			Hidden: assigneesLayout.Hidden,
-		},
-		{
-			Title:  "Base",
-			Width:  baseLayout.Width,
-			Hidden: baseLayout.Hidden,
-		},
-		{
-			Title:  "󰯢",
-			Width:  utils.IntPtr(4),
-			Hidden: reviewStatusLayout.Hidden,
-		},
-		{
-			Title:  "",
-			Width:  &ctx.Styles.PrSection.CiCellWidth,
-			Grow:   new(bool),
-			Hidden: ciLayout.Hidden,
-		},
-		{
-			Title:  "",
-			Width:  linesLayout.Width,
-			Hidden: linesLayout.Hidden,
-		},
+		fromColumnConfig(updatedAtLayout),
+		fromColumnConfig(stateLayout),
+		fromColumnConfig(repoLayout),
+		withColumnConfig(table.Column{Grow: utils.BoolPtr(true)}, titleLayout),
+		fromColumnConfig(authorLayout),
+		fromColumnConfig(assigneesLayout),
+		fromColumnConfig(baseLayout),
+		fromColumnConfig(reviewStatusLayout),
+		withColumnConfig(table.Column{Width: &ctx.Styles.PrSection.CiCellWidth, Grow: new(bool)}, ciLayout),
+		fromColumnConfig(linesLayout),
 	}
 }
 

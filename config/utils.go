@@ -51,5 +51,8 @@ func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
 	if sectionCfg.Hidden != nil {
 		colCfg.Hidden = sectionCfg.Hidden
 	}
+	if sectionCfg.Title != nil {
+		colCfg.Title = sectionCfg.Title
+	}
 	return colCfg
 }

@@ -58,8 +58,9 @@ type PreviewConfig struct {
 }
 
 type ColumnConfig struct {
-	Width  *int  `yaml:"width,omitempty"  validate:"omitempty,gt=0"`
-	Hidden *bool `yaml:"hidden,omitempty"`
+	Width  *int    `yaml:"width,omitempty"  validate:"omitempty,gt=0"`
+	Hidden *bool   `yaml:"hidden,omitempty"`
+	Title  *string `yaml:"title,omitempty"`
 }
 
 type PrsLayoutConfig struct {
@@ -192,24 +193,43 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{
+						Title: utils.StringPtr(""),
 						Width: utils.IntPtr(lipgloss.Width("2mo ago")),
 					},
+					State: ColumnConfig{
+						Title: utils.StringPtr(""),
+					},
 					Repo: ColumnConfig{
+						Title: utils.StringPtr(""),
 						Width: utils.IntPtr(15),
 					},
+					Title: ColumnConfig{
+						Title: utils.StringPtr("Title"),
+					},
 					Author: ColumnConfig{
+						Title: utils.StringPtr("Author"),
 						Width: utils.IntPtr(15),
 					},
 					Assignees: ColumnConfig{
+						Title:  utils.StringPtr("Assignees"),
 						Width:  utils.IntPtr(20),
 						Hidden: utils.BoolPtr(true),
 					},
 					Base: ColumnConfig{
+						Title:  utils.StringPtr("Base"),
 						Width:  utils.IntPtr(15),
 						Hidden: utils.BoolPtr(true),
 					},
 					Lines: ColumnConfig{
+						Title: utils.StringPtr(""),
 						Width: utils.IntPtr(lipgloss.Width("123450 / -123450")),
+					},
+					ReviewStatus: ColumnConfig{
+						Title: utils.StringPtr("󰯢"),
+						Width: utils.IntPtr(4),
+					},
+					Ci: ColumnConfig{
+						Title: utils.StringPtr(""),
 					},
 				},
 				Issues: IssuesLayoutConfig{
