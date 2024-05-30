@@ -18,7 +18,7 @@ type Model struct {
 }
 
 func NewModel(sectionType string, ctx *context.ProgramContext, initialValue string) Model {
-	prompt := fmt.Sprintf(" is:%s ", sectionType)
+	prompt := fmt.Sprintf("%s is:%s ", ctx.Theme.Icons.SearchIcon, sectionType)
 	ti := textinput.New()
 	ti.Placeholder = ""
 	ti.Focus()

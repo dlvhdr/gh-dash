@@ -3,7 +3,6 @@ package common
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/theme"
 )
 
@@ -46,13 +45,13 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 
 	s.WaitingGlyph = lipgloss.NewStyle().
 		Foreground(theme.FaintText).
-		Render(constants.WaitingIcon)
+		Render(theme.Icons.WaitingIcon)
 	s.FailureGlyph = lipgloss.NewStyle().
 		Foreground(theme.WarningText).
-		Render(constants.FailureIcon)
+		Render(theme.Icons.FailureIcon)
 	s.SuccessGlyph = lipgloss.NewStyle().
 		Foreground(theme.SuccessText).
-		Render(constants.SuccessIcon)
+		Render(theme.Icons.SuccessIcon)
 
 	return s
 }

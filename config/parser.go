@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-playground/validator/v10"
+	emoji "github.com/kyokomi/emoji/v2"
 	"gopkg.in/yaml.v2"
 
 	"github.com/dlvhdr/gh-dash/utils"
@@ -91,6 +92,76 @@ type LayoutConfig struct {
 	Issues IssuesLayoutConfig `yaml:"issues,omitempty"`
 }
 
+type IconsConfig struct {
+	WaitingIcon   string
+	FailureIcon   string
+	SuccessIcon   string
+	SearchIcon    string
+	UpdatedAtIcon string
+	StateIcon     string
+	RepoIcon      string
+	ReviewIcon    string
+	CiIcon        string
+	DiffIcon      string
+	MergeIntoIcon string
+}
+
+func mergeIconDefinitions(base string, defaultValue string) string {
+	if base == "" {
+		return defaultValue
+	} else {
+		return emoji.Emojize(base)
+	}
+}
+
+func mergeIconConfig(base *IconsConfig, defaults IconsConfig) {
+	base.WaitingIcon = mergeIconDefinitions(base.WaitingIcon, defaults.WaitingIcon)
+	base.FailureIcon = mergeIconDefinitions(base.FailureIcon, defaults.FailureIcon)
+	base.SuccessIcon = mergeIconDefinitions(base.SuccessIcon, defaults.SuccessIcon)
+	base.SearchIcon = mergeIconDefinitions(base.SearchIcon, defaults.SearchIcon)
+	base.UpdatedAtIcon = mergeIconDefinitions(base.UpdatedAtIcon, defaults.UpdatedAtIcon)
+	base.StateIcon = mergeIconDefinitions(base.StateIcon, defaults.StateIcon)
+	base.RepoIcon = mergeIconDefinitions(base.RepoIcon, defaults.RepoIcon)
+	base.ReviewIcon = mergeIconDefinitions(base.ReviewIcon, defaults.ReviewIcon)
+	base.CiIcon = mergeIconDefinitions(base.CiIcon, defaults.CiIcon)
+	base.DiffIcon = mergeIconDefinitions(base.DiffIcon, defaults.DiffIcon)
+	base.MergeIntoIcon = mergeIconDefinitions(base.MergeIntoIcon, defaults.MergeIntoIcon)
+}
+
+func NerdIconSet() *IconsConfig {
+	icons := IconsConfig{
+		WaitingIcon:   "",
+		FailureIcon:   "󰅙",
+		SuccessIcon:   "",
+		SearchIcon:    "",
+		UpdatedAtIcon: "",
+		StateIcon:     "",
+		RepoIcon:      "",
+		ReviewIcon:    "󰯢",
+		CiIcon:        "",
+		DiffIcon:      "",
+		MergeIntoIcon: "",
+	}
+	return &icons
+}
+
+func EmojiIconSet() *IconsConfig {
+	icons := IconsConfig{
+		WaitingIcon:   emoji.Emojize(":timer_clock:"),
+		FailureIcon:   emoji.Emojize(":cross_mark:"),
+		SuccessIcon:   emoji.Emojize(":check_mark_button:"),
+		SearchIcon:    emoji.Emojize(":mag:"),
+		UpdatedAtIcon: emoji.Emojize(":clock10:"),
+		StateIcon:     emoji.Emojize(":twisted_rightwards_arrows:"),
+		RepoIcon:      emoji.Emojize(":house:"),
+		ReviewIcon:    emoji.Emojize(":postbox:"),
+		CiIcon:        emoji.Emojize(":safety_vest:"),
+		DiffIcon:      emoji.Emojize(":card_index_dividers:"),
+		MergeIntoIcon: emoji.Emojize(":arrow_left:"),
+	}
+	return &icons
+}
+
 type Defaults struct {
 	Preview                PreviewConfig `yaml:"preview"`
 	PrsLimit               int           `yaml:"prsLimit"`
@@ -154,9 +225,20 @@ type UIThemeConfig struct {
 	Table TableUIThemeConfig `yaml:"table"`
 }
 
+type IconSet string
+
+const (
+	Unknown   IconSet = ""
+	NerdFonts IconSet = "nerd-fonts"
+	Emoji     IconSet = "emoji"
+	Custom    IconSet = "custom"
+)
+
 type ThemeConfig struct {
-	Ui     UIThemeConfig     `yaml:"ui,omitempty"     validate:"omitempty"`
-	Colors *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty"`
+	Ui      UIThemeConfig     `yaml:"ui,omitempty"     validate:"omitempty"`
+	Colors  *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty"`
+	Icons   *IconsConfig      `yaml:"icons,omitempty"  validate:"omitempty"`
+	IconSet IconSet           `yaml:"icon-set"`
 }
 
 type Config struct {
@@ -417,7 +499,7 @@ func ParseConfig(path string) (Config, error) {
 	if path == "" {
 		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing()
 		if err != nil {
-			return config, parsingError{err: err}
+			return withIconConfig(config), parsingError{err: err}
 		}
 	} else {
 		configFilePath = path
@@ -425,8 +507,33 @@ func ParseConfig(path string) (Config, error) {
 
 	config, err = parser.readConfigFile(configFilePath)
 	if err != nil {
-		return config, parsingError{err: err}
+		return withIconConfig(config), parsingError{err: err}
 	}
 
-	return config, nil
+	return withIconConfig(config), nil
+}
+
+func withIconConfig(config Config) Config {
+	theme := config.Theme
+
+	if theme == nil {
+		defaultTheme := ThemeConfig{}
+		defaultTheme.IconSet = NerdFonts
+		config.Theme = &defaultTheme
+		theme = &defaultTheme
+	}
+	if theme.Icons == nil {
+		theme.Icons = &IconsConfig{}
+	}
+
+	if theme.IconSet == Unknown {
+		theme.IconSet = NerdFonts
+	}
+	if theme.IconSet == NerdFonts {
+		mergeIconConfig(theme.Icons, *NerdIconSet())
+	}
+	if theme.IconSet == Emoji {
+		mergeIconConfig(theme.Icons, *EmojiIconSet())
+	}
+	return config
 }

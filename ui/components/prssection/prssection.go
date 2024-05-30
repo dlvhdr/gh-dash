@@ -208,16 +208,16 @@ func GetSectionColumns(
 
 	return []table.Column{
 		{
-			Title:  "",
+			Title:  ctx.Theme.Icons.UpdatedAtIcon,
 			Width:  updatedAtLayout.Width,
 			Hidden: updatedAtLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  ctx.Theme.Icons.StateIcon,
 			Hidden: stateLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  ctx.Theme.Icons.RepoIcon,
 			Width:  repoLayout.Width,
 			Hidden: repoLayout.Hidden,
 		},
@@ -242,18 +242,18 @@ func GetSectionColumns(
 			Hidden: baseLayout.Hidden,
 		},
 		{
-			Title:  "󰯢",
+			Title:  ctx.Theme.Icons.ReviewIcon,
 			Width:  utils.IntPtr(4),
 			Hidden: reviewStatusLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  ctx.Theme.Icons.CiIcon,
 			Width:  &ctx.Styles.PrSection.CiCellWidth,
 			Grow:   new(bool),
 			Hidden: ciLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  ctx.Theme.Icons.DiffIcon,
 			Width:  linesLayout.Width,
 			Hidden: linesLayout.Hidden,
 		},

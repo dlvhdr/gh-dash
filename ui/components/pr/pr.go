@@ -9,7 +9,6 @@ import (
 	"github.com/dlvhdr/gh-dash/data"
 	"github.com/dlvhdr/gh-dash/ui/components"
 	"github.com/dlvhdr/gh-dash/ui/components/table"
-	"github.com/dlvhdr/gh-dash/ui/constants"
 	"github.com/dlvhdr/gh-dash/ui/context"
 	"github.com/dlvhdr/gh-dash/utils"
 )
@@ -110,7 +109,7 @@ func (pr *PullRequest) renderCiStatus() string {
 		if pr.Data.State == "OPEN" {
 			ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
 		}
-		return ciCellStyle.Render(constants.SuccessIcon)
+		return ciCellStyle.Render(pr.Ctx.Theme.Icons.SuccessIcon)
 	}
 
 	if accStatus == "PENDING" {
@@ -120,7 +119,7 @@ func (pr *PullRequest) renderCiStatus() string {
 	if pr.Data.State == "OPEN" {
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.WarningText)
 	}
-	return ciCellStyle.Render(constants.FailureIcon)
+	return ciCellStyle.Render(pr.Ctx.Theme.Icons.FailureIcon)
 }
 
 func (pr *PullRequest) renderLines(isSelected bool) string {

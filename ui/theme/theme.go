@@ -2,6 +2,7 @@ package theme
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/config"
 )
@@ -17,6 +18,8 @@ type Theme struct {
 	InvertedText       lipgloss.AdaptiveColor // config.Theme.Colors.Text.Inverted
 	SuccessText        lipgloss.AdaptiveColor // config.Theme.Colors.Text.Success
 	WarningText        lipgloss.AdaptiveColor // config.Theme.Colors.Text.Warning
+
+	Icons config.IconsConfig
 }
 
 var DefaultTheme = &Theme{
@@ -30,6 +33,7 @@ var DefaultTheme = &Theme{
 	InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
 	SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
 	WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
+	Icons:              *config.NerdIconSet(),
 }
 
 func ParseTheme(cfg *config.Config) Theme {
@@ -59,6 +63,11 @@ func ParseTheme(cfg *config.Config) Theme {
 			WarningText:  _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
 		}
 	}
+	if cfg.Theme.Icons != nil {
+		DefaultTheme.Icons = *cfg.Theme.Icons
+	}
+	log.Debugf("Icon set: %s", cfg.Theme.IconSet)
+	log.Debugf("Icons: %v", DefaultTheme.Icons)
 
 	return *DefaultTheme
 }

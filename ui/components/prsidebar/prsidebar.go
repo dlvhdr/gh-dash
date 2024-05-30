@@ -168,7 +168,7 @@ func (m *Model) renderTitle() string {
 func (m *Model) renderBranches() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
-		Render(m.pr.Data.BaseRefName + "  " + m.pr.Data.HeadRefName)
+		Render(m.pr.Data.BaseRefName + " " + m.ctx.Theme.Icons.MergeIntoIcon + " " + m.pr.Data.HeadRefName)
 }
 
 func (m *Model) renderStatusPill() string {
