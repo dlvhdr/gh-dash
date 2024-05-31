@@ -53,7 +53,7 @@ func NewModel(
 
 	loadingSpinner := spinner.New()
 	loadingSpinner.Spinner = spinner.Dot
-	loadingSpinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	loadingSpinner.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
 
 	return Model{
 		ctx:            ctx,
