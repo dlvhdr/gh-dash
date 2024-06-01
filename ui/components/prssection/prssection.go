@@ -362,8 +362,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	cmds = append(cmds, fetchCmd)
 
-	m.Table.SetIsLoading(true)
-	cmds = append(cmds, m.Table.StartLoadingSpinner())
+	if m.PageInfo == nil {
+		m.Table.SetIsLoading(true)
+		cmds = append(cmds, m.Table.StartLoadingSpinner())
+
+	}
 
 	return cmds
 }
