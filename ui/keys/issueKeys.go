@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	log "github.com/charmbracelet/log"
-	"github.com/dlvhdr/gh-dash/config"
+	"github.com/dlvhdr/gh-dash/v4/config"
 )
 
 type IssueKeyMap struct {
@@ -76,6 +76,8 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 			key = &IssueKeys.Close
 		case "reopen":
 			key = &IssueKeys.Reopen
+		case "viewPrs":
+			key = &IssueKeys.ViewPRs
 		default:
 			return fmt.Errorf("unknown built-in issue key: '%s'", issueKey.Builtin)
 		}

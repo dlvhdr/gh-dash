@@ -207,8 +207,6 @@ func rebindUniversal(universal []config.Keybinding) error {
             key = &Keys.NextSection
 		case "prevSection":
             key = &Keys.PrevSection
-		case "switchView":
-            key = &Keys.SwitchView
 		case "search":
             key = &Keys.Search
 		case "copyurl":

@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	log "github.com/charmbracelet/log"
-	"github.com/dlvhdr/gh-dash/config"
+	"github.com/dlvhdr/gh-dash/v4/config"
 )
 
 type PRKeyMap struct {
@@ -93,7 +93,7 @@ func rebindPRKeys(keys []config.Keybinding) error {
 
 		log.Debug("Rebinding PR key", "builtin", prKey.Builtin, "key", prKey.Key)
 
-        var key *key.Binding
+		var key *key.Binding
 
 		switch prKey.Builtin {
 		case "assign":
@@ -101,8 +101,7 @@ func rebindPRKeys(keys []config.Keybinding) error {
 		case "unassign":
 			key = &PRKeys.Unassign
 		case "comment":
-            PRKeys.Comment = prKey.NewBinding(&PRKeys.Comment)
-            continue
+            key = &PRKeys.Comment
 		case "diff":
 			key = &PRKeys.Diff
 		case "checkout":
@@ -117,12 +116,14 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			key = &PRKeys.Merge
 		case "watchChecks":
 			key = &PRKeys.WatchChecks
+        case "viewIssues":
+            key = &PRKeys.ViewIssues
 		default:
-            return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
+			return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
 		}
 
-        key.SetKeys(prKey.Key)
-        key.SetHelp(prKey.Key, key.Help().Desc)
+		key.SetKeys(prKey.Key)
+		key.SetHelp(prKey.Key, key.Help().Desc)
 	}
 
 	return nil
