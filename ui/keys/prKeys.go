@@ -19,6 +19,7 @@ type PRKeyMap struct {
 	Reopen      key.Binding
 	Merge       key.Binding
 	WatchChecks key.Binding
+	ViewIssues  key.Binding
 }
 
 var PRKeys = PRKeyMap{
@@ -62,6 +63,10 @@ var PRKeys = PRKeyMap{
 		key.WithKeys("w"),
 		key.WithHelp("w", "Watch checks"),
 	),
+	ViewIssues: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "Switch to issues"),
+	),
 }
 
 func PRFullHelp() []key.Binding {
@@ -76,6 +81,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Reopen,
 		PRKeys.Merge,
 		PRKeys.WatchChecks,
+		PRKeys.ViewIssues,
 	}
 }
 

@@ -15,21 +15,21 @@ import (
 	log "github.com/charmbracelet/log"
 	"github.com/cli/go-gh/v2/pkg/browser"
 
-	"github.com/dlvhdr/gh-dash/config"
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/footer"
-	"github.com/dlvhdr/gh-dash/ui/components/issuesidebar"
-	"github.com/dlvhdr/gh-dash/ui/components/issuessection"
-	"github.com/dlvhdr/gh-dash/ui/components/prsidebar"
-	"github.com/dlvhdr/gh-dash/ui/components/prssection"
-	"github.com/dlvhdr/gh-dash/ui/components/section"
-	"github.com/dlvhdr/gh-dash/ui/components/sidebar"
-	"github.com/dlvhdr/gh-dash/ui/components/tabs"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/keys"
-	"github.com/dlvhdr/gh-dash/ui/theme"
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/footer"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/issuesidebar"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/issuessection"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/prsidebar"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/sidebar"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tabs"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/keys"
+	"github.com/dlvhdr/gh-dash/v4/ui/theme"
 )
 
 type Model struct {
@@ -209,7 +209,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
-			var currRow = m.getCurrRowData()
+			currRow := m.getCurrRowData()
 			b := browser.New("", os.Stdout, os.Stdin)
 			if currRow != nil {
 				err := b.Browse(currRow.GetUrl())
@@ -228,7 +228,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
 
-		case key.Matches(msg, m.keys.SwitchView):
+		case key.Matches(msg, keys.PRKeys.ViewIssues, keys.IssueKeys.ViewPRs):
 			m.ctx.View = m.switchSelectedView()
 			m.syncMainContentWidth()
 			m.setCurrSectionId(1)
@@ -345,8 +345,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 
 		case key.Matches(msg, m.keys.Quit):
+			if m.ctx.Config.ConfirmQuit {
+				m.footer, cmd = m.footer.Update(msg)
+				return m, cmd
+			}
 			cmd = tea.Quit
-
 		}
 
 	case initMsg:
@@ -684,16 +687,14 @@ func (m *Model) renderRunningTask() string {
 	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		currTaskStatus =
-
-			lipgloss.NewStyle().
-				Background(m.ctx.Theme.SelectedBackground).
-				Render(
-					fmt.Sprintf(
-						"%s%s",
-						m.taskSpinner.View(),
-						task.StartText,
-					))
+		currTaskStatus = lipgloss.NewStyle().
+			Background(m.ctx.Theme.SelectedBackground).
+			Render(
+				fmt.Sprintf(
+					"%s%s",
+					m.taskSpinner.View(),
+					task.StartText,
+				))
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.WarningText).

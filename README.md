@@ -39,10 +39,12 @@
 
 1. Clone the repo
 
-   ```bash
+   ```shell
    # git
    git clone https://github.com/dlvhdr/gh-dash
+   ```
 
+   ```shell
    # GitHub CLI
    gh repo clone dlvhdr/gh-dash
    ```
@@ -133,7 +135,7 @@ defaults:
   prsLimit: 20 # global limit
   issuesLimit: 20 # global limit
   preview:
-    open: true # wether to have the preview pane open by default
+    open: true # whether to have the preview pane open by default
     width: 60 # width in columns
   refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
@@ -144,6 +146,7 @@ keybindings: # optional, define custom keybindings - see more info below
 theme: # optional, see more info below
 pager:
   diff: less # or delta for example
+confirmQuit: false # show prompt on quit or not
 ```
 
 ### 🗃 Running with a different config file

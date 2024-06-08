@@ -7,15 +7,15 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/dlvhdr/gh-dash/config"
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/components/pr"
-	"github.com/dlvhdr/gh-dash/ui/components/section"
-	"github.com/dlvhdr/gh-dash/ui/components/table"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/keys"
-	"github.com/dlvhdr/gh-dash/utils"
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/keys"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 const SectionType = "pr"
@@ -32,17 +32,16 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{}
-	m.Model =
-		section.NewModel(
-			id,
-			ctx,
-			cfg.ToSectionConfig(),
-			SectionType,
-			GetSectionColumns(cfg, ctx),
-			m.GetItemSingularForm(),
-			m.GetItemPluralForm(),
-			lastUpdated,
-		)
+	m.Model = section.NewModel(
+		id,
+		ctx,
+		cfg.ToSectionConfig(),
+		SectionType,
+		GetSectionColumns(cfg, ctx),
+		m.GetItemSingularForm(),
+		m.GetItemPluralForm(),
+		lastUpdated,
+	)
 	m.Prs = []data.PullRequestData{}
 
 	return m
@@ -150,22 +149,26 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Mergeable = ""
 				}
 				m.Prs[i] = currPr
+				m.Table.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		if m.PageInfo != nil {
-			m.Prs = append(m.Prs, msg.Prs...)
-		} else {
-			m.Prs = msg.Prs
+		if m.LastFetchTaskId == msg.TaskId {
+			if m.PageInfo != nil {
+				m.Prs = append(m.Prs, msg.Prs...)
+			} else {
+				m.Prs = msg.Prs
+			}
+			m.TotalCount = msg.TotalCount
+			m.PageInfo = &msg.PageInfo
+			m.Table.SetIsLoading(false)
+			m.Table.SetRows(m.BuildRows())
+			m.UpdateLastUpdated(time.Now())
+			m.UpdateTotalItemsCount(m.TotalCount)
 		}
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetRows(m.BuildRows())
-		m.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -174,7 +177,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
 	m.PromptConfirmationBox = prompt
-	return &m, tea.Batch(cmd, searchCmd, promptCmd)
+
+	table, tableCmd := m.Table.Update(msg)
+	m.Table = table
+
+	return &m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
 }
 
 func GetSectionColumns(
@@ -285,6 +292,7 @@ type SectionPullRequestsFetchedMsg struct {
 	Prs        []data.PullRequestData
 	TotalCount int
 	PageInfo   data.PageInfo
+	TaskId     string
 }
 
 func (m *Model) GetCurrRow() data.RowData {
@@ -311,6 +319,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
+	m.LastFetchTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
@@ -347,10 +356,17 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Prs:        res.Prs,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
+				TaskId:     taskId,
 			},
 		}
 	}
 	cmds = append(cmds, fetchCmd)
+
+	if m.PageInfo == nil {
+		m.Table.SetIsLoading(true)
+		cmds = append(cmds, m.Table.StartLoadingSpinner())
+
+	}
 
 	return cmds
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
-	"github.com/dlvhdr/gh-dash/utils"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 const DashDir = "gh-dash"
@@ -182,6 +182,7 @@ type Config struct {
 	RepoPaths      map[string]string     `yaml:"repoPaths"`
 	Theme          *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
 	Pager          Pager                 `yaml:"pager"`
+	ConfirmQuit    bool                  `yaml:"confirmQuit"`
 }
 
 type configError struct {
@@ -284,6 +285,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 			},
 		},
+		ConfirmQuit: false,
 	}
 }
 

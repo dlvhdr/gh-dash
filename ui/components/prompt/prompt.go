@@ -3,7 +3,7 @@ package prompt
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
 
 type Model struct {

@@ -1,4 +1,4 @@
-module github.com/dlvhdr/gh-dash
+module github.com/dlvhdr/gh-dash/v4
 
 go 1.21
 
@@ -8,10 +8,10 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.25.0
-	github.com/charmbracelet/glamour v0.6.0
-	github.com/charmbracelet/lipgloss v0.9.1
+	github.com/charmbracelet/glamour v0.7.0
+	github.com/charmbracelet/lipgloss v0.10.1-0.20240413172830-d0be07ea6b9c
 	github.com/charmbracelet/log v0.3.1
-	github.com/cli/go-gh/v2 v2.5.0
+	github.com/cli/go-gh/v2 v2.9.0
 	github.com/cli/shurcooL-graphql v0.0.4
 	github.com/gen2brain/beeep v0.0.0-20240112042604-c7bb2cd88fea
 	github.com/go-playground/validator/v10 v10.18.0
@@ -23,9 +23,10 @@ require (
 )
 
 require (
-	github.com/alecthomas/chroma v0.10.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.8.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/charmbracelet/x/exp/term v0.0.0-20240425164147-ba2a9512b05f // indirect
 	github.com/cli/browser v1.3.0 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/containerd/console v1.0.4 // indirect
@@ -66,7 +67,7 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

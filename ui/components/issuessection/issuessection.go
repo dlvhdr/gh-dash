@@ -6,14 +6,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/dlvhdr/gh-dash/config"
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/components/issue"
-	"github.com/dlvhdr/gh-dash/ui/components/section"
-	"github.com/dlvhdr/gh-dash/ui/components/table"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/utils"
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/issue"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 const SectionType = "issue"
@@ -119,22 +119,26 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 				}
 				m.Issues[i] = currIssue
+				m.Table.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
 		}
 
 	case SectionIssuesFetchedMsg:
-		if m.PageInfo != nil {
-			m.Issues = append(m.Issues, msg.Issues...)
-		} else {
-			m.Issues = msg.Issues
+		if m.LastFetchTaskId == msg.TaskId {
+			if m.PageInfo != nil {
+				m.Issues = append(m.Issues, msg.Issues...)
+			} else {
+				m.Issues = msg.Issues
+			}
+			m.TotalCount = msg.TotalCount
+			m.Table.SetIsLoading(false)
+			m.PageInfo = &msg.PageInfo
+			m.Table.SetRows(m.BuildRows())
+			m.UpdateLastUpdated(time.Now())
+			m.UpdateTotalItemsCount(m.TotalCount)
 		}
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetRows(m.BuildRows())
-		m.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
 	}
 
 	search, searchCmd := m.SearchBar.Update(msg)
@@ -142,7 +146,11 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
 	m.PromptConfirmationBox = prompt
-	return &m, tea.Batch(cmd, searchCmd, promptCmd)
+
+	table, tableCmd := m.Table.Update(msg)
+	m.Table = table
+
+	return &m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
 }
 
 func GetSectionColumns(
@@ -259,6 +267,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
+	m.LastFetchTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
@@ -295,9 +304,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Issues:     res.Issues,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
+				TaskId:     taskId,
 			},
 		}
-
 	}
 	cmds = append(cmds, fetchCmd)
 
@@ -340,6 +349,7 @@ type SectionIssuesFetchedMsg struct {
 	Issues     []data.IssueData
 	TotalCount int
 	PageInfo   data.PageInfo
+	TaskId     string
 }
 
 type UpdateIssueMsg struct {

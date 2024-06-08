@@ -8,15 +8,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/config"
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/prompt"
-	"github.com/dlvhdr/gh-dash/ui/components/search"
-	"github.com/dlvhdr/gh-dash/ui/components/table"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/utils"
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/prompt"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/search"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 type Model struct {
@@ -37,6 +37,7 @@ type Model struct {
 	PromptConfirmationBox     prompt.Model
 	IsPromptConfirmationShown bool
 	PromptConfirmationAction  string
+	LastFetchTaskId           string
 }
 
 func NewModel(
@@ -77,6 +78,8 @@ func NewModel(
 				m.PluralForm,
 			),
 		)),
+		"Loading...",
+		true,
 	)
 	return m
 }

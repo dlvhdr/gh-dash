@@ -3,14 +3,14 @@ package common
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/theme"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/theme"
 )
 
 var (
 	SearchHeight       = 3
 	FooterHeight       = 1
-	ExpandedHelpHeight = 11
+	ExpandedHelpHeight = 12
 	InputBoxHeight     = 8
 	SingleRuneWidth    = 4
 	MainContentPadding = 1

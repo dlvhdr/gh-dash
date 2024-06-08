@@ -1,6 +1,16 @@
+version: 2
+
 before:
   hooks:
     - go mod tidy
+
+gomod:
+  proxy: true
+  env:
+    - GOPROXY=https://proxy.golang.org,direct
+    - GOSUMDB=sum.golang.org
+    - GOPRIVATE=github.com/dlvhdr/gh-dash
+  mod: mod
 
 builds:
   - env:
@@ -29,7 +39,7 @@ builds:
 
 archives:
   - format: binary
-    name_template: "gh-dash_{{ .Tag }}_{{ .Os }}-{{ .Arch }}"
+    name_template: "gh-dash_{{ .Tag }}_{{ .Os }}-{{ .Arch }}{{if .Arm}}_{{.Arm}}{{end}}"
 checksum:
   name_template: "checksums.txt"
 snapshot:

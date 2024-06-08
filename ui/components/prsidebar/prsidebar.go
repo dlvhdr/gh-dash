@@ -9,12 +9,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/inputbox"
-	"github.com/dlvhdr/gh-dash/ui/components/pr"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/inputbox"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
 
 type Model struct {
@@ -133,9 +133,17 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderPills())
 	s.WriteString("\n\n")
+
+	labels := m.renderLabels()
+	if labels != "" {
+		s.WriteString(labels)
+		s.WriteString("\n\n")
+	}
+
 	s.WriteString(m.renderDescription())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderChecks())
+
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
@@ -226,6 +234,14 @@ func (m *Model) renderPills() string {
 	mergeablePill := m.renderMergeablePill()
 	checksPill := m.renderChecksPill()
 	return lipgloss.JoinHorizontal(lipgloss.Top, statusPill, " ", mergeablePill, " ", checksPill)
+}
+
+func (m *Model) renderLabels() string {
+	width := m.getIndentedContentWidth()
+	labels := m.pr.Data.Labels.Nodes
+	style := m.ctx.Styles.PrSidebar.PillStyle
+
+	return common.RenderLabels(width, labels, style)
 }
 
 func (m *Model) renderDescription() string {

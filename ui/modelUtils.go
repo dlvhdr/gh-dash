@@ -3,22 +3,23 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"text/template"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	log "github.com/charmbracelet/log"
 	"github.com/charmbracelet/lipgloss"
+	log "github.com/charmbracelet/log"
 
-	"github.com/dlvhdr/gh-dash/config"
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/section"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
 
 func (m *Model) getCurrSection() section.Section {
@@ -66,14 +67,6 @@ type IssueCommandTemplateInput struct {
 	HeadRefName string
 }
 
-type PRCommandTemplateInput struct {
-	RepoName    string
-	RepoPath    string
-	PrNumber    int
-	HeadRefName string
-	BaseRefName string
-}
-
 func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
 
@@ -95,7 +88,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 				continue
 			}
 
-            log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
+			log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
 
 			switch data := currRowData.(type) {
 			case *data.PullRequestData:
@@ -109,22 +102,21 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	return nil
 }
 
-func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
-	repoName := prData.GetRepoNameWithOwner()
-	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+// runCustomCommand executes a user-defined command.
+// commandTemplate is a template string that will be parsed with the input data.
+// contextData is a map of key-value pairs of data specific to the context the command is being run in.
+func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string]any) tea.Cmd {
+	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
+	// for structured data, existing structs, etc. Especially if holes in the data are expected.
+	// Common data shared across contexts could be set here.
+	input := map[string]any{}
 
-	if !ok {
-		return func() tea.Msg {
-			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
-		}
-	}
+	// Merge data specific to the context the command is being run in onto any common data, overwriting duplicate keys.
+	maps.Copy(input, *contextData)
 
-	input := PRCommandTemplateInput{
-		RepoName:    repoName,
-		RepoPath:    repoPath,
-		PrNumber:    prData.Number,
-		HeadRefName: prData.HeadRefName,
-		BaseRefName: prData.BaseRefName,
+	// Append in the local RepoPath only if it can be found
+	if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
+		input["RepoPath"] = repoPath
 	}
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
@@ -132,12 +124,27 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 		log.Fatal("Failed parse keybinding template", "error", err)
 	}
 
+	// Set the command to error out if required input (e.g. RepoPath) is missing
+	cmd = cmd.Option("missingkey=error")
+
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		log.Fatal("Failed executing keybinding command", "error", err)
+		return func() tea.Msg {
+			return constants.ErrMsg{Err: fmt.Errorf("Failed to parsetemplate %s", commandTemplate)}
+		}
 	}
 	return m.executeCustomCommand(buff.String())
+}
+
+func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
+	return m.runCustomCommand(commandTemplate,
+		&map[string]any{
+			"RepoName":    prData.GetRepoNameWithOwner(),
+			"PrNumber":    prData.Number,
+			"HeadRefName": prData.HeadRefName,
+			"BaseRefName": prData.BaseRefName,
+		})
 }
 
 func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {

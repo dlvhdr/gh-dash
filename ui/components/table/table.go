@@ -1,23 +1,29 @@
 package table
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/listviewport"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/listviewport"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
 
 type Model struct {
-	ctx          context.ProgramContext
-	Columns      []Column
-	Rows         []Row
-	EmptyState   *string
-	dimensions   constants.Dimensions
-	rowsViewport listviewport.Model
+	ctx            context.ProgramContext
+	Columns        []Column
+	Rows           []Row
+	EmptyState     *string
+	loadingMessage string
+	isLoading      bool
+	loadingSpinner spinner.Model
+	dimensions     constants.Dimensions
+	rowsViewport   listviewport.Model
 }
 
 type Column struct {
@@ -37,17 +43,27 @@ func NewModel(
 	rows []Row,
 	itemTypeLabel string,
 	emptyState *string,
+	loadingMessage string,
+	isLoading bool,
 ) Model {
 	itemHeight := 1
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
 		itemHeight = 2
 	}
+
+	loadingSpinner := spinner.New()
+	loadingSpinner.Spinner = spinner.Dot
+	loadingSpinner.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
+
 	return Model{
-		ctx:        ctx,
-		Columns:    columns,
-		Rows:       rows,
-		EmptyState: emptyState,
-		dimensions: dimensions,
+		ctx:            ctx,
+		Columns:        columns,
+		Rows:           rows,
+		EmptyState:     emptyState,
+		loadingMessage: loadingMessage,
+		isLoading:      isLoading,
+		loadingSpinner: loadingSpinner,
+		dimensions:     dimensions,
 		rowsViewport: listviewport.NewModel(
 			ctx,
 			dimensions,
@@ -59,11 +75,25 @@ func NewModel(
 	}
 }
 
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	return m, cmd
+}
+
+func (m Model) StartLoadingSpinner() tea.Cmd {
+	return m.loadingSpinner.Tick
+}
+
 func (m Model) View() string {
 	header := m.renderHeader()
 	body := m.renderBody()
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, body)
+}
+
+func (m *Model) SetIsLoading(isLoading bool) {
+	m.isLoading = isLoading
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
@@ -209,6 +239,16 @@ func (m *Model) renderBody() string {
 		Height(m.dimensions.Height).
 		MaxWidth(m.dimensions.Width)
 
+	if m.isLoading {
+		return lipgloss.Place(
+			m.dimensions.Width,
+			m.dimensions.Height,
+			lipgloss.Center,
+			lipgloss.Center,
+			fmt.Sprintf("%s%s", m.loadingSpinner.View(), m.loadingMessage),
+		)
+	}
+
 	if len(m.Rows) == 0 && m.EmptyState != nil {
 		return bodyStyle.Render(*m.EmptyState)
 	}
@@ -249,7 +289,6 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		BorderBottom(m.ctx.Config.Theme.Ui.Table.ShowSeparator).
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
-
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {

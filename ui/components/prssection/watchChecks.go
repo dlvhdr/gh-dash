@@ -9,10 +9,10 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gen2brain/beeep"
 
-	"github.com/dlvhdr/gh-dash/data"
-	prComponent "github.com/dlvhdr/gh-dash/ui/components/pr"
-	"github.com/dlvhdr/gh-dash/ui/constants"
-	"github.com/dlvhdr/gh-dash/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	prComponent "github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
 
 func (m *Model) watchChecks() tea.Cmd {

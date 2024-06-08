@@ -9,12 +9,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/data"
-	"github.com/dlvhdr/gh-dash/ui/common"
-	"github.com/dlvhdr/gh-dash/ui/components/inputbox"
-	"github.com/dlvhdr/gh-dash/ui/components/issue"
-	"github.com/dlvhdr/gh-dash/ui/context"
-	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/inputbox"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/issue"
+	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
 
 type Model struct {
@@ -204,18 +204,11 @@ func (m *Model) renderBody() string {
 }
 
 func (m *Model) renderLabels() string {
-	labels := make([]string, 0, len(m.issue.Data.Labels.Nodes))
-	for _, label := range m.issue.Data.Labels.Nodes {
-		labels = append(
-			labels,
-			m.ctx.Styles.PrSidebar.PillStyle.Copy().
-				Background(lipgloss.Color("#"+label.Color)).
-				Render(label.Name),
-		)
-		labels = append(labels, " ")
-	}
+	width := m.getIndentedContentWidth()
+	labels := m.issue.Data.Labels.Nodes
+	style := m.ctx.Styles.PrSidebar.PillStyle
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, labels...)
+	return common.RenderLabels(width, labels, style)
 }
 
 func (m *Model) getIndentedContentWidth() int {
