@@ -39,10 +39,12 @@
 
 1. Clone the repo
 
-   ```bash
+   ```shell
    # git
    git clone https://github.com/dlvhdr/gh-dash
+   ```
 
+   ```shell
    # GitHub CLI
    gh repo clone dlvhdr/gh-dash
    ```
