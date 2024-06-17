@@ -12,7 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
-	"github.com/dlvhdr/gh-dash/utils"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 const DashDir = "gh-dash"

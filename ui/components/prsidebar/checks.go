@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dlvhdr/gh-dash/data"
+	"github.com/dlvhdr/gh-dash/v4/data"
 )
 
 func (sidebar *Model) renderChecks() string {
