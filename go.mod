@@ -1,4 +1,4 @@
-module github.com/dlvhdr/gh-dash
+module github.com/dlvhdr/gh-dash/v4
 
 go 1.21
 
