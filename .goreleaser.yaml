@@ -4,6 +4,14 @@ before:
   hooks:
     - go mod tidy
 
+gomod:
+  proxy: true
+  env:
+    - GOPROXY=https://proxy.golang.org,direct
+    - GOSUMDB=sum.golang.org
+    - GOPRIVATE=github.com/dlvhdr/gh-dash
+  mod: mod
+
 builds:
   - env:
       - CGO_ENABLED=0
