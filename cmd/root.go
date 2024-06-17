@@ -17,8 +17,8 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
-	"github.com/dlvhdr/gh-dash/ui"
-	"github.com/dlvhdr/gh-dash/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/ui"
+	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
 
 var (

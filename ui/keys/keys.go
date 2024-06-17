@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 
-	"github.com/dlvhdr/gh-dash/config"
+	"github.com/dlvhdr/gh-dash/v4/config"
 )
 
 type KeyMap struct {
