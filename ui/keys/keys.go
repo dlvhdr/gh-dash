@@ -172,57 +172,57 @@ func Rebind(universal, issueKeys, prKeys []config.Keybinding) error {
 }
 
 func rebindUniversal(universal []config.Keybinding) error {
-    log.Debug("Rebinding universal keys", "keys", universal)
+	log.Debug("Rebinding universal keys", "keys", universal)
 	for _, kb := range universal {
-        if kb.Builtin == "" {
-            continue
-        }
+		if kb.Builtin == "" {
+			continue
+		}
 
 		log.Debug("Rebinding universal key", "builtin", kb.Builtin, "key", kb.Key)
 
-        var key *key.Binding
+		var key *key.Binding
 
 		switch kb.Builtin {
 		case "up":
-            key = &Keys.Up
+			key = &Keys.Up
 		case "down":
-            key = &Keys.Down
+			key = &Keys.Down
 		case "firstLine":
-            key = &Keys.FirstLine
+			key = &Keys.FirstLine
 		case "lastLine":
-            key = &Keys.LastLine
+			key = &Keys.LastLine
 		case "togglePreview":
-            key = &Keys.TogglePreview
+			key = &Keys.TogglePreview
 		case "openGithub":
-            key = &Keys.OpenGithub
+			key = &Keys.OpenGithub
 		case "refresh":
-            key = &Keys.Refresh
+			key = &Keys.Refresh
 		case "refreshAll":
-            key = &Keys.RefreshAll
+			key = &Keys.RefreshAll
 		case "pageDown":
-            key = &Keys.PageDown
+			key = &Keys.PageDown
 		case "pageUp":
-            key = &Keys.PageUp
+			key = &Keys.PageUp
 		case "nextSection":
-            key = &Keys.NextSection
+			key = &Keys.NextSection
 		case "prevSection":
-            key = &Keys.PrevSection
+			key = &Keys.PrevSection
 		case "search":
-            key = &Keys.Search
+			key = &Keys.Search
 		case "copyurl":
-            key = &Keys.CopyUrl
+			key = &Keys.CopyUrl
 		case "copyNumber":
-            key = &Keys.CopyNumber
+			key = &Keys.CopyNumber
 		case "help":
-            key = &Keys.Help
+			key = &Keys.Help
 		case "quit":
-            key = &Keys.Quit
+			key = &Keys.Quit
 		default:
-            return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
+			return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
 		}
 
-        key.SetKeys(kb.Key)
-        key.SetHelp(kb.Key, key.Help().Desc)
+		key.SetKeys(kb.Key)
+		key.SetHelp(kb.Key, key.Help().Desc)
 	}
 
 	return nil

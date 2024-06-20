@@ -131,7 +131,7 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	err = cmd.Execute(&buff, input)
 	if err != nil {
 		return func() tea.Msg {
-			return constants.ErrMsg{Err: fmt.Errorf("Failed to parsetemplate %s", commandTemplate)}
+			return constants.ErrMsg{Err: fmt.Errorf("failed to parsetemplate %s", commandTemplate)}
 		}
 	}
 	return m.executeCustomCommand(buff.String())
@@ -148,32 +148,12 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 }
 
 func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {
-	repoName := issueData.GetRepoNameWithOwner()
-	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
-
-	if !ok {
-		return func() tea.Msg {
-			return constants.ErrMsg{Err: fmt.Errorf("Failed to find local path for repo %s", repoName)}
-		}
-	}
-
-	input := IssueCommandTemplateInput{
-		RepoName:    repoName,
-		RepoPath:    repoPath,
-		IssueNumber: issueData.Number,
-	}
-
-	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
-	if err != nil {
-		log.Fatal("Failed parse keybinding template", "error", err)
-	}
-
-	var buff bytes.Buffer
-	err = cmd.Execute(&buff, input)
-	if err != nil {
-		log.Fatal("Failed executing keybinding command", "error", err)
-	}
-	return m.executeCustomCommand(buff.String())
+	return m.runCustomCommand(commandTemplate,
+		&map[string]any{
+			"RepoName":    issueData.GetRepoNameWithOwner(),
+			"IssueNumber": issueData.Number,
+		},
+	)
 }
 
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
