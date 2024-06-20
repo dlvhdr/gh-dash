@@ -33,7 +33,7 @@ import (
 )
 
 type Model struct {
-	keys          keys.KeyMap
+	keys          *keys.KeyMap
 	sidebar       sidebar.Model
 	prSidebar     prsidebar.Model
 	issueSidebar  issuesidebar.Model
@@ -82,10 +82,7 @@ func NewModel(configPath string) Model {
 }
 
 func (m *Model) initScreen() tea.Msg {
-	var err error
-
-	config, err := config.ParseConfig(m.ctx.ConfigPath)
-	if err != nil {
+	showError := func(err error) {
 		styles := log.DefaultStyles()
 		styles.Key = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("1")).
@@ -107,10 +104,24 @@ func (m *Model) initScreen() tea.Msg {
 				"err",
 				err,
 			)
-
 	}
 
-	return initMsg{Config: config}
+	cfg, err := config.ParseConfig(m.ctx.ConfigPath)
+	if err != nil {
+		showError(err)
+		return initMsg{Config: cfg}
+	}
+
+	err = keys.Rebind(
+		cfg.Keybindings.Universal,
+		cfg.Keybindings.Issues,
+		cfg.Keybindings.Prs,
+	)
+	if err != nil {
+		showError(err)
+	}
+
+	return initMsg{Config: cfg}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -217,91 +228,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
 
-		case key.Matches(msg, keys.PRKeys.ViewIssues, keys.IssueKeys.ViewPRs):
-			m.ctx.View = m.switchSelectedView()
-			m.syncMainContentWidth()
-			m.setCurrSectionId(1)
-
-			currSections := m.getCurrentViewSections()
-			if len(currSections) == 0 {
-				newSections, fetchSectionsCmds := m.fetchAllViewSections()
-				m.setCurrentViewSections(newSections)
-				cmd = fetchSectionsCmds
-			}
-			m.onViewedRowChanged()
-
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
 				cmd = currSection.SetIsSearching(true)
 				return m, cmd
 			}
-
-		case key.Matches(msg, keys.PRKeys.Comment), key.Matches(msg, keys.IssueKeys.Comment):
-			m.sidebar.IsOpen = true
-			if m.ctx.View == config.PRsView {
-				cmd = m.prSidebar.SetIsCommenting(true)
-			} else {
-				cmd = m.issueSidebar.SetIsCommenting(true)
-			}
-			m.syncMainContentWidth()
-			m.syncSidebar()
-			m.sidebar.ScrollToBottom()
-			return m, cmd
-
-		case key.Matches(
-			msg,
-			keys.PRKeys.Close,
-			keys.PRKeys.Reopen,
-			keys.PRKeys.Ready,
-			keys.PRKeys.Merge,
-			keys.IssueKeys.Close,
-			keys.IssueKeys.Reopen,
-		):
-
-			var action string
-			switch {
-			case key.Matches(msg, keys.PRKeys.Close, keys.IssueKeys.Close):
-				action = "close"
-
-			case key.Matches(msg, keys.PRKeys.Reopen, keys.IssueKeys.Reopen):
-				action = "reopen"
-
-			case key.Matches(msg, keys.PRKeys.Ready):
-				action = "ready"
-
-			case key.Matches(msg, keys.PRKeys.Merge):
-				action = "merge"
-			}
-
-			if currSection != nil {
-				currSection.SetPromptConfirmationAction(action)
-				cmd = currSection.SetIsPromptConfirmationShown(true)
-			}
-			return m, cmd
-
-		case key.Matches(msg, keys.IssueKeys.Assign), key.Matches(msg, keys.PRKeys.Assign):
-			m.sidebar.IsOpen = true
-			if m.ctx.View == config.PRsView {
-				cmd = m.prSidebar.SetIsAssigning(true)
-			} else {
-				cmd = m.issueSidebar.SetIsAssigning(true)
-			}
-			m.syncMainContentWidth()
-			m.syncSidebar()
-			m.sidebar.ScrollToBottom()
-			return m, cmd
-
-		case key.Matches(msg, keys.IssueKeys.Unassign), key.Matches(msg, keys.PRKeys.Unassign):
-			m.sidebar.IsOpen = true
-			if m.ctx.View == config.PRsView {
-				cmd = m.prSidebar.SetIsUnassigning(true)
-			} else {
-				cmd = m.issueSidebar.SetIsUnassigning(true)
-			}
-			m.syncMainContentWidth()
-			m.syncSidebar()
-			m.sidebar.ScrollToBottom()
-			return m, cmd
 
 		case key.Matches(msg, m.keys.Help):
 			if !m.footer.ShowAll {
@@ -338,6 +269,127 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 			cmd = tea.Quit
+
+		case m.ctx.View == config.PRsView:
+			switch {
+			case key.Matches(msg, keys.PRKeys.Assign):
+				m.sidebar.IsOpen = true
+				cmd = m.prSidebar.SetIsAssigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Unassign):
+				m.sidebar.IsOpen = true
+				cmd = m.prSidebar.SetIsUnassigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Comment):
+				m.sidebar.IsOpen = true
+				cmd = m.prSidebar.SetIsCommenting(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Close):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("close")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Ready):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("ready")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Reopen):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("reopen")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.Merge):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("merge")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.PRKeys.ViewIssues):
+				m.ctx.View = m.switchSelectedView()
+				m.syncMainContentWidth()
+				m.setCurrSectionId(1)
+
+				currSections := m.getCurrentViewSections()
+				if len(currSections) == 0 {
+					newSections, fetchSectionsCmds := m.fetchAllViewSections()
+					m.setCurrentViewSections(newSections)
+					cmd = fetchSectionsCmds
+				}
+				m.onViewedRowChanged()
+			}
+		case m.ctx.View == config.IssuesView:
+			switch {
+			case key.Matches(msg, keys.IssueKeys.Assign):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsAssigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.Unassign):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsUnassigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.Comment):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsCommenting(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.Close):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("close")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.Reopen):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("reopen")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.ViewPRs):
+				m.ctx.View = m.switchSelectedView()
+				m.syncMainContentWidth()
+				m.setCurrSectionId(1)
+
+				currSections := m.getCurrentViewSections()
+				if len(currSections) == 0 {
+					newSections, fetchSectionsCmds := m.fetchAllViewSections()
+					m.setCurrentViewSections(newSections)
+					cmd = fetchSectionsCmds
+				}
+				m.onViewedRowChanged()
+			}
 		}
 
 	case initMsg:
@@ -635,7 +687,7 @@ func (m *Model) switchSelectedView() config.ViewType {
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 	if m.ctx.View == config.IssuesView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
-			if keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
 				return true
 			}
 		}
@@ -643,7 +695,7 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 
 	if m.ctx.View == config.PRsView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-			if keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
 				return true
 			}
 		}

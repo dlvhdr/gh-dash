@@ -7,15 +7,16 @@
 <img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
 
 ## ✨ Features
-* 🌅 fully configurable - define sections using github filters
-* 🔍 search for both prs and issues
-* 📝 customize columns with `hidden`, `width` and `grow` props
-* ⚡️ act on prs and issues with checkout, comment, open, merge, diff, etc...
-* ⌨️ set custom actions with new keybindings
-* 💅 use custom themes
-* 🔭 view details about a pr/issue with a detailed sidebar
-* 🪟 write multiple configuration files to easily switch between completely different dashboards
-* ♻️ set an interval for auto refreshing the dashboard
+
+- 🌅 fully configurable - define sections using github filters
+- 🔍 search for both prs and issues
+- 📝 customize columns with `hidden`, `width` and `grow` props
+- ⚡️ act on prs and issues with checkout, comment, open, merge, diff, etc...
+- ⌨️ set custom actions with new keybindings
+- 💅 use custom themes
+- 🔭 view details about a pr/issue with a detailed sidebar
+- 🪟 write multiple configuration files to easily switch between completely different dashboards
+- ♻️ set an interval for auto refreshing the dashboard
 
 ## 📦 Installation
 
@@ -70,19 +71,23 @@
 <details>
    <summary>How do I get these exact colors and font?</summary>
 
-   > I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
-   > For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
+> I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
+> For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
+
 </details>
 
 ## ⚡️ Usage
 
 Run
+
 ```sh
 gh dash
 ```
+
 Then press <kbd>?</kbd> for help.
 
 Run `gh dash --help` for more info:
+
 ```
 Usage:
   gh dash [flags]
@@ -96,6 +101,7 @@ Flags:
 ## ⚙️ Configuring
 
 A section is defined by a:
+
 - title - shown in the TUI
 - filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
 
@@ -158,9 +164,31 @@ It can be useful if you want to have a 🧳 work and 👩‍💻 personal dashbo
 
 ### ⌨️ Keybindings
 
-Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
-This is available for both PRs and Issues.
+You can:
 
+1. Override the builtin commands keybindings
+2. Define your own custom keybindings to run bash commands using [Go Templates](https://pkg.go.dev/text/template).
+
+#### Overriding builtin commands keybindings
+
+To override the "checkout" keybinding you can include this in your `config.yml` file:
+
+```yaml
+keybindings:
+  prs:
+    - key: O
+      builtin: checkout
+```
+
+The list of available builtin commands are:
+
+1. `universal`: up, down, firstLine, lastLine, togglePreview, openGithub, refresh, refreshAll, pageDown, pageUp, nextSection, prevSection, search, copyurl, copyNumber, help, quit
+2. `prs`: assign, unassign, comment, diff, checkout, close, ready, reopen, merge, watchChecks, viewIssues
+3. `Issues`: assign, unassign, comment, close, reopen, viewPrs
+
+#### Defining custom keybindings
+
+This is available for both PRs and Issues.
 For PRs, the available arguments are:
 
 | Argument      | Description                                                                     |
@@ -179,9 +207,9 @@ For Issues, the available arguments are:
 | `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
 | `IssueNumber` | The Issue number                                                                |
 
-#### Examples
+**Examples**
 
-To review a PR with either Neovim or VSCode include the following in your `config.yml` file:
+1. To review a PR with either Neovim or VSCode include the following in your `config.yml` file:
 
 ```yaml
 repoPaths:
@@ -202,7 +230,7 @@ keybindings:
         gh pr checkout {{.PrNumber}}
 ```
 
-To pin an issue include the following in your `config.yml` file:
+2. To pin an issue include the following in your `config.yml` file:
 
 ```yaml
 keybindings:
@@ -222,7 +250,7 @@ An `:owner/:repo` template can be specified as a generic fallback.
 ```yaml
 repoPaths:
   :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone github repos in a consistent location
-  dlvhdr/*: ~/code/repos/dlvhdr/*       # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
+  dlvhdr/*: ~/code/repos/dlvhdr/* # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 ```
 
@@ -259,6 +287,7 @@ theme:
 You can customize each section's layout as well as the global layout.
 
 For example, to hide the `author` column for **all** PR sections, include the following in your `config.yml`.
+
 ```
 defaults:
   layout:
@@ -270,7 +299,6 @@ defaults:
 - For `prs` the column names are: `updatedAt, repo, author, title, reviewStatus, state, ci, lines, assignees, base`.
 - For `issues` the column names are: `updatedAt, state, repo, title, creator, assignees, comments, reactions`.
 - The available properties to control are: `grow` (false, true), `width` (number of cells), and `hidden` (false, true).
-
 
 ## Author
 

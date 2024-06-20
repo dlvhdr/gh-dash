@@ -1,7 +1,12 @@
 package keys
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
+	log "github.com/charmbracelet/log"
+
+	"github.com/dlvhdr/gh-dash/v4/config"
 )
 
 type PRKeyMap struct {
@@ -79,4 +84,48 @@ func PRFullHelp() []key.Binding {
 		PRKeys.WatchChecks,
 		PRKeys.ViewIssues,
 	}
+}
+
+func rebindPRKeys(keys []config.Keybinding) error {
+	for _, prKey := range keys {
+		if prKey.Builtin == "" {
+			continue
+		}
+
+		log.Debug("Rebinding PR key", "builtin", prKey.Builtin, "key", prKey.Key)
+
+		var key *key.Binding
+
+		switch prKey.Builtin {
+		case "assign":
+			key = &PRKeys.Assign
+		case "unassign":
+			key = &PRKeys.Unassign
+		case "comment":
+			key = &PRKeys.Comment
+		case "diff":
+			key = &PRKeys.Diff
+		case "checkout":
+			key = &PRKeys.Checkout
+		case "close":
+			key = &PRKeys.Close
+		case "ready":
+			key = &PRKeys.Ready
+		case "reopen":
+			key = &PRKeys.Reopen
+		case "merge":
+			key = &PRKeys.Merge
+		case "watchChecks":
+			key = &PRKeys.WatchChecks
+		case "viewIssues":
+			key = &PRKeys.ViewIssues
+		default:
+			return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
+		}
+
+		key.SetKeys(prKey.Key)
+		key.SetHelp(prKey.Key, key.Help().Desc)
+	}
+
+	return nil
 }

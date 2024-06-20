@@ -3,7 +3,6 @@ package ui
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"maps"
 	"os"
 	"os/exec"
@@ -12,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	log "github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -84,9 +84,11 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 		}
 	case config.PRsView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-			if keybinding.Key != key {
+			if keybinding.Key != key || keybinding.Command == "" {
 				continue
 			}
+
+			log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
 
 			switch data := currRowData.(type) {
 			case *data.PullRequestData:
@@ -107,8 +109,7 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
 	// for structured data, existing structs, etc. Especially if holes in the data are expected.
 	// Common data shared across contexts could be set here.
-	input := map[string]any {
-	}
+	input := map[string]any{}
 
 	// Merge data specific to the context the command is being run in onto any common data, overwriting duplicate keys.
 	maps.Copy(input, *contextData)
@@ -120,7 +121,7 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
-		log.Fatal("Failed parse keybinding template", err)
+		log.Fatal("Failed parse keybinding template", "error", err)
 	}
 
 	// Set the command to error out if required input (e.g. RepoPath) is missing
@@ -129,14 +130,16 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	var buff bytes.Buffer
 	err = cmd.Execute(&buff, input)
 	if err != nil {
-		return func() tea.Msg { return constants.ErrMsg{Err: fmt.Errorf("Failed to parsetemplate %s", commandTemplate)} }
+		return func() tea.Msg {
+			return constants.ErrMsg{Err: fmt.Errorf("failed to parsetemplate %s", commandTemplate)}
+		}
 	}
 	return m.executeCustomCommand(buff.String())
 }
 
 func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequestData) tea.Cmd {
 	return m.runCustomCommand(commandTemplate,
-		&map[string]any {
+		&map[string]any{
 			"RepoName":    prData.GetRepoNameWithOwner(),
 			"PrNumber":    prData.Number,
 			"HeadRefName": prData.HeadRefName,
@@ -146,7 +149,7 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 
 func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.IssueData) tea.Cmd {
 	return m.runCustomCommand(commandTemplate,
-		&map[string]any {
+		&map[string]any{
 			"RepoName":    issueData.GetRepoNameWithOwner(),
 			"IssueNumber": issueData.Number,
 		},

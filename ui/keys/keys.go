@@ -1,8 +1,11 @@
 package keys
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	log "github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 )
@@ -82,7 +85,7 @@ func (k KeyMap) QuitAndHelpKeys() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-var Keys = KeyMap{
+var Keys = &KeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "move up"),
@@ -151,4 +154,76 @@ var Keys = KeyMap{
 		key.WithKeys("q", "esc", "ctrl+c"),
 		key.WithHelp("q", "quit"),
 	),
+}
+
+// Rebind will update our saved keybindings from configuration values.
+func Rebind(universal, issueKeys, prKeys []config.Keybinding) error {
+	err := rebindUniversal(universal)
+	if err != nil {
+		return err
+	}
+
+	err = rebindPRKeys(prKeys)
+	if err != nil {
+		return err
+	}
+
+	return rebindIssueKeys(issueKeys)
+}
+
+func rebindUniversal(universal []config.Keybinding) error {
+	log.Debug("Rebinding universal keys", "keys", universal)
+	for _, kb := range universal {
+		if kb.Builtin == "" {
+			continue
+		}
+
+		log.Debug("Rebinding universal key", "builtin", kb.Builtin, "key", kb.Key)
+
+		var key *key.Binding
+
+		switch kb.Builtin {
+		case "up":
+			key = &Keys.Up
+		case "down":
+			key = &Keys.Down
+		case "firstLine":
+			key = &Keys.FirstLine
+		case "lastLine":
+			key = &Keys.LastLine
+		case "togglePreview":
+			key = &Keys.TogglePreview
+		case "openGithub":
+			key = &Keys.OpenGithub
+		case "refresh":
+			key = &Keys.Refresh
+		case "refreshAll":
+			key = &Keys.RefreshAll
+		case "pageDown":
+			key = &Keys.PageDown
+		case "pageUp":
+			key = &Keys.PageUp
+		case "nextSection":
+			key = &Keys.NextSection
+		case "prevSection":
+			key = &Keys.PrevSection
+		case "search":
+			key = &Keys.Search
+		case "copyurl":
+			key = &Keys.CopyUrl
+		case "copyNumber":
+			key = &Keys.CopyNumber
+		case "help":
+			key = &Keys.Help
+		case "quit":
+			key = &Keys.Quit
+		default:
+			return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
+		}
+
+		key.SetKeys(kb.Key)
+		key.SetHelp(kb.Key, key.Help().Desc)
+	}
+
+	return nil
 }
