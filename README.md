@@ -182,9 +182,9 @@ keybindings:
 
 The list of available builtin commands are:
 
-1. Universal: "up", "down", "firstLine", "lastLine", "togglePreview", "openGithub", "refresh", "refreshAll", "pageDown", "pageUp", "nextSection", "prevSection", "search", "copyurl", "copyNumber", "help", "quit"
-2. PRs: "assign", "unassign", "comment", "diff", "checkout", "close", "ready", "reopen", "merge", "watchChecks", "viewIssues"
-3. Issues: "assign", "unassign", "comment", "close", "reopen", "viewPrs"
+1. `universal`: up, down, firstLine, lastLine, togglePreview, openGithub, refresh, refreshAll, pageDown, pageUp, nextSection, prevSection, search, copyurl, copyNumber, help, quit
+2. `prs`: assign, unassign, comment, diff, checkout, close, ready, reopen, merge, watchChecks, viewIssues
+3. `Issues`: assign, unassign, comment, close, reopen, viewPrs
 
 #### Defining custom keybindings
 
