@@ -166,7 +166,8 @@ type TableUIThemeConfig struct {
 }
 
 type UIThemeConfig struct {
-	Table TableUIThemeConfig `yaml:"table"`
+	SectionsShowCount bool               `yaml:"sectionsShowCount" default:"true"`
+	Table             TableUIThemeConfig `yaml:"table"`
 }
 
 type ThemeConfig struct {
@@ -280,6 +281,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 		RepoPaths: map[string]string{},
 		Theme: &ThemeConfig{
 			Ui: UIThemeConfig{
+				SectionsShowCount: true,
 				Table: TableUIThemeConfig{
 					ShowSeparator: true,
 				},

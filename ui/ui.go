@@ -48,12 +48,10 @@ type Model struct {
 }
 
 func NewModel(configPath string) Model {
-	tabsModel := tabs.NewModel()
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:          keys.Keys,
 		currSectionId: 1,
-		tabs:          tabsModel,
 		sidebar:       sidebar.NewModel(),
 		taskSpinner:   taskSpinner,
 		tasks:         map[string]context.Task{},
@@ -77,6 +75,7 @@ func NewModel(configPath string) Model {
 	m.footer = footer
 	m.prSidebar = prsidebar.NewModel(m.ctx)
 	m.issueSidebar = issuesidebar.NewModel(m.ctx)
+	m.tabs = tabs.NewModel(&m.ctx)
 
 	return m
 }
@@ -131,6 +130,7 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd             tea.Cmd
+		tabsCmd         tea.Cmd
 		sidebarCmd      tea.Cmd
 		prSidebarCmd    tea.Cmd
 		issueSidebarCmd tea.Cmd
@@ -328,6 +328,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
 				m.setCurrSectionId(1)
+				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
 				if len(currSections) == 0 {
@@ -381,6 +382,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
 				m.setCurrSectionId(1)
+				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
 				if len(currSections) == 0 {
@@ -396,8 +398,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Config = &msg.Config
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
+		log.Debug("Config loaded", "default view", m.ctx.Config.Defaults.View)
+		log.Debug("ui.ui initMsg", "ctx", m.ctx)
 		m.ctx.View = m.ctx.Config.Defaults.View
+		log.Debug("View set", "view", m.ctx.View)
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
+		m.tabs.UpdateSectionsConfigs(&m.ctx)
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
@@ -488,10 +494,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	m.tabs.UpdateSectionCounts(m.getCurrentViewSections())
+
 	sectionCmd := m.updateCurrentSection(msg)
 	cmds = append(
 		cmds,
 		cmd,
+		tabsCmd,
 		sidebarCmd,
 		footerCmd,
 		sectionCmd,

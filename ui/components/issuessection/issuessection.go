@@ -400,3 +400,14 @@ func (m Model) GetItemSingularForm() string {
 func (m Model) GetItemPluralForm() string {
 	return "Issues"
 }
+
+func (m Model) GetTotalCount() *int {
+	if m.IsLoading() {
+		return nil
+	}
+	return &m.TotalCount
+}
+
+func (m Model) IsLoading() bool {
+	return m.Table.IsLoading()
+}

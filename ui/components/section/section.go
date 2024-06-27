@@ -97,6 +97,7 @@ type Section interface {
 	GetPagerContent() string
 	GetItemSingularForm() string
 	GetItemPluralForm() string
+	GetTotalCount() *int
 }
 
 type Identifier interface {
@@ -120,6 +121,7 @@ type Table interface {
 	FetchNextPageSectionRows() []tea.Cmd
 	BuildRows() []table.Row
 	ResetRows()
+	IsLoading() bool
 }
 
 type Search interface {

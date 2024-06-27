@@ -81,7 +81,22 @@ func TimeElapsed(then time.Time) string {
 	return parts[0] + text
 }
 
-func BoolPtr(b bool) *bool       { return &b }
+func BoolPtr(b bool) *bool { return &b }
+
 func StringPtr(s string) *string { return &s }
-func UintPtr(u uint) *uint       { return &u }
-func IntPtr(u int) *int          { return &u }
+
+func UintPtr(u uint) *uint { return &u }
+
+func IntPtr(u int) *int { return &u }
+
+func ShortNumber(n int) string {
+	if n < 1000 {
+		return strconv.Itoa(n)
+	}
+
+	if n < 1000000 {
+		return strconv.Itoa(n/1000) + "k"
+	}
+
+	return strconv.Itoa(n/1000000) + "m"
+}

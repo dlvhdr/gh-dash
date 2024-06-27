@@ -1,19 +1,25 @@
 package tabs
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 type Model struct {
-	CurrSectionId int
+	sectionsConfigs []config.SectionConfig
+	sectionCounts   []*int
+	CurrSectionId   int
 }
 
-func NewModel() Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		CurrSectionId: 1,
 	}
@@ -24,10 +30,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View(ctx context.ProgramContext) string {
-	sectionsConfigs := ctx.GetViewSectionsConfig()
-	sectionTitles := make([]string, 0, len(sectionsConfigs))
-	for _, section := range sectionsConfigs {
-		sectionTitles = append(sectionTitles, section.Title)
+	sectionTitles := make([]string, 0, len(m.sectionsConfigs))
+	for i, section := range m.sectionsConfigs {
+		title := section.Title
+		// handle search section
+		if i > 0 && m.sectionCounts[i] != nil && ctx.Config.Theme.Ui.SectionsShowCount {
+			title = fmt.Sprintf("%s (%s)", title, utils.ShortNumber(*m.sectionCounts[i]))
+		}
+		sectionTitles = append(sectionTitles, title)
 	}
 
 	var tabs []string
@@ -52,4 +62,15 @@ func (m Model) View(ctx context.ProgramContext) string {
 
 func (m *Model) SetCurrSectionId(id int) {
 	m.CurrSectionId = id
+}
+
+func (m *Model) UpdateSectionsConfigs(ctx *context.ProgramContext) {
+	m.sectionsConfigs = ctx.GetViewSectionsConfig()
+}
+
+func (m *Model) UpdateSectionCounts(sections []section.Section) {
+	m.sectionCounts = make([]*int, len(sections))
+	for i, s := range sections {
+		m.sectionCounts[i] = s.GetTotalCount()
+	}
 }

@@ -48,6 +48,15 @@ properties:
           skip_schema_render: true
           format: yaml
         properties:
+          sectionsShowCount:
+            title: Sections Show Count
+            description: >-
+              Whether the number of results show up next to each section's title in the tab bar.
+            type: boolean
+            default: true
+            schematize:
+              skip_schema_render: true
+              format: yaml
           showSeparators:
             title: Show Separators
             description: >-
@@ -366,6 +375,7 @@ properties:
             pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
 default:
   ui:
+    sectionsShowCount: true
     table:
       showSeparators: true
   colors:
