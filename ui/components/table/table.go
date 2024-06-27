@@ -307,3 +307,7 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 func (m *Model) UpdateTotalItemsCount(count int) {
 	m.rowsViewport.SetTotalItems(count)
 }
+
+func (m *Model) IsLoading() bool {
+	return m.isLoading
+}

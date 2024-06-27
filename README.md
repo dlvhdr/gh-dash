@@ -264,6 +264,7 @@ If you choose to go this route, you need to specify _all_ of the following keys 
 ```yaml
 theme:
   ui:
+    sectionsShowCount: true
     table:
       showSeparator: true
   colors:

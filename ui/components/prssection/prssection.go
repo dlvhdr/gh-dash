@@ -398,14 +398,6 @@ func FetchAllSections(
 	return sections, tea.Batch(fetchPRsCmds...)
 }
 
-func (m Model) GetItemSingularForm() string {
-	return "PR"
-}
-
-func (m Model) GetItemPluralForm() string {
-	return "PRs"
-}
-
 type UpdatePRMsg struct {
 	PrNumber         int
 	IsClosed         *bool
@@ -447,4 +439,23 @@ func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
 		}
 	}
 	return false
+}
+
+func (m Model) GetItemSingularForm() string {
+	return "PR"
+}
+
+func (m Model) GetItemPluralForm() string {
+	return "PRs"
+}
+
+func (m Model) GetTotalCount() *int {
+	if m.IsLoading() {
+		return nil
+	}
+	return &m.TotalCount
+}
+
+func (m Model) IsLoading() bool {
+	return m.Table.IsLoading()
 }
