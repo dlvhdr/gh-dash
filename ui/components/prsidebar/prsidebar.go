@@ -24,6 +24,7 @@ type Model struct {
 	width     int
 
 	isCommenting  bool
+	isApproving   bool
 	isAssigning   bool
 	isUnassigning bool
 
@@ -38,6 +39,7 @@ func NewModel(ctx context.ProgramContext) Model {
 		pr: nil,
 
 		isCommenting:  false,
+		isApproving:   false,
 		isAssigning:   false,
 		isUnassigning: false,
 
@@ -68,6 +70,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isCommenting = false
+				return m, nil
+			}
+
+			m.inputBox, taCmd = m.inputBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
+		} else if m.isApproving {
+			switch msg.Type {
+
+			case tea.KeyCtrlD:
+				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
+					cmd = m.approve(m.inputBox.Value())
+				}
+				m.inputBox.Blur()
+				m.isApproving = false
+				return m, cmd
+
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.inputBox.Blur()
+				m.isApproving = false
 				return m, nil
 			}
 
@@ -147,7 +168,7 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning {
+	if m.isCommenting || m.isApproving || m.isAssigning || m.isUnassigning {
 		s.WriteString(m.inputBox.View())
 	}
 
@@ -288,7 +309,7 @@ func (m *Model) SetWidth(width int) {
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isUnassigning
+	return m.isCommenting || m.isAssigning || m.isApproving || m.isUnassigning
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -315,6 +336,24 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 func (m *Model) getIndentedContentWidth() int {
 	return m.width - 4
+}
+
+func (m *Model) GetIsApproving() bool {
+	return m.isApproving
+}
+
+func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
+	if !m.isApproving && isApproving {
+		m.inputBox.Reset()
+	}
+	m.isApproving = isApproving
+	m.inputBox.SetPrompt("Approve with comment...")
+	m.inputBox.SetValue("LGTM")
+
+	if isApproving {
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	}
+	return nil
 }
 
 func (m *Model) GetIsAssigning() bool {
