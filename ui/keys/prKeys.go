@@ -26,8 +26,8 @@ type PRKeyMap struct {
 
 var PRKeys = PRKeyMap{
 	Approve: key.NewBinding(
-		key.WithKeys("!"),
-		key.WithHelp("!", "approve"),
+		key.WithKeys("v"),
+		key.WithHelp("v", "approve"),
 	),
 	Assign: key.NewBinding(
 		key.WithKeys("a"),
