@@ -272,6 +272,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case m.ctx.View == config.PRsView:
 			switch {
+			case key.Matches(msg, keys.PRKeys.Approve):
+				m.sidebar.IsOpen = true
+				cmd = m.prSidebar.SetIsApproving(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
 			case key.Matches(msg, keys.PRKeys.Assign):
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsAssigning(true)
