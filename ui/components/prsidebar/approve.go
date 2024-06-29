@@ -17,7 +17,7 @@ func (m *Model) approve(comment string) tea.Cmd {
 	task := context.Task{
 		Id:           taskId,
 		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
-		FinishedText: fmt.Sprintf("pr #%d has been approved with comment: %s", prNumber, comment),
+		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
