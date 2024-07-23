@@ -21,7 +21,7 @@ import (
 const SectionType = "pr"
 
 type Model struct {
-	section.Model
+	section.BaseModel
 	Prs []data.PullRequestData
 }
 
@@ -32,7 +32,7 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{}
-	m.Model = section.NewModel(
+	m.BaseModel = section.NewModel(
 		id,
 		ctx,
 		cfg.ToSectionConfig(),
@@ -166,7 +166,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.PageInfo = &msg.PageInfo
 			m.Table.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
-			m.UpdateLastUpdated(time.Now())
+			m.Table.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
 		}
 	}
@@ -265,7 +265,7 @@ func GetSectionColumns(
 	}
 }
 
-func (m *Model) BuildRows() []table.Row {
+func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
 	for i, currPr := range m.Prs {
@@ -373,9 +373,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 
 func (m *Model) ResetRows() {
 	m.Prs = nil
-	m.Table.Rows = nil
-	m.ResetPageInfo()
-	m.Table.ResetCurrItem()
+	m.BaseModel.ResetRows()
 }
 
 func FetchAllSections(
