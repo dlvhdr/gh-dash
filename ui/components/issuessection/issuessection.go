@@ -19,7 +19,7 @@ import (
 const SectionType = "issue"
 
 type Model struct {
-	section.Model
+	section.BaseModel
 	Issues []data.IssueData
 }
 
@@ -30,7 +30,7 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{}
-	m.Model = section.NewModel(
+	m.BaseModel = section.NewModel(
 		id,
 		ctx,
 		cfg.ToSectionConfig(),
@@ -225,7 +225,7 @@ func GetSectionColumns(
 	}
 }
 
-func (m *Model) BuildRows() []table.Row {
+func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currIssue := range m.Issues {
 		issueModel := issue.Issue{Ctx: m.Ctx, Data: currIssue}
@@ -319,9 +319,7 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 
 func (m *Model) ResetRows() {
 	m.Issues = nil
-	m.Table.Rows = nil
-	m.ResetPageInfo()
-	m.Table.ResetCurrItem()
+	m.BaseModel.ResetRows()
 }
 
 func FetchAllSections(
