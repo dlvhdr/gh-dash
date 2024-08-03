@@ -211,14 +211,56 @@ func GetSectionColumns(
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
 
+	if !ctx.Config.Theme.Ui.Table.Compact {
+		return []table.Column{
+			{
+				Title:  "",
+				Width:  utils.IntPtr(3),
+				Hidden: stateLayout.Hidden,
+			},
+			{
+				Title:  "Title",
+				Grow:   utils.BoolPtr(true),
+				Hidden: titleLayout.Hidden,
+			},
+			{
+				Title:  "Assignees",
+				Width:  assigneesLayout.Width,
+				Hidden: assigneesLayout.Hidden,
+			},
+			{
+				Title:  "Base",
+				Width:  baseLayout.Width,
+				Hidden: baseLayout.Hidden,
+			},
+			{
+				Title:  "󰯢",
+				Width:  utils.IntPtr(4),
+				Hidden: reviewStatusLayout.Hidden,
+			},
+			{
+				Title:  "",
+				Width:  &ctx.Styles.PrSection.CiCellWidth,
+				Grow:   new(bool),
+				Hidden: ciLayout.Hidden,
+			},
+			{
+				Title:  "",
+				Width:  linesLayout.Width,
+				Hidden: linesLayout.Hidden,
+			},
+			{
+				Title:  "",
+				Width:  updatedAtLayout.Width,
+				Hidden: updatedAtLayout.Hidden,
+			},
+		}
+	}
+
 	return []table.Column{
 		{
-			Title:  "",
-			Width:  updatedAtLayout.Width,
-			Hidden: updatedAtLayout.Hidden,
-		},
-		{
 			Title:  "",
+			Width:  utils.IntPtr(3),
 			Hidden: stateLayout.Hidden,
 		},
 		{
@@ -261,6 +303,11 @@ func GetSectionColumns(
 			Title:  "",
 			Width:  linesLayout.Width,
 			Hidden: linesLayout.Hidden,
+		},
+		{
+			Title:  "",
+			Width:  updatedAtLayout.Width,
+			Hidden: updatedAtLayout.Hidden,
 		},
 	}
 }

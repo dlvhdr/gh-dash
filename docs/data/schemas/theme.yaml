@@ -66,6 +66,15 @@ properties:
             schematize:
               skip_schema_render: true
               format: yaml
+          compact:
+            title: Compact
+            description: >-
+              Whether to show table rows in a compact way or not
+            type: boolean
+            default: false
+            schematize:
+              skip_schema_render: true
+              format: yaml
   colors:
     title: Theme Colors
     description: Defines text, background, and border colors for the dashboard.
@@ -378,6 +387,7 @@ default:
     sectionsShowCount: true
     table:
       showSeparators: true
+      compact: false
   colors:
     text:
       primary: "#ffffff"

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/ui/components"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
@@ -19,7 +20,6 @@ type Issue struct {
 
 func (issue *Issue) ToTableRow() table.Row {
 	return table.Row{
-		issue.renderUpdateAt(),
 		issue.renderStatus(),
 		issue.renderRepoName(),
 		issue.renderTitle(),
@@ -27,6 +27,7 @@ func (issue *Issue) ToTableRow() table.Row {
 		issue.renderAssignees(),
 		issue.renderNumComments(),
 		issue.renderNumReactions(),
+		issue.renderUpdateAt(),
 	}
 }
 

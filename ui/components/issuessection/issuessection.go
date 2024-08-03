@@ -183,11 +183,6 @@ func GetSectionColumns(
 
 	return []table.Column{
 		{
-			Title:  "",
-			Width:  updatedAtLayout.Width,
-			Hidden: updatedAtLayout.Hidden,
-		},
-		{
 			Title:  "",
 			Width:  stateLayout.Width,
 			Hidden: stateLayout.Hidden,
@@ -221,6 +216,11 @@ func GetSectionColumns(
 			Title:  "",
 			Width:  &issueNumCommentsCellWidth,
 			Hidden: reactionsLayout.Hidden,
+		},
+		{
+			Title:  "",
+			Width:  updatedAtLayout.Width,
+			Hidden: updatedAtLayout.Hidden,
 		},
 	}
 }

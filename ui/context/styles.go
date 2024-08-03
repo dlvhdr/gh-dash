@@ -145,7 +145,7 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.PrSection.CiCellWidth = lipgloss.Width(" CI ")
 	s.PrSection.LinesCellWidth = lipgloss.Width(" 123450 / -123450 ")
-	s.PrSection.UpdatedAtCellWidth = lipgloss.Width("2mo ago")
+	s.PrSection.UpdatedAtCellWidth = lipgloss.Width("2mo  ")
 	s.PrSection.PrRepoCellWidth = 15
 	s.PrSection.PrAuthorCellWidth = 15
 
