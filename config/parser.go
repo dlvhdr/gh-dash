@@ -163,6 +163,7 @@ type ColorThemeConfig struct {
 
 type TableUIThemeConfig struct {
 	ShowSeparator bool `yaml:"showSeparator" default:"true"`
+	Multiline     bool `yaml:"multiline" default:"true"`
 }
 
 type UIThemeConfig struct {
@@ -208,10 +209,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			Layout: LayoutConfig{
 				Prs: PrsLayoutConfig{
 					UpdatedAt: ColumnConfig{
-						Width: utils.IntPtr(lipgloss.Width("2mo ago")),
+						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
 					},
 					Repo: ColumnConfig{
-						Width: utils.IntPtr(15),
+						Width: utils.IntPtr(20),
 					},
 					Author: ColumnConfig{
 						Width: utils.IntPtr(15),
@@ -230,7 +231,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 				Issues: IssuesLayoutConfig{
 					UpdatedAt: ColumnConfig{
-						Width: utils.IntPtr(lipgloss.Width("2mo ago")),
+						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
 					},
 					Repo: ColumnConfig{
 						Width: utils.IntPtr(15),
@@ -284,6 +285,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				SectionsShowCount: true,
 				Table: TableUIThemeConfig{
 					ShowSeparator: true,
+					Multiline:     true,
 				},
 			},
 		},

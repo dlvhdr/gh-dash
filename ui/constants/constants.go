@@ -29,4 +29,9 @@ const (
 	WaitingIcon = ""
 	FailureIcon = "󰅙"
 	SuccessIcon = ""
+
+	DraftIcon  = ""
+	MergedIcon = ""
+	OpenIcon   = ""
+	ClosedIcon = ""
 )

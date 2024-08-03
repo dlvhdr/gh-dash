@@ -68,14 +68,8 @@ func TimeElapsed(then time.Time) string {
 		parts = append(parts, strconv.Itoa(int(second))+"s")
 	}
 
-	if now.After(then) {
-		text = " ago"
-	} else {
-		text = " after"
-	}
-
 	if len(parts) == 0 {
-		return "just now"
+		return "now"
 	}
 
 	return parts[0] + text

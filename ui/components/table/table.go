@@ -47,8 +47,11 @@ func NewModel(
 	isLoading bool,
 ) Model {
 	itemHeight := 1
+	if ctx.Config.Theme.Ui.Table.Multiline {
+		itemHeight += 1
+	}
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
-		itemHeight = 2
+		itemHeight += 1
 	}
 
 	loadingSpinner := spinner.New()
@@ -266,7 +269,6 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 	}
 
 	renderedColumns := make([]string, 0, len(m.Columns))
-
 	headerColId := 0
 
 	for i, column := range m.Columns {
@@ -275,12 +277,18 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		}
 
 		colWidth := lipgloss.Width(headerColumns[headerColId])
+		colHeight := 1
+		if m.ctx.Config.Theme.Ui.Table.Multiline {
+			colHeight = 2
+		}
+		col := m.Rows[rowId][i]
 		renderedCol := style.Copy().
 			Width(colWidth).
 			MaxWidth(colWidth).
-			Height(1).
-			MaxHeight(1).
-			Render(m.Rows[rowId][i])
+			Height(colHeight).
+			MaxHeight(colHeight).
+			Render(col)
+
 		renderedColumns = append(renderedColumns, renderedCol)
 		headerColId++
 	}
