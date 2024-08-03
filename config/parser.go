@@ -163,7 +163,7 @@ type ColorThemeConfig struct {
 
 type TableUIThemeConfig struct {
 	ShowSeparator bool `yaml:"showSeparator" default:"true"`
-	Multiline     bool `yaml:"multiline" default:"true"`
+	Compact       bool `yaml:"compact" default:"false"`
 }
 
 type UIThemeConfig struct {
@@ -285,7 +285,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				SectionsShowCount: true,
 				Table: TableUIThemeConfig{
 					ShowSeparator: true,
-					Multiline:     true,
+					Compact:       false,
 				},
 			},
 		},

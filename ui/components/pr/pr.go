@@ -198,7 +198,7 @@ func (pr *PullRequest) renderAssignees() string {
 
 func (pr *PullRequest) renderRepoName() string {
 	repoName := ""
-	if pr.Ctx.Config.Theme.Ui.Table.Multiline {
+	if !pr.Ctx.Config.Theme.Ui.Table.Compact {
 		repoName = pr.Data.Repository.NameWithOwner
 	} else {
 		repoName = pr.Data.HeadRepository.Name
@@ -241,7 +241,7 @@ func (pr *PullRequest) RenderState() string {
 }
 
 func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
-	if pr.Ctx.Config.Theme.Ui.Table.Multiline {
+	if !pr.Ctx.Config.Theme.Ui.Table.Compact {
 		return table.Row{
 			pr.renderState(),
 			pr.renderExtendedTitle(isSelected),

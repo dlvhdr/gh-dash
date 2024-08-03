@@ -211,7 +211,7 @@ func GetSectionColumns(
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
 
-	if ctx.Config.Theme.Ui.Table.Multiline {
+	if !ctx.Config.Theme.Ui.Table.Compact {
 		return []table.Column{
 			{
 				Title:  "",

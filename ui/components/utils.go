@@ -36,7 +36,7 @@ func RenderIssueTitle(
 	number int,
 ) string {
 	prNumber := ""
-	if !ctx.Config.Theme.Ui.Table.Multiline {
+	if ctx.Config.Theme.Ui.Table.Compact {
 		prNumber = fmt.Sprintf("#%d ", number)
 		var prNumberFg lipgloss.AdaptiveColor
 		if state != "OPEN" {

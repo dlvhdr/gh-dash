@@ -47,7 +47,7 @@ func NewModel(
 	isLoading bool,
 ) Model {
 	itemHeight := 1
-	if ctx.Config.Theme.Ui.Table.Multiline {
+	if !ctx.Config.Theme.Ui.Table.Compact {
 		itemHeight += 1
 	}
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
@@ -278,7 +278,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 
 		colWidth := lipgloss.Width(headerColumns[headerColId])
 		colHeight := 1
-		if m.ctx.Config.Theme.Ui.Table.Multiline {
+		if !m.ctx.Config.Theme.Ui.Table.Compact {
 			colHeight = 2
 		}
 		col := m.Rows[rowId][i]
