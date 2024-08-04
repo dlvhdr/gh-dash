@@ -174,8 +174,9 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
 	repoName := baseStyle.Render(pr.Data.Repository.NameWithOwner)
-	prNumber := baseStyle.Render(fmt.Sprintf("#%d ", pr.Data.Number))
-	top := lipgloss.JoinHorizontal(lipgloss.Top, repoName, baseStyle.Render(" "), prNumber)
+	prNumber := baseStyle.Render(fmt.Sprintf("#%d", pr.Data.Number))
+	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
+	top := lipgloss.JoinHorizontal(lipgloss.Top, repoName, baseStyle.Render(" · "), prNumber, baseStyle.Render(" · "), author)
 	title := pr.Data.Title
 	width := max(lipgloss.Width(top), lipgloss.Width(title))
 	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).Render(top)
