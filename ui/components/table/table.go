@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/listviewport"
@@ -27,10 +28,11 @@ type Model struct {
 }
 
 type Column struct {
-	Title  string
-	Hidden *bool
-	Width  *int
-	Grow   *bool
+	Title         string
+	Hidden        *bool
+	Width         *int
+	ComputedWidth int
+	Grow          *bool
 }
 
 type Row []string
@@ -143,8 +145,21 @@ func (m *Model) LastItem() int {
 	return currItem
 }
 
+func (m *Model) cacheColumnWidths() {
+	columns := m.renderHeaderColumns()
+	log.Debug("cacheColumnWidths", "columns len", len(columns))
+	for i, col := range columns {
+		if m.Columns[i].Hidden != nil && *m.Columns[i].Hidden {
+			continue
+		}
+		log.Debug("ComputedWidth", "width", lipgloss.Width(col), "col", col)
+		m.Columns[i].ComputedWidth = lipgloss.Width(col)
+	}
+}
+
 func (m *Model) SyncViewPortContent() {
 	headerColumns := m.renderHeaderColumns()
+	m.cacheColumnWidths()
 	renderedRows := make([]string, 0, len(m.Rows))
 	for i := range m.Rows {
 		renderedRows = append(renderedRows, m.renderRow(i, headerColumns))

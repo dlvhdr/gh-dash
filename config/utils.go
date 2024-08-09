@@ -32,6 +32,7 @@ func (cfg PrsSectionConfig) ToSectionConfig() SectionConfig {
 		Title:   cfg.Title,
 		Filters: cfg.Filters,
 		Limit:   cfg.Limit,
+		Type:    cfg.Type,
 	}
 }
 

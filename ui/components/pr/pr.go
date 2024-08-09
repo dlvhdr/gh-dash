@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/components"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
@@ -15,15 +17,20 @@ import (
 )
 
 type PullRequest struct {
-	Ctx  *context.ProgramContext
-	Data data.PullRequestData
+	Ctx     *context.ProgramContext
+	Data    *data.PullRequestData
+	Branch  git.Branch
+	Columns []table.Column
 }
 
 func (pr *PullRequest) getTextStyle() lipgloss.Style {
-	return components.GetIssueTextStyle(pr.Ctx, pr.Data.State)
+	return components.GetIssueTextStyle(pr.Ctx)
 }
 
 func (pr *PullRequest) renderReviewStatus() string {
+	if pr.Data == nil {
+		return "-"
+	}
 	reviewCellStyle := pr.getTextStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
@@ -44,6 +51,11 @@ func (pr *PullRequest) renderReviewStatus() string {
 
 func (pr *PullRequest) renderState() string {
 	mergeCellStyle := lipgloss.NewStyle()
+
+	if pr.Data == nil {
+		return mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
+	}
+
 	switch pr.Data.State {
 	case "OPEN":
 		if pr.Data.IsDraft {
@@ -99,6 +111,9 @@ func (pr *PullRequest) GetStatusChecksRollup() string {
 }
 
 func (pr *PullRequest) renderCiStatus() string {
+	if pr.Data == nil {
+		return "-"
+	}
 
 	accStatus := pr.GetStatusChecksRollup()
 	ciCellStyle := pr.getTextStyle()
@@ -116,6 +131,9 @@ func (pr *PullRequest) renderCiStatus() string {
 }
 
 func (pr *PullRequest) renderLines(isSelected bool) string {
+	if pr.Data == nil {
+		return "-"
+	}
 	deletions := 0
 	if pr.Data.Deletions > 0 {
 		deletions = pr.Data.Deletions
@@ -173,15 +191,42 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	if isSelected {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
-	repoName := baseStyle.Render(pr.Data.Repository.NameWithOwner)
-	prNumber := baseStyle.Render(fmt.Sprintf("#%d", pr.Data.Number))
-	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
-	top := lipgloss.JoinHorizontal(lipgloss.Top, repoName, baseStyle.Render(" · "), prNumber, baseStyle.Render(" · "), author)
-	title := pr.Data.Title
-	width := max(lipgloss.Width(top), lipgloss.Width(title))
-	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).Render(top)
-	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).Render(title)
 
+	if pr.Data == nil {
+		return pr.renderBranch(isSelected)
+	}
+	repoName := baseStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d", pr.Data.Number)))
+	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
+	branch := baseStyle.Render(pr.Data.HeadRefName)
+	top := lipgloss.JoinHorizontal(lipgloss.Top, repoName, baseStyle.Render(" · "), branch, baseStyle.Render(" · "), author)
+	title := pr.Data.Title
+	var titleColumn table.Column
+	for _, column := range pr.Columns {
+		log.Debug("yaya", "cols", column)
+		if column.Title == "Title" {
+			titleColumn = column
+		}
+	}
+	width := titleColumn.ComputedWidth - 2
+	top = baseStyle.Copy().Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
+	title = baseStyle.Copy().Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
+
+	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
+}
+
+func (pr *PullRequest) renderBranch(isSelected bool) string {
+	baseStyle := lipgloss.NewStyle()
+	if isSelected {
+		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
+	}
+
+	// repoName := strings.TrimPrefix(pr.Ctx.Repo.Origin, "https://github.com/")
+	// repoName = strings.TrimSuffix(repoName, ".git")
+	top := lipgloss.JoinHorizontal(lipgloss.Top, baseStyle.Render("TODO"), baseStyle.Render(" · "), baseStyle.Render("UNPUBLISHED"))
+	branch := pr.Branch.Name
+	width := max(lipgloss.Width(top), lipgloss.Width(branch))
+	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).Render(top)
+	title := baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).Render(branch)
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
 
@@ -190,6 +235,9 @@ func (pr *PullRequest) renderAuthor() string {
 }
 
 func (pr *PullRequest) renderAssignees() string {
+	if pr.Data == nil {
+		return ""
+	}
 	assignees := make([]string, 0, len(pr.Data.Assignees.Nodes))
 	for _, assignee := range pr.Data.Assignees.Nodes {
 		assignees = append(assignees, assignee.Login)
@@ -211,16 +259,28 @@ func (pr *PullRequest) renderUpdateAt() string {
 	timeFormat := pr.Ctx.Config.Defaults.DateFormat
 
 	updatedAtOutput := ""
+	t := pr.Branch.LastUpdatedAt
+	if pr.Data != nil {
+		t = &pr.Data.UpdatedAt
+	}
+
+	if t == nil {
+		return ""
+	}
+
 	if timeFormat == "" || timeFormat == "relative" {
-		updatedAtOutput = utils.TimeElapsed(pr.Data.UpdatedAt)
+		updatedAtOutput = utils.TimeElapsed(*t)
 	} else {
-		updatedAtOutput = pr.Data.UpdatedAt.Format(timeFormat)
+		updatedAtOutput = t.Format(timeFormat)
 	}
 
 	return pr.getTextStyle().Copy().Foreground(pr.Ctx.Theme.FaintText).Render(updatedAtOutput)
 }
 
 func (pr *PullRequest) renderBaseName() string {
+	if pr.Data == nil {
+		return ""
+	}
 	return pr.getTextStyle().Render(pr.Data.BaseRefName)
 }
 

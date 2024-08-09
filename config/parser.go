@@ -31,12 +31,14 @@ type ViewType string
 const (
 	PRsView    ViewType = "prs"
 	IssuesView ViewType = "issues"
+	RepoView   ViewType = "repo"
 )
 
 type SectionConfig struct {
 	Title   string
 	Filters string
 	Limit   *int `yaml:"limit,omitempty"`
+	Type    *ViewType
 }
 
 type PrsSectionConfig struct {
@@ -44,6 +46,7 @@ type PrsSectionConfig struct {
 	Filters string
 	Limit   *int            `yaml:"limit,omitempty"`
 	Layout  PrsLayoutConfig `yaml:"layout,omitempty"`
+	Type    *ViewType
 }
 
 type IssuesSectionConfig struct {
@@ -226,7 +229,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Hidden: utils.BoolPtr(true),
 					},
 					Lines: ColumnConfig{
-						Width: utils.IntPtr(lipgloss.Width("123450 / -123450")),
+						Width: utils.IntPtr(lipgloss.Width("3450 / -3450")),
 					},
 				},
 				Issues: IssuesLayoutConfig{

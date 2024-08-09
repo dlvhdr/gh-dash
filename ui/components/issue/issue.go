@@ -32,7 +32,7 @@ func (issue *Issue) ToTableRow() table.Row {
 }
 
 func (issue *Issue) getTextStyle() lipgloss.Style {
-	return components.GetIssueTextStyle(issue.Ctx, issue.Data.State)
+	return components.GetIssueTextStyle(issue.Ctx)
 }
 
 func (issue *Issue) renderUpdateAt() string {

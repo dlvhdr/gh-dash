@@ -35,6 +35,7 @@ var (
 		Use:     "gh dash",
 		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
 		Version: "",
+		Args:    cobra.MaximumNArgs(1),
 	}
 )
 
@@ -45,7 +46,7 @@ func Execute() {
 	}
 }
 
-func createModel(configPath string, debug bool) (ui.Model, *os.File) {
+func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -63,7 +64,7 @@ func createModel(configPath string, debug bool) (ui.Model, *os.File) {
 		}
 	}
 
-	return ui.NewModel(configPath), loggerFile
+	return ui.NewModel(repoPath, configPath), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {
@@ -113,7 +114,8 @@ func init() {
 		"help for gh-dash",
 	)
 
-	rootCmd.Run = func(_ *cobra.Command, _ []string) {
+	rootCmd.Run = func(_ *cobra.Command, args []string) {
+		repo := args[0]
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
 			log.Fatal("Cannot parse debug flag", err)
@@ -123,7 +125,7 @@ func init() {
 		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
 
-		model, logger := createModel(cfgFile, debug)
+		model, logger := createModel(repo, cfgFile, debug)
 		if logger != nil {
 			defer logger.Close()
 		}

@@ -118,8 +118,10 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 	var view string
 	if ctx.View == config.PRsView {
 		view += " PRs"
-	} else {
+	} else if ctx.View == config.IssuesView {
 		view += " Issues"
+	} else if ctx.View == config.RepoView {
+		view += " Repo"
 	}
 
 	var user string

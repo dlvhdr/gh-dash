@@ -59,7 +59,7 @@ func (m *Model) watchChecks() tea.Cmd {
 				log.Debug("Error fetching updated PR details", "url", url, "err", err)
 			}
 
-			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: updatedPr}
+			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &updatedPr}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":
