@@ -39,8 +39,6 @@ func (m *Model) approve(comment string) tea.Cmd {
 		c := exec.Command("gh", commandArgs...)
 
 		err := c.Run()
-		if err != nil {
-		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
 			SectionType: prssection.SectionType,
