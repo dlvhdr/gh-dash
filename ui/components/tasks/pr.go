@@ -27,42 +27,65 @@ type UpdatePRMsg struct {
 	RemovedAssignees *data.Assignees
 }
 
-func Reopen(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
-	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_reopen_%d", prNumber)
-	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf("Reopening PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("PR #%d has been reopened", prNumber),
+func buildTaskId(prefix string, prNumber int) string {
+	return fmt.Sprintf("%s_%d", prefix, prNumber)
+}
+
+type GitHubTask struct {
+	Id           string
+	Args         []string
+	Section      SectionIdentifer
+	StartText    string
+	FinishedText string
+	Msg          UpdatePRMsg
+}
+
+func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
+	start := context.Task{
+		Id:           task.Id,
+		StartText:    task.StartText,
+		FinishedText: task.FinishedText,
 		State:        context.TaskStart,
 		Error:        nil,
 	}
-	startCmd := ctx.StartTask(task)
+
+	startCmd := ctx.StartTask(start)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
+		c := exec.Command("gh", task.Args...)
+
+		err := c.Run()
+		return constants.TaskFinishedMsg{
+			SectionId:   task.Section.Id,
+			SectionType: task.Section.Type,
+			TaskId:      task.Id,
+			Err:         err,
+			Msg:         task.Msg,
+		}
+	})
+}
+
+func ReopenPR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+	prNumber := pr.GetNumber()
+	return fireTask(ctx, GitHubTask{
+		Id: buildTaskId("pr_reopen", prNumber),
+		Args: []string{
 			"pr",
 			"reopen",
 			fmt.Sprint(prNumber),
 			"-R",
 			pr.GetRepoNameWithOwner(),
-		)
-
-		err := c.Run()
-		return constants.TaskFinishedMsg{
-			SectionId:   section.Id,
-			SectionType: section.Type,
-			TaskId:      taskId,
-			Err:         err,
-			Msg: UpdatePRMsg{
-				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(false),
-			},
-		}
+		},
+		Section:      section,
+		StartText:    fmt.Sprintf("Reopening PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("PR #%d has been reopened", prNumber),
+		Msg: UpdatePRMsg{
+			PrNumber: prNumber,
+			IsClosed: utils.BoolPtr(false),
+		},
 	})
 }
 
-func Close(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func ClosePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	taskId := fmt.Sprintf("pr_close_%d", prNumber)
 	task := context.Task{
@@ -97,7 +120,7 @@ func Close(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowDat
 	})
 }
 
-func Ready(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func PRReady(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	taskId := fmt.Sprintf("ready_%d", prNumber)
 	task := context.Task{
@@ -132,7 +155,7 @@ func Ready(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowDat
 	})
 }
 
-func Merge(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func MergePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	c := exec.Command(
 		"gh",

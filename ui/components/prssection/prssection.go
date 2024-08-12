@@ -90,13 +90,13 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				if input == "Y" || input == "y" {
 					switch action {
 					case "close":
-						cmd = tasks.Close(m.Ctx, sid, pr)
+						cmd = tasks.ClosePR(m.Ctx, sid, pr)
 					case "reopen":
-						cmd = tasks.Reopen(m.Ctx, sid, pr)
+						cmd = tasks.ReopenPR(m.Ctx, sid, pr)
 					case "ready":
-						cmd = tasks.Ready(m.Ctx, sid, pr)
+						cmd = tasks.PRReady(m.Ctx, sid, pr)
 					case "merge":
-						cmd = tasks.Merge(m.Ctx, sid, pr)
+						cmd = tasks.MergePR(m.Ctx, sid, pr)
 					}
 				}
 
