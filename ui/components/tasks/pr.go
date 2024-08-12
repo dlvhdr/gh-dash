@@ -50,16 +50,18 @@ func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
 	}
 
 	startCmd := ctx.StartTask(start)
-	c := exec.Command("gh", task.Args...)
-	return tea.Batch(startCmd, tea.ExecProcess(c, func(err error) tea.Msg {
+	return tea.Batch(startCmd, func() tea.Msg {
+		c := exec.Command("gh", task.Args...)
+
+		err := c.Run()
 		return constants.TaskFinishedMsg{
+			TaskId:      task.Id,
 			SectionId:   task.Section.Id,
 			SectionType: task.Section.Type,
-			TaskId:      task.Id,
 			Err:         err,
 			Msg:         task.Msg(c, err),
 		}
-	}))
+	})
 }
 
 func ReopenPR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
