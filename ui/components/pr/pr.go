@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -202,7 +201,6 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	title := pr.Data.Title
 	var titleColumn table.Column
 	for _, column := range pr.Columns {
-		log.Debug("yaya", "cols", column)
 		if column.Title == "Title" {
 			titleColumn = column
 		}
