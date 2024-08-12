@@ -6,8 +6,10 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
@@ -42,7 +44,7 @@ func (m *Model) comment(body string) tea.Cmd {
 			SectionType: prssection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: prssection.UpdatePRMsg{
+			Msg: tasks.UpdatePRMsg{
 				PrNumber: prNumber,
 				NewComment: &data.Comment{
 					Author:    struct{ Login string }{Login: m.ctx.User},

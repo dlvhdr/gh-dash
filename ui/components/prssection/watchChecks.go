@@ -11,6 +11,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	prComponent "github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
@@ -83,7 +84,7 @@ func (m *Model) watchChecks() tea.Cmd {
 			SectionType: SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: UpdatePRMsg{
+			Msg: tasks.UpdatePRMsg{
 				PrNumber: prNumber,
 			},
 		}

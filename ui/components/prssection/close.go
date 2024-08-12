@@ -5,6 +5,8 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/utils"
@@ -38,7 +40,7 @@ func (m *Model) close() tea.Cmd {
 			SectionType: SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: UpdatePRMsg{
+			Msg: tasks.UpdatePRMsg{
 				PrNumber: prNumber,
 				IsClosed: utils.BoolPtr(true),
 			},

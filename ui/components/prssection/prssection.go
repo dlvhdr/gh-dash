@@ -12,6 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/ui/keys"
@@ -84,16 +85,18 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
+				pr := m.GetCurrRow()
+				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
 				if input == "Y" || input == "y" {
 					switch action {
 					case "close":
-						cmd = m.close()
+						cmd = tasks.Close(m.Ctx, sid, pr)
 					case "reopen":
-						cmd = m.reopen()
+						cmd = tasks.Reopen(m.Ctx, sid, pr)
 					case "ready":
-						cmd = m.ready()
+						cmd = tasks.Ready(m.Ctx, sid, pr)
 					case "merge":
-						cmd = m.merge()
+						cmd = tasks.Merge(m.Ctx, sid, pr)
 					}
 				}
 
@@ -122,7 +125,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 		}
 
-	case UpdatePRMsg:
+	case tasks.UpdatePRMsg:
 		for i, currPr := range m.Prs {
 			if currPr.Number == msg.PrNumber {
 				if msg.IsClosed != nil {
@@ -441,16 +444,6 @@ func FetchAllSections(
 			sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
-}
-
-type UpdatePRMsg struct {
-	PrNumber         int
-	IsClosed         *bool
-	NewComment       *data.Comment
-	ReadyForReview   *bool
-	IsMerged         *bool
-	AddedAssignees   *data.Assignees
-	RemovedAssignees *data.Assignees
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
