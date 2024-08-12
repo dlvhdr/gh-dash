@@ -3,6 +3,7 @@ package markdown
 import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/ansi"
+	"github.com/charmbracelet/glamour/styles"
 )
 
 var markdownStyle *ansi.StyleConfig
@@ -14,7 +15,7 @@ func InitializeMarkdownStyle(hasDarkBackground bool) {
 	if hasDarkBackground {
 		markdownStyle = &CustomDarkStyleConfig
 	} else {
-		markdownStyle = &glamour.LightStyleConfig
+		markdownStyle = &styles.LightStyleConfig
 	}
 }
 
