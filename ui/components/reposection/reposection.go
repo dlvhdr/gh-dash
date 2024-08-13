@@ -1,29 +1,28 @@
-package prssection
+package reposection
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
-	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
-	"github.com/dlvhdr/gh-dash/v4/ui/keys"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
-const SectionType = "pr"
+const SectionType = "repo"
 
 type Model struct {
 	section.BaseModel
-	Prs []data.PullRequestData
+	repo *git.Repo
+	Prs  []data.PullRequestData
 }
 
 func NewModel(
@@ -43,6 +42,7 @@ func NewModel(
 		m.GetItemPluralForm(),
 		lastUpdated,
 	)
+	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Prs = []data.PullRequestData{}
 
 	return m
@@ -50,7 +50,6 @@ func NewModel(
 
 func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
-	var err error
 
 	switch msg := msg.(type) {
 
@@ -74,58 +73,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			break
 		}
 
-		if m.IsPromptConfirmationFocused() {
-			switch {
-
-			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
-				m.PromptConfirmationBox.Reset()
-				cmd = m.SetIsPromptConfirmationShown(false)
-				return &m, cmd
-
-			case msg.Type == tea.KeyEnter:
-				input := m.PromptConfirmationBox.Value()
-				action := m.GetPromptConfirmationAction()
-				pr := m.GetCurrRow()
-				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
-				if input == "Y" || input == "y" {
-					switch action {
-					case "close":
-						cmd = tasks.ClosePR(m.Ctx, sid, pr)
-					case "reopen":
-						cmd = tasks.ReopenPR(m.Ctx, sid, pr)
-					case "ready":
-						cmd = tasks.PRReady(m.Ctx, sid, pr)
-					case "merge":
-						cmd = tasks.MergePR(m.Ctx, sid, pr)
-					}
-				}
-
-				m.PromptConfirmationBox.Reset()
-				blinkCmd := m.SetIsPromptConfirmationShown(false)
-
-				return &m, tea.Batch(cmd, blinkCmd)
-			}
-
-			break
-		}
-
-		switch {
-
-		case key.Matches(msg, keys.PRKeys.Diff):
-			cmd = m.diff()
-
-		case key.Matches(msg, keys.PRKeys.Checkout):
-			cmd, err = m.checkout()
-			if err != nil {
-				m.Ctx.Error = err
-			}
-
-		case key.Matches(msg, keys.PRKeys.WatchChecks):
-			cmd = m.watchChecks()
-
-		}
-
-	case tasks.UpdatePRMsg:
+	case UpdatePRMsg:
 		for i, currPr := range m.Prs {
 			if currPr.Number == msg.PrNumber {
 				if msg.IsClosed != nil {
@@ -158,13 +106,14 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 		}
 
+	case repoMsg:
+		m.repo = msg.repo
+		m.Table.SetIsLoading(false)
+		m.Table.SetRows(m.BuildRows())
+
 	case SectionPullRequestsFetchedMsg:
 		if m.LastFetchTaskId == msg.TaskId {
-			if m.PageInfo != nil {
-				m.Prs = append(m.Prs, msg.Prs...)
-			} else {
-				m.Prs = msg.Prs
-			}
+			m.Prs = msg.Prs
 			m.TotalCount = msg.TotalCount
 			m.PageInfo = &msg.PageInfo
 			m.Table.SetIsLoading(false)
@@ -318,9 +267,11 @@ func GetSectionColumns(
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
-	for i, currPr := range m.Prs {
+
+	for i, ref := range m.repo.Branches {
 		i := i
-		prModel := pr.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns}
+		prModel := pr.PullRequest{Ctx: m.Ctx, Branch: ref, Columns: m.Table.Columns}
+		prModel.Data = findPRForRef(m.Prs, ref.Name)
 		rows = append(
 			rows,
 			prModel.ToTableRow(currItem == i),
@@ -334,8 +285,17 @@ func (m Model) BuildRows() []table.Row {
 	return rows
 }
 
+func findPRForRef(prs []data.PullRequestData, branch string) *data.PullRequestData {
+	for _, pr := range prs {
+		if pr.HeadRefName == branch {
+			return &pr
+		}
+	}
+	return nil
+}
+
 func (m *Model) NumRows() int {
-	return len(m.Prs)
+	return len(m.repo.Branches)
 }
 
 type SectionPullRequestsFetchedMsg struct {
@@ -346,11 +306,12 @@ type SectionPullRequestsFetchedMsg struct {
 }
 
 func (m *Model) GetCurrRow() data.RowData {
-	if len(m.Prs) == 0 {
+	if len(m.repo.Branches) == 0 {
 		return nil
 	}
-	pr := m.Prs[m.Table.GetCurrItem()]
-	return &pr
+	branch := m.repo.Branches[m.Table.GetCurrItem()]
+	pr := findPRForRef(m.Prs, branch.Name)
+	return pr
 }
 
 func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
@@ -370,25 +331,53 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
 	m.LastFetchTaskId = taskId
+
+	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
+	if m.Ctx.RepoPath != nil {
+		branchesTask := context.Task{
+			Id:        branchesTaskId,
+			StartText: "Reading local branches",
+			FinishedText: fmt.Sprintf(
+				`Read branches successfully for "%s"`,
+				*m.Ctx.RepoPath,
+			),
+			State: context.TaskStart,
+			Error: nil,
+		}
+		bCmd := m.Ctx.StartTask(branchesTask)
+		cmds = append(cmds, bCmd)
+	}
+
 	task := context.Task{
-		Id:        taskId,
-		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
-		FinishedText: fmt.Sprintf(
-			`PRs for "%s" have been fetched`,
-			m.Config.Title,
-		),
-		State: context.TaskStart,
-		Error: nil,
+		Id:           taskId,
+		StartText:    "Fetching PRs for your branches",
+		FinishedText: "PRs for your branches have been fetched",
+		State:        context.TaskStart,
+		Error:        nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
 
+	var repoCmd tea.Cmd
+	if m.Ctx.RepoPath != nil {
+		repoCmd = func() tea.Msg {
+			repo, err := git.GetRepo(*m.Ctx.RepoPath)
+			return constants.TaskFinishedMsg{
+				SectionId:   m.Id,
+				SectionType: m.Type,
+				TaskId:      branchesTaskId,
+				Msg:         repoMsg{repo: repo},
+				Err:         err,
+			}
+		}
+	}
 	fetchCmd := func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
 		res, err := data.FetchPullRequests(m.GetFilters(), *limit, m.PageInfo)
+		// TODO: enrich with branches only for section with branches
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
@@ -410,7 +399,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			},
 		}
 	}
-	cmds = append(cmds, fetchCmd)
+	cmds = append(cmds, fetchCmd, repoCmd)
 
 	if m.PageInfo == nil {
 		m.Table.SetIsLoading(true)
@@ -426,24 +415,53 @@ func (m *Model) ResetRows() {
 	m.BaseModel.ResetRows()
 }
 
-func FetchAllSections(
+type repoMsg struct {
+	repo *git.Repo
+	err  error
+}
+
+func openRepoCmd(dir string) tea.Cmd {
+	return func() tea.Msg {
+		repo, err := git.GetRepo(dir)
+		return repoMsg{repo: repo, err: err}
+	}
+}
+
+func FetchAllBranches(
 	ctx context.ProgramContext,
 ) (sections []section.Section, fetchAllCmd tea.Cmd) {
-	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
-	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
-	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(
-			i+1,
-			&ctx,
-			sectionConfig,
-			time.Now(),
-		) // 0 is the search section
-		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(
-			fetchPRsCmds,
-			sectionModel.FetchNextPageSectionRows()...)
+
+	cmds := make([]tea.Cmd, 0)
+	if ctx.RepoPath != nil {
+		cmds = append(cmds, openRepoCmd(*ctx.RepoPath))
 	}
-	return sections, tea.Batch(fetchPRsCmds...)
+
+	t := config.RepoView
+	cfg := config.PrsSectionConfig{
+		Title:   "Local Branches",
+		Filters: "author:@me",
+		Limit:   utils.IntPtr(20),
+		Type:    &t,
+	}
+	s := NewModel(
+		1,
+		&ctx,
+		cfg,
+		time.Now(),
+	)
+	cmds = append(cmds, s.FetchNextPageSectionRows()...)
+
+	return []section.Section{&s}, tea.Batch(cmds...)
+}
+
+type UpdatePRMsg struct {
+	PrNumber         int
+	IsClosed         *bool
+	NewComment       *data.Comment
+	ReadyForReview   *bool
+	IsMerged         *bool
+	AddedAssignees   *data.Assignees
+	RemovedAssignees *data.Assignees
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {

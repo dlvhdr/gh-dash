@@ -24,7 +24,6 @@ func FormatNumber(num int) string {
 
 func GetIssueTextStyle(
 	ctx *context.ProgramContext,
-	state string,
 ) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
 }
@@ -51,7 +50,7 @@ func RenderIssueTitle(
 
 	}
 
-	rTitle := GetIssueTextStyle(ctx, state).Render(title)
+	rTitle := GetIssueTextStyle(ctx).Render(title)
 
 	res := fmt.Sprintf("%s%s", prNumber, rTitle)
 	return res

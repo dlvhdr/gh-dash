@@ -11,6 +11,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	prComponent "github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
@@ -59,7 +60,7 @@ func (m *Model) watchChecks() tea.Cmd {
 				log.Debug("Error fetching updated PR details", "url", url, "err", err)
 			}
 
-			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: updatedPr}
+			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &updatedPr}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":
@@ -83,7 +84,7 @@ func (m *Model) watchChecks() tea.Cmd {
 			SectionType: SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: UpdatePRMsg{
+			Msg: tasks.UpdatePRMsg{
 				PrNumber: prNumber,
 			},
 		}

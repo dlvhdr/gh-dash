@@ -42,7 +42,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	var additionalKeys []key.Binding
-	if k.viewType == config.PRsView {
+	if k.viewType == config.PRsView || k.viewType == config.RepoView {
 		additionalKeys = PRFullHelp()
 	} else {
 		additionalKeys = IssueFullHelp()

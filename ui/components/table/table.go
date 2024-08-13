@@ -27,10 +27,11 @@ type Model struct {
 }
 
 type Column struct {
-	Title  string
-	Hidden *bool
-	Width  *int
-	Grow   *bool
+	Title         string
+	Hidden        *bool
+	Width         *int
+	ComputedWidth int
+	Grow          *bool
 }
 
 type Row []string
@@ -143,8 +144,19 @@ func (m *Model) LastItem() int {
 	return currItem
 }
 
+func (m *Model) cacheColumnWidths() {
+	columns := m.renderHeaderColumns()
+	for i, col := range columns {
+		if m.Columns[i].Hidden != nil && *m.Columns[i].Hidden {
+			continue
+		}
+		m.Columns[i].ComputedWidth = lipgloss.Width(col)
+	}
+}
+
 func (m *Model) SyncViewPortContent() {
 	headerColumns := m.renderHeaderColumns()
+	m.cacheColumnWidths()
 	renderedRows := make([]string, 0, len(m.Rows))
 	for i := range m.Rows {
 		renderedRows = append(renderedRows, m.renderRow(i, headerColumns))

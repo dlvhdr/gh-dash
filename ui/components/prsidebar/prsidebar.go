@@ -299,7 +299,7 @@ func (m *Model) SetRow(data *data.PullRequestData) {
 	if data == nil {
 		m.pr = nil
 	} else {
-		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: *data}
+		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: data}
 	}
 }
 
