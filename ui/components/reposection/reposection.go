@@ -335,42 +335,42 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	m.LastFetchTaskId = taskId
 
 	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
-	branchesTask := context.Task{
-		Id:        branchesTaskId,
-		StartText: "Reading local branches",
-		FinishedText: fmt.Sprintf(
-			`Read branches successfully for "%s"`,
-			m.Ctx.RepoPath,
-		),
-		State: context.TaskStart,
-		Error: nil,
+	if m.Ctx.RepoPath != nil {
+		branchesTask := context.Task{
+			Id:        branchesTaskId,
+			StartText: "Reading local branches",
+			FinishedText: fmt.Sprintf(
+				`Read branches successfully for "%s"`,
+				*m.Ctx.RepoPath,
+			),
+			State: context.TaskStart,
+			Error: nil,
+		}
+		bCmd := m.Ctx.StartTask(branchesTask)
+		cmds = append(cmds, bCmd)
 	}
-	bCmd := m.Ctx.StartTask(branchesTask)
-	cmds = append(cmds, bCmd)
 
 	task := context.Task{
-		Id:        taskId,
-		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
-		FinishedText: fmt.Sprintf(
-			`PRs for "%s" have been fetched`,
-			m.Config.Title,
-		),
-		State: context.TaskStart,
-		Error: nil,
+		Id:           taskId,
+		StartText:    "Fetching PRs for your branches",
+		FinishedText: "PRs for your branches have been fetched",
+		State:        context.TaskStart,
+		Error:        nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
 
-	repoCmd := func() tea.Msg {
-		log.Debug("repoCmd", "repoPath", m.Ctx.RepoPath)
-		repo, err := git.GetRepo(m.Ctx.RepoPath)
-
-		return constants.TaskFinishedMsg{
-			SectionId:   m.Id,
-			SectionType: m.Type,
-			TaskId:      branchesTaskId,
-			Msg:         repoMsg{repo: repo},
-			Err:         err,
+	var repoCmd tea.Cmd
+	if m.Ctx.RepoPath != nil {
+		repoCmd = func() tea.Msg {
+			repo, err := git.GetRepo(*m.Ctx.RepoPath)
+			return constants.TaskFinishedMsg{
+				SectionId:   m.Id,
+				SectionType: m.Type,
+				TaskId:      branchesTaskId,
+				Msg:         repoMsg{repo: repo},
+				Err:         err,
+			}
 		}
 	}
 	fetchCmd := func() tea.Msg {
@@ -434,7 +434,9 @@ func FetchAllBranches(
 ) (sections []section.Section, fetchAllCmd tea.Cmd) {
 
 	cmds := make([]tea.Cmd, 0)
-	cmds = append(cmds, openRepoCmd(ctx.RepoPath))
+	if ctx.RepoPath != nil {
+		cmds = append(cmds, openRepoCmd(*ctx.RepoPath))
+	}
 
 	t := config.RepoView
 	cfg := config.PrsSectionConfig{

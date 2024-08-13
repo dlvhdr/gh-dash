@@ -49,7 +49,7 @@ type Model struct {
 	tasks         map[string]context.Task
 }
 
-func NewModel(repoPath, configPath string) Model {
+func NewModel(repoPath *string, configPath string) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:          keys.Keys,

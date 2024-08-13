@@ -229,7 +229,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 						Hidden: utils.BoolPtr(true),
 					},
 					Lines: ColumnConfig{
-						Width: utils.IntPtr(lipgloss.Width("3450 / -3450")),
+						Width: utils.IntPtr(lipgloss.Width(" +31.4k -31.6k ")),
 					},
 				},
 				Issues: IssuesLayoutConfig{

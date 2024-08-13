@@ -30,7 +30,7 @@ type Task struct {
 }
 
 type ProgramContext struct {
-	RepoPath          string
+	RepoPath          *string
 	Repo              *git.Repo
 	User              string
 	ScreenHeight      int

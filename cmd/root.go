@@ -46,7 +46,7 @@ func Execute() {
 	}
 }
 
-func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.File) {
+func createModel(repoPath *string, configPath string, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -115,7 +115,10 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
-		repo := args[0]
+		var repo *string
+		if len(args) > 0 {
+			repo = &args[0]
+		}
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
 			log.Fatal("Cannot parse debug flag", err)
