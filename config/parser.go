@@ -411,6 +411,10 @@ func (parser ConfigParser) readConfigFile(path string) (Config, error) {
 	if err != nil {
 		return config, err
 	}
+	repoFF := IsFeatureEnabled(FF_REPO_VIEW)
+	if config.Defaults.View == RepoView && !repoFF {
+		config.Defaults.View = PRsView
+	}
 
 	err = validate.Struct(config)
 	return config, err

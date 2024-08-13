@@ -5,7 +5,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -108,7 +107,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case repoMsg:
-		log.Debug("repoMsg", "msg", msg.repo)
 		m.repo = msg.repo
 		m.Table.SetIsLoading(false)
 		m.Table.SetRows(m.BuildRows())

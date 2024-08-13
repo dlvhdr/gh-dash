@@ -116,7 +116,8 @@ func init() {
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
 		var repo *string
-		if len(args) > 0 {
+		_, repos := os.LookupEnv("FF_REPOS_VIEW")
+		if repos && len(args) > 0 {
 			repo = &args[0]
 		}
 		debug, err := rootCmd.Flags().GetBool("debug")

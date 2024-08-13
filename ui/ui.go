@@ -718,9 +718,23 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 }
 
 func (m *Model) switchSelectedView() config.ViewType {
-	if m.ctx.View == config.PRsView {
+	repoFF := config.IsFeatureEnabled(config.FF_REPO_VIEW)
+
+	if repoFF {
+		switch true {
+		case m.ctx.View == config.RepoView:
+			return config.PRsView
+		case m.ctx.View == config.PRsView:
+			return config.IssuesView
+		case m.ctx.View == config.IssuesView:
+			return config.RepoView
+		}
+	}
+
+	switch true {
+	case m.ctx.View == config.PRsView:
 		return config.IssuesView
-	} else {
+	default:
 		return config.PRsView
 	}
 }
