@@ -17,6 +17,7 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
+	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/ui"
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
@@ -116,7 +117,7 @@ func init() {
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
 		var repo *string
-		_, repos := os.LookupEnv("FF_REPOS_VIEW")
+		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {
 			repo = &args[0]
 		}
