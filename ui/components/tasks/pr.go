@@ -135,27 +135,40 @@ func PRReady(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowD
 
 func MergePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
-	return fireTask(ctx, GitHubTask{
-		Id: buildTaskId("pr_merge", prNumber),
-		Args: []string{
-			"pr",
-			"merge",
-			fmt.Sprint(prNumber),
-			"-R",
-			pr.GetRepoNameWithOwner(),
-		},
-		Section:      section,
+	c := exec.Command(
+		"gh",
+		"pr",
+		"merge",
+		fmt.Sprint(prNumber),
+		"-R",
+		pr.GetRepoNameWithOwner(),
+	)
+
+	taskId := fmt.Sprintf("merge_%d", prNumber)
+	task := context.Task{
+		Id:           taskId,
 		StartText:    fmt.Sprintf("Merging PR #%d", prNumber),
 		FinishedText: fmt.Sprintf("PR #%d has been merged", prNumber),
-		Msg: func(c *exec.Cmd, err error) UpdatePRMsg {
-			isMerged := false
-			if err == nil && c.ProcessState.ExitCode() == 0 {
-				isMerged = true
-			}
-			return UpdatePRMsg{
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := ctx.StartTask(task)
+
+	return tea.Batch(startCmd, tea.ExecProcess(c, func(err error) tea.Msg {
+		isMerged := false
+		if err == nil && c.ProcessState.ExitCode() == 0 {
+			isMerged = true
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   section.Id,
+			SectionType: section.Type,
+			TaskId:      taskId,
+			Err:         err,
+			Msg: UpdatePRMsg{
 				PrNumber: prNumber,
 				IsMerged: &isMerged,
-			}
-		},
-	})
+			},
+		}
+	}))
 }
