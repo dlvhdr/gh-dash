@@ -79,9 +79,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch msg.Type {
 
 			case tea.KeyCtrlD:
+				comment := ""
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					cmd = m.approve(m.inputBox.Value())
+					comment = m.inputBox.Value()
 				}
+				cmd = m.approve(comment)
 				m.inputBox.Blur()
 				m.isApproving = false
 				return m, cmd
