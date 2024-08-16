@@ -2,6 +2,8 @@ package reposection
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -123,6 +125,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Table.SetIsLoading(false)
 		m.updateBranches()
 		m.Table.SetRows(m.BuildRows())
+		m.Table.ResetCurrItem()
 
 	case SectionPullRequestsFetchedMsg:
 		if m.LastFetchTaskId == msg.TaskId {
@@ -286,6 +289,22 @@ func (m *Model) updateBranches() {
 
 		branches = append(branches, b)
 	}
+
+	slices.SortFunc(branches, func(a, b branch.Branch) int {
+		if a.Data.IsCheckedOut {
+			return -1
+		}
+		if a.Data.LastUpdatedAt != nil && b.Data.LastUpdatedAt != nil {
+			return b.Data.LastUpdatedAt.Compare(*a.Data.LastUpdatedAt)
+		}
+		if a.Data.LastUpdatedAt != nil {
+			return -1
+		}
+		if b.Data.LastUpdatedAt != nil {
+			return 1
+		}
+		return strings.Compare(a.Data.Name, b.Data.Name)
+	})
 	m.Branches = branches
 }
 
@@ -293,10 +312,9 @@ func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
 
-	for i, ref := range m.repo.Branches {
-		b := branch.Branch{Ctx: m.Ctx, Data: ref, Columns: m.Table.Columns}
-		b.PR = findPRForRef(m.Prs, ref.Name)
+	sorted := m.Branches
 
+	for i, b := range sorted {
 		rows = append(
 			rows,
 			b.ToTableRow(currItem == i),
