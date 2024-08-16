@@ -17,6 +17,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/issuesidebar"
@@ -40,6 +41,7 @@ type Model struct {
 	issueSidebar  issuesidebar.Model
 	currSectionId int
 	footer        footer.Model
+	repoName      *string
 	repo          []section.Section
 	prs           []section.Section
 	issues        []section.Section
@@ -417,7 +419,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
+		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.fetchRepo())
+
+	case repoFetchedMsg:
+		m.ctx.RepoUrl = &msg.Url
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
@@ -849,4 +854,18 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 			return intervalRefresh(t)
 		},
 	)
+}
+
+func (m *Model) fetchRepo() tea.Cmd {
+	return func() tea.Msg {
+		url, err := git.GetOriginUrl(*m.ctx.RepoPath)
+		if err != nil {
+			return constants.ErrMsg{Err: err}
+		}
+		return repoFetchedMsg{Url: url}
+	}
+}
+
+type repoFetchedMsg struct {
+	Url string
 }

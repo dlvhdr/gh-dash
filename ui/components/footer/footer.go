@@ -1,6 +1,7 @@
 package footer
 
 import (
+	"fmt"
 	"strings"
 
 	bbHelp "github.com/charmbracelet/bubbles/help"
@@ -121,7 +122,13 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 	} else if ctx.View == config.IssuesView {
 		view += " Issues"
 	} else if ctx.View == config.RepoView {
-		view += " Repo"
+		repo := m.ctx.RepoPath
+		if m.ctx.RepoUrl != nil {
+			r, _ := strings.CutPrefix(*m.ctx.RepoUrl, "https://github.com/")
+			r, _ = strings.CutSuffix(r, ".git")
+			repo = &r
+		}
+		view += fmt.Sprintf(" %s", *repo)
 	}
 
 	var user string
