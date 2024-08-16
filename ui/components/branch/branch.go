@@ -180,9 +180,11 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
 	}
 
-	title := "NOT PUBLISHED"
+	title := "-"
 	if b.PR != nil {
 		title = b.PR.Title
+	} else if b.Data.LastCommitMsg != nil {
+		title = *b.Data.LastCommitMsg
 	}
 	var titleColumn table.Column
 	for _, column := range b.Columns {
@@ -193,8 +195,10 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	width := titleColumn.ComputedWidth - 2
 	title = baseStyle.Copy().Foreground(b.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
 	name := b.Data.Name
-	if b.Data.Name == "main" || b.Data.Name == "master" && !b.Data.IsCheckedOut {
+	if b.Data.Name == "main" || b.Data.Name == "master" {
 		name = " " + name
+	} else {
+		name = " " + name
 	}
 	if b.Data.IsCheckedOut {
 		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(" " + name)

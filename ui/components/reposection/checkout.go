@@ -2,6 +2,7 @@ package reposection
 
 import (
 	"fmt"
+	"time"
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,7 +15,7 @@ import (
 func (m *Model) checkout() (tea.Cmd, error) {
 	b := m.GetCurrBranch()
 
-	taskId := fmt.Sprintf("checkout_%s", b.Data.Name)
+	taskId := fmt.Sprintf("checkout_%s_%d", b.Data.Name, time.Now().Unix())
 	task := context.Task{
 		Id:           taskId,
 		StartText:    fmt.Sprintf("Checking out branch %s", b.Data.Name),
