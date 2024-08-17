@@ -41,7 +41,6 @@ type Model struct {
 	issueSidebar  issuesidebar.Model
 	currSectionId int
 	footer        footer.Model
-	repoName      *string
 	repo          []section.Section
 	prs           []section.Section
 	issues        []section.Section
@@ -189,7 +188,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Down):
 			prevRow := currSection.CurrRow()
 			nextRow := currSection.NextRow()
-			if prevRow != nextRow && nextRow == currSection.NumRows()-1 {
+			if prevRow != nextRow && nextRow == currSection.NumRows()-1 && m.ctx.View != config.RepoView {
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
 			m.onViewedRowChanged()
@@ -533,15 +532,11 @@ func (m Model) View() string {
 	s.WriteString("\n")
 	currSection := m.getCurrSection()
 	mainContent := ""
-	parts := make([]string, 0, 2)
 	if currSection != nil {
-		parts = append(parts, m.getCurrSection().View())
-		if m.ctx.View != config.RepoView {
-			parts = append(parts, m.sidebar.View())
-		}
 		mainContent = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			parts...,
+			m.getCurrSection().View(),
+			m.sidebar.View(),
 		)
 	} else {
 		mainContent = "No sections defined..."

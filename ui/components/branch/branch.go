@@ -182,7 +182,7 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 
 	title := "-"
 	if b.PR != nil {
-		title = b.PR.Title
+		title = fmt.Sprintf("#%d %s", b.PR.Number, b.PR.Title)
 	} else if b.Data.LastCommitMsg != nil {
 		title = *b.Data.LastCommitMsg
 	}
@@ -193,7 +193,7 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
-	title = baseStyle.Copy().Foreground(b.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
+	title = baseStyle.Copy().Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
 	name := b.Data.Name
 	if b.Data.Name == "main" || b.Data.Name == "master" {
 		name = " " + name
@@ -202,10 +202,12 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	}
 	if b.Data.IsCheckedOut {
 		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(" " + name)
+	} else {
+		name = baseStyle.Foreground(b.Ctx.Theme.PrimaryText).Render(name)
 	}
-	bottom := baseStyle.Width(width).MaxWidth(width).Render(name)
+	top := baseStyle.Width(width).MaxWidth(width).Render(name)
 
-	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, title, bottom))
+	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
 
 func (pr *Branch) renderAuthor() string {
