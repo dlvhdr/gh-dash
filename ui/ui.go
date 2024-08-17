@@ -17,6 +17,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/issuesidebar"
@@ -118,6 +119,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Universal,
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
+		cfg.Keybindings.Branches,
 	)
 	if err != nil {
 		showError(err)
@@ -187,7 +189,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Down):
 			prevRow := currSection.CurrRow()
 			nextRow := currSection.NextRow()
-			if prevRow != nextRow && nextRow == currSection.NumRows()-1 {
+			if prevRow != nextRow && nextRow == currSection.NumRows()-1 && m.ctx.View != config.RepoView {
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
 			m.onViewedRowChanged()
@@ -274,6 +276,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmd = tea.Quit
 
+		case m.ctx.View == config.RepoView:
+			switch {
+			case key.Matches(msg, keys.BranchKeys.Delete):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("delete")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+			}
 		case m.ctx.View == config.PRsView, m.ctx.View == config.RepoView:
 			switch {
 			case key.Matches(msg, keys.PRKeys.Approve):
@@ -404,6 +415,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.onViewedRowChanged()
 			}
+
 		}
 
 	case initMsg:
@@ -417,7 +429,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
+		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.fetchRepo())
+
+	case repoFetchedMsg:
+		m.ctx.RepoUrl = &msg.Url
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
@@ -528,15 +543,11 @@ func (m Model) View() string {
 	s.WriteString("\n")
 	currSection := m.getCurrSection()
 	mainContent := ""
-	parts := make([]string, 0, 2)
 	if currSection != nil {
-		parts = append(parts, m.getCurrSection().View())
-		if m.ctx.View != config.RepoView {
-			parts = append(parts, m.sidebar.View())
-		}
 		mainContent = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			parts...,
+			m.getCurrSection().View(),
+			m.sidebar.View(),
 		)
 	} else {
 		mainContent = "No sections defined..."
@@ -849,4 +860,18 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 			return intervalRefresh(t)
 		},
 	)
+}
+
+func (m *Model) fetchRepo() tea.Cmd {
+	return func() tea.Msg {
+		url, err := git.GetOriginUrl(*m.ctx.RepoPath)
+		if err != nil {
+			return constants.ErrMsg{Err: err}
+		}
+		return repoFetchedMsg{Url: url}
+	}
+}
+
+type repoFetchedMsg struct {
+	Url string
 }

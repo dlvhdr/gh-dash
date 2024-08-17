@@ -6,7 +6,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
-	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/theme"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
@@ -31,7 +30,7 @@ type Task struct {
 
 type ProgramContext struct {
 	RepoPath          *string
-	Repo              *git.Repo
+	RepoUrl           *string
 	User              string
 	ScreenHeight      int
 	ScreenWidth       int

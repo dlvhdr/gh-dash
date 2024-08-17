@@ -2,18 +2,22 @@ package reposection
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
-	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/keys"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
@@ -21,8 +25,9 @@ const SectionType = "repo"
 
 type Model struct {
 	section.BaseModel
-	repo *git.Repo
-	Prs  []data.PullRequestData
+	repo     *git.Repo
+	Branches []branch.Branch
+	Prs      []data.PullRequestData
 }
 
 func NewModel(
@@ -43,6 +48,7 @@ func NewModel(
 		lastUpdated,
 	)
 	m.repo = &git.Repo{Branches: []git.Branch{}}
+	m.Branches = []branch.Branch{}
 	m.Prs = []data.PullRequestData{}
 
 	return m
@@ -50,6 +56,7 @@ func NewModel(
 
 func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
+	var err error
 
 	switch msg := msg.(type) {
 
@@ -71,6 +78,44 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 
 			break
+		}
+
+		if m.IsPromptConfirmationFocused() {
+			switch {
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.PromptConfirmationBox.Reset()
+				cmd = m.SetIsPromptConfirmationShown(false)
+				return &m, cmd
+
+			case msg.Type == tea.KeyEnter:
+				input := m.PromptConfirmationBox.Value()
+				action := m.GetPromptConfirmationAction()
+				if input == "Y" || input == "y" {
+					switch action {
+					case "delete":
+						cmd, err = m.delete()
+						if err != nil {
+							m.Ctx.Error = err
+						}
+					}
+				}
+
+				m.PromptConfirmationBox.Reset()
+				blinkCmd := m.SetIsPromptConfirmationShown(false)
+
+				return &m, tea.Batch(cmd, blinkCmd)
+			}
+
+			break
+		}
+
+		switch {
+		case key.Matches(msg, keys.BranchKeys.Checkout):
+			cmd, err = m.checkout()
+			if err != nil {
+				m.Ctx.Error = err
+			}
+
 		}
 
 	case UpdatePRMsg:
@@ -109,7 +154,9 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case repoMsg:
 		m.repo = msg.repo
 		m.Table.SetIsLoading(false)
+		m.updateBranches()
 		m.Table.SetRows(m.BuildRows())
+		m.Table.ResetCurrItem()
 
 	case SectionPullRequestsFetchedMsg:
 		if m.LastFetchTaskId == msg.TaskId {
@@ -117,6 +164,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.TotalCount = msg.TotalCount
 			m.PageInfo = &msg.PageInfo
 			m.Table.SetIsLoading(false)
+			m.updateBranches()
 			m.Table.SetRows(m.BuildRows())
 			m.Table.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
@@ -264,17 +312,43 @@ func GetSectionColumns(
 	}
 }
 
+func (m *Model) updateBranches() {
+	branches := make([]branch.Branch, 0)
+	for _, ref := range m.repo.Branches {
+		b := branch.Branch{Ctx: m.Ctx, Data: ref, Columns: m.Table.Columns}
+		b.PR = findPRForRef(m.Prs, ref.Name)
+
+		branches = append(branches, b)
+	}
+
+	slices.SortFunc(branches, func(a, b branch.Branch) int {
+		if a.Data.IsCheckedOut {
+			return -1
+		}
+		if a.Data.LastUpdatedAt != nil && b.Data.LastUpdatedAt != nil {
+			return b.Data.LastUpdatedAt.Compare(*a.Data.LastUpdatedAt)
+		}
+		if a.Data.LastUpdatedAt != nil {
+			return -1
+		}
+		if b.Data.LastUpdatedAt != nil {
+			return 1
+		}
+		return strings.Compare(a.Data.Name, b.Data.Name)
+	})
+	m.Branches = branches
+}
+
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
 
-	for i, ref := range m.repo.Branches {
-		i := i
-		prModel := pr.PullRequest{Ctx: m.Ctx, Branch: ref, Columns: m.Table.Columns}
-		prModel.Data = findPRForRef(m.Prs, ref.Name)
+	sorted := m.Branches
+
+	for i, b := range sorted {
 		rows = append(
 			rows,
-			prModel.ToTableRow(currItem == i),
+			b.ToTableRow(currItem == i),
 		)
 	}
 
@@ -303,6 +377,13 @@ type SectionPullRequestsFetchedMsg struct {
 	TotalCount int
 	PageInfo   data.PageInfo
 	TaskId     string
+}
+
+func (m *Model) GetCurrBranch() *branch.Branch {
+	if len(m.repo.Branches) == 0 {
+		return nil
+	}
+	return &m.Branches[m.Table.GetCurrItem()]
 }
 
 func (m *Model) GetCurrRow() data.RowData {
@@ -360,16 +441,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 
 	var repoCmd tea.Cmd
 	if m.Ctx.RepoPath != nil {
-		repoCmd = func() tea.Msg {
-			repo, err := git.GetRepo(*m.Ctx.RepoPath)
-			return constants.TaskFinishedMsg{
-				SectionId:   m.Id,
-				SectionType: m.Type,
-				TaskId:      branchesTaskId,
-				Msg:         repoMsg{repo: repo},
-				Err:         err,
-			}
-		}
+		repoCmd = m.makeRepoCmd(branchesTaskId)
 	}
 	fetchCmd := func() tea.Msg {
 		limit := m.Config.Limit
@@ -514,4 +586,17 @@ func (m Model) GetTotalCount() *int {
 
 func (m Model) IsLoading() bool {
 	return m.Table.IsLoading()
+}
+
+func (m *Model) makeRepoCmd(taskId string) tea.Cmd {
+	return func() tea.Msg {
+		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		return constants.TaskFinishedMsg{
+			SectionId:   m.Id,
+			SectionType: m.Type,
+			TaskId:      taskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	}
 }

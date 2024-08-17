@@ -46,8 +46,8 @@ var PRKeys = PRKeyMap{
 		key.WithHelp("d", "diff"),
 	),
 	Checkout: key.NewBinding(
-		key.WithKeys("C"),
-		key.WithHelp("C", "checkout"),
+		key.WithKeys("C", " "),
+		key.WithHelp("C/Space", "checkout"),
 	),
 	Close: key.NewBinding(
 		key.WithKeys("x"),

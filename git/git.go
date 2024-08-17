@@ -1,10 +1,13 @@
 package git
 
 import (
+	"errors"
 	"sort"
 	"time"
 
 	gitm "github.com/aymanbagabas/git-module"
+
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 // Extends git.Repository
@@ -17,6 +20,33 @@ type Repo struct {
 type Branch struct {
 	Name          string
 	LastUpdatedAt *time.Time
+	LastCommitMsg *string
+	IsCheckedOut  bool
+}
+
+func GetOriginUrl(dir string) (string, error) {
+	repo, err := gitm.Open(dir)
+	if err != nil {
+		return "", err
+	}
+	remotes, err := repo.Remotes()
+	if err != nil {
+		return "", err
+	}
+
+	for _, remote := range remotes {
+		if remote != "origin" {
+			continue
+		}
+
+		urls, err := gitm.RemoteGetURL(dir, remote)
+		if err != nil || len(urls) == 0 {
+			return "", err
+		}
+		return urls[0], nil
+	}
+
+	return "", errors.New("no origin remote found")
 }
 
 func GetRepo(dir string) (*Repo, error) {
@@ -30,14 +60,23 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
+	headRev, err := repo.RevParse("HEAD")
+	if err != nil {
+		return nil, err
+	}
+
 	branches := make([]Branch, len(bNames))
 	for i, b := range bNames {
 		var updatedAt *time.Time
+		var lastCommitMsg *string
+		isHead := false
 		commits, err := gitm.Log(dir, b, gitm.LogOptions{MaxCount: 1})
 		if err == nil && len(commits) > 0 {
 			updatedAt = &commits[0].Committer.When
+			isHead = commits[0].ID.Equal(headRev)
+			lastCommitMsg = utils.StringPtr(commits[0].Summary())
 		}
-		branches[i] = Branch{Name: b, LastUpdatedAt: updatedAt}
+		branches[i] = Branch{Name: b, LastUpdatedAt: updatedAt, IsCheckedOut: isHead, LastCommitMsg: lastCommitMsg}
 	}
 	sort.Slice(branches, func(i, j int) bool {
 		if branches[j].LastUpdatedAt == nil || branches[i].LastUpdatedAt == nil {

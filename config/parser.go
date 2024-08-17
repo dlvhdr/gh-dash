@@ -127,6 +127,7 @@ type Keybindings struct {
 	Universal []Keybinding `yaml:"universal"`
 	Issues    []Keybinding `yaml:"issues"`
 	Prs       []Keybinding `yaml:"prs"`
+	Branches  []Keybinding `yaml:"branches"`
 }
 
 type Pager struct {
