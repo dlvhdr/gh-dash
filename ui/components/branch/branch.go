@@ -195,11 +195,6 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	width := titleColumn.ComputedWidth - 2
 	title = baseStyle.Copy().Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
 	name := b.Data.Name
-	if b.Data.Name == "main" || b.Data.Name == "master" {
-		name = " " + name
-	} else {
-		name = " " + name
-	}
 	if b.Data.IsCheckedOut {
 		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(" " + name)
 	} else {

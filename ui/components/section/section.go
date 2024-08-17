@@ -371,6 +371,8 @@ func (m *BaseModel) GetPromptConfirmation() string {
 
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.IssuesView:
 			prompt = "Are you sure you want to reopen this issue? (Y/n) "
+		case m.PromptConfirmationAction == "delete" && m.Ctx.View == config.RepoView:
+			prompt = "Are you sure you want to delete this branch? (Y/n) "
 		}
 
 		m.PromptConfirmationBox.SetPrompt(prompt)

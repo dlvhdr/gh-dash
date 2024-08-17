@@ -119,6 +119,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Universal,
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
+		cfg.Keybindings.Branches,
 	)
 	if err != nil {
 		showError(err)
@@ -275,6 +276,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmd = tea.Quit
 
+		case m.ctx.View == config.RepoView:
+			switch {
+			case key.Matches(msg, keys.BranchKeys.Delete):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("delete")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+			}
 		case m.ctx.View == config.PRsView, m.ctx.View == config.RepoView:
 			switch {
 			case key.Matches(msg, keys.PRKeys.Approve):
@@ -405,6 +415,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.onViewedRowChanged()
 			}
+
 		}
 
 	case initMsg:

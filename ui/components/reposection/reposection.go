@@ -79,12 +79,43 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 			break
 		}
+
+		if m.IsPromptConfirmationFocused() {
+			switch {
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.PromptConfirmationBox.Reset()
+				cmd = m.SetIsPromptConfirmationShown(false)
+				return &m, cmd
+
+			case msg.Type == tea.KeyEnter:
+				input := m.PromptConfirmationBox.Value()
+				action := m.GetPromptConfirmationAction()
+				if input == "Y" || input == "y" {
+					switch action {
+					case "delete":
+						cmd, err = m.delete()
+						if err != nil {
+							m.Ctx.Error = err
+						}
+					}
+				}
+
+				m.PromptConfirmationBox.Reset()
+				blinkCmd := m.SetIsPromptConfirmationShown(false)
+
+				return &m, tea.Batch(cmd, blinkCmd)
+			}
+
+			break
+		}
+
 		switch {
-		case key.Matches(msg, keys.PRKeys.Checkout):
+		case key.Matches(msg, keys.BranchKeys.Checkout):
 			cmd, err = m.checkout()
 			if err != nil {
 				m.Ctx.Error = err
 			}
+
 		}
 
 	case UpdatePRMsg:
