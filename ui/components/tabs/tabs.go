@@ -54,7 +54,7 @@ func (m Model) View(ctx context.ProgramContext) string {
 		MaxWidth(ctx.ScreenWidth).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
 
-	return ctx.Styles.Tabs.TabsRow.Copy().
+	return ctx.Styles.Tabs.TabsRow.
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
 		Render(renderedTabs)

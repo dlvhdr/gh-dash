@@ -863,6 +863,9 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 }
 
 func (m *Model) fetchRepo() tea.Cmd {
+	if !config.IsFeatureEnabled(config.FF_REPO_VIEW) {
+		return nil
+	}
 	return func() tea.Msg {
 		url, err := git.GetOriginUrl(*m.ctx.RepoPath)
 		if err != nil {

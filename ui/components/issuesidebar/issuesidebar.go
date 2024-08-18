@@ -156,7 +156,7 @@ func (m *Model) renderFullNameAndNumber() string {
 }
 
 func (m *Model) renderTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
+	return m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).
 		Render(m.issue.Data.Title)
 }
 
@@ -172,7 +172,7 @@ func (m *Model) renderStatusPill() string {
 		content = " Closed"
 	}
 
-	return m.ctx.Styles.PrSidebar.PillStyle.Copy().
+	return m.ctx.Styles.PrSidebar.PillStyle.
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
 }

@@ -147,10 +147,10 @@ func (b *Branch) renderLines(isSelected bool) string {
 		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
 	}
 
-	additionsText := baseStyle.Copy().
+	additionsText := baseStyle.
 		Foreground(additionsFg).
 		Render(fmt.Sprintf("+%s", components.FormatNumber(b.PR.Additions)))
-	deletionsText := baseStyle.Copy().
+	deletionsText := baseStyle.
 		Foreground(deletionsFg).
 		Render(fmt.Sprintf("-%s", components.FormatNumber(deletions)))
 
@@ -193,7 +193,7 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
-	title = baseStyle.Copy().Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
+	title = baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
 	name := b.Data.Name
 	if b.Data.IsCheckedOut {
 		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(" " + name)
@@ -227,7 +227,7 @@ func (b *Branch) renderRepoName() string {
 	} else {
 		repoName = b.PR.HeadRepository.Name
 	}
-	return b.getTextStyle().Copy().Foreground(b.Ctx.Theme.FaintText).Render(repoName)
+	return b.getTextStyle().Foreground(b.Ctx.Theme.FaintText).Render(repoName)
 }
 
 func (b *Branch) renderUpdateAt() string {
@@ -249,7 +249,7 @@ func (b *Branch) renderUpdateAt() string {
 		updatedAtOutput = t.Format(timeFormat)
 	}
 
-	return b.getTextStyle().Copy().Foreground(b.Ctx.Theme.FaintText).Render(updatedAtOutput)
+	return b.getTextStyle().Foreground(b.Ctx.Theme.FaintText).Render(updatedAtOutput)
 }
 
 func (b *Branch) renderBaseName() string {

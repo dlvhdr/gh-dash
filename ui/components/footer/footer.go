@@ -93,7 +93,7 @@ func (m Model) View() string {
 							),
 					)))
 
-		footer = m.ctx.Styles.Common.FooterStyle.Copy().
+		footer = m.ctx.Styles.Common.FooterStyle.
 			Render(lipgloss.JoinHorizontal(lipgloss.Top, viewSwitcher, leftSection, spacing, rightSection, helpIndicator))
 	}
 
@@ -133,10 +133,10 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 
 	var user string
 	if ctx.User != "" {
-		user = ctx.Styles.Tabs.ViewSwitcher.Copy().Background(ctx.Theme.FaintText).Render("@" + ctx.User)
+		user = ctx.Styles.Tabs.ViewSwitcher.Background(ctx.Theme.FaintText).Render("@" + ctx.User)
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, ctx.Styles.Tabs.ViewSwitcher.Copy().
+	return lipgloss.JoinHorizontal(lipgloss.Top, ctx.Styles.Tabs.ViewSwitcher.
 		Render(view), user)
 }
 

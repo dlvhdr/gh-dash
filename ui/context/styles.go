@@ -103,7 +103,7 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.Common = common.BuildStyles(theme)
 
-	s.PrSidebar.PillStyle = s.Common.MainTextStyle.Copy().
+	s.PrSidebar.PillStyle = s.Common.MainTextStyle.
 		Foreground(theme.InvertedText).
 		PaddingLeft(1).
 		PaddingRight(1)
@@ -111,16 +111,16 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Help.Text = lipgloss.NewStyle().Foreground(theme.SecondaryText)
 	s.Help.KeyText = lipgloss.NewStyle().Foreground(theme.PrimaryText)
 	s.Help.BubbleStyles = bbHelp.Styles{
-		ShortDesc:      s.Help.Text.Copy().Foreground(theme.FaintText),
-		FullDesc:       s.Help.Text.Copy().Foreground(theme.FaintText),
-		ShortSeparator: s.Help.Text.Copy().Foreground(theme.SecondaryBorder),
-		FullSeparator:  s.Help.Text.Copy(),
-		FullKey:        s.Help.KeyText.Copy(),
-		ShortKey:       s.Help.KeyText.Copy(),
-		Ellipsis:       s.Help.Text.Copy(),
+		ShortDesc:      s.Help.Text.Foreground(theme.FaintText),
+		FullDesc:       s.Help.Text.Foreground(theme.FaintText),
+		ShortSeparator: s.Help.Text.Foreground(theme.SecondaryBorder),
+		FullSeparator:  s.Help.Text,
+		FullKey:        s.Help.KeyText,
+		ShortKey:       s.Help.KeyText,
+		Ellipsis:       s.Help.Text,
 	}
 
-	s.CommentBox.Text = s.Help.Text.Copy()
+	s.CommentBox.Text = s.Help.Text
 
 	s.Pager.Height = 2
 	s.Pager.Root = lipgloss.NewStyle().
@@ -178,12 +178,12 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Table.CellStyle = lipgloss.NewStyle().PaddingLeft(1).
 		PaddingRight(1).
 		MaxHeight(1)
-	s.Table.SelectedCellStyle = s.Table.CellStyle.Copy().
+	s.Table.SelectedCellStyle = s.Table.CellStyle.
 		Background(theme.SelectedBackground)
-	s.Table.TitleCellStyle = s.Table.CellStyle.Copy().
+	s.Table.TitleCellStyle = s.Table.CellStyle.
 		Bold(true).
 		Foreground(theme.PrimaryText)
-	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.Copy().
+	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.
 		Width(common.SingleRuneWidth)
 	s.Table.HeaderStyle = lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).

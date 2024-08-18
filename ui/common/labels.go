@@ -14,7 +14,7 @@ func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Styl
 	currentRowLabels := []string{}
 
 	for _, l := range labels {
-		currentLabel := pillStyle.Copy().
+		currentLabel := pillStyle.
 			Background(lipgloss.Color("#" + l.Color)).
 			Render(l.Name)
 

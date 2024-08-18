@@ -40,7 +40,7 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		Background(theme.SelectedBackground).
 		Height(FooterHeight)
 
-	s.ErrorStyle = s.FooterStyle.Copy().
+	s.ErrorStyle = s.FooterStyle.
 		Foreground(theme.WarningText).
 		MaxHeight(FooterHeight)
 

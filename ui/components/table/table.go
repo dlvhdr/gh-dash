@@ -205,7 +205,7 @@ func (m *Model) renderHeaderColumns() []string {
 		}
 
 		if column.Width != nil {
-			renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.Copy().
+			renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.
 				Width(*column.Width).
 				MaxWidth(*column.Width).
 				Render(column.Title)
@@ -213,7 +213,7 @@ func (m *Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		cell := m.ctx.Styles.Table.TitleCellStyle.Copy().Render(column.Title)
+		cell := m.ctx.Styles.Table.TitleCellStyle.Render(column.Title)
 		renderedColumns[i] = cell
 		takenWidth += lipgloss.Width(cell)
 	}
@@ -229,7 +229,7 @@ func (m *Model) renderHeaderColumns() []string {
 			continue
 		}
 
-		renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.Copy().
+		renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.
 			Width(growCellWidth).
 			MaxWidth(growCellWidth).
 			Render(column.Title)
@@ -241,7 +241,7 @@ func (m *Model) renderHeaderColumns() []string {
 func (m *Model) renderHeader() string {
 	headerColumns := m.renderHeaderColumns()
 	header := lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...)
-	return m.ctx.Styles.Table.HeaderStyle.Copy().
+	return m.ctx.Styles.Table.HeaderStyle.
 		Width(m.dimensions.Width).
 		MaxWidth(m.dimensions.Width).
 		Height(common.TableHeaderHeight).
@@ -294,7 +294,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 			colHeight = 2
 		}
 		col := m.Rows[rowId][i]
-		renderedCol := style.Copy().
+		renderedCol := style.
 			Width(colWidth).
 			MaxWidth(colWidth).
 			Height(colHeight).
@@ -305,7 +305,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		headerColId++
 	}
 
-	return m.ctx.Styles.Table.RowStyle.Copy().
+	return m.ctx.Styles.Table.RowStyle.
 		BorderBottom(m.ctx.Config.Theme.Ui.Table.ShowSeparator).
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))

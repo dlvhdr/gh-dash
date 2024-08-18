@@ -147,10 +147,10 @@ func (pr *PullRequest) renderLines(isSelected bool) string {
 		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	additionsText := baseStyle.Copy().
+	additionsText := baseStyle.
 		Foreground(additionsFg).
 		Render(fmt.Sprintf("+%s", components.FormatNumber(pr.Data.Additions)))
-	deletionsText := baseStyle.Copy().
+	deletionsText := baseStyle.
 		Foreground(deletionsFg).
 		Render(fmt.Sprintf("-%s", components.FormatNumber(deletions)))
 
@@ -206,8 +206,8 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
-	top = baseStyle.Copy().Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
-	title = baseStyle.Copy().Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
+	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
+	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
 
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
@@ -250,7 +250,7 @@ func (pr *PullRequest) renderRepoName() string {
 	} else {
 		repoName = pr.Data.HeadRepository.Name
 	}
-	return pr.getTextStyle().Copy().Foreground(pr.Ctx.Theme.FaintText).Render(repoName)
+	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(repoName)
 }
 
 func (pr *PullRequest) renderUpdateAt() string {
@@ -272,7 +272,7 @@ func (pr *PullRequest) renderUpdateAt() string {
 		updatedAtOutput = t.Format(timeFormat)
 	}
 
-	return pr.getTextStyle().Copy().Foreground(pr.Ctx.Theme.FaintText).Render(updatedAtOutput)
+	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(updatedAtOutput)
 }
 
 func (pr *PullRequest) renderBaseName() string {
