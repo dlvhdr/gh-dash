@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -21,6 +22,8 @@ type Branch struct {
 	Name          string
 	LastUpdatedAt *time.Time
 	LastCommitMsg *string
+	CommitsAhead  int
+	CommitsBehind int
 	IsCheckedOut  bool
 }
 
@@ -76,7 +79,22 @@ func GetRepo(dir string) (*Repo, error) {
 			isHead = commits[0].ID.Equal(headRev)
 			lastCommitMsg = utils.StringPtr(commits[0].Summary())
 		}
-		branches[i] = Branch{Name: b, LastUpdatedAt: updatedAt, IsCheckedOut: isHead, LastCommitMsg: lastCommitMsg}
+		commitsAhead, err := repo.RevListCount([]string{fmt.Sprintf("origin/%s..%s", b, b)})
+		if err != nil {
+			commitsAhead = 0
+		}
+		commitsBehind, err := repo.RevListCount([]string{fmt.Sprintf("%s..origin/%s", b, b)})
+		if err != nil {
+			commitsBehind = 0
+		}
+		branches[i] = Branch{
+			Name:          b,
+			LastUpdatedAt: updatedAt,
+			IsCheckedOut:  isHead,
+			LastCommitMsg: lastCommitMsg,
+			CommitsAhead:  int(commitsAhead),
+			CommitsBehind: int(commitsBehind),
+		}
 	}
 	sort.Slice(branches, func(i, j int) bool {
 		if branches[j].LastUpdatedAt == nil || branches[i].LastUpdatedAt == nil {
