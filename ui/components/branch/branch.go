@@ -203,10 +203,10 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	commitsAhead := ""
 	commitsBehind := ""
 	if b.Data.CommitsAhead > 0 {
-		commitsAhead = fmt.Sprintf(" ↑%d", b.Data.CommitsAhead)
+		commitsAhead = baseStyle.Render(fmt.Sprintf(" ↑%d", b.Data.CommitsAhead))
 	}
 	if b.Data.CommitsBehind > 0 {
-		commitsBehind = fmt.Sprintf(" ↓%d", b.Data.CommitsBehind)
+		commitsBehind = baseStyle.Render(fmt.Sprintf(" ↓%d", b.Data.CommitsBehind))
 	}
 	top := baseStyle.Width(width).MaxWidth(width).Render(lipgloss.JoinHorizontal(lipgloss.Left, name, commitsAhead, commitsBehind))
 
