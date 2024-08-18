@@ -310,7 +310,7 @@ func (m *BaseModel) GetMainContent() string {
 func (m *BaseModel) View() string {
 	search := m.SearchBar.View(*m.Ctx)
 
-	return m.Ctx.Styles.Section.ContainerStyle.Copy().Render(
+	return m.Ctx.Styles.Section.ContainerStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			search,
@@ -346,7 +346,7 @@ func (m *BaseModel) GetPagerContent() string {
 			len(m.Table.Rows),
 		)
 	}
-	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(pagerContent)
+	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Render(pagerContent)
 	return pager
 }
 
@@ -377,7 +377,7 @@ func (m *BaseModel) GetPromptConfirmation() string {
 
 		m.PromptConfirmationBox.SetPrompt(prompt)
 
-		return m.Ctx.Styles.ListViewPort.PagerStyle.Copy().Render(m.PromptConfirmationBox.View())
+		return m.Ctx.Styles.ListViewPort.PagerStyle.Render(m.PromptConfirmationBox.View())
 	}
 
 	return ""

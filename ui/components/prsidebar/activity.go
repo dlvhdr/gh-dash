@@ -90,7 +90,7 @@ func (m *Model) renderActivity() string {
 }
 
 func (m *Model) renderActivityTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Copy().
+	return m.ctx.Styles.Common.MainTextStyle.
 		MarginBottom(1).
 		Underline(true).
 		Render(" Comments")
@@ -115,7 +115,7 @@ func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRend
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.FaintBorder).Render(
 		lipgloss.JoinHorizontal(lipgloss.Top,
-			m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author),
+			m.ctx.Styles.Common.MainTextStyle.Render(comment.Author),
 			" ",
 			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 		))
@@ -159,7 +159,7 @@ func (m *Model) renderReviewHeader(review data.Review) string {
 	return lipgloss.JoinHorizontal(lipgloss.Top,
 		m.renderReviewDecision(review.State),
 		" ",
-		m.ctx.Styles.Common.MainTextStyle.Copy().Render(review.Author.Login),
+		m.ctx.Styles.Common.MainTextStyle.Render(review.Author.Login),
 		" ",
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
 	)

@@ -23,9 +23,9 @@ func NewModel(sectionType string, ctx *context.ProgramContext, initialValue stri
 	ti.Placeholder = ""
 	ti.Focus()
 	ti.Width = getInputWidth(ctx, prompt)
-	ti.PromptStyle = ti.PromptStyle.Copy().Foreground(ctx.Theme.SecondaryText)
+	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
-	ti.TextStyle = ti.TextStyle.Copy().Faint(true)
+	ti.TextStyle = ti.TextStyle.Faint(true)
 	ti.Blur()
 	ti.SetValue(initialValue)
 	ti.CursorStart()
@@ -59,13 +59,13 @@ func (m Model) View(ctx context.ProgramContext) string {
 }
 
 func (m *Model) Focus() {
-	m.textInput.TextStyle = m.textInput.TextStyle.Copy().Faint(false)
+	m.textInput.TextStyle = m.textInput.TextStyle.Faint(false)
 	m.textInput.CursorEnd()
 	m.textInput.Focus()
 }
 
 func (m *Model) Blur() {
-	m.textInput.TextStyle = m.textInput.TextStyle.Copy().Faint(true)
+	m.textInput.TextStyle = m.textInput.TextStyle.Faint(true)
 	m.textInput.CursorStart()
 	m.textInput.Blur()
 }

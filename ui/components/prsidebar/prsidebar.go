@@ -184,7 +184,7 @@ func (m *Model) renderFullNameAndNumber() string {
 }
 
 func (m *Model) renderTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Copy().Width(m.getIndentedContentWidth()).
+	return m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).
 		Render(m.pr.Data.Title)
 }
 
@@ -217,11 +217,11 @@ func (m *Model) renderStatusPill() string {
 func (m *Model) renderMergeablePill() string {
 	status := m.pr.Data.Mergeable
 	if status == "CONFLICTING" {
-		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
+		return m.ctx.Styles.PrSidebar.PillStyle.
 			Background(m.ctx.Theme.WarningText).
 			Render("󰅖 Merge Conflicts")
 	} else if status == "MERGEABLE" {
-		return m.ctx.Styles.PrSidebar.PillStyle.Copy().
+		return m.ctx.Styles.PrSidebar.PillStyle.
 			Background(m.ctx.Theme.SuccessText).
 			Render("󰃸 Mergeable")
 	}
@@ -235,18 +235,18 @@ func (m *Model) renderChecksPill() string {
 
 	status := m.pr.GetStatusChecksRollup()
 	if status == "FAILURE" {
-		return s.Copy().
+		return s.
 			Background(t.WarningText).
 			Render("󰅖 Checks")
 	} else if status == "PENDING" {
-		return s.Copy().
+		return s.
 			Background(t.FaintText).
 			Foreground(t.PrimaryText).
 			Faint(true).
 			Render(" Checks")
 	}
 
-	return s.Copy().
+	return s.
 		Background(t.SuccessText).
 		Foreground(t.InvertedText).
 		Render("󰄬 Checks")

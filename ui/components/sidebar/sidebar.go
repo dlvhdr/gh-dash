@@ -54,22 +54,22 @@ func (m Model) View() string {
 	}
 
 	height := m.ctx.MainContentHeight
-	style := m.ctx.Styles.Sidebar.Root.Copy().
+	style := m.ctx.Styles.Sidebar.Root.
 		Height(height).
 		MaxHeight(height).
 		Width(m.ctx.Config.Defaults.Preview.Width).
 		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
 
 	if m.data == "" {
-		return style.Copy().Align(lipgloss.Center).Render(
+		return style.Align(lipgloss.Center).Render(
 			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
 		)
 	}
 
-	return style.Copy().Render(lipgloss.JoinVertical(
+	return style.Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		m.ctx.Styles.Sidebar.PagerStyle.Copy().
+		m.ctx.Styles.Sidebar.PagerStyle.
 			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
 	))
 }

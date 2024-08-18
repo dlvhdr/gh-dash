@@ -54,7 +54,7 @@ func (m *Model) renderActivity() string {
 }
 
 func (m Model) renderActivitiesTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Copy().
+	return m.ctx.Styles.Common.MainTextStyle.
 		MarginBottom(1).
 		Underline(true).
 		Render(" Comments")
@@ -66,7 +66,7 @@ func renderEmptyState() string {
 
 func (m *Model) renderComment(comment data.IssueComment, markdownRenderer glamour.TermRenderer) (string, error) {
 	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		m.ctx.Styles.Common.MainTextStyle.Copy().Render(comment.Author.Login),
+		m.ctx.Styles.Common.MainTextStyle.Render(comment.Author.Login),
 		" ",
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
