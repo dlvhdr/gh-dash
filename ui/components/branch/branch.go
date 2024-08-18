@@ -200,7 +200,15 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	} else {
 		name = baseStyle.Foreground(b.Ctx.Theme.PrimaryText).Render(name)
 	}
-	top := baseStyle.Width(width).MaxWidth(width).Render(name)
+	commitsAhead := ""
+	commitsBehind := ""
+	if b.Data.CommitsAhead > 0 {
+		commitsAhead = fmt.Sprintf(" ↑%d", b.Data.CommitsAhead)
+	}
+	if b.Data.CommitsBehind > 0 {
+		commitsBehind = fmt.Sprintf(" ↓%d", b.Data.CommitsBehind)
+	}
+	top := baseStyle.Width(width).MaxWidth(width).Render(lipgloss.JoinHorizontal(lipgloss.Left, name, commitsAhead, commitsBehind))
 
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
