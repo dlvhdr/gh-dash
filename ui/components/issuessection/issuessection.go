@@ -39,6 +39,7 @@ func NewModel(
 		m.GetItemSingularForm(),
 		m.GetItemPluralForm(),
 		lastUpdated,
+		true,
 	)
 	m.Issues = []data.IssueData{}
 

@@ -46,6 +46,7 @@ func NewModel(
 		m.GetItemSingularForm(),
 		m.GetItemPluralForm(),
 		lastUpdated,
+		false,
 	)
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
@@ -61,24 +62,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
-
-		if m.IsSearchFocused() {
-			switch {
-
-			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
-				m.SearchBar.SetValue(m.SearchValue)
-				blinkCmd := m.SetIsSearching(false)
-				return &m, blinkCmd
-
-			case msg.Type == tea.KeyEnter:
-				m.SearchValue = m.SearchBar.Value()
-				m.SetIsSearching(false)
-				m.ResetRows()
-				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
-			}
-
-			break
-		}
 
 		if m.IsPromptConfirmationFocused() {
 			switch {
@@ -171,9 +154,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 	}
 
-	search, searchCmd := m.SearchBar.Update(msg)
 	m.Table.SetRows(m.BuildRows())
-	m.SearchBar = search
 
 	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
 	m.PromptConfirmationBox = prompt
@@ -181,7 +162,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	table, tableCmd := m.Table.Update(msg)
 	m.Table = table
 
-	return &m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
+	return &m, tea.Batch(cmd, promptCmd, tableCmd)
 }
 
 func GetSectionColumns(

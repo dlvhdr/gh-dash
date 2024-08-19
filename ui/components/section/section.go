@@ -38,6 +38,7 @@ type BaseModel struct {
 	IsPromptConfirmationShown bool
 	PromptConfirmationAction  string
 	LastFetchTaskId           string
+	IsSearchSupported         bool
 }
 
 func NewModel(
@@ -48,6 +49,7 @@ func NewModel(
 	columns []table.Column,
 	singular, plural string,
 	lastUpdated time.Time,
+	isSearchSupported bool,
 ) BaseModel {
 	m := BaseModel{
 		Id:                    id,
@@ -64,6 +66,7 @@ func NewModel(
 		TotalCount:            0,
 		PageInfo:              nil,
 		PromptConfirmationBox: prompt.NewModel(ctx),
+		IsSearchSupported:     isSearchSupported,
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -308,7 +311,10 @@ func (m *BaseModel) GetMainContent() string {
 }
 
 func (m *BaseModel) View() string {
-	search := m.SearchBar.View(*m.Ctx)
+	search := ""
+	if m.IsSearchSupported {
+		search = m.SearchBar.View(*m.Ctx)
+	}
 
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
 		lipgloss.JoinVertical(

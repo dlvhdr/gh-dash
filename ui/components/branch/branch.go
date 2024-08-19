@@ -196,7 +196,7 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	title = baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
 	name := b.Data.Name
 	if b.Data.IsCheckedOut {
-		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(" " + name)
+		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(name)
 	} else {
 		name = baseStyle.Foreground(b.Ctx.Theme.PrimaryText).Render(name)
 	}

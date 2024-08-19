@@ -42,6 +42,7 @@ func NewModel(
 		m.GetItemSingularForm(),
 		m.GetItemPluralForm(),
 		lastUpdated,
+		true,
 	)
 	m.Prs = []data.PullRequestData{}
 

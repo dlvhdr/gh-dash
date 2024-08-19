@@ -284,6 +284,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
+
+			case key.Matches(msg, keys.BranchKeys.ViewPRs):
+				m.ctx.View = m.switchSelectedView()
+				m.syncMainContentWidth()
+				m.setCurrSectionId(1)
+				m.tabs.UpdateSectionsConfigs(&m.ctx)
+
+				currSections := m.getCurrentViewSections()
+				if len(currSections) == 0 {
+					newSections, fetchSectionsCmds := m.fetchAllViewSections()
+					m.setCurrentViewSections(newSections)
+					cmd = fetchSectionsCmds
+				}
+				m.onViewedRowChanged()
+
 			}
 		case m.ctx.View == config.PRsView, m.ctx.View == config.RepoView:
 			switch {
