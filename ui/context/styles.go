@@ -197,7 +197,6 @@ func InitStyles(theme theme.Theme) Styles {
 		Faint(true).
 		Padding(0, 2)
 	s.Tabs.ActiveTab = s.Tabs.Tab.
-		Copy().
 		Faint(false).
 		Bold(true).
 		Background(theme.SelectedBackground).

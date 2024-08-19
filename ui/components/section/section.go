@@ -41,37 +41,42 @@ type BaseModel struct {
 	IsSearchSupported         bool
 }
 
+type NewSectionOptions struct {
+	Id                int
+	Config            config.SectionConfig
+	IsSearchSupported bool
+	Type              string
+	Columns           []table.Column
+	Singular          string
+	Plural            string
+	LastUpdated       time.Time
+}
+
 func NewModel(
-	id int,
 	ctx *context.ProgramContext,
-	cfg config.SectionConfig,
-	sType string,
-	columns []table.Column,
-	singular, plural string,
-	lastUpdated time.Time,
-	isSearchSupported bool,
+	options NewSectionOptions,
 ) BaseModel {
 	m := BaseModel{
-		Id:                    id,
-		Type:                  sType,
-		Config:                cfg,
 		Ctx:                   ctx,
+		Id:                    options.Id,
+		Type:                  options.Type,
+		Config:                options.Config,
 		Spinner:               spinner.Model{Spinner: spinner.Dot},
-		Columns:               columns,
-		SingularForm:          singular,
-		PluralForm:            plural,
-		SearchBar:             search.NewModel(sType, ctx, cfg.Filters),
-		SearchValue:           cfg.Filters,
+		Columns:               options.Columns,
+		SingularForm:          options.Singular,
+		PluralForm:            options.Plural,
+		SearchBar:             search.NewModel(options.Type, ctx, options.Config.Filters),
+		SearchValue:           options.Config.Filters,
 		IsSearching:           false,
 		TotalCount:            0,
 		PageInfo:              nil,
 		PromptConfirmationBox: prompt.NewModel(ctx),
-		IsSearchSupported:     isSearchSupported,
+		IsSearchSupported:     options.IsSearchSupported,
 	}
 	m.Table = table.NewModel(
 		*ctx,
 		m.GetDimensions(),
-		lastUpdated,
+		options.LastUpdated,
 		m.Columns,
 		nil,
 		m.SingularForm,

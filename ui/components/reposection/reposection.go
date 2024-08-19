@@ -8,12 +8,12 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
-	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
@@ -24,7 +24,9 @@ import (
 const SectionType = "repo"
 
 type Model struct {
-	section.BaseModel
+	ctx      *context.ProgramContext
+	cfg      config.PrsSectionConfig
+	table    table.Model
 	repo     *git.Repo
 	Branches []branch.Branch
 	Prs      []data.PullRequestData
@@ -37,16 +39,18 @@ func NewModel(
 	lastUpdated time.Time,
 ) Model {
 	m := Model{}
-	m.BaseModel = section.NewModel(
-		id,
-		ctx,
-		cfg.ToSectionConfig(),
-		SectionType,
-		GetSectionColumns(cfg, ctx),
-		m.GetItemSingularForm(),
-		m.GetItemPluralForm(),
+	m.ctx = ctx
+	m.cfg = cfg
+	m.table = table.NewModel(
+		*ctx,
+		m.GetDimensions(),
 		lastUpdated,
-		false,
+		GetSectionColumns(ctx, cfg),
+		nil,
+		"Branch",
+		utils.StringPtr("No branches"),
+		"Loading branches...",
+		true,
 	)
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
@@ -55,7 +59,7 @@ func NewModel(
 	return m
 }
 
-func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var err error
 
@@ -63,40 +67,40 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case tea.KeyMsg:
 
-		if m.IsPromptConfirmationFocused() {
-			switch {
-			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
-				m.PromptConfirmationBox.Reset()
-				cmd = m.SetIsPromptConfirmationShown(false)
-				return &m, cmd
-
-			case msg.Type == tea.KeyEnter:
-				input := m.PromptConfirmationBox.Value()
-				action := m.GetPromptConfirmationAction()
-				if input == "Y" || input == "y" {
-					switch action {
-					case "delete":
-						cmd, err = m.delete()
-						if err != nil {
-							m.Ctx.Error = err
-						}
-					}
-				}
-
-				m.PromptConfirmationBox.Reset()
-				blinkCmd := m.SetIsPromptConfirmationShown(false)
-
-				return &m, tea.Batch(cmd, blinkCmd)
-			}
-
-			break
-		}
+		// if m.IsPromptConfirmationFocused() {
+		// 	switch {
+		// 	case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+		// 		m.PromptConfirmationBox.Reset()
+		// 		cmd = m.SetIsPromptConfirmationShown(false)
+		// 		return &m, cmd
+		//
+		// 	case msg.Type == tea.KeyEnter:
+		// 		input := m.PromptConfirmationBox.Value()
+		// 		action := m.GetPromptConfirmationAction()
+		// 		if input == "Y" || input == "y" {
+		// 			switch action {
+		// 			case "delete":
+		// 				cmd, err = m.delete()
+		// 				if err != nil {
+		// 					m.Ctx.Error = err
+		// 				}
+		// 			}
+		// 		}
+		//
+		// 		m.PromptConfirmationBox.Reset()
+		// 		blinkCmd := m.SetIsPromptConfirmationShown(false)
+		//
+		// 		return &m, tea.Batch(cmd, blinkCmd)
+		// 	}
+		//
+		// 	break
+		// }
 
 		switch {
 		case key.Matches(msg, keys.BranchKeys.Checkout):
 			cmd, err = m.checkout()
 			if err != nil {
-				m.Ctx.Error = err
+				m.ctx.Error = err
 			}
 
 		}
@@ -128,46 +132,65 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Mergeable = ""
 				}
 				m.Prs[i] = currPr
-				m.Table.SetIsLoading(false)
-				m.Table.SetRows(m.BuildRows())
+				m.table.SetIsLoading(false)
+				m.table.SetRows(m.BuildRows())
 				break
 			}
 		}
 
 	case repoMsg:
 		m.repo = msg.repo
-		m.Table.SetIsLoading(false)
+		m.table.SetIsLoading(false)
 		m.updateBranches()
-		m.Table.SetRows(m.BuildRows())
-		m.Table.ResetCurrItem()
+		m.table.SetRows(m.BuildRows())
+		m.table.ResetCurrItem()
 
 	case SectionPullRequestsFetchedMsg:
-		if m.LastFetchTaskId == msg.TaskId {
-			m.Prs = msg.Prs
-			m.TotalCount = msg.TotalCount
-			m.PageInfo = &msg.PageInfo
-			m.Table.SetIsLoading(false)
-			m.updateBranches()
-			m.Table.SetRows(m.BuildRows())
-			m.Table.UpdateLastUpdated(time.Now())
-			m.UpdateTotalItemsCount(m.TotalCount)
-		}
+		// if m.LastFetchTaskId == msg.TaskId {
+		// 	m.Prs = msg.Prs
+		// 	m.TotalCount = msg.TotalCount
+		// 	m.PageInfo = &msg.PageInfo
+		// 	m.table.SetIsLoading(false)
+		// 	m.updateBranches()
+		// 	m.table.SetRows(m.BuildRows())
+		// 	m.table.UpdateLastUpdated(time.Now())
+		// 	m.UpdateTotalItemsCount(m.TotalCount)
+		// }
 	}
 
-	m.Table.SetRows(m.BuildRows())
+	m.table.SetRows(m.BuildRows())
 
-	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
-	m.PromptConfirmationBox = prompt
+	// prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
+	// m.PromptConfirmationBox = prompt
 
-	table, tableCmd := m.Table.Update(msg)
-	m.Table = table
+	table, tableCmd := m.table.Update(msg)
+	m.table = table
 
-	return &m, tea.Batch(cmd, promptCmd, tableCmd)
+	return m, tea.Batch(cmd, tableCmd)
+}
+
+func (m Model) View() string {
+	view := ""
+	if m.table.Rows == nil {
+		d := m.GetDimensions()
+		view = lipgloss.Place(
+			d.Width,
+			d.Height,
+			lipgloss.Center,
+			lipgloss.Center,
+			"No local branches",
+		)
+	} else {
+		view = m.table.View()
+	}
+	return m.ctx.Styles.Section.ContainerStyle.Render(
+		view,
+	)
 }
 
 func GetSectionColumns(
-	cfg config.PrsSectionConfig,
 	ctx *context.ProgramContext,
+	cfg config.PrsSectionConfig,
 ) []table.Column {
 	dLayout := ctx.Config.Defaults.Layout.Prs
 	sLayout := cfg.Layout
@@ -296,7 +319,7 @@ func GetSectionColumns(
 func (m *Model) updateBranches() {
 	branches := make([]branch.Branch, 0)
 	for _, ref := range m.repo.Branches {
-		b := branch.Branch{Ctx: m.Ctx, Data: ref, Columns: m.Table.Columns}
+		b := branch.Branch{Ctx: m.ctx, Data: ref, Columns: m.table.Columns}
 		b.PR = findPRForRef(m.Prs, ref.Name)
 
 		branches = append(branches, b)
@@ -322,7 +345,7 @@ func (m *Model) updateBranches() {
 
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
-	currItem := m.Table.GetCurrItem()
+	currItem := m.table.GetCurrItem()
 
 	sorted := m.Branches
 
@@ -364,14 +387,14 @@ func (m *Model) GetCurrBranch() *branch.Branch {
 	if len(m.repo.Branches) == 0 {
 		return nil
 	}
-	return &m.Branches[m.Table.GetCurrItem()]
+	return &m.Branches[m.table.GetCurrItem()]
 }
 
 func (m *Model) GetCurrRow() data.RowData {
 	if len(m.repo.Branches) == 0 {
 		return nil
 	}
-	branch := m.repo.Branches[m.Table.GetCurrItem()]
+	branch := m.repo.Branches[m.table.GetCurrItem()]
 	pr := findPRForRef(m.Prs, branch.Name)
 	return pr
 }
@@ -381,91 +404,77 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		return nil
 	}
 
-	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
-		return nil
-	}
-
 	var cmds []tea.Cmd
 
-	startCursor := time.Now().String()
-	if m.PageInfo != nil {
-		startCursor = m.PageInfo.StartCursor
-	}
-	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
-	m.LastFetchTaskId = taskId
-
 	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
-	if m.Ctx.RepoPath != nil {
+	if m.ctx.RepoPath != nil {
 		branchesTask := context.Task{
 			Id:        branchesTaskId,
 			StartText: "Reading local branches",
 			FinishedText: fmt.Sprintf(
 				`Read branches successfully for "%s"`,
-				*m.Ctx.RepoPath,
+				*m.ctx.RepoPath,
 			),
 			State: context.TaskStart,
 			Error: nil,
 		}
-		bCmd := m.Ctx.StartTask(branchesTask)
+		bCmd := m.ctx.StartTask(branchesTask)
 		cmds = append(cmds, bCmd)
 	}
 
+	prsTaskId := fmt.Sprintf("fetching_pr_branches", time.Now().Unix())
 	task := context.Task{
-		Id:           taskId,
+		Id:           prsTaskId,
 		StartText:    "Fetching PRs for your branches",
 		FinishedText: "PRs for your branches have been fetched",
 		State:        context.TaskStart,
 		Error:        nil,
 	}
-	startCmd := m.Ctx.StartTask(task)
+	startCmd := m.ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
 
 	var repoCmd tea.Cmd
-	if m.Ctx.RepoPath != nil {
+	if m.ctx.RepoPath != nil {
 		repoCmd = m.makeRepoCmd(branchesTaskId)
 	}
 	fetchCmd := func() tea.Msg {
-		limit := m.Config.Limit
+		limit := m.cfg.Limit
 		if limit == nil {
-			limit = &m.Ctx.Config.Defaults.PrsLimit
+			limit = &m.ctx.Config.Defaults.PrsLimit
 		}
-		res, err := data.FetchPullRequests(m.GetFilters(), *limit, m.PageInfo)
+		res, err := data.FetchPullRequests("author:@me", *limit, nil)
 		// TODO: enrich with branches only for section with branches
 		if err != nil {
 			return constants.TaskFinishedMsg{
-				SectionId:   m.Id,
-				SectionType: m.Type,
-				TaskId:      taskId,
+				SectionId:   0,
+				SectionType: SectionType,
+				TaskId:      prsTaskId,
 				Err:         err,
 			}
 		}
 
 		return constants.TaskFinishedMsg{
-			SectionId:   m.Id,
-			SectionType: m.Type,
-			TaskId:      taskId,
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      prsTaskId,
 			Msg: SectionPullRequestsFetchedMsg{
 				Prs:        res.Prs,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
-				TaskId:     taskId,
+				TaskId:     prsTaskId,
 			},
 		}
 	}
 	cmds = append(cmds, fetchCmd, repoCmd)
 
-	if m.PageInfo == nil {
-		m.Table.SetIsLoading(true)
-		cmds = append(cmds, m.Table.StartLoadingSpinner())
-
-	}
+	m.table.SetIsLoading(true)
+	cmds = append(cmds, m.table.StartLoadingSpinner())
 
 	return cmds
 }
 
 func (m *Model) ResetRows() {
 	m.Prs = nil
-	m.BaseModel.ResetRows()
 }
 
 type repoMsg struct {
@@ -480,9 +489,7 @@ func openRepoCmd(dir string) tea.Cmd {
 	}
 }
 
-func FetchAllBranches(
-	ctx context.ProgramContext,
-) (sections []section.Section, fetchAllCmd tea.Cmd) {
+func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 
 	cmds := make([]tea.Cmd, 0)
 	if ctx.RepoPath != nil {
@@ -496,15 +503,15 @@ func FetchAllBranches(
 		Limit:   utils.IntPtr(20),
 		Type:    &t,
 	}
-	s := NewModel(
+	m := NewModel(
 		1,
 		&ctx,
 		cfg,
 		time.Now(),
 	)
-	cmds = append(cmds, s.FetchNextPageSectionRows()...)
+	cmds = append(cmds, m.FetchNextPageSectionRows()...)
 
-	return []section.Section{&s}, tea.Batch(cmds...)
+	return m, tea.Batch(cmds...)
 }
 
 type UpdatePRMsg struct {
@@ -550,34 +557,46 @@ func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
 	return false
 }
 
-func (m Model) GetItemSingularForm() string {
-	return "PR"
-}
-
-func (m Model) GetItemPluralForm() string {
-	return "PRs"
-}
-
-func (m Model) GetTotalCount() *int {
-	if m.IsLoading() {
-		return nil
-	}
-	return &m.TotalCount
-}
-
 func (m Model) IsLoading() bool {
-	return m.Table.IsLoading()
+	return m.table.IsLoading()
 }
 
 func (m *Model) makeRepoCmd(taskId string) tea.Cmd {
 	return func() tea.Msg {
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(*m.ctx.RepoPath)
 		return constants.TaskFinishedMsg{
-			SectionId:   m.Id,
-			SectionType: m.Type,
+			SectionId:   0,
+			SectionType: SectionType,
 			TaskId:      taskId,
 			Msg:         repoMsg{repo: repo},
 			Err:         err,
 		}
+	}
+}
+
+func (m Model) GetDimensions() constants.Dimensions {
+	if m.ctx == nil {
+		return constants.Dimensions{}
+	}
+	return constants.Dimensions{
+		Width:  m.ctx.MainContentWidth - m.ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		Height: m.ctx.MainContentHeight,
+	}
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	oldDimensions := m.GetDimensions()
+	m.ctx = ctx
+	newDimensions := m.GetDimensions()
+	tableDimensions := constants.Dimensions{
+		Height: newDimensions.Height,
+		Width:  newDimensions.Width,
+	}
+	m.table.SetDimensions(tableDimensions)
+	m.table.UpdateProgramContext(ctx)
+
+	if oldDimensions.Height != newDimensions.Height ||
+		oldDimensions.Width != newDimensions.Width {
+		m.table.SyncViewPortContent()
 	}
 }

@@ -23,20 +23,20 @@ func (m *Model) delete() (tea.Cmd, error) {
 		State:        context.TaskStart,
 		Error:        nil,
 	}
-	startCmd := m.Ctx.StartTask(task)
+	startCmd := m.ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := gitm.DeleteBranch(*m.Ctx.RepoPath, b.Data.Name, gitm.DeleteBranchOptions{Force: true})
+		err := gitm.DeleteBranch(*m.ctx.RepoPath, b.Data.Name, gitm.DeleteBranchOptions{Force: true})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(*m.ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
 
 		return constants.TaskFinishedMsg{
-			SectionId:   m.Id,
-			SectionType: m.Type,
+			SectionId:   0,
+			SectionType: SectionType,
 			TaskId:      taskId,
 			Msg:         repoMsg{repo: repo},
 			Err:         err,

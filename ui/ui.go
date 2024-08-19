@@ -41,7 +41,7 @@ type Model struct {
 	issueSidebar  issuesidebar.Model
 	currSectionId int
 	footer        footer.Model
-	repo          []section.Section
+	repo          reposection.Model
 	prs           []section.Section
 	issues        []section.Section
 	tabs          tabs.Model
@@ -554,20 +554,24 @@ func (m Model) View() string {
 	}
 
 	s := strings.Builder{}
-	s.WriteString(m.tabs.View(m.ctx))
-	s.WriteString("\n")
-	currSection := m.getCurrSection()
-	mainContent := ""
-	if currSection != nil {
-		mainContent = lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			m.getCurrSection().View(),
-			m.sidebar.View(),
-		)
-	} else {
-		mainContent = "No sections defined..."
+	if m.ctx.View != config.RepoView {
+		s.WriteString(m.tabs.View(m.ctx))
 	}
-	s.WriteString(mainContent)
+	s.WriteString("\n")
+	content := "No sections defined"
+	if m.ctx.View == config.RepoView {
+		content = m.repo.View()
+	} else {
+		currSection := m.getCurrSection()
+		if currSection != nil {
+			content = lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				m.getCurrSection().View(),
+				m.sidebar.View(),
+			)
+		}
+	}
+	s.WriteString(content)
 	s.WriteString("\n")
 	if m.ctx.Error != nil {
 		s.WriteString(
@@ -617,6 +621,7 @@ func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
 		section.UpdateProgramContext(&m.ctx)
 	}
+	m.repo.UpdateProgramContext(&m.ctx)
 	m.footer.UpdateProgramContext(&m.ctx)
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
@@ -627,8 +632,7 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
 	switch sType {
 	case reposection.SectionType:
-		updatedSection, cmd = m.repo[id].Update(msg)
-		m.repo[id] = updatedSection
+		m.repo, cmd = m.repo.Update(msg)
 	case prssection.SectionType:
 		updatedSection, cmd = m.prs[id].Update(msg)
 		m.prs[id] = updatedSection
@@ -688,7 +692,9 @@ func (m *Model) syncSidebar() {
 
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	if m.ctx.View == config.RepoView {
-		return reposection.FetchAllBranches(m.ctx)
+		var cmd tea.Cmd
+		m.repo, cmd = reposection.FetchAllBranches(m.ctx)
+		return nil, cmd
 	} else if m.ctx.View == config.PRsView {
 		return prssection.FetchAllSections(m.ctx)
 	} else {
@@ -698,7 +704,7 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 
 func (m *Model) getCurrentViewSections() []section.Section {
 	if m.ctx.View == config.RepoView {
-		return m.repo
+		return []section.Section{}
 	} else if m.ctx.View == config.PRsView {
 		return m.prs
 	} else {
@@ -707,18 +713,10 @@ func (m *Model) getCurrentViewSections() []section.Section {
 }
 
 func (m *Model) setCurrentViewSections(newSections []section.Section) {
-	if m.ctx.View == config.RepoView {
-		search := prssection.NewModel(
-			0,
-			&m.ctx,
-			config.PrsSectionConfig{
-				Title:   "",
-				Filters: "archived:false",
-			},
-			time.Now(),
-		)
-		m.repo = append([]section.Section{&search}, newSections...)
-	} else if m.ctx.View == config.PRsView {
+	if newSections == nil {
+		return
+	}
+	if m.ctx.View == config.PRsView {
 		search := prssection.NewModel(
 			0,
 			&m.ctx,

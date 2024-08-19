@@ -31,15 +31,17 @@ func NewModel(
 ) Model {
 	m := Model{}
 	m.BaseModel = section.NewModel(
-		id,
 		ctx,
-		cfg.ToSectionConfig(),
-		SectionType,
-		GetSectionColumns(cfg, ctx),
-		m.GetItemSingularForm(),
-		m.GetItemPluralForm(),
-		lastUpdated,
-		true,
+		section.NewSectionOptions{
+			Id:                id,
+			Config:            cfg.ToSectionConfig(),
+			Type:              SectionType,
+			Columns:           GetSectionColumns(cfg, ctx),
+			Singular:          m.GetItemSingularForm(),
+			Plural:            m.GetItemPluralForm(),
+			LastUpdated:       lastUpdated,
+			IsSearchSupported: true,
+		},
 	)
 	m.Issues = []data.IssueData{}
 
