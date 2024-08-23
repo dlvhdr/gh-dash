@@ -36,10 +36,12 @@ func (m *Model) push() (tea.Cmd, error) {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
+		var err error
 		if len(b.Data.Remotes) == 0 {
-			return constants.TaskFinishedMsg{TaskId: taskId, Err: fmt.Errorf("No remotes found for branch %s", b.Data.Name)}
+			err = gitm.Push(*m.Ctx.RepoPath, "", b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
+		} else {
+			err = gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
 		}
-		err := gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
