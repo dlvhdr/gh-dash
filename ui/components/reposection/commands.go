@@ -6,6 +6,7 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -37,10 +38,11 @@ func (m *Model) push() (tea.Cmd, error) {
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
 		var err error
+		log.Debug("Pushing branch", "branch", b.Data.Name, "remotes", len(b.Data.Remotes), "repoPath", *m.Ctx.RepoPath)
 		if len(b.Data.Remotes) == 0 {
-			err = gitm.Push(*m.Ctx.RepoPath, "", b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
+			err = gitm.Push(*m.Ctx.RepoPath, "origin", b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
 		} else {
-			err = gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
+			err = gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name)
 		}
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
