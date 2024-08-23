@@ -65,6 +65,9 @@ func (m *Model) SyncViewPort(content string) {
 }
 
 func (m *Model) getNumPrsPerPage() int {
+	if m.ListItemHeight == 0 {
+		return 0
+	}
 	return m.viewport.Height / m.ListItemHeight
 }
 

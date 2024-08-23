@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Model) checkout() (tea.Cmd, error) {
-	b := m.GetCurrBranch()
+	b := m.getCurrBranch()
 
 	taskId := fmt.Sprintf("checkout_%s_%d", b.Data.Name, time.Now().Unix())
 	task := context.Task{
@@ -35,8 +35,8 @@ func (m *Model) checkout() (tea.Cmd, error) {
 		}
 
 		return constants.TaskFinishedMsg{
-			SectionId:   m.Id,
-			SectionType: m.Type,
+			SectionId:   0,
+			SectionType: SectionType,
 			TaskId:      taskId,
 			Msg:         repoMsg{repo: repo},
 			Err:         err,

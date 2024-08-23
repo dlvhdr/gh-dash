@@ -13,7 +13,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	log "github.com/charmbracelet/log"
-	"github.com/cli/go-gh/v2/pkg/browser"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -41,7 +40,7 @@ type Model struct {
 	issueSidebar  issuesidebar.Model
 	currSectionId int
 	footer        footer.Model
-	repo          []section.Section
+	repo          section.Section
 	prs           []section.Section
 	issues        []section.Section
 	tabs          tabs.Model
@@ -53,11 +52,10 @@ type Model struct {
 func NewModel(repoPath *string, configPath string) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
-		keys:          keys.Keys,
-		currSectionId: 1,
-		sidebar:       sidebar.NewModel(),
-		taskSpinner:   taskSpinner,
-		tasks:         map[string]context.Task{},
+		keys:        keys.Keys,
+		sidebar:     sidebar.NewModel(),
+		taskSpinner: taskSpinner,
+		tasks:       map[string]context.Task{},
 	}
 
 	m.ctx = context.ProgramContext{
@@ -72,6 +70,8 @@ func NewModel(repoPath *string, configPath string) Model {
 			return m.taskSpinner.Tick
 		},
 	}
+
+	m.currSectionId = m.getCurrentViewDefaultSection()
 	m.taskSpinner.Style = lipgloss.NewStyle().
 		Background(m.ctx.Theme.SelectedBackground)
 
@@ -214,14 +214,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
-			currRow := m.getCurrRowData()
-			b := browser.New("", os.Stdout, os.Stdin)
-			if currRow != nil {
-				err := b.Browse(currRow.GetUrl())
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			cmds = append(cmds, m.openBrowser())
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
@@ -284,6 +277,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
+
+			case key.Matches(msg, keys.BranchKeys.ViewPRs):
+				m.ctx.View = m.switchSelectedView()
+				m.syncMainContentWidth()
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
+				m.tabs.UpdateSectionsConfigs(&m.ctx)
+
+				currSections := m.getCurrentViewSections()
+				if len(currSections) == 0 {
+					newSections, fetchSectionsCmds := m.fetchAllViewSections()
+					m.setCurrentViewSections(newSections)
+					cmd = fetchSectionsCmds
+				}
+				m.onViewedRowChanged()
+
 			}
 		case m.ctx.View == config.PRsView, m.ctx.View == config.RepoView:
 			switch {
@@ -350,7 +358,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
-				m.setCurrSectionId(1)
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
 				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
@@ -404,7 +412,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.IssueKeys.ViewPRs):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
-				m.setCurrSectionId(1)
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
 				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
@@ -539,20 +547,24 @@ func (m Model) View() string {
 	}
 
 	s := strings.Builder{}
-	s.WriteString(m.tabs.View(m.ctx))
-	s.WriteString("\n")
-	currSection := m.getCurrSection()
-	mainContent := ""
-	if currSection != nil {
-		mainContent = lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			m.getCurrSection().View(),
-			m.sidebar.View(),
-		)
-	} else {
-		mainContent = "No sections defined..."
+	if m.ctx.View != config.RepoView {
+		s.WriteString(m.tabs.View(m.ctx))
 	}
-	s.WriteString(mainContent)
+	s.WriteString("\n")
+	content := "No sections defined"
+	if m.ctx.View == config.RepoView {
+		content = m.repo.View()
+	} else {
+		currSection := m.getCurrSection()
+		if currSection != nil {
+			content = lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				m.getCurrSection().View(),
+				m.sidebar.View(),
+			)
+		}
+	}
+	s.WriteString(content)
 	s.WriteString("\n")
 	if m.ctx.Error != nil {
 		s.WriteString(
@@ -612,8 +624,7 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	var updatedSection section.Section
 	switch sType {
 	case reposection.SectionType:
-		updatedSection, cmd = m.repo[id].Update(msg)
-		m.repo[id] = updatedSection
+		m.repo, cmd = m.repo.Update(msg)
 	case prssection.SectionType:
 		updatedSection, cmd = m.prs[id].Update(msg)
 		m.prs[id] = updatedSection
@@ -673,7 +684,10 @@ func (m *Model) syncSidebar() {
 
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	if m.ctx.View == config.RepoView {
-		return reposection.FetchAllBranches(m.ctx)
+		var cmd tea.Cmd
+		s, cmd := reposection.FetchAllBranches(m.ctx)
+		m.repo = &s
+		return nil, cmd
 	} else if m.ctx.View == config.PRsView {
 		return prssection.FetchAllSections(m.ctx)
 	} else {
@@ -683,7 +697,7 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 
 func (m *Model) getCurrentViewSections() []section.Section {
 	if m.ctx.View == config.RepoView {
-		return m.repo
+		return []section.Section{m.repo}
 	} else if m.ctx.View == config.PRsView {
 		return m.prs
 	} else {
@@ -691,19 +705,21 @@ func (m *Model) getCurrentViewSections() []section.Section {
 	}
 }
 
-func (m *Model) setCurrentViewSections(newSections []section.Section) {
+func (m *Model) getCurrentViewDefaultSection() int {
 	if m.ctx.View == config.RepoView {
-		search := prssection.NewModel(
-			0,
-			&m.ctx,
-			config.PrsSectionConfig{
-				Title:   "",
-				Filters: "archived:false",
-			},
-			time.Now(),
-		)
-		m.repo = append([]section.Section{&search}, newSections...)
+		return 0
 	} else if m.ctx.View == config.PRsView {
+		return 1
+	} else {
+		return 1
+	}
+}
+
+func (m *Model) setCurrentViewSections(newSections []section.Section) {
+	if newSections == nil {
+		return
+	}
+	if m.ctx.View == config.PRsView {
 		search := prssection.NewModel(
 			0,
 			&m.ctx,
