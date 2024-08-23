@@ -52,11 +52,10 @@ type Model struct {
 func NewModel(repoPath *string, configPath string) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
-		keys:          keys.Keys,
-		currSectionId: 0,
-		sidebar:       sidebar.NewModel(),
-		taskSpinner:   taskSpinner,
-		tasks:         map[string]context.Task{},
+		keys:        keys.Keys,
+		sidebar:     sidebar.NewModel(),
+		taskSpinner: taskSpinner,
+		tasks:       map[string]context.Task{},
 	}
 
 	m.ctx = context.ProgramContext{
@@ -71,6 +70,8 @@ func NewModel(repoPath *string, configPath string) Model {
 			return m.taskSpinner.Tick
 		},
 	}
+
+	m.currSectionId = m.getCurrentViewDefaultSection()
 	m.taskSpinner.Style = lipgloss.NewStyle().
 		Background(m.ctx.Theme.SelectedBackground)
 
