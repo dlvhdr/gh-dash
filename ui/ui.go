@@ -13,7 +13,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	log "github.com/charmbracelet/log"
-	"github.com/cli/go-gh/v2/pkg/browser"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -214,14 +213,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.OpenGithub):
-			currRow := m.getCurrRowData()
-			b := browser.New("", os.Stdout, os.Stdin)
-			if currRow != nil {
-				err := b.Browse(currRow.GetUrl())
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			cmds = append(cmds, m.openBrowser())
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
