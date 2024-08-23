@@ -27,17 +27,34 @@ type repoMsg struct {
 	err  error
 }
 
-func (m *Model) readRepoCmd(taskId string) tea.Cmd {
-	return func() tea.Msg {
+func (m *Model) readRepoCmd() []tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
+	if m.Ctx.RepoPath != nil {
+		branchesTask := context.Task{
+			Id:        branchesTaskId,
+			StartText: "Reading local branches",
+			FinishedText: fmt.Sprintf(
+				`Read branches successfully for "%s"`,
+				*m.Ctx.RepoPath,
+			),
+			State: context.TaskStart,
+			Error: nil,
+		}
+		bCmd := m.Ctx.StartTask(branchesTask)
+		cmds = append(cmds, bCmd)
+	}
+	cmds = append(cmds, func() tea.Msg {
 		repo, err := git.GetRepo(*m.Ctx.RepoPath)
 		return constants.TaskFinishedMsg{
 			SectionId:   0,
 			SectionType: SectionType,
-			TaskId:      taskId,
+			TaskId:      branchesTaskId,
 			Msg:         repoMsg{repo: repo},
 			Err:         err,
 		}
-	}
+	})
+	return cmds
 }
 
 func (m *Model) fetchPRsCmd() []tea.Cmd {

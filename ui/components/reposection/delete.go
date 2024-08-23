@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Model) delete() (tea.Cmd, error) {
-	b := m.GetCurrBranch()
+	b := m.getCurrBranch()
 
 	taskId := fmt.Sprintf("delete_%s_%d", b.Data.Name, time.Now().Unix())
 	task := context.Task{

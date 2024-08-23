@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Model) checkout() (tea.Cmd, error) {
-	b := m.GetCurrBranch()
+	b := m.getCurrBranch()
 
 	taskId := fmt.Sprintf("checkout_%s_%d", b.Data.Name, time.Now().Unix())
 	task := context.Task{
