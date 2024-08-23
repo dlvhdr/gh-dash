@@ -25,6 +25,7 @@ type Branch struct {
 	CommitsAhead  int
 	CommitsBehind int
 	IsCheckedOut  bool
+	Remotes       []string
 }
 
 func GetOriginUrl(dir string) (string, error) {
@@ -87,10 +88,15 @@ func GetRepo(dir string) (*Repo, error) {
 		if err != nil {
 			commitsBehind = 0
 		}
+		remotes, err := repo.RemoteGetURL(b)
+		if err != nil {
+			commitsBehind = 0
+		}
 		branches[i] = Branch{
 			Name:          b,
 			LastUpdatedAt: updatedAt,
 			IsCheckedOut:  isHead,
+			Remotes:       remotes,
 			LastCommitMsg: lastCommitMsg,
 			CommitsAhead:  int(commitsAhead),
 			CommitsBehind: int(commitsBehind),

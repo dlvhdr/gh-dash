@@ -72,6 +72,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Ctx.Error = err
 			}
 
+		case key.Matches(msg, keys.BranchKeys.Push):
+			cmd, err = m.push()
+			if err != nil {
+				m.Ctx.Error = err
+			}
+
 		}
 
 	case repoMsg:
