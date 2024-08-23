@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/listviewport"
@@ -55,7 +54,6 @@ func NewModel(
 	if ctx.Config.Theme.Ui.Table.ShowSeparator {
 		itemHeight += 1
 	}
-	log.Debug("ctx", "itemHeight", itemHeight)
 
 	loadingSpinner := spinner.New()
 	loadingSpinner.Spinner = spinner.Dot
