@@ -421,50 +421,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		cmds = append(cmds, bCmd)
 	}
 
-	prsTaskId := fmt.Sprintf("fetching_pr_branches", time.Now().Unix())
-	task := context.Task{
-		Id:           prsTaskId,
-		StartText:    "Fetching PRs for your branches",
-		FinishedText: "PRs for your branches have been fetched",
-		State:        context.TaskStart,
-		Error:        nil,
-	}
-	startCmd := m.Ctx.StartTask(task)
-	cmds = append(cmds, startCmd)
-
 	var repoCmd tea.Cmd
 	if m.Ctx.RepoPath != nil {
-		repoCmd = m.makeRepoCmd(branchesTaskId)
+		repoCmd = m.readRepoCmd(branchesTaskId)
+		cmds = append(cmds, repoCmd)
 	}
-	fetchCmd := func() tea.Msg {
-		limit := m.Config.Limit
-		if limit == nil {
-			limit = &m.Ctx.Config.Defaults.PrsLimit
-		}
-		res, err := data.FetchPullRequests("author:@me", *limit, nil)
-		// TODO: enrich with branches only for section with branches
-		if err != nil {
-			return constants.TaskFinishedMsg{
-				SectionId:   0,
-				SectionType: SectionType,
-				TaskId:      prsTaskId,
-				Err:         err,
-			}
-		}
-
-		return constants.TaskFinishedMsg{
-			SectionId:   0,
-			SectionType: SectionType,
-			TaskId:      prsTaskId,
-			Msg: SectionPullRequestsFetchedMsg{
-				Prs:        res.Prs,
-				TotalCount: res.TotalCount,
-				PageInfo:   res.PageInfo,
-				TaskId:     prsTaskId,
-			},
-		}
-	}
-	cmds = append(cmds, fetchCmd, repoCmd)
+	cmds = append(cmds, m.fetchPRsCmd()...)
 
 	m.Table.SetIsLoading(true)
 	cmds = append(cmds, m.Table.StartLoadingSpinner())
@@ -476,23 +438,8 @@ func (m *Model) ResetRows() {
 	m.Prs = nil
 }
 
-type repoMsg struct {
-	repo *git.Repo
-	err  error
-}
-
-func openRepoCmd(dir string) tea.Cmd {
-	return func() tea.Msg {
-		repo, err := git.GetRepo(dir)
-		return repoMsg{repo: repo, err: err}
-	}
-}
-
 func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
-	if ctx.RepoPath != nil {
-		cmds = append(cmds, openRepoCmd(*ctx.RepoPath))
-	}
 
 	t := config.RepoView
 	cfg := config.PrsSectionConfig{
@@ -507,19 +454,13 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 		cfg,
 		time.Now(),
 	)
+
+	if ctx.RepoPath != nil {
+		cmds = append(cmds, m.readRepoCmd("fetch_all_branches_"))
+	}
 	cmds = append(cmds, m.FetchNextPageSectionRows()...)
 
 	return m, tea.Batch(cmds...)
-}
-
-type UpdatePRMsg struct {
-	PrNumber         int
-	IsClosed         *bool
-	NewComment       *data.Comment
-	ReadyForReview   *bool
-	IsMerged         *bool
-	AddedAssignees   *data.Assignees
-	RemovedAssignees *data.Assignees
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
@@ -553,23 +494,6 @@ func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
 		}
 	}
 	return false
-}
-
-func (m *Model) IsLoading() bool {
-	return m.Table.IsLoading()
-}
-
-func (m *Model) makeRepoCmd(taskId string) tea.Cmd {
-	return func() tea.Msg {
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
-		return constants.TaskFinishedMsg{
-			SectionId:   0,
-			SectionType: SectionType,
-			TaskId:      taskId,
-			Msg:         repoMsg{repo: repo},
-			Err:         err,
-		}
-	}
 }
 
 func (m Model) GetDimensions() constants.Dimensions {

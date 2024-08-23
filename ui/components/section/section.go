@@ -344,6 +344,10 @@ func (m *BaseModel) UpdateTotalItemsCount(count int) {
 	m.Table.UpdateTotalItemsCount(count)
 }
 
+func (m *BaseModel) IsLoading() bool {
+	return m.Table.IsLoading()
+}
+
 func (m *BaseModel) GetPagerContent() string {
 	pagerContent := ""
 	if m.TotalCount > 0 {
