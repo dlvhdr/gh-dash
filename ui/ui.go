@@ -41,7 +41,7 @@ type Model struct {
 	issueSidebar  issuesidebar.Model
 	currSectionId int
 	footer        footer.Model
-	repo          reposection.Model
+	repo          section.Section
 	prs           []section.Section
 	issues        []section.Section
 	tabs          tabs.Model
@@ -54,7 +54,7 @@ func NewModel(repoPath *string, configPath string) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:          keys.Keys,
-		currSectionId: 1,
+		currSectionId: 0,
 		sidebar:       sidebar.NewModel(),
 		taskSpinner:   taskSpinner,
 		tasks:         map[string]context.Task{},
@@ -288,7 +288,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.BranchKeys.ViewPRs):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
-				m.setCurrSectionId(1)
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
 				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
@@ -365,7 +365,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
-				m.setCurrSectionId(1)
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
 				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
@@ -419,7 +419,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.IssueKeys.ViewPRs):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
-				m.setCurrSectionId(1)
+				m.setCurrSectionId(m.getCurrentViewDefaultSection())
 				m.tabs.UpdateSectionsConfigs(&m.ctx)
 
 				currSections := m.getCurrentViewSections()
@@ -621,7 +621,6 @@ func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
 		section.UpdateProgramContext(&m.ctx)
 	}
-	m.repo.UpdateProgramContext(&m.ctx)
 	m.footer.UpdateProgramContext(&m.ctx)
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
@@ -693,7 +692,8 @@ func (m *Model) syncSidebar() {
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	if m.ctx.View == config.RepoView {
 		var cmd tea.Cmd
-		m.repo, cmd = reposection.FetchAllBranches(m.ctx)
+		s, cmd := reposection.FetchAllBranches(m.ctx)
+		m.repo = &s
 		return nil, cmd
 	} else if m.ctx.View == config.PRsView {
 		return prssection.FetchAllSections(m.ctx)
@@ -704,11 +704,21 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 
 func (m *Model) getCurrentViewSections() []section.Section {
 	if m.ctx.View == config.RepoView {
-		return []section.Section{}
+		return []section.Section{m.repo}
 	} else if m.ctx.View == config.PRsView {
 		return m.prs
 	} else {
 		return m.issues
+	}
+}
+
+func (m *Model) getCurrentViewDefaultSection() int {
+	if m.ctx.View == config.RepoView {
+		return 0
+	} else if m.ctx.View == config.PRsView {
+		return 1
+	} else {
+		return 1
 	}
 }
 
