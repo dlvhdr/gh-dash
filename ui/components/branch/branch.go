@@ -175,42 +175,12 @@ func (b *Branch) renderTitle() string {
 }
 
 func (b *Branch) renderExtendedTitle(isSelected bool) string {
-	baseStyle := lipgloss.NewStyle()
-	if isSelected {
-		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
-	}
+	baseStyle := b.getBaseStyle(isSelected)
+	width := b.getMaxWidth()
 
-	title := "-"
-	if b.PR != nil {
-		title = fmt.Sprintf("#%d %s", b.PR.Number, b.PR.Title)
-	} else if b.Data.LastCommitMsg != nil {
-		title = *b.Data.LastCommitMsg
-	}
-	var titleColumn table.Column
-	for _, column := range b.Columns {
-		if column.Title == "Title" {
-			titleColumn = column
-		}
-	}
-	width := titleColumn.ComputedWidth - 2
-	title = baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
-	name := b.Data.Name
-	if b.Data.IsCheckedOut {
-		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(name)
-	} else {
-		name = baseStyle.Foreground(b.Ctx.Theme.PrimaryText).Render(name)
-	}
-	commitsAhead := ""
-	commitsBehind := ""
-	if b.Data.CommitsAhead > 0 {
-		commitsAhead = baseStyle.Render(fmt.Sprintf(" ↑%d", b.Data.CommitsAhead))
-	}
-	if b.Data.CommitsBehind > 0 {
-		commitsBehind = baseStyle.Render(fmt.Sprintf(" ↓%d", b.Data.CommitsBehind))
-	}
-	top := baseStyle.Width(width).MaxWidth(width).Render(lipgloss.JoinHorizontal(lipgloss.Left, name, commitsAhead, commitsBehind))
-
-	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
+	title := b.renderPRTitleOrCommigMsg(isSelected, width)
+	branch := b.renderBranch(isSelected, width)
+	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, branch, title))
 }
 
 func (pr *Branch) renderAuthor() string {
@@ -310,4 +280,65 @@ func (b *Branch) ToTableRow(isSelected bool) table.Row {
 		b.renderLines(isSelected),
 		b.renderUpdateAt(),
 	}
+}
+
+func (b *Branch) renderBranch(isSelected bool, width int) string {
+	baseStyle := b.getBaseStyle(isSelected)
+	name := b.Data.Name
+	if b.Data.IsCheckedOut {
+		name = baseStyle.Foreground(b.Ctx.Theme.SuccessText).Render(name)
+	} else {
+		name = baseStyle.Foreground(b.Ctx.Theme.PrimaryText).Render(name)
+	}
+	return baseStyle.MaxHeight(1).Width(width).MaxWidth(width).Render(lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		name,
+		b.renderCommitsAheadBehind(isSelected),
+	))
+
+}
+
+func (b *Branch) getBaseStyle(isSelected bool) lipgloss.Style {
+	baseStyle := lipgloss.NewStyle()
+	if isSelected {
+		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
+	}
+
+	return baseStyle
+}
+
+func (b *Branch) getMaxWidth() int {
+	var titleColumn table.Column
+	for _, column := range b.Columns {
+		if column.Grow != nil && *column.Grow {
+			titleColumn = column
+		}
+	}
+	return titleColumn.ComputedWidth - 2
+}
+
+func (b *Branch) renderCommitsAheadBehind(isSelected bool) string {
+	baseStyle := b.getBaseStyle(isSelected)
+
+	commitsAhead := ""
+	commitsBehind := ""
+	if b.Data.CommitsAhead > 0 {
+		commitsAhead = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(fmt.Sprintf(" ↑%d", b.Data.CommitsAhead))
+	}
+	if b.Data.CommitsBehind > 0 {
+		commitsBehind = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(fmt.Sprintf(" ↓%d", b.Data.CommitsBehind))
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, commitsAhead, commitsBehind)
+}
+
+func (b *Branch) renderPRTitleOrCommigMsg(isSelected bool, width int) string {
+	baseStyle := b.getBaseStyle(isSelected)
+	title := "-"
+	if b.PR != nil {
+		title = fmt.Sprintf("#%d %s", b.PR.Number, b.PR.Title)
+	} else if b.Data.LastCommitMsg != nil {
+		title = *b.Data.LastCommitMsg
+	}
+	return baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
 }
