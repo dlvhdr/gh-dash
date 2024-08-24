@@ -269,7 +269,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = tea.Quit
 
 		case m.ctx.View == config.RepoView:
-			log.Debug("RepoView")
 			switch {
 			case key.Matches(msg, keys.BranchKeys.Delete):
 				if currSection != nil {
@@ -291,8 +290,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.onViewedRowChanged()
-			default:
-				log.Debug("Not a top-level binding for RepoView")
 
 			}
 		case m.ctx.View == config.PRsView:
@@ -432,7 +429,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Config = &msg.Config
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
-		log.Debug("Config loaded", "default view", m.ctx.Config.Defaults.View)
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
