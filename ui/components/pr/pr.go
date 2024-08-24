@@ -191,9 +191,6 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	if pr.Data == nil {
-		return pr.renderBranch(isSelected)
-	}
 	repoName := baseStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d", pr.Data.Number)))
 	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
 	branch := baseStyle.Render(pr.Data.HeadRefName)
@@ -201,30 +198,14 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	title := pr.Data.Title
 	var titleColumn table.Column
 	for _, column := range pr.Columns {
-		if column.Title == "Title" {
+		if column.Grow != nil && *column.Grow {
 			titleColumn = column
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
 	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
-	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Render(title)
+	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(title)
 
-	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
-}
-
-func (pr *PullRequest) renderBranch(isSelected bool) string {
-	baseStyle := lipgloss.NewStyle()
-	if isSelected {
-		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
-	}
-
-	// repoName := strings.TrimPrefix(pr.Ctx.Repo.Origin, "https://github.com/")
-	// repoName = strings.TrimSuffix(repoName, ".git")
-	top := lipgloss.JoinHorizontal(lipgloss.Top, baseStyle.Render("TODO"), baseStyle.Render(" · "), baseStyle.Render("UNPUBLISHED"))
-	branch := pr.Branch.Name
-	width := max(lipgloss.Width(top), lipgloss.Width(branch))
-	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).Render(top)
-	title := baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).Render(branch)
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -20,6 +21,75 @@ type UpdatePRMsg struct {
 	IsMerged         *bool
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
+}
+
+func (m *Model) push() (tea.Cmd, error) {
+	b := m.getCurrBranch()
+
+	taskId := fmt.Sprintf("push_%s_%d", b.Data.Name, time.Now().Unix())
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Pushing branch %s", b.Data.Name),
+		FinishedText: fmt.Sprintf("Branch %s has been pushed", b.Data.Name),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		var err error
+		if len(b.Data.Remotes) == 0 {
+			err = gitm.Push(*m.Ctx.RepoPath, "origin", b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
+		} else {
+			err = gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name)
+		}
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      taskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	}), nil
+}
+
+func (m *Model) checkout() (tea.Cmd, error) {
+	b := m.getCurrBranch()
+
+	taskId := fmt.Sprintf("checkout_%s_%d", b.Data.Name, time.Now().Unix())
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Checking out branch %s", b.Data.Name),
+		FinishedText: fmt.Sprintf("Branch %s has been checked out", b.Data.Name),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		err := gitm.Checkout(*m.Ctx.RepoPath, b.Data.Name)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      taskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	}), nil
 }
 
 type repoMsg struct {

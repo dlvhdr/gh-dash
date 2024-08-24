@@ -11,6 +11,7 @@ import (
 
 type BranchKeyMap struct {
 	Checkout key.Binding
+	Push     key.Binding
 	Delete   key.Binding
 	ViewPRs  key.Binding
 }
@@ -19,6 +20,10 @@ var BranchKeys = BranchKeyMap{
 	Checkout: key.NewBinding(
 		key.WithKeys("C", " "),
 		key.WithHelp("C/space", "checkout"),
+	),
+	Push: key.NewBinding(
+		key.WithKeys("P"),
+		key.WithHelp("P", "push"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d", "backspace"),

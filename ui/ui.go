@@ -71,7 +71,6 @@ func NewModel(repoPath *string, configPath string) Model {
 		},
 	}
 
-	m.currSectionId = m.getCurrentViewDefaultSection()
 	m.taskSpinner.Style = lipgloss.NewStyle().
 		Background(m.ctx.Theme.SelectedBackground)
 
@@ -293,7 +292,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.onViewedRowChanged()
 
 			}
-		case m.ctx.View == config.PRsView, m.ctx.View == config.RepoView:
+		case m.ctx.View == config.PRsView:
 			switch {
 			case key.Matches(msg, keys.PRKeys.Approve):
 				m.sidebar.IsOpen = true
@@ -430,8 +429,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Config = &msg.Config
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
-		log.Debug("Config loaded", "default view", m.ctx.Config.Defaults.View)
 		m.ctx.View = m.ctx.Config.Defaults.View
+		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.tabs.UpdateSectionsConfigs(&m.ctx)
 		m.syncMainContentWidth()
