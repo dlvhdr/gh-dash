@@ -13,6 +13,7 @@ import (
 
 // Extends git.Repository
 type Repo struct {
+	gitm.Repository
 	Origin   string
 	Remotes  []string
 	Branches []Branch
@@ -55,6 +56,10 @@ func GetOriginUrl(dir string) (string, error) {
 
 func GetRepo(dir string) (*Repo, error) {
 	repo, err := gitm.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--all"}}})
 	if err != nil {
 		return nil, err
 	}
@@ -119,5 +124,5 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	return &Repo{Origin: origin[0], Remotes: remotes, Branches: branches}, nil
+	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches}, nil
 }
