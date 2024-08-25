@@ -1,7 +1,6 @@
 package reposection
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -94,28 +93,16 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Table.SetIsLoading(false)
 		m.updateBranches()
 		m.Table.SetRows(m.BuildRows())
-		filters := make([]string, 0)
-		filters = append(filters, fmt.Sprintf("repo:%s", *m.Ctx.RepoUrl))
-		for _, b := range m.repo.Branches {
-			filters = append(filters, fmt.Sprintf("head:%s", b.Name))
-		}
-		m.Config.Filters = strings.Join(filters, " ")
-		cmds = append(cmds, m.fetchPrsOnRepoReadCmd()...)
 
 	case SectionPullRequestsFetchedMsg:
-		if m.LastFetchTaskId == msg.TaskId {
-			if m.PageInfo != nil {
-				m.Prs = append(m.Prs, msg.Prs...)
-			} else {
-				m.Prs = msg.Prs
-			}
-			m.TotalCount = msg.TotalCount
-			m.PageInfo = &msg.PageInfo
-			m.Table.SetIsLoading(false)
-			m.Table.SetRows(m.BuildRows())
-			m.Table.UpdateLastUpdated(time.Now())
-			m.UpdateTotalItemsCount(m.TotalCount)
-		}
+		m.Prs = msg.Prs
+		m.updateBranches()
+		m.TotalCount = msg.TotalCount
+		m.PageInfo = &msg.PageInfo
+		m.Table.SetIsLoading(false)
+		m.Table.SetRows(m.BuildRows())
+		m.Table.UpdateLastUpdated(time.Now())
+		m.UpdateTotalItemsCount(m.TotalCount)
 
 	case RefreshBranchesMsg:
 		cmds = append(cmds, m.onRefreshCmd()...)
@@ -369,34 +356,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 	if m.Ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
-		cmds = append(cmds, m.fetchPRsCmd()...)
+		cmds = append(cmds, m.fetchPRsCmd())
 	}
 
 	m.Table.SetIsLoading(true)
 	cmds = append(cmds, m.Table.StartLoadingSpinner())
-	if !m.isRefreshSetUp {
-		m.isRefreshSetUp = true
-		cmds = append(cmds, m.tickRefreshCmd())
-	}
-
-	return cmds
-}
-
-func (m *Model) fetchPrsOnRepoReadCmd() []tea.Cmd {
-	if m == nil {
-		return nil
-	}
-
-	var cmds []tea.Cmd
-	if m.Ctx.RepoPath != nil {
-		cmds = append(cmds, m.fetchPRsCmd()...)
-	}
-
-	if !m.isRefreshSetUp {
-		m.isRefreshSetUp = true
-		cmds = append(cmds, m.tickRefreshCmd())
-	}
-
 	return cmds
 }
 
@@ -417,7 +381,14 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 
 	if ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
+		cmds = append(cmds, m.fetchPRsCmd())
 	}
+
+	if !m.isRefreshSetUp {
+		m.isRefreshSetUp = true
+		cmds = append(cmds, m.tickRefreshCmd())
+	}
+
 	return m, tea.Batch(cmds...)
 }
 

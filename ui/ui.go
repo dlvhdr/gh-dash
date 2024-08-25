@@ -504,8 +504,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case constants.ErrMsg:
 		m.ctx.Error = msg.Err
-	case reposection.RefreshBranchesMsg:
-		log.Debug("ui.ui Got RefreshBranchesMsg msg")
 	}
 
 	m.syncProgramContext()

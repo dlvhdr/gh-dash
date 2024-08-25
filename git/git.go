@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	gitm "github.com/aymanbagabas/git-module"
@@ -125,4 +126,10 @@ func GetRepo(dir string) (*Repo, error) {
 	}
 
 	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches}, nil
+}
+
+func GetRepoShortName(url string) string {
+	r, _ := strings.CutPrefix(url, "https://github.com/")
+	r, _ = strings.CutSuffix(r, ".git")
+	return r
 }

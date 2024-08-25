@@ -6,7 +6,6 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -136,7 +135,6 @@ func (m *Model) checkout() (tea.Cmd, error) {
 
 type repoMsg struct {
 	repo *git.Repo
-	err  error
 }
 
 func (m *Model) readRepoCmd() []tea.Cmd {
@@ -172,7 +170,7 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 	return cmds
 }
 
-func (m *Model) fetchPRsCmd() []tea.Cmd {
+func (m *Model) fetchPRsCmd() tea.Cmd {
 	prsTaskId := fmt.Sprintf("fetching_pr_branches_%d", time.Now().Unix())
 	task := context.Task{
 		Id:           prsTaskId,
@@ -181,15 +179,13 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 		State:        context.TaskStart,
 		Error:        nil,
 	}
-	cmds := make([]tea.Cmd, 0)
-	cmds = append(cmds, m.Ctx.StartTask(task))
-	cmds = append(cmds, func() tea.Msg {
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		log.Debug("omg", "filters", m.Config.Filters, "limit", limit)
-		res, err := data.FetchPullRequests(m.Config.Filters, *limit, nil)
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(*m.Ctx.RepoUrl)), *limit, nil)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   0,
@@ -198,7 +194,6 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 				Err:         err,
 			}
 		}
-
 		return constants.TaskFinishedMsg{
 			SectionId:   0,
 			SectionType: SectionType,
@@ -211,19 +206,15 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 			},
 		}
 	})
-	return cmds
 }
 
-type RefreshBranchesMsg struct {
-	time.Time
-	IAreRefresh bool
-}
+type RefreshBranchesMsg time.Time
 
 const refreshIntervalSec = 20
 
 func (m *Model) tickRefreshCmd() tea.Cmd {
 	return tea.Tick(time.Second*refreshIntervalSec, func(t time.Time) tea.Msg {
-		return RefreshBranchesMsg{Time: t}
+		return RefreshBranchesMsg(t)
 	})
 }
 

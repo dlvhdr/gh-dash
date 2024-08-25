@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/listviewport"
@@ -56,6 +57,7 @@ func NewModel(
 	}
 
 	loadingSpinner := spinner.New()
+	log.Debug("table loadingSpinner", "id", loadingSpinner.ID())
 	loadingSpinner.Spinner = spinner.Dot
 	loadingSpinner.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
 
@@ -81,7 +83,9 @@ func NewModel(
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	if m.isLoading {
+		m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	}
 	return m, cmd
 }
 

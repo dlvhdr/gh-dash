@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/ui/keys"
 	"github.com/dlvhdr/gh-dash/v4/utils"
@@ -124,9 +125,8 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 	} else if ctx.View == config.RepoView {
 		repo := m.ctx.RepoPath
 		if m.ctx.RepoUrl != nil {
-			r, _ := strings.CutPrefix(*m.ctx.RepoUrl, "https://github.com/")
-			r, _ = strings.CutSuffix(r, ".git")
-			repo = &r
+			shortName := git.GetRepoShortName(*m.ctx.RepoUrl)
+			repo = &shortName
 		}
 		view += fmt.Sprintf(" %s", *repo)
 	}
