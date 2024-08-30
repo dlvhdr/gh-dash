@@ -42,12 +42,20 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
 
-		err = repo.Pull(gitm.PullOptions{
-			All:            false,
-			Remote:         "origin",
-			Branch:         b.Data.Name,
-			CommandOptions: gitm.CommandOptions{Args: []string{"--ff-only", "--no-edit"}},
-		})
+		if b.Data.IsCheckedOut {
+			err = repo.Pull(gitm.PullOptions{
+				All:            false,
+				Remote:         "origin",
+				Branch:         b.Data.Name,
+				CommandOptions: gitm.CommandOptions{Args: []string{"--ff-only", "--no-edit"}},
+			})
+		} else {
+			err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{
+				"--no-write-fetch-head",
+				"origin",
+				b.Data.Name + ":" + b.Data.Name,
+			}}})
+		}
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
