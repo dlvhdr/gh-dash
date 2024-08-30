@@ -114,6 +114,16 @@ func (m *Model) initScreen() tea.Msg {
 		return initMsg{Config: cfg}
 	}
 
+	var url *string
+	if config.IsFeatureEnabled(config.FF_REPO_VIEW) && m.ctx.RepoPath != nil {
+		res, err := git.GetOriginUrl(*m.ctx.RepoPath)
+		if err != nil {
+			showError(err)
+			return initMsg{Config: cfg}
+		}
+		url = &res
+	}
+
 	err = keys.Rebind(
 		cfg.Keybindings.Universal,
 		cfg.Keybindings.Issues,
@@ -124,7 +134,7 @@ func (m *Model) initScreen() tea.Msg {
 		showError(err)
 	}
 
-	return initMsg{Config: cfg}
+	return initMsg{Config: cfg, RepoUrl: url}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -427,6 +437,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case initMsg:
 		m.ctx.Config = &msg.Config
+		m.ctx.RepoUrl = msg.RepoUrl
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
 		m.ctx.View = m.ctx.Config.Defaults.View
@@ -436,10 +447,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.fetchRepo())
-
-	case repoFetchedMsg:
-		m.ctx.RepoUrl = &msg.Url
+		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
@@ -584,7 +592,8 @@ func (m Model) View() string {
 }
 
 type initMsg struct {
-	Config config.Config
+	Config  config.Config
+	RepoUrl *string
 }
 
 func (m *Model) setCurrSectionId(newSectionId int) {
@@ -624,6 +633,7 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	switch sType {
 	case reposection.SectionType:
 		m.repo, cmd = m.repo.Update(msg)
+
 	case prssection.SectionType:
 		updatedSection, cmd = m.prs[id].Update(msg)
 		m.prs[id] = updatedSection
@@ -820,12 +830,12 @@ func (m *Model) renderRunningTask() string {
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.WarningText).
 			Background(m.ctx.Theme.SelectedBackground).
-			Render(fmt.Sprintf(" %s", task.Error.Error()))
+			Render(fmt.Sprintf("%s %s", constants.FailureIcon, task.Error.Error()))
 	case context.TaskFinished:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SuccessText).
 			Background(m.ctx.Theme.SelectedBackground).
-			Render(fmt.Sprintf(" %s", task.FinishedText))
+			Render(fmt.Sprintf("%s %s", constants.SuccessIcon, task.FinishedText))
 	}
 
 	var numProcessing int
@@ -845,8 +855,9 @@ func (m *Model) renderRunningTask() string {
 
 	return lipgloss.NewStyle().
 		Padding(0, 1).
+		MaxHeight(1).
 		Background(m.ctx.Theme.SelectedBackground).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus))
+		Render(strings.TrimSpace(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus)))
 }
 
 type userFetchedMsg struct {
@@ -875,21 +886,4 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 			return intervalRefresh(t)
 		},
 	)
-}
-
-func (m *Model) fetchRepo() tea.Cmd {
-	if !config.IsFeatureEnabled(config.FF_REPO_VIEW) {
-		return nil
-	}
-	return func() tea.Msg {
-		url, err := git.GetOriginUrl(*m.ctx.RepoPath)
-		if err != nil {
-			return constants.ErrMsg{Err: err}
-		}
-		return repoFetchedMsg{Url: url}
-	}
-}
-
-type repoFetchedMsg struct {
-	Url string
 }

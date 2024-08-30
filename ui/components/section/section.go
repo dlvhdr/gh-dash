@@ -146,17 +146,6 @@ type PromptConfirmation interface {
 	GetPromptConfirmation() string
 }
 
-func (m *BaseModel) CreateNextTickCmd(nextTickCmd tea.Cmd) tea.Cmd {
-	if m == nil || nextTickCmd == nil {
-		return nil
-	}
-	return m.MakeSectionCmd(func() tea.Msg {
-		return SectionTickMsg{
-			InternalTickMsg: nextTickCmd(),
-		}
-	})
-}
-
 func (m *BaseModel) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
 		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
@@ -189,10 +178,6 @@ type SectionRowsFetchedMsg struct {
 
 func (msg SectionRowsFetchedMsg) GetSectionId() int {
 	return msg.SectionId
-}
-
-type SectionTickMsg struct {
-	InternalTickMsg tea.Msg
 }
 
 func (m *BaseModel) GetId() int {

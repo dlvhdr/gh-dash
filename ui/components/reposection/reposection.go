@@ -25,9 +25,10 @@ const SectionType = "repo"
 
 type Model struct {
 	section.BaseModel
-	repo     *git.Repo
-	Branches []branch.Branch
-	Prs      []data.PullRequestData
+	repo           *git.Repo
+	Branches       []branch.Branch
+	Prs            []data.PullRequestData
+	isRefreshSetUp bool
 }
 
 func NewModel(
@@ -53,12 +54,14 @@ func NewModel(
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
 	m.Prs = []data.PullRequestData{}
+	m.isRefreshSetUp = false
 
 	return m
 }
 
 func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	var err error
 
 	switch msg := msg.(type) {
@@ -77,6 +80,11 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if err != nil {
 				m.Ctx.Error = err
 			}
+		case key.Matches(msg, keys.BranchKeys.FastForward):
+			cmd, err = m.fastForward()
+			if err != nil {
+				m.Ctx.Error = err
+			}
 
 		}
 
@@ -85,16 +93,32 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Table.SetIsLoading(false)
 		m.updateBranches()
 		m.Table.SetRows(m.BuildRows())
-		m.Table.ResetCurrItem()
 
+	case SectionPullRequestsFetchedMsg:
+		m.Prs = msg.Prs
+		m.updateBranches()
+		m.TotalCount = msg.TotalCount
+		m.PageInfo = &msg.PageInfo
+		m.Table.SetIsLoading(false)
+		m.Table.SetRows(m.BuildRows())
+		m.Table.UpdateLastUpdated(time.Now())
+		m.UpdateTotalItemsCount(m.TotalCount)
+
+	case RefreshBranchesMsg:
+		cmds = append(cmds, m.onRefreshBranchesMsg()...)
+
+	case FetchMsg:
+		cmds = append(cmds, m.onFetchMsg()...)
 	}
 
-	m.Table.SetRows(m.BuildRows())
+	cmds = append(cmds, cmd)
 
+	m.Table.SetRows(m.BuildRows())
 	table, tableCmd := m.Table.Update(msg)
 	m.Table = table
+	cmds = append(cmds, tableCmd)
 
-	return m, tea.Batch(cmd, tableCmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) View() string {
@@ -335,12 +359,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 	if m.Ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
-		cmds = append(cmds, m.fetchPRsCmd()...)
+		cmds = append(cmds, m.fetchRepoCmd()...)
+		cmds = append(cmds, m.fetchPRsCmd())
 	}
 
 	m.Table.SetIsLoading(true)
 	cmds = append(cmds, m.Table.StartLoadingSpinner())
-
 	return cmds
 }
 
@@ -349,13 +373,11 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 
 	t := config.RepoView
 	cfg := config.PrsSectionConfig{
-		Title:   "Local Branches",
-		Filters: "author:@me",
-		Limit:   utils.IntPtr(20),
-		Type:    &t,
+		Title: "Local Branches",
+		Type:  &t,
 	}
 	m := NewModel(
-		1,
+		0,
 		&ctx,
 		cfg,
 		time.Now(),
@@ -363,8 +385,15 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 
 	if ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
+		cmds = append(cmds, m.fetchRepoCmd()...)
+		cmds = append(cmds, m.fetchPRsCmd())
 	}
-	cmds = append(cmds, m.FetchNextPageSectionRows()...)
+
+	if !m.isRefreshSetUp {
+		m.isRefreshSetUp = true
+		cmds = append(cmds, m.tickRefreshBranchesCmd())
+		cmds = append(cmds, m.tickFetchCmd())
+	}
 
 	return m, tea.Batch(cmds...)
 }

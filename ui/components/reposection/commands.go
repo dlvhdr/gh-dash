@@ -23,6 +23,56 @@ type UpdatePRMsg struct {
 	RemovedAssignees *data.Assignees
 }
 
+func (m *Model) fastForward() (tea.Cmd, error) {
+	b := m.getCurrBranch()
+
+	taskId := fmt.Sprintf("fast-forward_%s_%d", b.Data.Name, time.Now().Unix())
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Fast-forwarding branch %s", b.Data.Name),
+		FinishedText: fmt.Sprintf("Branch %s has been fast-forwarded", b.Data.Name),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		var err error
+		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+
+		if b.Data.IsCheckedOut {
+			err = repo.Pull(gitm.PullOptions{
+				All:            false,
+				Remote:         "origin",
+				Branch:         b.Data.Name,
+				CommandOptions: gitm.CommandOptions{Args: []string{"--ff-only", "--no-edit"}},
+			})
+		} else {
+			err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{
+				"--no-write-fetch-head",
+				"origin",
+				b.Data.Name + ":" + b.Data.Name,
+			}}})
+		}
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      taskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	}), nil
+}
+
 func (m *Model) push() (tea.Cmd, error) {
 	b := m.getCurrBranch()
 
@@ -94,7 +144,6 @@ func (m *Model) checkout() (tea.Cmd, error) {
 
 type repoMsg struct {
 	repo *git.Repo
-	err  error
 }
 
 func (m *Model) readRepoCmd() []tea.Cmd {
@@ -102,20 +151,20 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
 	if m.Ctx.RepoPath != nil {
 		branchesTask := context.Task{
-			Id:        branchesTaskId,
-			StartText: "Reading local branches",
-			FinishedText: fmt.Sprintf(
-				`Read branches successfully for "%s"`,
-				*m.Ctx.RepoPath,
-			),
-			State: context.TaskStart,
-			Error: nil,
+			Id:           branchesTaskId,
+			StartText:    "Reading local branches",
+			FinishedText: "Branches read",
+			State:        context.TaskStart,
+			Error:        nil,
 		}
 		bCmd := m.Ctx.StartTask(branchesTask)
 		cmds = append(cmds, bCmd)
 	}
 	cmds = append(cmds, func() tea.Msg {
 		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: branchesTaskId, Err: err}
+		}
 		return constants.TaskFinishedMsg{
 			SectionId:   0,
 			SectionType: SectionType,
@@ -127,9 +176,38 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 	return cmds
 }
 
-func (m *Model) fetchPRsCmd() []tea.Cmd {
-	prsTaskId := fmt.Sprintf("fetching_pr_branches_%d", time.Now().Unix())
+func (m *Model) fetchRepoCmd() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
+	fetchTaskId := fmt.Sprintf("git_fetch_repo_%d", time.Now().Unix())
+	if m.Ctx.RepoPath == nil {
+		return []tea.Cmd{}
+	}
+	fetchTask := context.Task{
+		Id:           fetchTaskId,
+		StartText:    "Fetching branches from origin",
+		FinishedText: "Fetched origin branches",
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	cmds = append(cmds, m.Ctx.StartTask(fetchTask))
+	cmds = append(cmds, func() tea.Msg {
+		repo, err := git.FetchRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: fetchTaskId, Err: err}
+		}
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      fetchTaskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	})
+	return cmds
+}
+
+func (m *Model) fetchPRsCmd() tea.Cmd {
+	prsTaskId := fmt.Sprintf("fetching_pr_branches_%d", time.Now().Unix())
 	task := context.Task{
 		Id:           prsTaskId,
 		StartText:    "Fetching PRs for your branches",
@@ -137,14 +215,13 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 		State:        context.TaskStart,
 		Error:        nil,
 	}
-	cmds = append(cmds, m.Ctx.StartTask(task))
-	cmds = append(cmds, func() tea.Msg {
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
 		limit := m.Config.Limit
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		res, err := data.FetchPullRequests("author:@me", *limit, nil)
-		// TODO: enrich with branches only for section with branches
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(*m.Ctx.RepoUrl)), *limit, nil)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   0,
@@ -153,7 +230,6 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 				Err:         err,
 			}
 		}
-
 		return constants.TaskFinishedMsg{
 			SectionId:   0,
 			SectionType: SectionType,
@@ -166,5 +242,38 @@ func (m *Model) fetchPRsCmd() []tea.Cmd {
 			},
 		}
 	})
+}
+
+type RefreshBranchesMsg time.Time
+
+type FetchMsg time.Time
+
+const refreshIntervalSec = 30
+
+const fetchIntervalSec = 60
+
+func (m *Model) tickRefreshBranchesCmd() tea.Cmd {
+	return tea.Tick(time.Second*refreshIntervalSec, func(t time.Time) tea.Msg {
+		return RefreshBranchesMsg(t)
+	})
+}
+
+func (m *Model) tickFetchCmd() tea.Cmd {
+	return tea.Tick(time.Second*fetchIntervalSec, func(t time.Time) tea.Msg {
+		return FetchMsg(t)
+	})
+}
+
+func (m *Model) onRefreshBranchesMsg() []tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+	cmds = append(cmds, m.readRepoCmd()...)
+	cmds = append(cmds, m.tickRefreshBranchesCmd())
+	return cmds
+}
+
+func (m *Model) onFetchMsg() []tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+	cmds = append(cmds, m.fetchRepoCmd()...)
+	cmds = append(cmds, m.tickRefreshBranchesCmd())
 	return cmds
 }

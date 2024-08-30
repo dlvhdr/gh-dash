@@ -10,16 +10,21 @@ import (
 )
 
 type BranchKeyMap struct {
-	Checkout key.Binding
-	Push     key.Binding
-	Delete   key.Binding
-	ViewPRs  key.Binding
+	Checkout    key.Binding
+	FastForward key.Binding
+	Push        key.Binding
+	Delete      key.Binding
+	ViewPRs     key.Binding
 }
 
 var BranchKeys = BranchKeyMap{
 	Checkout: key.NewBinding(
 		key.WithKeys("C", " "),
 		key.WithHelp("C/space", "checkout"),
+	),
+	FastForward: key.NewBinding(
+		key.WithKeys("f"),
+		key.WithHelp("f", "fast-forward"),
 	),
 	Push: key.NewBinding(
 		key.WithKeys("P"),
@@ -38,6 +43,8 @@ var BranchKeys = BranchKeyMap{
 func BranchFullHelp() []key.Binding {
 	return []key.Binding{
 		BranchKeys.Checkout,
+		BranchKeys.FastForward,
+		BranchKeys.Push,
 		BranchKeys.Delete,
 		BranchKeys.ViewPRs,
 	}

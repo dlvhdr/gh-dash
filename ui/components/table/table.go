@@ -81,7 +81,9 @@ func NewModel(
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	if m.isLoading {
+		m.loadingSpinner, cmd = m.loadingSpinner.Update(msg)
+	}
 	return m, cmd
 }
 
