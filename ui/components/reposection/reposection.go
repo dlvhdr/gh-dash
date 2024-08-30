@@ -118,6 +118,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case SectionPullRequestsFetchedMsg:
 		m.Prs = msg.Prs
 
+	case RefreshBranchesMsg:
+		cmds = append(cmds, m.onRefreshBranchesMsg()...)
+
+	case FetchMsg:
+		cmds = append(cmds, m.onFetchMsg()...)
+
 	}
 
 	m.updateBranchesWithPrs()
@@ -318,13 +324,7 @@ func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
 
-	sorted := m.Branches
-	filtered := make([]branch.Branch, 0)
-	for _, b := range sorted {
-		if strings.Contains(b.Data.Name, m.SearchValue) {
-			filtered = append(filtered, b)
-		}
-	}
+	filtered := m.getFilteredBranches()
 
 	for i, b := range filtered {
 		if strings.Contains(b.Data.Name, m.SearchValue) {
@@ -340,6 +340,17 @@ func (m Model) BuildRows() []table.Row {
 	}
 
 	return rows
+}
+
+func (m *Model) getFilteredBranches() []branch.Branch {
+	sorted := m.Branches
+	filtered := make([]branch.Branch, 0)
+	for _, b := range sorted {
+		if strings.Contains(b.Data.Name, m.SearchValue) {
+			filtered = append(filtered, b)
+		}
+	}
+	return filtered
 }
 
 func findPRForRef(prs []data.PullRequestData, branch string) *data.PullRequestData {
