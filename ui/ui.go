@@ -222,9 +222,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
 
-		case key.Matches(msg, m.keys.OpenGithub):
-			cmds = append(cmds, m.openBrowser())
-
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
 			currSection.ResetRows()
@@ -270,7 +267,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, cmd
 
-			// this is a change
 		case key.Matches(msg, m.keys.Quit):
 			if m.ctx.Config.ConfirmQuit {
 				m.footer, cmd = m.footer.Update(msg)
@@ -280,6 +276,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case m.ctx.View == config.RepoView:
 			switch {
+
+			case key.Matches(msg, m.keys.OpenGithub):
+				cmds = append(cmds, m.repo.(*reposection.Model).OpenGithub())
+
 			case key.Matches(msg, keys.BranchKeys.Delete):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("delete")
@@ -304,6 +304,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case m.ctx.View == config.PRsView:
 			switch {
+			case key.Matches(msg, m.keys.OpenGithub):
+				cmds = append(cmds, m.openBrowser())
+
 			case key.Matches(msg, keys.PRKeys.Approve):
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsApproving(true)
@@ -380,6 +383,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case m.ctx.View == config.IssuesView:
 			switch {
+			case key.Matches(msg, m.keys.OpenGithub):
+				cmds = append(cmds, m.openBrowser())
+
 			case key.Matches(msg, keys.IssueKeys.Assign):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsAssigning(true)

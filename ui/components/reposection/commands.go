@@ -9,6 +9,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 )
@@ -276,4 +277,10 @@ func (m *Model) onFetchMsg() []tea.Cmd {
 	cmds = append(cmds, m.fetchRepoCmd()...)
 	cmds = append(cmds, m.tickRefreshBranchesCmd())
 	return cmds
+}
+
+func (m *Model) OpenGithub() tea.Cmd {
+	row := m.CurrRow()
+	b := m.getFilteredBranches()[row]
+	return tasks.OpenBranchPR(m.Ctx, tasks.SectionIdentifer{Id: 0, Type: SectionType}, b.Data.Name)
 }

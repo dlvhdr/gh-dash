@@ -64,6 +64,26 @@ func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
 	})
 }
 
+func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifer, branch string) tea.Cmd {
+	return fireTask(ctx, GitHubTask{
+		Id: fmt.Sprintf("branch_open_%s", branch),
+		Args: []string{
+			"pr",
+			"view",
+			"--web",
+			branch,
+			"-R",
+			*ctx.RepoUrl,
+		},
+		Section:      section,
+		StartText:    fmt.Sprintf("Opening PR for branch %s", branch),
+		FinishedText: fmt.Sprintf("PR for branch %s has been opened", branch),
+		Msg: func(c *exec.Cmd, err error) UpdatePRMsg {
+			return UpdatePRMsg{}
+		},
+	})
+}
+
 func ReopenPR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
