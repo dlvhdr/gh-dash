@@ -12,7 +12,9 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/search"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
@@ -41,16 +43,16 @@ func NewModel(
 	m.BaseModel = section.NewModel(
 		ctx,
 		section.NewSectionOptions{
-			Id:                id,
-			Config:            cfg.ToSectionConfig(),
-			Type:              SectionType,
-			Columns:           GetSectionColumns(ctx, cfg),
-			Singular:          "branch",
-			Plural:            "branches",
-			LastUpdated:       lastUpdated,
-			IsSearchSupported: false,
+			Id:          id,
+			Config:      cfg.ToSectionConfig(),
+			Type:        SectionType,
+			Columns:     GetSectionColumns(ctx, cfg),
+			Singular:    "branch",
+			Plural:      "branches",
+			LastUpdated: lastUpdated,
 		},
 	)
+	m.SearchBar = search.NewModel(ctx, search.SearchOptions{})
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
 	m.Prs = []data.PullRequestData{}
@@ -113,6 +115,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	cmds = append(cmds, cmd)
 
+	search, searchCmd := m.SearchBar.Update(msg)
+	cmds = append(cmds, searchCmd)
+	m.SearchBar = search
+
+	m.Table.SetRows(m.BuildRows())
+
 	m.Table.SetRows(m.BuildRows())
 	table, tableCmd := m.Table.Update(msg)
 	m.Table = table
@@ -135,8 +143,9 @@ func (m *Model) View() string {
 	} else {
 		view = m.Table.View()
 	}
+
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
-		view,
+		lipgloss.JoinVertical(lipgloss.Left, m.SearchBar.View(*m.Ctx), view),
 	)
 }
 
@@ -404,7 +413,7 @@ func (m Model) GetDimensions() constants.Dimensions {
 	}
 	return constants.Dimensions{
 		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight,
+		Height: m.Ctx.MainContentHeight - common.SearchHeight,
 	}
 }
 
