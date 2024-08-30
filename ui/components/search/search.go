@@ -19,17 +19,19 @@ type Model struct {
 type SearchOptions struct {
 	Prefix       string
 	InitialValue string
+	Placeholder  string
 }
 
 func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
-	ti.Placeholder = ""
-	ti.Focus()
+	ti.Placeholder = opts.Placeholder
 	ti.Width = getInputWidth(ctx, prompt)
 	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Faint(true)
+	ti.Cursor.Style = ti.Cursor.Style.Faint(true)
+	ti.Cursor.TextStyle = ti.Cursor.TextStyle.Faint(true)
 	ti.Blur()
 	ti.SetValue(opts.InitialValue)
 	ti.CursorStart()
