@@ -12,7 +12,9 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
+	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/search"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
@@ -41,16 +43,17 @@ func NewModel(
 	m.BaseModel = section.NewModel(
 		ctx,
 		section.NewSectionOptions{
-			Id:                id,
-			Config:            cfg.ToSectionConfig(),
-			Type:              SectionType,
-			Columns:           GetSectionColumns(ctx, cfg),
-			Singular:          "branch",
-			Plural:            "branches",
-			LastUpdated:       lastUpdated,
-			IsSearchSupported: false,
+			Id:          id,
+			Config:      cfg.ToSectionConfig(),
+			Type:        SectionType,
+			Columns:     GetSectionColumns(ctx, cfg),
+			Singular:    "branch",
+			Plural:      "branches",
+			LastUpdated: lastUpdated,
 		},
 	)
+	m.SearchBar = search.NewModel(ctx, search.SearchOptions{Placeholder: "Search branches"})
+	m.SearchValue = ""
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
 	m.Prs = []data.PullRequestData{}
@@ -61,12 +64,31 @@ func NewModel(
 
 func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
+	cmds := make([]tea.Cmd, 0)
 	var err error
 
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
+
+		if m.IsSearchFocused() {
+			switch {
+
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.SearchBar.SetValue(m.SearchValue)
+				blinkCmd := m.SetIsSearching(false)
+				return m, blinkCmd
+
+			case msg.Type == tea.KeyEnter:
+				m.Table.ResetCurrItem()
+				m.SetIsSearching(false)
+				m.SearchValue = m.SearchBar.Value()
+				m.BuildRows()
+				return m, nil
+			}
+
+			break
+		}
 
 		switch {
 		case key.Matches(msg, keys.BranchKeys.Checkout):
@@ -91,30 +113,26 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case repoMsg:
 		m.repo = msg.repo
 		m.Table.SetIsLoading(false)
-		m.updateBranches()
 		m.Table.SetRows(m.BuildRows())
 
 	case SectionPullRequestsFetchedMsg:
 		m.Prs = msg.Prs
-		m.updateBranches()
-		m.TotalCount = msg.TotalCount
-		m.PageInfo = &msg.PageInfo
-		m.Table.SetIsLoading(false)
-		m.Table.SetRows(m.BuildRows())
-		m.Table.UpdateLastUpdated(time.Now())
-		m.UpdateTotalItemsCount(m.TotalCount)
 
-	case RefreshBranchesMsg:
-		cmds = append(cmds, m.onRefreshBranchesMsg()...)
-
-	case FetchMsg:
-		cmds = append(cmds, m.onFetchMsg()...)
 	}
+
+	m.updateBranchesWithPrs()
 
 	cmds = append(cmds, cmd)
 
+	search, searchCmd := m.SearchBar.Update(msg)
+	cmds = append(cmds, searchCmd)
+	m.SearchBar = search
+
+	m.Table.SetRows(m.BuildRows())
+
 	m.Table.SetRows(m.BuildRows())
 	table, tableCmd := m.Table.Update(msg)
+	cmds = append(cmds, tableCmd)
 	m.Table = table
 	cmds = append(cmds, tableCmd)
 
@@ -135,8 +153,9 @@ func (m *Model) View() string {
 	} else {
 		view = m.Table.View()
 	}
+
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
-		view,
+		lipgloss.JoinVertical(lipgloss.Left, m.SearchBar.View(*m.Ctx), view),
 	)
 }
 
@@ -268,7 +287,7 @@ func GetSectionColumns(
 	}
 }
 
-func (m *Model) updateBranches() {
+func (m *Model) updateBranchesWithPrs() {
 	branches := make([]branch.Branch, 0)
 	for _, ref := range m.repo.Branches {
 		b := branch.Branch{Ctx: m.Ctx, Data: ref, Columns: m.Table.Columns}
@@ -300,12 +319,20 @@ func (m Model) BuildRows() []table.Row {
 	currItem := m.Table.GetCurrItem()
 
 	sorted := m.Branches
+	filtered := make([]branch.Branch, 0)
+	for _, b := range sorted {
+		if strings.Contains(b.Data.Name, m.SearchValue) {
+			filtered = append(filtered, b)
+		}
+	}
 
-	for i, b := range sorted {
-		rows = append(
-			rows,
-			b.ToTableRow(currItem == i),
-		)
+	for i, b := range filtered {
+		if strings.Contains(b.Data.Name, m.SearchValue) {
+			rows = append(
+				rows,
+				b.ToTableRow(currItem == i),
+			)
+		}
 	}
 
 	if rows == nil {
@@ -404,7 +431,7 @@ func (m Model) GetDimensions() constants.Dimensions {
 	}
 	return constants.Dimensions{
 		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
-		Height: m.Ctx.MainContentHeight,
+		Height: m.Ctx.MainContentHeight - common.SearchHeight,
 	}
 }
 

@@ -36,14 +36,13 @@ func NewModel(
 	m.BaseModel = section.NewModel(
 		ctx,
 		section.NewSectionOptions{
-			Id:                id,
-			Config:            cfg.ToSectionConfig(),
-			Type:              SectionType,
-			Columns:           GetSectionColumns(cfg, ctx),
-			Singular:          m.GetItemSingularForm(),
-			Plural:            m.GetItemPluralForm(),
-			LastUpdated:       lastUpdated,
-			IsSearchSupported: true,
+			Id:          id,
+			Config:      cfg.ToSectionConfig(),
+			Type:        SectionType,
+			Columns:     GetSectionColumns(cfg, ctx),
+			Singular:    m.GetItemSingularForm(),
+			Plural:      m.GetItemPluralForm(),
+			LastUpdated: lastUpdated,
 		},
 	)
 	m.Prs = []data.PullRequestData{}

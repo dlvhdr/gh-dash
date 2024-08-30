@@ -12,29 +12,34 @@ import (
 
 type Model struct {
 	ctx          *context.ProgramContext
-	sectionType  string
 	initialValue string
 	textInput    textinput.Model
 }
 
-func NewModel(sectionType string, ctx *context.ProgramContext, initialValue string) Model {
-	prompt := fmt.Sprintf(" is:%s ", sectionType)
+type SearchOptions struct {
+	Prefix       string
+	InitialValue string
+	Placeholder  string
+}
+
+func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
+	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
-	ti.Placeholder = ""
-	ti.Focus()
+	ti.Placeholder = opts.Placeholder
 	ti.Width = getInputWidth(ctx, prompt)
 	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Faint(true)
+	ti.Cursor.Style = ti.Cursor.Style.Faint(true)
+	ti.Cursor.TextStyle = ti.Cursor.TextStyle.Faint(true)
 	ti.Blur()
-	ti.SetValue(initialValue)
+	ti.SetValue(opts.InitialValue)
 	ti.CursorStart()
 
 	return Model{
 		ctx:          ctx,
 		textInput:    ti,
-		initialValue: initialValue,
-		sectionType:  sectionType,
+		initialValue: opts.InitialValue,
 	}
 }
 

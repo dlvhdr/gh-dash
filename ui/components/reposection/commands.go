@@ -210,8 +210,8 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 	prsTaskId := fmt.Sprintf("fetching_pr_branches_%d", time.Now().Unix())
 	task := context.Task{
 		Id:           prsTaskId,
-		StartText:    "Fetching PRs for your branches",
-		FinishedText: "PRs for your branches have been fetched",
+		StartText:    "Fetching PRs",
+		FinishedText: "PRs fetched",
 		State:        context.TaskStart,
 		Error:        nil,
 	}

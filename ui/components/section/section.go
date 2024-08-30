@@ -42,14 +42,13 @@ type BaseModel struct {
 }
 
 type NewSectionOptions struct {
-	Id                int
-	Config            config.SectionConfig
-	IsSearchSupported bool
-	Type              string
-	Columns           []table.Column
-	Singular          string
-	Plural            string
-	LastUpdated       time.Time
+	Id          int
+	Config      config.SectionConfig
+	Type        string
+	Columns     []table.Column
+	Singular    string
+	Plural      string
+	LastUpdated time.Time
 }
 
 func NewModel(
@@ -57,21 +56,23 @@ func NewModel(
 	options NewSectionOptions,
 ) BaseModel {
 	m := BaseModel{
-		Ctx:                   ctx,
-		Id:                    options.Id,
-		Type:                  options.Type,
-		Config:                options.Config,
-		Spinner:               spinner.Model{Spinner: spinner.Dot},
-		Columns:               options.Columns,
-		SingularForm:          options.Singular,
-		PluralForm:            options.Plural,
-		SearchBar:             search.NewModel(options.Type, ctx, options.Config.Filters),
+		Ctx:          ctx,
+		Id:           options.Id,
+		Type:         options.Type,
+		Config:       options.Config,
+		Spinner:      spinner.Model{Spinner: spinner.Dot},
+		Columns:      options.Columns,
+		SingularForm: options.Singular,
+		PluralForm:   options.Plural,
+		SearchBar: search.NewModel(ctx, search.SearchOptions{
+			Prefix:       fmt.Sprintf("is:%s", options.Type),
+			InitialValue: options.Config.Filters,
+		}),
 		SearchValue:           options.Config.Filters,
 		IsSearching:           false,
 		TotalCount:            0,
 		PageInfo:              nil,
 		PromptConfirmationBox: prompt.NewModel(ctx),
-		IsSearchSupported:     options.IsSearchSupported,
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -301,11 +302,7 @@ func (m *BaseModel) GetMainContent() string {
 }
 
 func (m *BaseModel) View() string {
-	search := ""
-	if m.IsSearchSupported {
-		search = m.SearchBar.View(*m.Ctx)
-	}
-
+	search := m.SearchBar.View(*m.Ctx)
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
