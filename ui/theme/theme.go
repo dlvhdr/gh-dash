@@ -29,7 +29,7 @@ var DefaultTheme = &Theme{
 	FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
 	InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
 	SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
-	WarningText:        lipgloss.AdaptiveColor{Light: "003", Dark: "003"},
+	WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
 }
 
 func ParseTheme(cfg *config.Config) Theme {

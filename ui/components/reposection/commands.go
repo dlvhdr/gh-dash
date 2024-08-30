@@ -42,11 +42,12 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
 
-		err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{
-			"--no-write-fetch-head",
-			"origin",
-			b.Data.Name + ":" + b.Data.Name,
-		}}})
+		err = repo.Pull(gitm.PullOptions{
+			All:            false,
+			Remote:         "origin",
+			Branch:         b.Data.Name,
+			CommandOptions: gitm.CommandOptions{Args: []string{"--ff-only", "--no-edit"}},
+		})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -142,14 +143,11 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
 	if m.Ctx.RepoPath != nil {
 		branchesTask := context.Task{
-			Id:        branchesTaskId,
-			StartText: "Reading local branches",
-			FinishedText: fmt.Sprintf(
-				`Read branches successfully for "%s"`,
-				*m.Ctx.RepoPath,
-			),
-			State: context.TaskStart,
-			Error: nil,
+			Id:           branchesTaskId,
+			StartText:    "Reading local branches",
+			FinishedText: "Branches read",
+			State:        context.TaskStart,
+			Error:        nil,
 		}
 		bCmd := m.Ctx.StartTask(branchesTask)
 		cmds = append(cmds, bCmd)
@@ -163,6 +161,36 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 			SectionId:   0,
 			SectionType: SectionType,
 			TaskId:      branchesTaskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	})
+	return cmds
+}
+
+func (m *Model) fetchRepoCmd() []tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+	fetchTaskId := fmt.Sprintf("git_fetch_repo_%d", time.Now().Unix())
+	if m.Ctx.RepoPath == nil {
+		return []tea.Cmd{}
+	}
+	fetchTask := context.Task{
+		Id:           fetchTaskId,
+		StartText:    "Fetching branches from origin",
+		FinishedText: "Fetched origin branches",
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	cmds = append(cmds, m.Ctx.StartTask(fetchTask))
+	cmds = append(cmds, func() tea.Msg {
+		repo, err := git.FetchRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: fetchTaskId, Err: err}
+		}
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      fetchTaskId,
 			Msg:         repoMsg{repo: repo},
 			Err:         err,
 		}
@@ -210,17 +238,34 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 
 type RefreshBranchesMsg time.Time
 
-const refreshIntervalSec = 20
+type FetchMsg time.Time
 
-func (m *Model) tickRefreshCmd() tea.Cmd {
+const refreshIntervalSec = 30
+
+const fetchIntervalSec = 60
+
+func (m *Model) tickRefreshBranchesCmd() tea.Cmd {
 	return tea.Tick(time.Second*refreshIntervalSec, func(t time.Time) tea.Msg {
 		return RefreshBranchesMsg(t)
 	})
 }
 
-func (m *Model) onRefreshCmd() []tea.Cmd {
+func (m *Model) tickFetchCmd() tea.Cmd {
+	return tea.Tick(time.Second*fetchIntervalSec, func(t time.Time) tea.Msg {
+		return FetchMsg(t)
+	})
+}
+
+func (m *Model) onRefreshBranchesMsg() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
 	cmds = append(cmds, m.readRepoCmd()...)
-	cmds = append(cmds, m.tickRefreshCmd())
+	cmds = append(cmds, m.tickRefreshBranchesCmd())
+	return cmds
+}
+
+func (m *Model) onFetchMsg() []tea.Cmd {
+	cmds := make([]tea.Cmd, 0)
+	cmds = append(cmds, m.fetchRepoCmd()...)
+	cmds = append(cmds, m.tickRefreshBranchesCmd())
 	return cmds
 }

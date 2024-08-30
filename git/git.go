@@ -60,10 +60,6 @@ func GetRepo(dir string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--all"}}})
-	if err != nil {
-		return nil, err
-	}
 
 	bNames, err := repo.Branches()
 	if err != nil {
@@ -94,10 +90,7 @@ func GetRepo(dir string) (*Repo, error) {
 		if err != nil {
 			commitsBehind = 0
 		}
-		remotes, err := repo.RemoteGetURL(b)
-		if err != nil {
-			commitsBehind = 0
-		}
+		remotes, _ := repo.RemoteGetURL(b)
 		branches[i] = Branch{
 			Name:          b,
 			LastUpdatedAt: updatedAt,
@@ -126,6 +119,18 @@ func GetRepo(dir string) (*Repo, error) {
 	}
 
 	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches}, nil
+}
+
+func FetchRepo(dir string) (*Repo, error) {
+	repo, err := gitm.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--all"}}})
+	if err != nil {
+		return nil, err
+	}
+	return GetRepo(dir)
 }
 
 func GetRepoShortName(url string) string {

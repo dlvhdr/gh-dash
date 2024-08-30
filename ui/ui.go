@@ -855,8 +855,9 @@ func (m *Model) renderRunningTask() string {
 
 	return lipgloss.NewStyle().
 		Padding(0, 1).
+		MaxHeight(1).
 		Background(m.ctx.Theme.SelectedBackground).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus))
+		Render(strings.TrimSpace(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus)))
 }
 
 type userFetchedMsg struct {

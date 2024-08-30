@@ -105,7 +105,10 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.UpdateTotalItemsCount(m.TotalCount)
 
 	case RefreshBranchesMsg:
-		cmds = append(cmds, m.onRefreshCmd()...)
+		cmds = append(cmds, m.onRefreshBranchesMsg()...)
+
+	case FetchMsg:
+		cmds = append(cmds, m.onFetchMsg()...)
 	}
 
 	cmds = append(cmds, cmd)
@@ -356,6 +359,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 	if m.Ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
+		cmds = append(cmds, m.fetchRepoCmd()...)
 		cmds = append(cmds, m.fetchPRsCmd())
 	}
 
@@ -381,12 +385,14 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 
 	if ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
+		cmds = append(cmds, m.fetchRepoCmd()...)
 		cmds = append(cmds, m.fetchPRsCmd())
 	}
 
 	if !m.isRefreshSetUp {
 		m.isRefreshSetUp = true
-		cmds = append(cmds, m.tickRefreshCmd())
+		cmds = append(cmds, m.tickRefreshBranchesCmd())
+		cmds = append(cmds, m.tickFetchCmd())
 	}
 
 	return m, tea.Batch(cmds...)
