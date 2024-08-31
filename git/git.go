@@ -66,7 +66,9 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	headRev, err := repo.RevParse("HEAD")
+	headRef, err := repo.RevParse("HEAD", gitm.RevParseOptions{
+		CommandOptions: gitm.CommandOptions{Args: []string{"--abbrev-ref"}},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -75,11 +77,10 @@ func GetRepo(dir string) (*Repo, error) {
 	for i, b := range bNames {
 		var updatedAt *time.Time
 		var lastCommitMsg *string
-		isHead := false
+		isHead := b == headRef
 		commits, err := gitm.Log(dir, b, gitm.LogOptions{MaxCount: 1})
 		if err == nil && len(commits) > 0 {
 			updatedAt = &commits[0].Committer.When
-			isHead = commits[0].ID.Equal(headRev)
 			lastCommitMsg = utils.StringPtr(commits[0].Summary())
 		}
 		commitsAhead, err := repo.RevListCount([]string{fmt.Sprintf("origin/%s..%s", b, b)})

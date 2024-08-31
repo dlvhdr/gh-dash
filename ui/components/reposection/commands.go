@@ -137,14 +137,15 @@ func (m *Model) checkout() (tea.Cmd, error) {
 			SectionId:   0,
 			SectionType: SectionType,
 			TaskId:      taskId,
-			Msg:         repoMsg{repo: repo},
+			Msg:         repoMsg{repo: repo, resetSelection: true},
 			Err:         err,
 		}
 	}), nil
 }
 
 type repoMsg struct {
-	repo *git.Repo
+	repo           *git.Repo
+	resetSelection bool
 }
 
 func (m *Model) readRepoCmd() []tea.Cmd {
@@ -299,6 +300,37 @@ func (m *Model) deleteBranch() tea.Cmd {
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
 		err := gitm.DeleteBranch(*m.Ctx.RepoPath, b.Data.Name, gitm.DeleteBranchOptions{Force: true})
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		if err != nil {
+			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      taskId,
+			Msg:         repoMsg{repo: repo},
+			Err:         err,
+		}
+	})
+}
+
+func (m *Model) newBranch(name string) tea.Cmd {
+	taskId := fmt.Sprintf("create_branch_%s_%d", name, time.Now().Unix())
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Creating branch %s", name),
+		FinishedText: fmt.Sprintf("Branch %s has been created", name),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		// TODO: find out what the default branch is / use the currently selected branch
+		err := gitm.Checkout(*m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: "main"})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}

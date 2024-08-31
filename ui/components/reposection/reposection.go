@@ -102,20 +102,24 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
-				pr := findPRForRef(m.Prs, m.getCurrBranch().Data.Name)
-				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
-				if input == "Y" || input == "y" {
-					switch action {
-					case "delete":
-						cmd = m.deleteBranch()
-					case "close":
-						cmd = tasks.ClosePR(m.Ctx, sid, pr)
-					case "reopen":
-						cmd = tasks.ReopenPR(m.Ctx, sid, pr)
-					case "ready":
-						cmd = tasks.PRReady(m.Ctx, sid, pr)
-					case "merge":
-						cmd = tasks.MergePR(m.Ctx, sid, pr)
+				if action == "new" {
+					cmd = m.newBranch(input)
+				} else {
+					pr := findPRForRef(m.Prs, m.getCurrBranch().Data.Name)
+					sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
+					if input == "Y" || input == "y" {
+						switch action {
+						case "delete":
+							cmd = m.deleteBranch()
+						case "close":
+							cmd = tasks.ClosePR(m.Ctx, sid, pr)
+						case "reopen":
+							cmd = tasks.ReopenPR(m.Ctx, sid, pr)
+						case "ready":
+							cmd = tasks.PRReady(m.Ctx, sid, pr)
+						case "merge":
+							cmd = tasks.MergePR(m.Ctx, sid, pr)
+						}
 					}
 				}
 
@@ -152,6 +156,9 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.repo = msg.repo
 		m.Table.SetIsLoading(false)
 		m.Table.SetRows(m.BuildRows())
+		if msg.resetSelection {
+			m.Table.ResetCurrItem()
+		}
 
 	case SectionPullRequestsFetchedMsg:
 		m.Prs = msg.Prs
