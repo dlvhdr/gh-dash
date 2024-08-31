@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -105,7 +104,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				action := m.GetPromptConfirmationAction()
 				pr := findPRForRef(m.Prs, m.getCurrBranch().Data.Name)
 				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
-				log.Debug("Enter", "input", input, "action", action, "pr", pr, "sid", sid)
 				if input == "Y" || input == "y" {
 					switch action {
 					case "delete":
