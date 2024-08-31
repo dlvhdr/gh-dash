@@ -26,7 +26,8 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
-	ti.Width = getInputWidth(ctx, prompt)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ti.Width = 0
 	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Faint(true)
@@ -80,13 +81,17 @@ func (m *Model) SetValue(val string) {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	m.textInput.Width = getInputWidth(ctx, m.textInput.Prompt)
+	m.textInput.Width = m.getInputWidth(ctx)
 	m.textInput.SetValue(m.textInput.Value())
 	m.textInput.Blur()
 }
 
-func getInputWidth(ctx *context.ProgramContext, prompt string) int {
-	return ctx.MainContentWidth - lipgloss.Width(prompt) - 6
+func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
+	textWidth := 0
+	if m.textInput.Value() == "" {
+		textWidth = lipgloss.Width(m.textInput.Placeholder)
+	}
+	return ctx.MainContentWidth - lipgloss.Width(m.textInput.Prompt) - textWidth - 6
 }
 
 func (m Model) Value() string {

@@ -53,7 +53,7 @@ func NewModel(
 			LastUpdated: lastUpdated,
 		},
 	)
-	m.SearchBar = search.NewModel(ctx, search.SearchOptions{Placeholder: "Search branches"})
+	m.SearchBar = search.NewModel(ctx, search.SearchOptions{Placeholder: "Search branches..."})
 	m.SearchValue = ""
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
