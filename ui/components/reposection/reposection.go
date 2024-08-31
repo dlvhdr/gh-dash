@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
@@ -17,6 +18,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/ui/components/search"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/ui/keys"
@@ -90,6 +92,44 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			break
 		}
 
+		if m.IsPromptConfirmationFocused() {
+			switch {
+
+			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+				m.PromptConfirmationBox.Reset()
+				cmd = m.SetIsPromptConfirmationShown(false)
+				return m, cmd
+
+			case msg.Type == tea.KeyEnter:
+				input := m.PromptConfirmationBox.Value()
+				action := m.GetPromptConfirmationAction()
+				pr := findPRForRef(m.Prs, m.getCurrBranch().Data.Name)
+				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
+				log.Debug("Enter", "input", input, "action", action, "pr", pr, "sid", sid)
+				if input == "Y" || input == "y" {
+					switch action {
+					case "delete":
+						cmd = m.deleteBranch()
+					case "close":
+						cmd = tasks.ClosePR(m.Ctx, sid, pr)
+					case "reopen":
+						cmd = tasks.ReopenPR(m.Ctx, sid, pr)
+					case "ready":
+						cmd = tasks.PRReady(m.Ctx, sid, pr)
+					case "merge":
+						cmd = tasks.MergePR(m.Ctx, sid, pr)
+					}
+				}
+
+				m.PromptConfirmationBox.Reset()
+				blinkCmd := m.SetIsPromptConfirmationShown(false)
+
+				return m, tea.Batch(cmd, blinkCmd)
+			}
+
+			break
+		}
+
 		switch {
 		case key.Matches(msg, keys.BranchKeys.Checkout):
 			cmd, err = m.checkout()
@@ -133,6 +173,10 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	search, searchCmd := m.SearchBar.Update(msg)
 	cmds = append(cmds, searchCmd)
 	m.SearchBar = search
+
+	prompt, promptCmd := m.PromptConfirmationBox.Update(msg)
+	cmds = append(cmds, promptCmd)
+	m.PromptConfirmationBox = prompt
 
 	m.Table.SetRows(m.BuildRows())
 
