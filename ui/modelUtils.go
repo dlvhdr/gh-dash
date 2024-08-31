@@ -2,10 +2,12 @@ package ui
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"maps"
 	"os"
 	"os/exec"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -82,7 +84,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 				return m.runCustomIssueCommand(keybinding.Command, data)
 			}
 		}
-	case config.PRsView, config.RepoView:
+	case config.PRsView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
 			if keybinding.Key != key || keybinding.Command == "" {
 				continue
@@ -93,6 +95,19 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 			switch data := currRowData.(type) {
 			case *data.PullRequestData:
 				return m.runCustomPRCommand(keybinding.Command, data)
+			}
+		}
+	case config.RepoView:
+		for _, keybinding := range m.ctx.Config.Keybindings.Branches {
+			if keybinding.Key != key || keybinding.Command == "" {
+				continue
+			}
+
+			log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
+
+			switch data := currRowData.(type) {
+			case *data.PullRequestData:
+				return m.runCustomBranchCommand(keybinding.Command, data)
 			}
 		}
 	default:
@@ -112,7 +127,9 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	input := map[string]any{}
 
 	// Merge data specific to the context the command is being run in onto any common data, overwriting duplicate keys.
-	maps.Copy(input, *contextData)
+	if contextData != nil {
+		maps.Copy(input, *contextData)
+	}
 
 	// Append in the local RepoPath only if it can be found
 	if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
@@ -156,7 +173,21 @@ func (m *Model) runCustomIssueCommand(commandTemplate string, issueData *data.Is
 	)
 }
 
+func (m *Model) runCustomBranchCommand(commandTemplate string, branchData *data.PullRequestData) tea.Cmd {
+	if reflect.ValueOf(branchData).IsNil() {
+		return m.executeCustomCommand(commandTemplate)
+	}
+	return m.runCustomCommand(commandTemplate,
+		&map[string]any{
+			"RepoName":    branchData.GetRepoNameWithOwner(),
+			"PrNumber":    branchData.Number,
+			"HeadRefName": branchData.HeadRefName,
+			"BaseRefName": branchData.BaseRefName,
+		})
+}
+
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
+	log.Debug("executing custom command", "cmd", cmd)
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"
@@ -169,7 +200,7 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 			if mdErr != nil {
 				return constants.ErrMsg{Err: mdErr}
 			}
-			return constants.ErrMsg{Err: fmt.Errorf(
+			return constants.ErrMsg{Err: errors.New(
 				lipgloss.JoinVertical(lipgloss.Left,
 					fmt.Sprintf("Whoops, got an error: %s", err),
 					md,
@@ -193,6 +224,26 @@ func (m *Model) notify(text string) tea.Cmd {
 	finishCmd := func() tea.Msg {
 		return constants.TaskFinishedMsg{
 			TaskId: id,
+		}
+	}
+
+	return tea.Sequence(startCmd, finishCmd)
+}
+
+func (m *Model) notifyErr(text string) tea.Cmd {
+	id := fmt.Sprint(time.Now().Unix())
+	startCmd := m.ctx.StartTask(
+		context.Task{
+			Id:           id,
+			StartText:    text,
+			FinishedText: text,
+			State:        context.TaskStart,
+		})
+
+	finishCmd := func() tea.Msg {
+		return constants.TaskFinishedMsg{
+			TaskId: id,
+			Err:    errors.New(text),
 		}
 	}
 

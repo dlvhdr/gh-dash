@@ -99,7 +99,7 @@ func (m Model) View() string {
 	}
 
 	if m.ShowAll {
-		keymap := keys.GetKeyMap(m.ctx.View)
+		keymap := keys.CreateKeyMapForView(m.ctx.View)
 		fullHelp := m.help.View(keymap)
 		return lipgloss.JoinVertical(lipgloss.Top, footer, fullHelp)
 	}

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -246,22 +247,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.CopyNumber):
-			number := fmt.Sprint(m.getCurrRowData().GetNumber())
-			err := clipboard.WriteAll(number)
+			row := m.getCurrRowData()
 			var cmd tea.Cmd
+			if reflect.ValueOf(row).IsNil() {
+				cmd = m.notifyErr("Current selection isn't associated with a PR/Issue")
+				return m, cmd
+			}
+			number := fmt.Sprint(row.GetNumber())
+			err := clipboard.WriteAll(number)
 			if err != nil {
-				cmd = m.notify(fmt.Sprintf("Failed copying to clipboard %v", err))
+				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {
 				cmd = m.notify(fmt.Sprintf("Copied %s to clipboard", number))
 			}
 			return m, cmd
 
 		case key.Matches(msg, m.keys.CopyUrl):
-			url := m.getCurrRowData().GetUrl()
-			err := clipboard.WriteAll(url)
 			var cmd tea.Cmd
+			row := m.getCurrRowData()
+			if reflect.ValueOf(row).IsNil() {
+				cmd = m.notifyErr("Current selection isn't associated with a PR/Issue")
+				return m, cmd
+			}
+			url := row.GetUrl()
+			err := clipboard.WriteAll(url)
 			if err != nil {
-				cmd = m.notify(fmt.Sprintf("Failed copying to clipboard %v", err))
+				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {
 				cmd = m.notify(fmt.Sprintf("Copied %s to clipboard", url))
 			}
@@ -792,6 +803,14 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 
 	if m.ctx.View == config.PRsView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+				return true
+			}
+		}
+	}
+
+	if m.ctx.View == config.RepoView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Branches {
 			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
 				return true
 			}
