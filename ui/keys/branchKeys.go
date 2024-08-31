@@ -32,7 +32,7 @@ var BranchKeys = BranchKeyMap{
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d", "backspace"),
-		key.WithHelp("d/backspace", "checkout"),
+		key.WithHelp("d/backspace", "delete"),
 	),
 	ViewPRs: key.NewBinding(
 		key.WithKeys("s"),

@@ -31,7 +31,7 @@ type KeyMap struct {
 	Quit          key.Binding
 }
 
-func GetKeyMap(viewType config.ViewType) help.KeyMap {
+func CreateKeyMapForView(viewType config.ViewType) help.KeyMap {
 	Keys.viewType = viewType
 	return Keys
 }
@@ -42,8 +42,10 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	var additionalKeys []key.Binding
-	if k.viewType == config.PRsView || k.viewType == config.RepoView {
+	if k.viewType == config.PRsView {
 		additionalKeys = PRFullHelp()
+	} else if k.viewType == config.RepoView {
+		additionalKeys = BranchFullHelp()
 	} else {
 		additionalKeys = IssueFullHelp()
 	}
