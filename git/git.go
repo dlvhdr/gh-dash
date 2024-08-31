@@ -18,6 +18,7 @@ type Repo struct {
 	Origin   string
 	Remotes  []string
 	Branches []Branch
+	Status   gitm.NameStatus
 }
 
 type Branch struct {
@@ -73,6 +74,11 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
+	status, err := repo.ShowNameStatus(headRef)
+	if err != nil {
+		return nil, err
+	}
+
 	branches := make([]Branch, len(bNames))
 	for i, b := range bNames {
 		var updatedAt *time.Time
@@ -119,7 +125,7 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches}, nil
+	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches, Status: *status}, nil
 }
 
 func FetchRepo(dir string) (*Repo, error) {
