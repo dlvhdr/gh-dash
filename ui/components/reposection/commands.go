@@ -60,6 +60,7 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
+		repo, err = git.GetRepo(*m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
