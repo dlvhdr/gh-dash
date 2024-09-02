@@ -331,7 +331,7 @@ func (m *Model) newBranch(name string) tea.Cmd {
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
 		// TODO: find out what the default branch is / use the currently selected branch
-		err := gitm.Checkout(*m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: "main"})
+		err := gitm.Checkout(*m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: "master"})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
