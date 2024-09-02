@@ -141,7 +141,7 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	}
 
 	// Append in the local RepoPath only if it can be found
-	if input["RepoPath"] == "" {
+	if input["RepoName"] != nil {
 		if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
 			input["RepoPath"] = repoPath
 		}
