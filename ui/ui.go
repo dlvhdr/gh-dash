@@ -800,6 +800,12 @@ func (m *Model) switchSelectedView() config.ViewType {
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
+	for _, keybinding := range m.ctx.Config.Keybindings.Universal {
+		if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+			return true
+		}
+	}
+
 	if m.ctx.View == config.IssuesView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
 			if keybinding.Builtin == "" && keybinding.Key == msg.String() {

@@ -72,6 +72,15 @@ type IssueCommandTemplateInput struct {
 func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
 
+	for _, keybinding := range m.ctx.Config.Keybindings.Universal {
+		if keybinding.Key != key {
+			continue
+		}
+
+		log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
+		return m.runCustomUniversalCommand(keybinding.Command)
+	}
+
 	switch m.ctx.View {
 	case config.IssuesView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
@@ -132,8 +141,10 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	}
 
 	// Append in the local RepoPath only if it can be found
-	if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
-		input["RepoPath"] = repoPath
+	if input["RepoPath"] == "" {
+		if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
+			input["RepoPath"] = repoPath
+		}
 	}
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
@@ -177,13 +188,24 @@ func (m *Model) runCustomBranchCommand(commandTemplate string, branchData *data.
 	if reflect.ValueOf(branchData).IsNil() {
 		return m.executeCustomCommand(commandTemplate)
 	}
-	return m.runCustomCommand(commandTemplate,
-		&map[string]any{
-			"RepoName":    branchData.GetRepoNameWithOwner(),
-			"PrNumber":    branchData.Number,
-			"HeadRefName": branchData.HeadRefName,
-			"BaseRefName": branchData.BaseRefName,
-		})
+	input := map[string]any{
+		"RepoPath": m.ctx.RepoPath,
+	}
+	if branchData != nil {
+		maps.Copy(input,
+			map[string]any{
+				"RepoName":    branchData.GetRepoNameWithOwner(),
+				"PrNumber":    branchData.Number,
+				"HeadRefName": branchData.HeadRefName,
+				"BaseRefName": branchData.BaseRefName,
+			})
+	}
+	return m.runCustomCommand(commandTemplate, &input)
+}
+
+func (m *Model) runCustomUniversalCommand(commandTemplate string) tea.Cmd {
+	input := map[string]any{"RepoPath": m.ctx.RepoPath}
+	return m.runCustomCommand(commandTemplate, &input)
 }
 
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
