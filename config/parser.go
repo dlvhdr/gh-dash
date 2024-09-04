@@ -105,6 +105,10 @@ type Defaults struct {
 	DateFormat             string        `yaml:"dateFormat,omitempty"`
 }
 
+type RepoConfig struct {
+	BranchesRefetchIntervalSeconds int `yaml:"branchesRefetchIntervalSeconds,omitempty"`
+}
+
 type Keybinding struct {
 	Key     string `yaml:"key"`
 	Command string `yaml:"command"`
@@ -183,6 +187,7 @@ type ThemeConfig struct {
 type Config struct {
 	PRSections     []PrsSectionConfig    `yaml:"prSections"`
 	IssuesSections []IssuesSectionConfig `yaml:"issuesSections"`
+	Repo           RepoConfig            `yaml:"repo"`
 	Defaults       Defaults              `yaml:"defaults"`
 	Keybindings    Keybindings           `yaml:"keybindings"`
 	RepoPaths      map[string]string     `yaml:"repoPaths"`
@@ -249,6 +254,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 				},
 			},
+		},
+		Repo: RepoConfig{
+			BranchesRefetchIntervalSeconds: 60,
 		},
 		PRSections: []PrsSectionConfig{
 			{

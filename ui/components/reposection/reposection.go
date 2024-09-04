@@ -32,6 +32,7 @@ type Model struct {
 	Branches       []branch.Branch
 	Prs            []data.PullRequestData
 	isRefreshSetUp bool
+	refreshId      int
 }
 
 func NewModel(
@@ -164,10 +165,14 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.Prs = msg.Prs
 
 	case RefreshBranchesMsg:
-		cmds = append(cmds, m.onRefreshBranchesMsg()...)
+		if msg.id == m.refreshId {
+			cmds = append(cmds, m.onRefreshBranchesMsg()...)
+		}
 
-	case FetchMsg:
-		cmds = append(cmds, m.onFetchMsg()...)
+	case RefreshPrsMsg:
+		if msg.id == m.refreshId {
+			cmds = append(cmds, m.onRefreshPrsMsg()...)
+		}
 
 	}
 
@@ -469,6 +474,7 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 		cfg,
 		time.Now(),
 	)
+	m.refreshId = nextID()
 
 	if ctx.RepoPath != nil {
 		cmds = append(cmds, m.readRepoCmd()...)
@@ -479,7 +485,7 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 	if !m.isRefreshSetUp {
 		m.isRefreshSetUp = true
 		cmds = append(cmds, m.tickRefreshBranchesCmd())
-		cmds = append(cmds, m.tickFetchCmd())
+		cmds = append(cmds, m.tickFetchPrsCmd())
 	}
 
 	return m, tea.Batch(cmds...)
