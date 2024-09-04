@@ -2,6 +2,7 @@ package reposection
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	gitm "github.com/aymanbagabas/git-module"
@@ -247,23 +248,38 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 	})
 }
 
-type RefreshBranchesMsg time.Time
+type RefreshBranchesMsg struct {
+	id   int
+	time time.Time
+}
 
-type FetchMsg time.Time
+type RefreshPrsMsg struct {
+	id   int
+	time time.Time
+}
 
-const refreshIntervalSec = 30
+var (
+	lastID int
+	idMtx  sync.Mutex
+)
 
-const fetchIntervalSec = 60
+// Return the next ID we should use on the Model.
+func nextID() int {
+	idMtx.Lock()
+	defer idMtx.Unlock()
+	lastID++
+	return lastID
+}
 
 func (m *Model) tickRefreshBranchesCmd() tea.Cmd {
-	return tea.Tick(time.Second*refreshIntervalSec, func(t time.Time) tea.Msg {
-		return RefreshBranchesMsg(t)
+	return tea.Tick(time.Second*time.Duration(m.Ctx.Config.Repo.BranchesRefetchIntervalSeconds), func(t time.Time) tea.Msg {
+		return RefreshBranchesMsg{id: m.refreshId, time: t}
 	})
 }
 
-func (m *Model) tickFetchCmd() tea.Cmd {
-	return tea.Tick(time.Second*fetchIntervalSec, func(t time.Time) tea.Msg {
-		return FetchMsg(t)
+func (m *Model) tickFetchPrsCmd() tea.Cmd {
+	return tea.Tick(time.Second*time.Duration(m.Ctx.Config.Repo.PrsRefetchIntervalSeconds), func(t time.Time) tea.Msg {
+		return RefreshPrsMsg{id: m.refreshId, time: t}
 	})
 }
 
@@ -274,10 +290,10 @@ func (m *Model) onRefreshBranchesMsg() []tea.Cmd {
 	return cmds
 }
 
-func (m *Model) onFetchMsg() []tea.Cmd {
+func (m *Model) onRefreshPrsMsg() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
 	cmds = append(cmds, m.fetchRepoCmd()...)
-	cmds = append(cmds, m.tickRefreshBranchesCmd())
+	cmds = append(cmds, m.tickFetchPrsCmd())
 	return cmds
 }
 
