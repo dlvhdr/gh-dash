@@ -411,3 +411,20 @@ func (m Model) GetTotalCount() *int {
 func (m Model) IsLoading() bool {
 	return m.Table.IsLoading()
 }
+
+func (m Model) GetPagerContent() string {
+	pagerContent := ""
+	if m.TotalCount > 0 {
+		pagerContent = fmt.Sprintf(
+			"%v %v • %v %v/%v • Fetched %v",
+			constants.WaitingIcon,
+			m.LastUpdated().Format("01/02 15:04:05"),
+			m.SingularForm,
+			m.Table.GetCurrItem()+1,
+			m.TotalCount,
+			len(m.Table.Rows),
+		)
+	}
+	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Render(pagerContent)
+	return pager
+}

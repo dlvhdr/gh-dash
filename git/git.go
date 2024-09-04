@@ -1,6 +1,8 @@
 package git
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"sort"
@@ -18,6 +20,7 @@ type Repo struct {
 	Origin   string
 	Remotes  []string
 	Branches []Branch
+	Status   gitm.NameStatus
 }
 
 type Branch struct {
@@ -72,6 +75,10 @@ func GetRepo(dir string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	}
+	status, err := getUnstagedStatus(repo)
+	if err != nil {
+		return nil, err
+	}
 
 	branches := make([]Branch, len(bNames))
 	for i, b := range bNames {
@@ -119,7 +126,33 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches}, nil
+	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches, Status: status}, nil
+}
+
+func getUnstagedStatus(repo *gitm.Repository) (gitm.NameStatus, error) {
+	cmd := gitm.NewCommand("diff", "HEAD", "--name-status")
+	stdout, err := cmd.RunInDir(repo.Path())
+	if err != nil {
+		return gitm.NameStatus{}, err
+	}
+	status := gitm.NameStatus{}
+	scanner := bufio.NewScanner(bytes.NewReader(stdout))
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) < 2 {
+			continue
+		}
+
+		switch fields[0][0] {
+		case 'A':
+			status.Added = append(status.Added, fields[1])
+		case 'D':
+			status.Removed = append(status.Removed, fields[1])
+		case 'M':
+			status.Modified = append(status.Modified, fields[1])
+		}
+	}
+	return status, err
 }
 
 func FetchRepo(dir string) (*Repo, error) {

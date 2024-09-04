@@ -1,6 +1,7 @@
 package reposection
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -536,4 +537,13 @@ func (m *Model) GetTotalCount() *int {
 	}
 
 	return utils.IntPtr(len(m.Branches))
+}
+
+func (m *Model) GetPagerContent() string {
+	s := lipgloss.NewStyle().Background(m.Ctx.Styles.ListViewPort.PagerStyle.GetBackground())
+	mod := s.Foreground(lipgloss.Color("#e0af68")).Render(fmt.Sprintf(" %d", len(m.repo.Status.Modified)))
+	plus := s.Foreground(m.Ctx.Theme.SuccessText).Render(fmt.Sprintf(" %d", len(m.repo.Status.Added)))
+	minus := s.Foreground(m.Ctx.Theme.WarningText).Render(fmt.Sprintf(" %d", len(m.repo.Status.Removed)))
+	spacer := s.Render(" ")
+	return m.Ctx.Styles.ListViewPort.PagerStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, plus, spacer, minus, spacer, mod))
 }
