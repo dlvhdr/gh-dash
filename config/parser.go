@@ -107,6 +107,7 @@ type Defaults struct {
 
 type RepoConfig struct {
 	BranchesRefetchIntervalSeconds int `yaml:"branchesRefetchIntervalSeconds,omitempty"`
+	PrsRefetchIntervalSeconds      int `yaml:"prsRefetchIntervalSeconds,omitempty"`
 }
 
 type Keybinding struct {
@@ -256,7 +257,8 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			},
 		},
 		Repo: RepoConfig{
-			BranchesRefetchIntervalSeconds: 60,
+			BranchesRefetchIntervalSeconds: 30,
+			PrsRefetchIntervalSeconds:      60,
 		},
 		PRSections: []PrsSectionConfig{
 			{

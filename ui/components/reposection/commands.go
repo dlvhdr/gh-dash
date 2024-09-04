@@ -258,13 +258,6 @@ type RefreshPrsMsg struct {
 	time time.Time
 }
 
-const (
-	refreshIntervalSec int = 30
-	fetchIntervalSec   int = 60
-)
-
-// Internal ID management. Used during animating to ensure that frame messages
-// are received only by spinner components that sent them.
 var (
 	lastID int
 	idMtx  sync.Mutex
@@ -285,7 +278,7 @@ func (m *Model) tickRefreshBranchesCmd() tea.Cmd {
 }
 
 func (m *Model) tickFetchPrsCmd() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(fetchIntervalSec), func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*time.Duration(m.Ctx.Config.Repo.PrsRefetchIntervalSeconds), func(t time.Time) tea.Msg {
 		return RefreshPrsMsg{id: m.refreshId, time: t}
 	})
 }
