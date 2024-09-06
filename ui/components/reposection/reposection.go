@@ -142,7 +142,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 
 		case key.Matches(msg, keys.BranchKeys.Push):
-			cmd, err = m.push()
+			cmd, err = m.push(pushOptions{force: false})
+			if err != nil {
+				m.Ctx.Error = err
+			}
+		case key.Matches(msg, keys.BranchKeys.ForcePush):
+			cmd, err = m.push(pushOptions{force: true})
 			if err != nil {
 				m.Ctx.Error = err
 			}
