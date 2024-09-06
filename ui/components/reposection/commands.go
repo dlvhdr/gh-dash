@@ -7,6 +7,7 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -76,24 +77,49 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 	}), nil
 }
 
-func (m *Model) push() (tea.Cmd, error) {
+type pushOptions struct {
+	force bool
+}
+
+func (m *Model) push(opts pushOptions) (tea.Cmd, error) {
 	b := m.getCurrBranch()
 
 	taskId := fmt.Sprintf("push_%s_%d", b.Data.Name, time.Now().Unix())
+	withForceText := func() string {
+		if opts.force {
+			return " with force"
+		}
+		return ""
+	}
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Pushing branch %s", b.Data.Name),
-		FinishedText: fmt.Sprintf("Branch %s has been pushed", b.Data.Name),
+		StartText:    fmt.Sprintf("Pushing branch %s%s", b.Data.Name, withForceText()),
+		FinishedText: fmt.Sprintf("Branch %s has been pushed%s", b.Data.Name, withForceText()),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
 		var err error
+		args := []string{}
+		if opts.force {
+			args = append(args, "--force")
+		}
 		if len(b.Data.Remotes) == 0 {
-			err = gitm.Push(*m.Ctx.RepoPath, "origin", b.Data.Name, gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--set-upstream"}}})
+			args = append(args, "--set-upstream")
+			err = gitm.Push(
+				*m.Ctx.RepoPath,
+				"origin",
+				b.Data.Name,
+				gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: args}},
+			)
 		} else {
-			err = gitm.Push(*m.Ctx.RepoPath, b.Data.Remotes[0], b.Data.Name)
+			err = gitm.Push(
+				*m.Ctx.RepoPath,
+				b.Data.Remotes[0],
+				b.Data.Name,
+				gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: args}},
+			)
 		}
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
@@ -246,6 +272,49 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 			},
 		}
 	})
+}
+
+func (m *Model) fetchPRCmd(branch string) []tea.Cmd {
+	prsTaskId := fmt.Sprintf("fetching_pr_for_branch_%s_%d", branch, time.Now().Unix())
+	task := context.Task{
+		Id:           prsTaskId,
+		StartText:    fmt.Sprintf("Fetching PR for branch %s", branch),
+		FinishedText: "PR fetched",
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return []tea.Cmd{startCmd, func() tea.Msg {
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(*m.Ctx.RepoUrl), branch), 1, nil)
+		log.Debug("Fetching PRs", "res", res)
+		if err != nil {
+			return constants.TaskFinishedMsg{
+				SectionId:   0,
+				SectionType: SectionType,
+				TaskId:      prsTaskId,
+				Err:         err,
+			}
+		}
+
+		if len(res.Prs) != 1 {
+			return constants.TaskFinishedMsg{
+				SectionId:   0,
+				SectionType: SectionType,
+				TaskId:      prsTaskId,
+				Err:         fmt.Errorf("expected 1 PR, got %d", len(res.Prs)),
+			}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      prsTaskId,
+			Msg: tasks.UpdateBranchMsg{
+				Name:  branch,
+				NewPr: &res.Prs[0],
+			},
+		}
+	}}
 }
 
 type RefreshBranchesMsg struct {

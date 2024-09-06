@@ -305,6 +305,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
+			case key.Matches(msg, keys.BranchKeys.CreatePr):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("create_pr")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.BranchKeys.ViewPRs):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
@@ -495,11 +502,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			now := time.Now()
 			task.FinishedTime = &now
 			m.tasks[msg.TaskId] = task
-			cmd = tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+			clear := tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 				return constants.ClearTaskMsg{TaskId: msg.TaskId}
 			})
+			cmds = append(cmds, clear)
 
-			m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
+			scmd := m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
+			cmds = append(cmds, scmd)
+
 			m.syncSidebar()
 		}
 

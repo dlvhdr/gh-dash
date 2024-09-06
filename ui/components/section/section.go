@@ -355,6 +355,8 @@ func (m *BaseModel) GetPromptConfirmation() string {
 			prompt = "Are you sure you want to delete this branch? (Y/n) "
 		case m.PromptConfirmationAction == "new" && m.Ctx.View == config.RepoView:
 			prompt = "Enter branch name: "
+		case m.PromptConfirmationAction == "create_pr" && m.Ctx.View == config.RepoView:
+			prompt = "Enter PR title: "
 		}
 
 		m.PromptConfirmationBox.SetPrompt(prompt)
