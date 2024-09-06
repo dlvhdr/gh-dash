@@ -34,6 +34,7 @@ func (m Model) View() string {
 
 	s.WriteString(m.branch.Data.Name)
 	if m.branch.PR != nil {
+		s.WriteString("\n")
 		s.WriteString(fmt.Sprintf("#%d %s", m.branch.PR.GetNumber(), m.branch.PR.Title))
 	}
 
