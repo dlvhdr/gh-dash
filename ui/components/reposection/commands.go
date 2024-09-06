@@ -7,6 +7,7 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -271,6 +272,49 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 			},
 		}
 	})
+}
+
+func (m *Model) fetchPRCmd(branch string) []tea.Cmd {
+	prsTaskId := fmt.Sprintf("fetching_pr_for_branch_%s_%d", branch, time.Now().Unix())
+	task := context.Task{
+		Id:           prsTaskId,
+		StartText:    fmt.Sprintf("Fetching PR for branch %s", branch),
+		FinishedText: "PR fetched",
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.Ctx.StartTask(task)
+	return []tea.Cmd{startCmd, func() tea.Msg {
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(*m.Ctx.RepoUrl), branch), 1, nil)
+		log.Debug("Fetching PRs", "res", res)
+		if err != nil {
+			return constants.TaskFinishedMsg{
+				SectionId:   0,
+				SectionType: SectionType,
+				TaskId:      prsTaskId,
+				Err:         err,
+			}
+		}
+
+		if len(res.Prs) != 1 {
+			return constants.TaskFinishedMsg{
+				SectionId:   0,
+				SectionType: SectionType,
+				TaskId:      prsTaskId,
+				Err:         fmt.Errorf("expected 1 PR, got %d", len(res.Prs)),
+			}
+		}
+
+		return constants.TaskFinishedMsg{
+			SectionId:   0,
+			SectionType: SectionType,
+			TaskId:      prsTaskId,
+			Msg: tasks.UpdateBranchMsg{
+				Name:  branch,
+				NewPr: &res.Prs[0],
+			},
+		}
+	}}
 }
 
 type RefreshBranchesMsg struct {

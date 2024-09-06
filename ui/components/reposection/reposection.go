@@ -104,11 +104,14 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case msg.Type == tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
+				branch := m.getCurrBranch().Data.Name
+				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
 				if action == "new" {
 					cmd = m.newBranch(input)
+				} else if action == "create_pr" {
+					cmd = tasks.CreatePR(m.Ctx, sid, branch, input)
 				} else {
-					pr := findPRForRef(m.Prs, m.getCurrBranch().Data.Name)
-					sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
+					pr := findPRForRef(m.Prs, branch)
 					if input == "Y" || input == "y" {
 						switch action {
 						case "delete":
@@ -159,6 +162,14 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 		}
 
+	case tasks.UpdateBranchMsg:
+		if msg.IsCreated != nil && *msg.IsCreated {
+			cmds = append(cmds, m.fetchPRCmd(msg.Name)...)
+		}
+		if msg.NewPr != nil {
+			m.Prs = append(m.Prs, *msg.NewPr)
+		}
+
 	case repoMsg:
 		m.repo = msg.repo
 		m.Table.SetIsLoading(false)
@@ -198,7 +209,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	m.Table.SetRows(m.BuildRows())
 	table, tableCmd := m.Table.Update(msg)
-	cmds = append(cmds, tableCmd)
 	m.Table = table
 	cmds = append(cmds, tableCmd)
 

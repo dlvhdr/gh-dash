@@ -12,6 +12,7 @@ import (
 type BranchKeyMap struct {
 	Checkout    key.Binding
 	New         key.Binding
+	CreatePr    key.Binding
 	FastForward key.Binding
 	Push        key.Binding
 	ForcePush   key.Binding
@@ -27,6 +28,10 @@ var BranchKeys = BranchKeyMap{
 	New: key.NewBinding(
 		key.WithKeys("n"),
 		key.WithHelp("n", "new"),
+	),
+	CreatePr: key.NewBinding(
+		key.WithKeys("O"),
+		key.WithHelp("O", "create PR"),
 	),
 	FastForward: key.NewBinding(
 		key.WithKeys("f"),
@@ -57,6 +62,7 @@ func BranchFullHelp() []key.Binding {
 		BranchKeys.Push,
 		BranchKeys.ForcePush,
 		BranchKeys.New,
+		BranchKeys.CreatePr,
 		BranchKeys.Delete,
 		BranchKeys.ViewPRs,
 	}
@@ -75,6 +81,8 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 		switch branchKey.Builtin {
 		case "new":
 			key = &BranchKeys.New
+		case "createPr":
+			key = &BranchKeys.CreatePr
 		case "delete":
 			key = &BranchKeys.Delete
 		case "push":
