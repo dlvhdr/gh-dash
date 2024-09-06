@@ -19,6 +19,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/branchsidebar"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/issuesidebar"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/issuessection"
@@ -39,6 +41,7 @@ type Model struct {
 	sidebar       sidebar.Model
 	prSidebar     prsidebar.Model
 	issueSidebar  issuesidebar.Model
+	branchSidebar branchsidebar.Model
 	currSectionId int
 	footer        footer.Model
 	repo          section.Section
@@ -79,6 +82,7 @@ func NewModel(repoPath *string, configPath string) Model {
 	m.footer = footer
 	m.prSidebar = prsidebar.NewModel(m.ctx)
 	m.issueSidebar = issuesidebar.NewModel(m.ctx)
+	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.tabs = tabs.NewModel(&m.ctx)
 
 	return m
@@ -593,17 +597,13 @@ func (m Model) View() string {
 	}
 	s.WriteString("\n")
 	content := "No sections defined"
-	if m.ctx.View == config.RepoView {
-		content = m.repo.View()
-	} else {
-		currSection := m.getCurrSection()
-		if currSection != nil {
-			content = lipgloss.JoinHorizontal(
-				lipgloss.Top,
-				m.getCurrSection().View(),
-				m.sidebar.View(),
-			)
-		}
+	currSection := m.getCurrSection()
+	if currSection != nil {
+		content = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.getCurrSection().View(),
+			m.sidebar.View(),
+		)
 	}
 	s.WriteString(content)
 	s.WriteString("\n")
@@ -660,6 +660,7 @@ func (m *Model) syncProgramContext() {
 	m.sidebar.UpdateProgramContext(&m.ctx)
 	m.prSidebar.UpdateProgramContext(&m.ctx)
 	m.issueSidebar.UpdateProgramContext(&m.ctx)
+	m.branchSidebar.UpdateProgramContext(&m.ctx)
 }
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
@@ -700,9 +701,6 @@ func (m *Model) syncMainContentWidth() {
 }
 
 func (m *Model) syncSidebar() {
-	if m.ctx.View == config.RepoView {
-		return
-	}
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 
@@ -712,6 +710,9 @@ func (m *Model) syncSidebar() {
 	}
 
 	switch row := currRowData.(type) {
+	case branch.BranchData:
+		m.branchSidebar.SetRow(&row)
+		m.sidebar.SetContent(m.branchSidebar.View())
 	case *data.PullRequestData:
 		m.prSidebar.SetSectionId(m.currSectionId)
 		m.prSidebar.SetRow(row)

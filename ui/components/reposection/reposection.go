@@ -454,9 +454,12 @@ func (m *Model) GetCurrRow() data.RowData {
 	if len(m.repo.Branches) == 0 {
 		return nil
 	}
-	branch := m.repo.Branches[m.Table.GetCurrItem()]
-	pr := findPRForRef(m.Prs, branch.Name)
-	return pr
+	b := m.repo.Branches[m.Table.GetCurrItem()]
+	pr := findPRForRef(m.Prs, b.Name)
+	return branch.BranchData{
+		Data: b,
+		PR:   pr,
+	}
 }
 
 func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
