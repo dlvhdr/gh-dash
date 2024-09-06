@@ -17,10 +17,11 @@ import (
 // Extends git.Repository
 type Repo struct {
 	gitm.Repository
-	Origin   string
-	Remotes  []string
-	Branches []Branch
-	Status   gitm.NameStatus
+	Origin         string
+	Remotes        []string
+	Branches       []Branch
+	HeadBranchName string
+	Status         gitm.NameStatus
 }
 
 type Branch struct {
@@ -116,17 +117,22 @@ func GetRepo(dir string) (*Repo, error) {
 		return branches[i].LastUpdatedAt.After(*branches[j].LastUpdatedAt)
 	})
 
-	remotes, err := repo.Remotes()
+	headBranch, err := repo.SymbolicRef()
 	if err != nil {
 		return nil, err
 	}
+	headBranch, _ = strings.CutPrefix(headBranch, gitm.RefsHeads)
 
+	remotes, err := repo.Remotes(gitm.RemotesOptions{CommandOptions: gitm.CommandOptions{Args: []string{"show"}}})
+	if err != nil {
+		return nil, err
+	}
 	origin, err := gitm.RemoteGetURL(dir, "origin", gitm.RemoteGetURLOptions{All: true})
 	if err != nil {
 		return nil, err
 	}
 
-	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, Branches: branches, Status: status}, nil
+	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, HeadBranchName: headBranch, Branches: branches, Status: status}, nil
 }
 
 func getUnstagedStatus(repo *gitm.Repository) (gitm.NameStatus, error) {
