@@ -208,6 +208,8 @@ func (m *Model) runCustomUniversalCommand(commandTemplate string) tea.Cmd {
 	return m.runCustomCommand(commandTemplate, &input)
 }
 
+type execProcessFinishedMsg struct{}
+
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 	log.Debug("executing custom command", "cmd", cmd)
 	shell := os.Getenv("SHELL")
@@ -229,7 +231,7 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 				),
 			)}
 		}
-		return nil
+		return execProcessFinishedMsg{}
 	})
 }
 

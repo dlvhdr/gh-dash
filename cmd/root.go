@@ -138,6 +138,7 @@ func init() {
 		p := tea.NewProgram(
 			model,
 			tea.WithAltScreen(),
+			tea.WithReportFocus(),
 		)
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)

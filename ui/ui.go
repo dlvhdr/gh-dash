@@ -537,6 +537,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.onViewedRowChanged()
 		}
 
+	case execProcessFinishedMsg, tea.FocusMsg:
+		newSections, fetchSectionsCmds := m.fetchAllViewSections()
+		m.setCurrentViewSections(newSections)
+		cmds = append(cmds, fetchSectionsCmds)
+
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
 
