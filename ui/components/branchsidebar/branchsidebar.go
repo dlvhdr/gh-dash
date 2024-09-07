@@ -38,8 +38,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	s := strings.Builder{}
 
-	if m.status != nil {
-		s.WriteString("FILES:")
+	s.WriteString("FILES:\n\n")
+	if m.status == nil {
+		s.WriteString("\nLoading...")
+	} else {
+
+		if len(m.status.Added) == 0 && len(m.status.Removed) == 0 && len(m.status.Modified) == 0 {
+			s.WriteString("\nNo changes")
+		}
+
 		for _, file := range m.status.Added {
 			s.WriteString(fmt.Sprintf("\nA %s", file))
 		}
@@ -51,9 +58,9 @@ func (m Model) View() string {
 		}
 	}
 
-	s.WriteString("\n")
+	s.WriteString("\n\n")
 	s.WriteString("------------------------------")
-	s.WriteString("\n")
+	s.WriteString("\n\n")
 
 	if m.branch == nil {
 		return "No branch selected"
