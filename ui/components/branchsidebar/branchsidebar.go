@@ -6,6 +6,7 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/git"
@@ -38,7 +39,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	s := strings.Builder{}
 
-	s.WriteString("FILES:\n\n")
+	s.WriteString(lipgloss.NewStyle().Bold(true).Render("STATUS\n"))
 	if m.status == nil {
 		s.WriteString("\nLoading...")
 	} else {
@@ -59,7 +60,9 @@ func (m Model) View() string {
 	}
 
 	s.WriteString("\n\n")
-	s.WriteString("------------------------------")
+	s.WriteString(lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder).Render(
+		strings.Repeat(lipgloss.NormalBorder().Bottom, m.ctx.Config.Defaults.Preview.Width-5)),
+	)
 	s.WriteString("\n\n")
 
 	if m.branch == nil {
