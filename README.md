@@ -8,7 +8,7 @@
 
 ## ✨ Features
 
-- 🌅 fully configurable - define sections using github filters
+- 🌅 fully configurable - define sections using GitHub filters
 - 🔍 search for both prs and issues
 - 📝 customize columns with `hidden`, `width` and `grow` props
 - ⚡️ act on prs and issues with checkout, comment, open, merge, diff, etc...
@@ -22,7 +22,7 @@
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
 
-   _Installation requires a minimum version (2.0.0) of the the GitHub CLI that supports extensions._
+   _Installation requires a minimum version (2.0.0) of the GitHub CLI that supports extensions._
 
 2. Install this extension:
 
@@ -103,7 +103,7 @@ Flags:
 A section is defined by a:
 
 - title - shown in the TUI
-- filters - how the repo's PRs should be filtered - these are plain [github filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
+- filters - how the repo's PRs should be filtered - these are plain [GitHub filters](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests)
 
 All configuration is provided within a `config.yml` file under the extension's directory (either `$XDG_CONFIG_HOME/gh-dash` or `~/.config/gh-dash/` or your OS config dir) or `$GH_DASH_CONFIG`.
 
@@ -143,9 +143,9 @@ defaults:
   preview:
     open: true # whether to have the preview pane open by default
     width: 60 # width in columns
-  refetchIntervalMinutes: 30 # will refetch all sections every 30 minutes
+  refetchIntervalMinutes: 30 # will re-fetch all sections every 30 minutes
 repoPaths: # configure where to locate repos when checking out PRs
-  :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone github repos in a consistent location
+  :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone GitHub repos in a consistent location
   dlvhdr/*: ~/code/repos/dlvhdr/* # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 keybindings: # optional, define custom keybindings - see more info below
@@ -249,7 +249,7 @@ An `:owner/:repo` template can be specified as a generic fallback.
 
 ```yaml
 repoPaths:
-  :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone github repos in a consistent location
+  :owner/:repo: ~/src/github.com/:owner/:repo # template if you always clone GitHub repos in a consistent location
   dlvhdr/*: ~/code/repos/dlvhdr/* # will match dlvhdr/repo-name to ~/code/repos/dlvhdr/repo-name
   dlvhdr/gh-dash: ~/code/gh-dash # will not match wildcard and map to specified path
 ```
