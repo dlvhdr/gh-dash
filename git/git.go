@@ -135,6 +135,15 @@ func GetRepo(dir string) (*Repo, error) {
 	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, HeadBranchName: headBranch, Branches: branches, Status: status}, nil
 }
 
+func GetStatus(dir string) (gitm.NameStatus, error) {
+	repo, err := gitm.Open(dir)
+	if err != nil {
+		return gitm.NameStatus{}, err
+	}
+	return getUnstagedStatus(repo)
+}
+
+// test
 func getUnstagedStatus(repo *gitm.Repository) (gitm.NameStatus, error) {
 	cmd := gitm.NewCommand("diff", "HEAD", "--name-status")
 	stdout, err := cmd.RunInDir(repo.Path())
