@@ -539,9 +539,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case execProcessFinishedMsg, tea.FocusMsg:
-		newSections, fetchSectionsCmds := m.fetchAllViewSections()
-		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds)
+		cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
@@ -552,7 +550,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.syncProgramContext()
 
-	log.Debug("🟢 repoView", "msg", msg)
 	var bsCmd tea.Cmd
 	m.branchSidebar, bsCmd = m.branchSidebar.Update(msg)
 	cmds = append(cmds, bsCmd)
