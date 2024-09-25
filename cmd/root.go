@@ -63,6 +63,9 @@ func createModel(repoPath *string, configPath string, debug bool) (ui.Model, *os
 			loggerFile, _ = tea.LogToFile("debug.log", "debug")
 			slog.Print("Failed setting up logging", fileErr)
 		}
+	} else {
+		log.SetOutput(os.Stderr)
+		log.SetLevel(log.FatalLevel)
 	}
 
 	return ui.NewModel(repoPath, configPath), loggerFile
