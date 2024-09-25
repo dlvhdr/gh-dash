@@ -191,10 +191,13 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	repoName := baseStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d", pr.Data.Number)))
 	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
-	branch := baseStyle.Render(pr.Data.HeadRefName)
-	top := lipgloss.JoinHorizontal(lipgloss.Top, repoName, baseStyle.Render(" · "), branch, baseStyle.Render(" · "), author)
+	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d by %s", pr.Data.Number, author))
+	branchHidden := pr.Ctx.Config.Defaults.Layout.Prs.Base.Hidden
+	if branchHidden != nil && !*branchHidden {
+		branch := baseStyle.Render(pr.Data.HeadRefName)
+		top = lipgloss.JoinHorizontal(lipgloss.Top, top, baseStyle.Render(" · "), branch)
+	}
 	title := pr.Data.Title
 	var titleColumn table.Column
 	for _, column := range pr.Columns {
