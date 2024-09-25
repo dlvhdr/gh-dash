@@ -194,7 +194,7 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.Author.Login))
 	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d by %s", pr.Data.Number, author))
 	branchHidden := pr.Ctx.Config.Defaults.Layout.Prs.Base.Hidden
-	if branchHidden != nil && !*branchHidden {
+	if branchHidden == nil || !*branchHidden {
 		branch := baseStyle.Render(pr.Data.HeadRefName)
 		top = lipgloss.JoinHorizontal(lipgloss.Top, top, baseStyle.Render(" · "), branch)
 	}
