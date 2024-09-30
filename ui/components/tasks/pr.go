@@ -238,3 +238,26 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifer, branchName 
 		}
 	}))
 }
+
+func UpdatePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+	prNumber := pr.GetNumber()
+	return fireTask(ctx, GitHubTask{
+		Id: buildTaskId("pr_update", prNumber),
+		Args: []string{
+			"pr",
+			"update-branch",
+			fmt.Sprint(prNumber),
+			"-R",
+			pr.GetRepoNameWithOwner(),
+		},
+		Section:      section,
+		StartText:    fmt.Sprintf("Updating PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("PR #%d has been updated", prNumber),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			return UpdatePRMsg{
+				PrNumber: prNumber,
+				IsClosed: utils.BoolPtr(true),
+			}
+		},
+	})
+}
