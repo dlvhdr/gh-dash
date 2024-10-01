@@ -148,6 +148,7 @@ type ColorThemeText struct {
 	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
 	Warning   HexColor `yaml:"warning"   validate:"hexcolor"`
 	Success   HexColor `yaml:"success"   validate:"hexcolor"`
+	Error     HexColor `yaml:"error"     validate:"hexcolor"`
 }
 
 type ColorThemeBorder struct {
