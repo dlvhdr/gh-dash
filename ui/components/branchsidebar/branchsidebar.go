@@ -7,7 +7,6 @@ import (
 	gitm "github.com/aymanbagabas/git-module"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
@@ -27,7 +26,6 @@ func NewModel(ctx context.ProgramContext) Model {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	log.Debug("🟢 branchsidebar.Update", "msg", msg)
 	switch msg := msg.(type) {
 	case updateBranchStatusMsg:
 		m.status = &msg.status
