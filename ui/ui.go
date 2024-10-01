@@ -206,7 +206,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if prevRow != nextRow && nextRow == currSection.NumRows()-1 && m.ctx.View != config.RepoView {
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
-			m.onViewedRowChanged()
+			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Up):
 			currSection.PrevRow()
@@ -214,14 +214,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.FirstLine):
 			currSection.FirstItem()
-			m.onViewedRowChanged()
+			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.LastLine):
 			if currSection.CurrRow()+1 < currSection.NumRows() {
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
 			currSection.LastItem()
-			m.onViewedRowChanged()
+			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
@@ -514,7 +514,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			scmd := m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
 			cmds = append(cmds, scmd)
 
-			m.syncSidebar()
+			syncCmd := m.syncSidebar()
+			cmds = append(cmds, syncCmd)
 		}
 
 	case spinner.TickMsg:
@@ -538,9 +539,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case execProcessFinishedMsg, tea.FocusMsg:
-		newSections, fetchSectionsCmds := m.fetchAllViewSections()
-		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds)
+		cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
@@ -550,6 +549,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.syncProgramContext()
+
+	var bsCmd tea.Cmd
+	m.branchSidebar, bsCmd = m.branchSidebar.Update(msg)
+	cmds = append(cmds, bsCmd)
 
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 
@@ -640,9 +643,10 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 	m.tabs.SetCurrSectionId(newSectionId)
 }
 
-func (m *Model) onViewedRowChanged() {
-	m.syncSidebar()
+func (m *Model) onViewedRowChanged() tea.Cmd {
+	cmd := m.syncSidebar()
 	m.sidebar.ScrollToTop()
+	return cmd
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
@@ -705,18 +709,19 @@ func (m *Model) syncMainContentWidth() {
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
 }
 
-func (m *Model) syncSidebar() {
+func (m *Model) syncSidebar() tea.Cmd {
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
+	var cmd tea.Cmd
 
 	if currRowData == nil {
 		m.sidebar.SetContent("")
-		return
+		return nil
 	}
 
 	switch row := currRowData.(type) {
 	case branch.BranchData:
-		m.branchSidebar.SetRow(&row)
+		cmd = m.branchSidebar.SetRow(&row)
 		m.sidebar.SetContent(m.branchSidebar.View())
 	case *data.PullRequestData:
 		m.prSidebar.SetSectionId(m.currSectionId)
@@ -729,6 +734,8 @@ func (m *Model) syncSidebar() {
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
 	}
+
+	return cmd
 }
 
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
