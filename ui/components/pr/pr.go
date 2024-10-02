@@ -286,7 +286,7 @@ func (pr *PullRequest) RenderState() string {
 func (pr *PullRequest) RenderMergeStateStatus() string {
 	switch pr.Data.MergeStateStatus {
 	case "CLEAN":
-		return constants.SuccessIcon + " Upto-date"
+		return constants.SuccessIcon + \" Up-to-date\"
 	case "BLOCKED":
 		return constants.BlockedIcon + " Blocked"
 	case "BEHIND":
