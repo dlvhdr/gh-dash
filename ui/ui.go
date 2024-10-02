@@ -396,6 +396,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
+			case key.Matches(msg, keys.PRKeys.Update):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("update")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()

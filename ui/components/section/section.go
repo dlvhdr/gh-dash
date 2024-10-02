@@ -346,6 +346,9 @@ func (m *BaseModel) GetPromptConfirmation() string {
 		case m.PromptConfirmationAction == "merge" && m.Ctx.View == config.PRsView:
 			prompt = "Are you sure you want to merge this PR? (Y/n) "
 
+		case m.PromptConfirmationAction == "update" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to update this PR? (Y/n) "
+
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.IssuesView:
 			prompt = "Are you sure you want to close this issue? (Y/n) "
 

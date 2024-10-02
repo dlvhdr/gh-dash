@@ -30,8 +30,10 @@ const (
 	FailureIcon = "󰅙"
 	SuccessIcon = ""
 
-	DraftIcon  = ""
-	MergedIcon = ""
-	OpenIcon   = ""
-	ClosedIcon = ""
+	DraftIcon   = ""
+	BehindIcon  = "󰇮"
+	BlockedIcon = ""
+	MergedIcon  = ""
+	OpenIcon    = ""
+	ClosedIcon  = ""
 )

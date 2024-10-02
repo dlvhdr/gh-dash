@@ -33,14 +33,15 @@ type PullRequestData struct {
 	HeadRef struct {
 		Name string
 	}
-	Repository    Repository
-	Assignees     Assignees     `graphql:"assignees(first: 3)"`
-	Comments      Comments      `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews Reviews       `graphql:"latestReviews(last: 3)"`
-	ReviewThreads ReviewThreads `graphql:"reviewThreads(last: 20)"`
-	IsDraft       bool
-	Commits       Commits  `graphql:"commits(last: 1)"`
-	Labels        PRLabels `graphql:"labels(first: 3)"`
+	Repository       Repository
+	Assignees        Assignees     `graphql:"assignees(first: 3)"`
+	Comments         Comments      `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews    Reviews       `graphql:"latestReviews(last: 3)"`
+	ReviewThreads    ReviewThreads `graphql:"reviewThreads(last: 20)"`
+	IsDraft          bool
+	Commits          Commits          `graphql:"commits(last: 1)"`
+	Labels           PRLabels         `graphql:"labels(first: 3)"`
+	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
 }
 
 type CheckRun struct {
@@ -151,6 +152,8 @@ type PRLabel struct {
 type PRLabels struct {
 	Nodes []Label
 }
+
+type MergeStateStatus string
 
 type PageInfo struct {
 	HasNextPage bool

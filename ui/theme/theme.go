@@ -17,6 +17,7 @@ type Theme struct {
 	InvertedText       lipgloss.AdaptiveColor // config.Theme.Colors.Text.Inverted
 	SuccessText        lipgloss.AdaptiveColor // config.Theme.Colors.Text.Success
 	WarningText        lipgloss.AdaptiveColor // config.Theme.Colors.Text.Warning
+	ErrorText          lipgloss.AdaptiveColor // config.Theme.Colors.Text.Error
 }
 
 var DefaultTheme = &Theme{
@@ -29,7 +30,8 @@ var DefaultTheme = &Theme{
 	FaintText:          lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
 	InvertedText:       lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
 	SuccessText:        lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
-	WarningText:        lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
+	WarningText:        lipgloss.AdaptiveColor{Light: "003", Dark: "003"},
+	ErrorText:          lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
 }
 
 func ParseTheme(cfg *config.Config) Theme {
@@ -57,6 +59,7 @@ func ParseTheme(cfg *config.Config) Theme {
 			InvertedText: _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
 			SuccessText:  _shimHex(cfg.Theme.Colors.Inline.Text.Success),
 			WarningText:  _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
+			ErrorText:    _shimHex(cfg.Theme.Colors.Inline.Text.Error),
 		}
 	}
 

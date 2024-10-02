@@ -17,6 +17,7 @@ type BranchKeyMap struct {
 	Push        key.Binding
 	ForcePush   key.Binding
 	Delete      key.Binding
+	UpdatePr    key.Binding
 	ViewPRs     key.Binding
 }
 
@@ -49,6 +50,10 @@ var BranchKeys = BranchKeyMap{
 		key.WithKeys("d", "backspace"),
 		key.WithHelp("d/backspace", "delete"),
 	),
+	UpdatePr: key.NewBinding(
+		key.WithKeys("u"),
+		key.WithHelp("u", "update PR"),
+	),
 	ViewPRs: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "Switch to PRs"),
@@ -64,6 +69,7 @@ func BranchFullHelp() []key.Binding {
 		BranchKeys.New,
 		BranchKeys.CreatePr,
 		BranchKeys.Delete,
+		BranchKeys.UpdatePr,
 		BranchKeys.ViewPRs,
 	}
 }
@@ -95,6 +101,8 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 			key = &BranchKeys.Checkout
 		case "viewPRs":
 			key = &BranchKeys.ViewPRs
+		case "updatePr":
+			key = &BranchKeys.UpdatePr
 		default:
 			return fmt.Errorf("unknown built-in branch key: '%s'", branchKey.Builtin)
 		}

@@ -283,6 +283,19 @@ func (pr *PullRequest) RenderState() string {
 	}
 }
 
+func (pr *PullRequest) RenderMergeStateStatus() string {
+	switch pr.Data.MergeStateStatus {
+	case "CLEAN":
+		return constants.SuccessIcon + " Up-to-date"
+	case "BLOCKED":
+		return constants.BlockedIcon + " Blocked"
+	case "BEHIND":
+		return constants.BehindIcon + " Behind"
+	default:
+		return ""
+	}
+}
+
 func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 	if !pr.Ctx.Config.Theme.Ui.Table.Compact {
 		return table.Row{

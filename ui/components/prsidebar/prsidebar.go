@@ -223,9 +223,27 @@ func (m *Model) renderMergeablePill() string {
 	} else if status == "MERGEABLE" {
 		return m.ctx.Styles.PrSidebar.PillStyle.
 			Background(m.ctx.Theme.SuccessText).
-			Render("󰃸 Mergeable")
+			Render("󰃸 No Merge Conflicts")
 	}
 
+	return ""
+}
+
+func (m *Model) renderMergeStateStatusPill() string {
+	status := m.pr.Data.MergeStateStatus
+	if status == "CLEAN" {
+		return m.ctx.Styles.PrSidebar.PillStyle.
+			Background(m.ctx.Theme.SuccessText).
+			Render("󰄬 Branch Up-To-Date")
+	} else if status == "BLOCKED" {
+		return m.ctx.Styles.PrSidebar.PillStyle.
+			Background(m.ctx.Theme.ErrorText).
+			Render("󰅖 Branch Blocked")
+	} else if status == "BEHIND" {
+		return m.ctx.Styles.PrSidebar.PillStyle.
+			Background(m.ctx.Theme.WarningText).
+			Render(" Branch Behind")
+	}
 	return ""
 }
 
@@ -236,7 +254,7 @@ func (m *Model) renderChecksPill() string {
 	status := m.pr.GetStatusChecksRollup()
 	if status == "FAILURE" {
 		return s.
-			Background(t.WarningText).
+			Background(t.ErrorText).
 			Render("󰅖 Checks")
 	} else if status == "PENDING" {
 		return s.
@@ -256,7 +274,8 @@ func (m *Model) renderPills() string {
 	statusPill := m.renderStatusPill()
 	mergeablePill := m.renderMergeablePill()
 	checksPill := m.renderChecksPill()
-	return lipgloss.JoinHorizontal(lipgloss.Top, statusPill, " ", mergeablePill, " ", checksPill)
+	uptoDatePill := m.renderMergeStateStatusPill()
+	return lipgloss.JoinHorizontal(lipgloss.Top, statusPill, " ", mergeablePill, " ", checksPill, " ", uptoDatePill)
 }
 
 func (m *Model) renderLabels() string {
