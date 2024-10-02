@@ -234,7 +234,7 @@ func (m *Model) renderMergeStateStatusPill() string {
 	if status == "CLEAN" {
 		return m.ctx.Styles.PrSidebar.PillStyle.
 			Background(m.ctx.Theme.SuccessText).
-			Render(" Branch UpTo Date")
+			Render(\" Branch Up-To-Date\")
 	} else if status == "BLOCKED" {
 		return m.ctx.Styles.PrSidebar.PillStyle.
 			Background(m.ctx.Theme.ErrorText).
