@@ -69,10 +69,19 @@
    </details>
 
 <details>
+    <summary>Updating from an older version</summary>
+
+```bash
+gh extension upgrade dlvhdr/gh-dash
+```
+</details>
+
+<details>
    <summary>How do I get these exact colors and font?</summary>
 
 > I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
 > For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
+
 
 </details>
 
