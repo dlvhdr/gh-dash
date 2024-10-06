@@ -87,9 +87,12 @@ merge the PR.
 ---
 variant: danger
 ---
-When you use this command, the dashboard merges the PR immediately and without
+**Prior to v3.10.0:** When you use this command, the dashboard merges the PR immediately and without
 prompting for confirmation. Only use this command when you're sure you want to
 merge the PR.
+
+**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
+merges the PR only after you approve the action.
 ```
 
 ## `w` - Mark PR as Ready for Review { #mark-pr-as-ready-for-review}
@@ -106,9 +109,12 @@ close the PR.
 ---
 variant: warning
 ---
-When you use this command, the dashboard closes the PR immediately and without
+**Prior to v3.10.0:** When you use this command, the dashboard closes the PR immediately and without
 prompting for confirmation. Only use this command when you're sure you want to
 close the PR.
+
+**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
+closes the PR only after you approve the action.
 
 This command doesn't support closing the PR with a comment. If you want to add
 a comment that explains why you're closing the PR, use the
@@ -124,7 +130,10 @@ command to reopen the PR.
 ---
 variant: warning
 ---
-When you use this command, the dashboard reopens the PR immediately and without
+**Prior to v3.10.0:** When you use this command, the dashboard reopens the PR immediately and without
 prompting for confirmation. Only use this command when you're sure you want to
 reopen the closed PR.
+
+**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
+reopens the PR only after you approve the action.
 ```
