@@ -57,9 +57,12 @@ to close the issue.
 ---
 variant: warning
 ---
-When you use this command, the dashboard closes the issue immediately and
+**Prior to v3.10.0:** When you use this command, the dashboard closes the issue immediately and
 without prompting for confirmation. Only use this command when you're sure you
 want to close the issue.
+
+**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
+closes the issue only after you approve the action.
 
 This command doesn't support closing the issue with a comment. If you want to
 add a comment that explains why you're closing the issue, use the
@@ -75,7 +78,10 @@ command to reopen the issue.
 ---
 variant: warning
 ---
-When you use this command, the dashboard reopens the issue immediately and
+**Prior to v3.10.0:** When you use this command, the dashboard reopens the issue immediately and
 without prompting for confirmation. Only use this command when you're sure you
 want to reopen the closed issue.
+
+**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
+reopens the issue only after you approve the action.
 ```
