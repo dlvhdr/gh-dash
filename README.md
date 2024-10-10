@@ -195,6 +195,15 @@ The list of available builtin commands are:
 2. `prs`: approve, assign, unassign, comment, diff, checkout, close, ready, reopen, merge, update, watchChecks, viewIssues
 3. `Issues`: assign, unassign, comment, close, reopen, viewPrs
 
+To unbind the "esc" keybinding you can include this in your `config.yml` file:
+
+```yaml
+keybindings:
+  prs:
+    - key: esc
+      builtin:
+```
+
 #### Defining custom keybindings
 
 This is available for both PRs and Issues.
