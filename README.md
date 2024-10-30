@@ -293,6 +293,7 @@ theme:
       faint: "#3E4057"
       warning: "#F23D5C"
       success: "#3DF294"
+      error: "#D20F39"
     background:
       selected: "#39386B"
     border:
