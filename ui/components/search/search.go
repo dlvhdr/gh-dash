@@ -27,7 +27,7 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ti.Width = 0
+	ti.Width = ctx.MainContentWidth - lipgloss.Width(prompt) - 6
 	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
 	ti.Prompt = prompt
 	ti.TextStyle = ti.TextStyle.Faint(true)
