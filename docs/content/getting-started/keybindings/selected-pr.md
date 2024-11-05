@@ -95,9 +95,9 @@ merge the PR.
 merges the PR only after you approve the action.
 ```
 
-## `w` - Mark PR as Ready for Review { #mark-pr-as-ready-for-review}
+## `W` - Mark PR as Ready for Review { #mark-pr-as-ready-for-review}
 
-Press ![kbd:`w`]() to mark the PR as ready for review. When you do, the dashboard uses the
+Press ![kbd:`W`]() to mark the PR as ready for review. When you do, the dashboard uses the
 `gh pr ready` command to convert the PR from draft status to ready for review.
 
 ## `x` - Close PR { #close-pr }
