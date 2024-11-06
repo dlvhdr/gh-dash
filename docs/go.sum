@@ -8,6 +8,8 @@ github.com/platenio/platen/modules/platen v0.0.0-20230530030614-0a5bf77211cc h1:
 github.com/platenio/platen/modules/platen v0.0.0-20230530030614-0a5bf77211cc/go.mod h1:7pfizXCKb4vonp6Og/3zkoy09YYsHip9/hXiT/pc3IM=
 github.com/platenio/platen/modules/platen v0.0.0-20230614143927-dd048e2da196 h1:rSOUejTdKH6VGNCMFn2ti9MhGOcFj+PvnDuYibJoakk=
 github.com/platenio/platen/modules/platen v0.0.0-20230614143927-dd048e2da196/go.mod h1:7pfizXCKb4vonp6Og/3zkoy09YYsHip9/hXiT/pc3IM=
+github.com/platenio/platen/modules/platen v0.0.0-20231124141037-5a875309774c h1:ftQLeFf3erlZrGq/3RGkwglSBT/sq9Xz8tYfi14LQdM=
+github.com/platenio/platen/modules/platen v0.0.0-20231124141037-5a875309774c/go.mod h1:7pfizXCKb4vonp6Og/3zkoy09YYsHip9/hXiT/pc3IM=
 github.com/platenio/platen/modules/schematize v0.0.0-20230417130935-f8a3fca1013d h1:PhpSZzd1YFHCZzsJJinIHoMU3Bw/w/GPYkWXz/flnvU=
 github.com/platenio/platen/modules/schematize v0.0.0-20230417130935-f8a3fca1013d/go.mod h1:0u7RXHeXIfNq9mAGzEu5T0UxdAa9D54y+ucI8oivs5M=
 github.com/platenio/platen/modules/schematize v0.0.0-20230504053552-c70b34ba1161 h1:t0wxjK59xg5ggSEpWEZHtooO0COoV5oC/WFIPcJLhRM=
@@ -18,3 +20,5 @@ github.com/platenio/platen/modules/schematize v0.0.0-20230530030614-0a5bf77211cc
 github.com/platenio/platen/modules/schematize v0.0.0-20230530030614-0a5bf77211cc/go.mod h1:0u7RXHeXIfNq9mAGzEu5T0UxdAa9D54y+ucI8oivs5M=
 github.com/platenio/platen/modules/schematize v0.0.0-20230614143927-dd048e2da196 h1:p4GUmZTuMEdDkhLG8V7Eo+YY8DVWR4h872Ohd1HqPRI=
 github.com/platenio/platen/modules/schematize v0.0.0-20230614143927-dd048e2da196/go.mod h1:0u7RXHeXIfNq9mAGzEu5T0UxdAa9D54y+ucI8oivs5M=
+github.com/platenio/platen/modules/schematize v0.0.0-20231124141037-5a875309774c h1:07Pq498bWcMqztKpHoo/fhst9QQeM/Qza6dySzhc9kU=
+github.com/platenio/platen/modules/schematize v0.0.0-20231124141037-5a875309774c/go.mod h1:0u7RXHeXIfNq9mAGzEu5T0UxdAa9D54y+ucI8oivs5M=
