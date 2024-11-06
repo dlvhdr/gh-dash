@@ -70,6 +70,15 @@ import "log"
 log.Printf("Some message with a variable %v\n", someVariable)
 ```
 
+### Running the docs locally
+
+- Check the current Hugo version in the [workflow file](./.github/workflows/hugo.yaml)
+- Install correct Hugo Extended version using the [official installation guide](https://gohugo.io/getting-started/installing/)
+- Check the Hugo version using `hugo version`
+- Go to the `docs/` directory using `cd docs`
+- Install the Hugo mods using `hugo mod get`
+- Run the Hugo server using `hugo server`
+
 ### Your PR is merged!
 
 Congratulations :tada::tada:
