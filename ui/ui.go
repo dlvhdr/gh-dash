@@ -546,7 +546,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case execProcessFinishedMsg, tea.FocusMsg:
-		cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+		if currSection != nil {
+			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+		}
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
