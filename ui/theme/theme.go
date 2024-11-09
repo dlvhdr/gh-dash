@@ -2,6 +2,7 @@ package theme
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 )
@@ -35,7 +36,10 @@ var DefaultTheme = &Theme{
 }
 
 func ParseTheme(cfg *config.Config) Theme {
-	_shimHex := func(hex config.HexColor) lipgloss.AdaptiveColor {
+	_shimHex := func(hex config.HexColor, fallback lipgloss.AdaptiveColor) lipgloss.AdaptiveColor {
+		if hex == "" {
+			return fallback
+		}
 		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
 	}
 
@@ -43,25 +47,52 @@ func ParseTheme(cfg *config.Config) Theme {
 		DefaultTheme = &Theme{
 			SelectedBackground: _shimHex(
 				cfg.Theme.Colors.Inline.Background.Selected,
+				DefaultTheme.SelectedBackground,
 			),
 			PrimaryBorder: _shimHex(
 				cfg.Theme.Colors.Inline.Border.Primary,
+				DefaultTheme.PrimaryBorder,
 			),
-			FaintBorder: _shimHex(cfg.Theme.Colors.Inline.Border.Faint),
+			FaintBorder: _shimHex(
+				cfg.Theme.Colors.Inline.Border.Faint,
+				DefaultTheme.FaintBorder,
+			),
 			SecondaryBorder: _shimHex(
 				cfg.Theme.Colors.Inline.Border.Secondary,
+				DefaultTheme.SecondaryBorder,
 			),
-			FaintText:   _shimHex(cfg.Theme.Colors.Inline.Text.Faint),
-			PrimaryText: _shimHex(cfg.Theme.Colors.Inline.Text.Primary),
+			FaintText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Faint,
+				DefaultTheme.FaintText,
+			),
+			PrimaryText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Primary,
+				DefaultTheme.PrimaryText,
+			),
 			SecondaryText: _shimHex(
 				cfg.Theme.Colors.Inline.Text.Secondary,
+				DefaultTheme.SecondaryText,
 			),
-			InvertedText: _shimHex(cfg.Theme.Colors.Inline.Text.Inverted),
-			SuccessText:  _shimHex(cfg.Theme.Colors.Inline.Text.Success),
-			WarningText:  _shimHex(cfg.Theme.Colors.Inline.Text.Warning),
-			ErrorText:    _shimHex(cfg.Theme.Colors.Inline.Text.Error),
+			InvertedText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Inverted,
+				DefaultTheme.InvertedText,
+			),
+			SuccessText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Success,
+				DefaultTheme.SuccessText,
+			),
+			WarningText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Warning,
+				DefaultTheme.WarningText,
+			),
+			ErrorText: _shimHex(
+				cfg.Theme.Colors.Inline.Text.Error,
+				DefaultTheme.ErrorText,
+			),
 		}
 	}
+
+	log.Debug("Parsing theme", "config", cfg.Theme.Colors, "theme", DefaultTheme)
 
 	return *DefaultTheme
 }

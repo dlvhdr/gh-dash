@@ -143,22 +143,22 @@ type HexColor string
 
 type ColorThemeText struct {
 	Primary   HexColor `yaml:"primary"   validate:"omitempty,hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Inverted  HexColor `yaml:"inverted"  validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
-	Warning   HexColor `yaml:"warning"   validate:"hexcolor"`
-	Success   HexColor `yaml:"success"   validate:"hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
+	Inverted  HexColor `yaml:"inverted"  validate:"omitempty,hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
+	Warning   HexColor `yaml:"warning"   validate:"omitempty,hexcolor"`
+	Success   HexColor `yaml:"success"   validate:"omitempty,hexcolor"`
 	Error     HexColor `yaml:"error"     validate:"omitempty,hexcolor"`
 }
 
 type ColorThemeBorder struct {
-	Primary   HexColor `yaml:"primary"   validate:"hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"hexcolor"`
+	Primary   HexColor `yaml:"primary"   validate:"omitempty,hexcolor"`
+	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
+	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
 }
 
 type ColorThemeBackground struct {
-	Selected HexColor `yaml:"selected" validate:"hexcolor"`
+	Selected HexColor `yaml:"selected" validate:"omitempty,hexcolor"`
 }
 
 type ColorTheme struct {
@@ -296,13 +296,6 @@ func (parser ConfigParser) getDefaultConfig() Config {
 		},
 		RepoPaths: map[string]string{},
 		Theme: &ThemeConfig{
-			Colors: &ColorThemeConfig{
-				Inline: ColorTheme{
-					Text: ColorThemeText{
-						Error: "#F7768E",
-					},
-				},
-			},
 			Ui: UIThemeConfig{
 				SectionsShowCount: true,
 				Table: TableUIThemeConfig{
