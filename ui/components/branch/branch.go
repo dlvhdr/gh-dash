@@ -40,7 +40,7 @@ func (b *Branch) renderReviewStatus() string {
 
 	if b.PR.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
-			b.Ctx.Theme.WarningText,
+			b.Ctx.Theme.ErrorText,
 		)
 		return reviewCellStyle.Render("󰌑")
 	}
@@ -125,7 +125,7 @@ func (b *Branch) renderCiStatus() string {
 		return ciCellStyle.Render(b.Ctx.Styles.Common.WaitingGlyph)
 	}
 
-	ciCellStyle = ciCellStyle.Foreground(b.Ctx.Theme.WarningText)
+	ciCellStyle = ciCellStyle.Foreground(b.Ctx.Theme.ErrorText)
 	return ciCellStyle.Render(constants.FailureIcon)
 }
 
@@ -140,7 +140,7 @@ func (b *Branch) renderLines(isSelected bool) string {
 
 	var additionsFg, deletionsFg lipgloss.AdaptiveColor
 	additionsFg = b.Ctx.Theme.SuccessText
-	deletionsFg = b.Ctx.Theme.WarningText
+	deletionsFg = b.Ctx.Theme.ErrorText
 
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {

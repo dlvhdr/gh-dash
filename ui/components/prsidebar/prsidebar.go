@@ -218,7 +218,7 @@ func (m *Model) renderMergeablePill() string {
 	status := m.pr.Data.Mergeable
 	if status == "CONFLICTING" {
 		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.WarningText).
+			Background(m.ctx.Theme.ErrorText).
 			Render("󰅖 Merge Conflicts")
 	} else if status == "MERGEABLE" {
 		return m.ctx.Styles.PrSidebar.PillStyle.

@@ -631,7 +631,7 @@ func (m Model) View() string {
 				Render(fmt.Sprintf("%s %s",
 					m.ctx.Styles.Common.FailureGlyph,
 					lipgloss.NewStyle().
-						Foreground(m.ctx.Theme.WarningText).
+						Foreground(m.ctx.Theme.ErrorText).
 						Render(m.ctx.Error.Error()),
 				)),
 		)
@@ -898,7 +898,7 @@ func (m *Model) renderRunningTask() string {
 				))
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
-			Foreground(m.ctx.Theme.WarningText).
+			Foreground(m.ctx.Theme.ErrorText).
 			Background(m.ctx.Theme.SelectedBackground).
 			Render(fmt.Sprintf("%s %s", constants.FailureIcon, task.Error.Error()))
 	case context.TaskFinished:
