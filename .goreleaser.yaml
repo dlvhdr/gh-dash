@@ -29,8 +29,8 @@ builds:
       - arm
       - "386"
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
     ldflags:
       - -s -w
       - -X github.com/dlvhdr/gh-dash/cmd.Version={{.Version}}
@@ -53,7 +53,7 @@ archives:
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
