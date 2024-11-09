@@ -40,7 +40,7 @@ func (pr *PullRequest) renderReviewStatus() string {
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
-			pr.Ctx.Theme.WarningText,
+			pr.Ctx.Theme.ErrorText,
 		)
 		return reviewCellStyle.Render("󰌑")
 	}
@@ -125,7 +125,7 @@ func (pr *PullRequest) renderCiStatus() string {
 		return ciCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
 	}
 
-	ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.WarningText)
+	ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.ErrorText)
 	return ciCellStyle.Render(constants.FailureIcon)
 }
 
