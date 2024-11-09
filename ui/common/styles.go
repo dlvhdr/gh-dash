@@ -10,7 +10,7 @@ import (
 var (
 	SearchHeight       = 3
 	FooterHeight       = 1
-	ExpandedHelpHeight = 13
+	ExpandedHelpHeight = 14
 	InputBoxHeight     = 8
 	SingleRuneWidth    = 4
 	MainContentPadding = 1
@@ -41,14 +41,14 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		Height(FooterHeight)
 
 	s.ErrorStyle = s.FooterStyle.
-		Foreground(theme.WarningText).
+		Foreground(theme.ErrorText).
 		MaxHeight(FooterHeight)
 
 	s.WaitingGlyph = lipgloss.NewStyle().
 		Foreground(theme.FaintText).
 		Render(constants.WaitingIcon)
 	s.FailureGlyph = lipgloss.NewStyle().
-		Foreground(theme.WarningText).
+		Foreground(theme.ErrorText).
 		Render(constants.FailureIcon)
 	s.SuccessGlyph = lipgloss.NewStyle().
 		Foreground(theme.SuccessText).
