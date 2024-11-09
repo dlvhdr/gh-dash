@@ -18,6 +18,7 @@ builds:
     flags:
       - -tags=nodbus
     goos:
+      - android
       - freebsd
       - linux
       - windows
@@ -36,6 +37,15 @@ builds:
       - -X github.com/dlvhdr/gh-dash/cmd.Commit={{.Commit}}
       - -X github.com/dlvhdr/gh-dash/cmd.Date={{.CommitDate}}
       - -X github.com/dlvhdr/gh-dash/cmd.BuiltBy=goreleaser
+    # Skipping builds for Android non-ARM64 architectures as they need CGO enabled
+    # https://goreleaser.com/limitations/cgo/
+    ignore:
+      - goos: android
+        goarch: "386"
+      - goos: android
+        goarch: amd64
+      - goos: android
+        goarch: arm
 
 archives:
   - format: binary
