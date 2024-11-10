@@ -140,7 +140,7 @@ func (pr *PullRequest) renderLines(isSelected bool) string {
 
 	var additionsFg, deletionsFg lipgloss.AdaptiveColor
 	additionsFg = pr.Ctx.Theme.SuccessText
-	deletionsFg = pr.Ctx.Theme.WarningText
+	deletionsFg = pr.Ctx.Theme.ErrorText
 
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {
