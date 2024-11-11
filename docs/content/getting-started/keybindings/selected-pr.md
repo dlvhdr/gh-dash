@@ -95,6 +95,21 @@ merge the PR.
 merges the PR only after you approve the action.
 ```
 
+## `u` - Update PR { #update-pr}
+
+Press ![kbd:`u`]() to update the PR branch. When you do, the dashboard uses the
+`gh pr update-branch` command to update the PR. This command updates the branch with a merge commit.
+
+## `v` - Approve PR { #approve-pr}
+
+Press ![kbd:`v`]() to approve the PR. When you do, the dashboard uses the
+`gh pr review --approve` command to approve the PR. This will prompt you to add an optional comment to the approval.
+
+## `w` - Watch PR checks { #watch-pr-checks}
+
+Press ![kbd:`w`]() to watch the PR check and get a desktop notification if they succeed or fail. When you do, the dashboard uses the
+`gh pr checks --watch` command to watch the PR checks.
+
 ## `W` - Mark PR as Ready for Review { #mark-pr-as-ready-for-review}
 
 Press ![kbd:`W`]() to mark the PR as ready for review. When you do, the dashboard uses the
