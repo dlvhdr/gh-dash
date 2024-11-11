@@ -72,11 +72,11 @@ var PRKeys = PRKeyMap{
 	),
 	WatchChecks: key.NewBinding(
 		key.WithKeys("w"),
-		key.WithHelp("w", "Watch checks"),
+		key.WithHelp("w", "watch checks"),
 	),
 	ViewIssues: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "Switch to issues"),
+		key.WithHelp("s", "switch to issues"),
 	),
 }
 
