@@ -557,6 +557,10 @@ func (m *Model) GetTotalCount() *int {
 	return utils.IntPtr(len(m.Branches))
 }
 
+func (m *Model) SetIsLoading(val bool) {
+	m.Table.SetIsLoading(val)
+}
+
 func (m *Model) GetPagerContent() string {
 	s := lipgloss.NewStyle().Background(m.Ctx.Styles.ListViewPort.PagerStyle.GetBackground())
 	mod := s.Foreground(lipgloss.Color("#e0af68")).Render(fmt.Sprintf(" %d", len(m.repo.Status.Modified)))
