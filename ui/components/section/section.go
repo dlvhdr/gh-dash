@@ -88,7 +88,7 @@ func NewModel(
 			),
 		)),
 		"Loading...",
-		true,
+		false,
 	)
 	return m
 }
@@ -129,6 +129,7 @@ type Table interface {
 	BuildRows() []table.Row
 	ResetRows()
 	IsLoading() bool
+	SetIsLoading(val bool)
 }
 
 type Search interface {

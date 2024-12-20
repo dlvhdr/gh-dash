@@ -230,6 +230,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
 			currSection.ResetRows()
+			currSection.SetIsLoading(true)
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 		case key.Matches(msg, m.keys.RefreshAll):
@@ -489,7 +490,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval())
+		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
@@ -552,6 +553,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
+
+	case updateFooterMsg:
+		m.footer, cmd = m.footer.Update(msg)
+		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
 
 	case constants.ErrMsg:
 		m.ctx.Error = msg.Err
@@ -754,7 +759,7 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 		m.repo = &s
 		return nil, cmd
 	} else if m.ctx.View == config.PRsView {
-		return prssection.FetchAllSections(m.ctx)
+		return prssection.FetchAllSections(m.ctx, m.prs)
 	} else {
 		return issuessection.FetchAllSections(m.ctx)
 	}
@@ -955,9 +960,20 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 	}
 
 	return tea.Tick(
-		time.Minute*time.Duration(m.ctx.Config.Defaults.RefetchIntervalMinutes),
+		time.Second*30,
 		func(t time.Time) tea.Msg {
 			return intervalRefresh(t)
+		},
+	)
+}
+
+type updateFooterMsg struct{}
+
+func (m *Model) doUpdateFooterAtInterval() tea.Cmd {
+	return tea.Tick(
+		time.Second*10,
+		func(t time.Time) tea.Msg {
+			return updateFooterMsg{}
 		},
 	)
 }

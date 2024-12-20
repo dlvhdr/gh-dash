@@ -412,6 +412,10 @@ func (m Model) IsLoading() bool {
 	return m.Table.IsLoading()
 }
 
+func (m *Model) SetIsLoading(val bool) {
+	m.Table.SetIsLoading(val)
+}
+
 func (m Model) GetPagerContent() string {
 	pagerContent := ""
 	if m.TotalCount > 0 {

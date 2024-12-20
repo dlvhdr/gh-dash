@@ -373,6 +373,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
+	isFirstFetch := m.LastFetchTaskId == ""
 	m.LastFetchTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
@@ -416,7 +417,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	cmds = append(cmds, fetchCmd)
 
-	if m.PageInfo == nil {
+	if isFirstFetch {
 		m.Table.SetIsLoading(true)
 		cmds = append(cmds, m.Table.StartLoadingSpinner())
 
@@ -432,16 +433,22 @@ func (m *Model) ResetRows() {
 
 func FetchAllSections(
 	ctx context.ProgramContext,
+	prs []section.Section,
 ) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
 	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
 		sectionModel := NewModel(
-			i+1,
+			i+1, // 0 is the search section
 			&ctx,
 			sectionConfig,
 			time.Now(),
-		) // 0 is the search section
+		)
+		if len(prs) > 0 && len(prs) >= i+1 && prs[i+1] != nil {
+			oldSection := prs[i+1].(*Model)
+			sectionModel.Prs = oldSection.Prs
+			sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
+		}
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(
 			fetchPRsCmds,
@@ -502,13 +509,23 @@ func (m Model) IsLoading() bool {
 	return m.Table.IsLoading()
 }
 
+func (m *Model) SetIsLoading(val bool) {
+	m.Table.SetIsLoading(val)
+}
+
 func (m Model) GetPagerContent() string {
 	pagerContent := ""
+	timeElapsed := utils.TimeElapsed(m.LastUpdated())
+	if timeElapsed == "now" {
+		timeElapsed = "just now"
+	} else {
+		timeElapsed = fmt.Sprintf("~%v ago", timeElapsed)
+	}
 	if m.TotalCount > 0 {
 		pagerContent = fmt.Sprintf(
-			"%v %v • %v %v/%v • Fetched %v",
+			"%v Updated %v • %v %v/%v (fetched %v)",
 			constants.WaitingIcon,
-			m.LastUpdated().Format("01/02 15:04:05"),
+			timeElapsed,
 			m.SingularForm,
 			m.Table.GetCurrItem()+1,
 			m.TotalCount,
