@@ -554,7 +554,8 @@ func (m *Model) GetTotalCount() *int {
 		return nil
 	}
 
-	return utils.IntPtr(len(m.Branches))
+	c := len(m.Branches)
+	return &c
 }
 
 func (m *Model) SetIsLoading(val bool) {
