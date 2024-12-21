@@ -175,6 +175,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.Table.SetRows(m.BuildRows())
 			m.Table.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
+
 		}
 	}
 
@@ -502,7 +503,8 @@ func (m Model) GetTotalCount() *int {
 	if m.IsLoading() {
 		return nil
 	}
-	return &m.TotalCount
+	c := m.TotalCount
+	return &c
 }
 
 func (m Model) IsLoading() bool {
