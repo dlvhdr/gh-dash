@@ -105,7 +105,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				branch := m.getCurrBranch().Data.Name
-				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
+				sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
 				if action == "new" {
 					cmd = m.newBranch(input)
 				} else if action == "create_pr" {
