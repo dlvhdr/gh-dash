@@ -14,7 +14,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
-type SectionIdentifer struct {
+type SectionIdentifier struct {
 	Id   int
 	Type string
 }
@@ -42,7 +42,7 @@ func buildTaskId(prefix string, prNumber int) string {
 type GitHubTask struct {
 	Id           string
 	Args         []string
-	Section      SectionIdentifer
+	Section      SectionIdentifier
 	StartText    string
 	FinishedText string
 	Msg          func(c *exec.Cmd, err error) tea.Msg
@@ -73,7 +73,7 @@ func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
 	})
 }
 
-func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifer, branch string) tea.Cmd {
+func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch string) tea.Cmd {
 	return fireTask(ctx, GitHubTask{
 		Id: fmt.Sprintf("branch_open_%s", branch),
 		Args: []string{
@@ -93,7 +93,7 @@ func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifer, branch 
 	})
 }
 
-func ReopenPR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_reopen", prNumber),
@@ -116,7 +116,7 @@ func ReopenPR(ctx *context.ProgramContext, section SectionIdentifer, pr data.Row
 	})
 }
 
-func ClosePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_close", prNumber),
@@ -139,7 +139,7 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowD
 	})
 }
 
-func PRReady(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_ready", prNumber),
@@ -162,7 +162,7 @@ func PRReady(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowD
 	})
 }
 
-func MergePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	c := exec.Command(
 		"gh",
@@ -202,7 +202,7 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowD
 	}))
 }
 
-func CreatePR(ctx *context.ProgramContext, section SectionIdentifer, branchName string, title string) tea.Cmd {
+func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName string, title string) tea.Cmd {
 	c := exec.Command(
 		"gh",
 		"pr",
@@ -239,7 +239,7 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifer, branchName 
 	}))
 }
 
-func UpdatePR(ctx *context.ProgramContext, section SectionIdentifer, pr data.RowData) tea.Cmd {
+func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_update", prNumber),
