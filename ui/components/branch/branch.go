@@ -178,7 +178,7 @@ func (b *Branch) renderExtendedTitle(isSelected bool) string {
 	baseStyle := b.getBaseStyle(isSelected)
 	width := b.getMaxWidth()
 
-	title := b.renderLastCommigMsg(isSelected, width)
+	title := b.renderLastCommitMsg(isSelected, width)
 	branch := b.renderBranch(isSelected, width)
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, branch, title))
 }
@@ -332,7 +332,7 @@ func (b *Branch) renderCommitsAheadBehind(isSelected bool) string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, commitsAhead, commitsBehind)
 }
 
-func (b *Branch) renderLastCommigMsg(isSelected bool, width int) string {
+func (b *Branch) renderLastCommitMsg(isSelected bool, width int) string {
 	baseStyle := b.getBaseStyle(isSelected)
 	title := "-"
 	if b.Data.LastCommitMsg != nil {
