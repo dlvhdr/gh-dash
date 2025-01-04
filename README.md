@@ -102,7 +102,12 @@ Usage:
   gh dash [flags]
 
 Flags:
-  -c, --config string   use this configuration file (default lookup: a .gh-dash.yml file if inside a current git repo, $GH_DASH_CONFIG env var, or if not set, $XDG_CONFIG_HOME/gh-dash/config.yml)
+  -c, --config string   use this configuration file 
+                        (default lookup:
+                          1. a .gh-dash.yml file if inside a git repo
+                          2. $GH_DASH_CONFIG env var
+                          3. $XDG_CONFIG_HOME/gh-dash/config.yml
+                        )
       --debug           passing this flag will allow writing debug output to debug.log
   -h, --help            help for gh-dash
 ```
