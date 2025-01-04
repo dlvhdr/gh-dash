@@ -113,7 +113,7 @@ func (m *Model) initScreen() tea.Msg {
 			)
 	}
 
-	cfg, err := config.ParseConfig(m.ctx.ConfigPath)
+	cfg, err := config.ParseConfig(m.ctx.ConfigPath, m.ctx.RepoPath)
 	if err != nil {
 		showError(err)
 		return initMsg{Config: cfg}
