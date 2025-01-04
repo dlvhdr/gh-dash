@@ -18,6 +18,13 @@
 - 🪟 write multiple configuration files to easily switch between completely different dashboards
 - ♻️ set an interval for auto refreshing the dashboard
 
+## 📃 Docs
+
+See the docs site at [https://dlvhdr.github.io/gh-dash](dlvhdr.github.io/gh-dash) to get started,
+or just skim this README.
+
+---
+
 ## 📦 Installation
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
