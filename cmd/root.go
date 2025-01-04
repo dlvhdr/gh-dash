@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui"
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
@@ -59,6 +60,9 @@ func createModel(repoPath *string, configPath string, debug bool) (ui.Model, *os
 			log.SetReportCaller(true)
 			log.SetLevel(log.DebugLevel)
 			log.Debug("Logging to debug.log")
+			if repoPath != nil {
+				log.Debug("Running in repo", "repo", *repoPath)
+			}
 		} else {
 			loggerFile, _ = tea.LogToFile("debug.log", "debug")
 			slog.Print("Failed setting up logging", fileErr)
@@ -123,6 +127,14 @@ func init() {
 		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {
 			repo = &args[0]
+		}
+
+		if repo == nil {
+			r, err := git.GetRepoInPwd()
+			if err == nil && r != nil {
+				p := r.Path()
+				repo = &p
+			}
 		}
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {

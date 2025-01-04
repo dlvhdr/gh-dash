@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
+prSections:
+  - title: Mine
+    filters: is:open author:@me repo:dlvhdr/gh-dash
+    layout:
+      author:
+        hidden: true
+  - title: Review
+    filters: repo:dlvhdr/gh-dash -author:@me is:open
+  - title: All
+    filters: repo:dlvhdr/gh-dash
+issuesSections:
+  - title: Open
+    filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
+  - title: Creator
+    filters: author:@me repo:dlvhdr/gh-dash is:open
+  - title: All
+    filters: repo:dlvhdr/gh-dash sort:reactions
+
+pager:
+  diff: diffnav
+defaults:
+  view: prs
+  refetchIntervalMinutes: 5
+  layout:
+    prs:
+      repoName:
+        grow: true,
+        width: 10
+        hidden: false
+      base:
+        hidden: true
+
+  preview:
+    open: true
+    width: 70
+  prsLimit: 20
+  issuesLimit: 20
+repoPaths:
+  dlvhdr/*: ~/code/personal/*
+
+keybindings:
+  universal:
+    - key: g
+      command: >
+        cd {{.RepoPath}} && lazygit
+  prs:
+    - key: O
+      builtin: checkout
+    - key: C
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"
+        '
+    - key: b
+      command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} --json statusCheckRollup | command jq -rcj '.statusCheckRollup.[] | select(.context == "buildkite/mono") | .targetUrl' | xargs open
+    - key: a
+      command: >
+        cd {{.RepoPath}} && git add -A && lazygit
+    - key: v
+      command: >
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      compact: false
+  colors:
+    text:
+      primary: "#E2E1ED"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#B0B3BF"
+      warning: "#E0AF68"
+      success: "#3DF294"
+    background:
+      selected: "#1B1B33"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"

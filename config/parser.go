@@ -13,7 +13,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
-	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
@@ -366,7 +365,7 @@ func (parser ConfigParser) createConfigFileIfMissing(
 	return nil
 }
 
-func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
+func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath *string) (string, error) {
 	var configFilePath string
 	ghDashConfig := os.Getenv("GH_DASH_CONFIG")
 
@@ -374,8 +373,8 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, erro
 	if ghDashConfig != "" {
 		configFilePath = ghDashConfig
 		// Then try to see if we're currently in a git repo
-	} else if repo, err := git.GetRepoInPwd(); err == nil {
-		basename := repo.Path() + "/." + DashDir
+	} else if repoPath != nil {
+		basename := *repoPath + "/." + DashDir
 		repoConfigYml := basename + ".yml"
 		repoConfigYaml := basename + ".yml"
 		if _, err := os.Stat(repoConfigYml); err == nil {
@@ -386,8 +385,10 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, erro
 		if configFilePath != "" {
 			return configFilePath, nil
 		}
-		// Then fallback to global config
-	} else {
+	}
+
+	// Then fallback to global config
+	if configFilePath == "" {
 		configDir := os.Getenv("XDG_CONFIG_HOME")
 		if configDir == "" {
 			homeDir, err := os.UserHomeDir()
@@ -462,7 +463,7 @@ func initParser() ConfigParser {
 	return ConfigParser{}
 }
 
-func ParseConfig(path string) (Config, error) {
+func ParseConfig(path string, repoPath *string) (Config, error) {
 	parser := initParser()
 
 	var config Config
@@ -470,7 +471,7 @@ func ParseConfig(path string) (Config, error) {
 	var configFilePath string
 
 	if path == "" {
-		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing()
+		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing(repoPath)
 		if err != nil {
 			return config, parsingError{err: err}
 		}
