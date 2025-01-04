@@ -99,7 +99,12 @@ func init() {
 		"config",
 		"c",
 		"",
-		"use this configuration file (default is $GH_DASH_CONFIG, or if not set, \n$XDG_CONFIG_HOME/gh-dash/config.yml)",
+		`use this configuration file
+(default lookup:
+  1. a .gh-dash.yml file if inside a git repo
+  2. $GH_DASH_CONFIG env var
+  3. $XDG_CONFIG_HOME/gh-dash/config.yml
+)`,
 	)
 	err := rootCmd.MarkPersistentFlagFilename("config", "yaml", "yml")
 	if err != nil {
