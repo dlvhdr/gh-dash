@@ -13,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 
+	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
@@ -367,10 +368,25 @@ func (parser ConfigParser) createConfigFileIfMissing(
 
 func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing() (string, error) {
 	var configFilePath string
-
 	ghDashConfig := os.Getenv("GH_DASH_CONFIG")
+
+	// First try GH_DASH_CONFIG
 	if ghDashConfig != "" {
 		configFilePath = ghDashConfig
+		// Then try to see if we're currently in a git repo
+	} else if repo, err := git.GetRepoInPwd(); err == nil {
+		basename := repo.Path() + "/." + DashDir
+		repoConfigYml := basename + ".yml"
+		repoConfigYaml := basename + ".yml"
+		if _, err := os.Stat(repoConfigYml); err == nil {
+			configFilePath = repoConfigYml
+		} else if _, err := os.Stat(repoConfigYaml); err == nil {
+			configFilePath = repoConfigYaml
+		}
+		if configFilePath != "" {
+			return configFilePath, nil
+		}
+		// Then fallback to global config
 	} else {
 		configDir := os.Getenv("XDG_CONFIG_HOME")
 		if configDir == "" {
