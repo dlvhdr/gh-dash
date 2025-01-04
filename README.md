@@ -23,7 +23,6 @@
 See the docs site at [dlvhdr.github.io/gh-dash](https://dlvhdr.github.io/gh-dash) to get started,
 or just skim this README.
 
----
 ## 📦 Installation
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
