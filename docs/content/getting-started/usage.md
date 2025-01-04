@@ -23,7 +23,7 @@ To use `gh-dash`, follow these steps after you've [installed it][01]:
      gh dash [flags]
 
    Flags:
-     -c, --config string   use this configuration file (default is $GH_DASH_CONFIG, or if not set, $XDG_CONFIG_HOME/gh-dash/config.yml)
+     -c, --config string   use this configuration file (default lookup: a .gh-dash.yml file if inside a git repo, $GH_DASH_CONFIG env var, or if not set, $XDG_CONFIG_HOME/gh-dash/config.yml)
          --debug           passing this flag will allow writing debug output to debug.log
      -h, --help            help for gh-dash
    ```
@@ -41,15 +41,16 @@ gh dash --config path/to/configuration/file.yml
 
 | Aliases |  Type  |                Default                |
 | :------ | :----: | :------------------------------------ |
-| `-c`    | String | `$GH_DASH_CONFIG` or if not set, `$XDG_CONFIG_HOME/gh-dash-config.yml` |
+| `-c`    | String | `.gh-dash.yml` file if inside a git repo, `$GH_DASH_CONFIG` env var, or if not set, `$XDG_CONFIG_HOME/gh-dash-config.yml` |
 
 If you don't specify this flag, `gh-dash` uses the default configuration. If the file doesn't exist, gh-dash will create it. The location of the default configuration file depends on your system:
 
-1. If `$GH_DASH_CONFIG` is a non-empty string, `gh-dash` will use this file for
+1. If Inside a git repo, `gh-dash` will look for a `.gh-dash.yml` file in the root of the repo.
+2. If `$GH_DASH_CONFIG` is a non-empty string, `gh-dash` will use this file for
     its configuration.
-1. If `$GH_DASH_CONFIG` isn't set and `$XDG_CONFIG_HOME` is a non-empty string,
+3. If `$GH_DASH_CONFIG` isn't set and `$XDG_CONFIG_HOME` is a non-empty string,
     the default path is `$XDG_CONFIG_HOME/gh-dash/config.yml`.
-1. If neither `$GH_DASH_CONFIG` or `$XDG_CONFIG_HOME` are set, then:
+4. If neither `$GH_DASH_CONFIG` or `$XDG_CONFIG_HOME` are set, then:
    - On Linux and macOS systems, the default path is `$HOME/gh-dash/config.yml`.
    - On Windows systems, the default path is `%USERPROFILE%\gh-dash\config.yml`.
 
