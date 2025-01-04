@@ -376,7 +376,7 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath *strin
 	} else if repoPath != nil {
 		basename := *repoPath + "/." + DashDir
 		repoConfigYml := basename + ".yml"
-		repoConfigYaml := basename + ".yml"
+		repoConfigYaml := basename + ".yaml"
 		if _, err := os.Stat(repoConfigYml); err == nil {
 			configFilePath = repoConfigYml
 		} else if _, err := os.Stat(repoConfigYaml); err == nil {
