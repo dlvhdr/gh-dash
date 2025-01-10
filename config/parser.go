@@ -122,7 +122,7 @@ func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 		helpDesc = previous.Help().Desc
 	}
 
-    	keys := strings.Split(kb.Key, "/")
+	keys := strings.Split(kb.Key, "/")
 	return key.NewBinding(
 		key.WithKeys(keys...),
 		key.WithHelp(kb.Key, helpDesc),
