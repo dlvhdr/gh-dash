@@ -316,11 +316,13 @@ func (m *Model) SetSectionId(id int) {
 	m.sectionId = id
 }
 
-func (m *Model) SetRow(data *data.PullRequestData) {
-	if data == nil {
+func (m *Model) SetRow(d *data.PullRequestData) {
+	if d == nil {
 		m.pr = nil
 	} else {
-		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: data}
+		// TODO: understand why not copying the ctx to a new var — causes a memory leak
+		c := *m.ctx
+		m.pr = &pr.PullRequest{Ctx: &c, Data: d}
 	}
 }
 

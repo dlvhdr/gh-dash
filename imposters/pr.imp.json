@@ -1,0 +1,14 @@
+[{
+        "request": {
+            "method": "POST",
+            "endpoint": "/api/graphql"            
+        },
+        "response": {
+            "status": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "bodyFile": "pr.json"
+        }
+    }
+]
