@@ -1,7 +1,9 @@
 package data
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -9,6 +11,8 @@ import (
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 	"github.com/shurcooL/githubv4"
+
+	"github.com/dlvhdr/gh-dash/v4/config"
 )
 
 type PullRequestData struct {
@@ -191,9 +195,19 @@ type PullRequestsResponse struct {
 	PageInfo   PageInfo
 }
 
+var client *gh.GraphQLClient
+
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
-	client, err := gh.DefaultGraphQLClient()
+	if client == nil {
+		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
+			log.Debug("using mock data", "server", "https://localhost:3000")
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+		} else {
+			client, err = gh.DefaultGraphQLClient()
+		}
+	}
 
 	if err != nil {
 		return PullRequestsResponse{}, err
@@ -222,7 +236,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}
-	log.Debug("Successfully fetched PRs", "query", query, "count", queryResult.Search.IssueCount)
+	log.Debug("Successfully fetched PRs", "count", queryResult.Search.IssueCount)
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
@@ -264,7 +278,7 @@ func FetchPullRequest(prUrl string) (PullRequestData, error) {
 	if err != nil {
 		return PullRequestData{}, err
 	}
-	log.Debug("Successfully fetched PR", "url", prUrl, "data", queryResult.Resource.PullRequest)
+	log.Debug("Successfully fetched PR", "url", prUrl)
 
 	return queryResult.Resource.PullRequest, nil
 }
