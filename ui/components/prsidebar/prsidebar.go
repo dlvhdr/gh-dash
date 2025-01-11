@@ -321,8 +321,8 @@ func (m *Model) SetRow(d *data.PullRequestData) {
 		m.pr = nil
 	} else {
 		// TODO: understand why not copying the ctx to a new var — causes a memory leak
-		c := *m.ctx
-		m.pr = &pr.PullRequest{Ctx: &c, Data: d}
+		// c := *m.ctx
+		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: d}
 	}
 }
 

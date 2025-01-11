@@ -960,7 +960,8 @@ func (m *Model) doRefreshAtInterval() tea.Cmd {
 	}
 
 	return tea.Tick(
-		time.Minute*time.Duration(m.ctx.Config.Defaults.RefetchIntervalMinutes),
+		// time.Minute*time.Duration(m.ctx.Config.Defaults.RefetchIntervalMinutes),
+		time.Millisecond*50,
 		func(t time.Time) tea.Msg {
 			return intervalRefresh(t)
 		},
