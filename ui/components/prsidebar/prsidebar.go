@@ -31,8 +31,8 @@ type Model struct {
 	inputBox inputbox.Model
 }
 
-func NewModel(ctx context.ProgramContext) Model {
-	inputBox := inputbox.NewModel(&ctx)
+func NewModel(ctx *context.ProgramContext) Model {
+	inputBox := inputbox.NewModel(ctx)
 	inputBox.SetHeight(common.InputBoxHeight)
 
 	return Model{
@@ -320,8 +320,6 @@ func (m *Model) SetRow(d *data.PullRequestData) {
 	if d == nil {
 		m.pr = nil
 	} else {
-		// TODO: understand why not copying the ctx to a new var — causes a memory leak
-		// c := *m.ctx
 		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: d}
 	}
 }

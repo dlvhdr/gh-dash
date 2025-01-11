@@ -48,7 +48,7 @@ func Execute() {
 	}
 }
 
-func createModel(repoPath *string, configPath string, debug bool) (ui.Model, *os.File) {
+func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -60,8 +60,8 @@ func createModel(repoPath *string, configPath string, debug bool) (ui.Model, *os
 			log.SetReportCaller(true)
 			log.SetLevel(log.DebugLevel)
 			log.Debug("Logging to debug.log")
-			if repoPath != nil {
-				log.Debug("Running in repo", "repo", *repoPath)
+			if repoPath != "" {
+				log.Debug("Running in repo", "repo", repoPath)
 			}
 		} else {
 			loggerFile, _ = tea.LogToFile("debug.log", "debug")
@@ -128,17 +128,16 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
-		var repo *string
+		var repo string
 		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {
-			repo = &args[0]
+			repo = args[0]
 		}
 
-		if repo == nil {
+		if repo == "" {
 			r, err := git.GetRepoInPwd()
 			if err == nil && r != nil {
-				p := r.Path()
-				repo = &p
+				repo = r.Path()
 			}
 		}
 		debug, err := rootCmd.Flags().GetBool("debug")

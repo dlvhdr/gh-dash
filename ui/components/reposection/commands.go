@@ -40,7 +40,7 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
 		var err error
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -62,7 +62,7 @@ func (m *Model) fastForward() (tea.Cmd, error) {
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err = git.GetRepo(*m.Ctx.RepoPath)
+		repo, err = git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -108,14 +108,14 @@ func (m *Model) push(opts pushOptions) (tea.Cmd, error) {
 		if len(b.Data.Remotes) == 0 {
 			args = append(args, "--set-upstream")
 			err = gitm.Push(
-				*m.Ctx.RepoPath,
+				m.Ctx.RepoPath,
 				"origin",
 				b.Data.Name,
 				gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: args}},
 			)
 		} else {
 			err = gitm.Push(
-				*m.Ctx.RepoPath,
+				m.Ctx.RepoPath,
 				b.Data.Remotes[0],
 				b.Data.Name,
 				gitm.PushOptions{CommandOptions: gitm.CommandOptions{Args: args}},
@@ -124,7 +124,7 @@ func (m *Model) push(opts pushOptions) (tea.Cmd, error) {
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -152,11 +152,11 @@ func (m *Model) checkout() (tea.Cmd, error) {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := gitm.Checkout(*m.Ctx.RepoPath, b.Data.Name)
+		err := gitm.Checkout(m.Ctx.RepoPath, b.Data.Name)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -179,7 +179,7 @@ type repoMsg struct {
 func (m *Model) readRepoCmd() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
 	branchesTaskId := fmt.Sprintf("fetching_branches_%d", time.Now().Unix())
-	if m.Ctx.RepoPath != nil {
+	if m.Ctx.RepoPath != "" {
 		branchesTask := context.Task{
 			Id:           branchesTaskId,
 			StartText:    "Reading local branches",
@@ -191,7 +191,7 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 		cmds = append(cmds, bCmd)
 	}
 	cmds = append(cmds, func() tea.Msg {
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: branchesTaskId, Err: err}
 		}
@@ -209,7 +209,7 @@ func (m *Model) readRepoCmd() []tea.Cmd {
 func (m *Model) fetchRepoCmd() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
 	fetchTaskId := fmt.Sprintf("git_fetch_repo_%d", time.Now().Unix())
-	if m.Ctx.RepoPath == nil {
+	if m.Ctx.RepoPath == "" {
 		return []tea.Cmd{}
 	}
 	fetchTask := context.Task{
@@ -221,7 +221,7 @@ func (m *Model) fetchRepoCmd() []tea.Cmd {
 	}
 	cmds = append(cmds, m.Ctx.StartTask(fetchTask))
 	cmds = append(cmds, func() tea.Msg {
-		repo, err := git.FetchRepo(*m.Ctx.RepoPath)
+		repo, err := git.FetchRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: fetchTaskId, Err: err}
 		}
@@ -251,7 +251,7 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(*m.Ctx.RepoUrl)), *limit, nil)
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(m.Ctx.RepoUrl)), *limit, nil)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   0,
@@ -285,7 +285,7 @@ func (m *Model) fetchPRCmd(branch string) []tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return []tea.Cmd{startCmd, func() tea.Msg {
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(*m.Ctx.RepoUrl), branch), 1, nil)
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(m.Ctx.RepoUrl), branch), 1, nil)
 		log.Debug("Fetching PRs", "res", res)
 		if err != nil {
 			return constants.TaskFinishedMsg{
@@ -385,11 +385,11 @@ func (m *Model) deleteBranch() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := gitm.DeleteBranch(*m.Ctx.RepoPath, b.Data.Name, gitm.DeleteBranchOptions{Force: true})
+		err := gitm.DeleteBranch(m.Ctx.RepoPath, b.Data.Name, gitm.DeleteBranchOptions{Force: true})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
@@ -415,11 +415,11 @@ func (m *Model) newBranch(name string) tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := gitm.Checkout(*m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: m.repo.HeadBranchName})
+		err := gitm.Checkout(m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: m.repo.HeadBranchName})
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}
-		repo, err := git.GetRepo(*m.Ctx.RepoPath)
+		repo, err := git.GetRepo(m.Ctx.RepoPath)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}

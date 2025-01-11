@@ -55,7 +55,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) View(ctx context.ProgramContext) string {
+func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
 		Width(ctx.MainContentWidth - 4).
 		MaxHeight(3).

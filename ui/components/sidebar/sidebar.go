@@ -83,7 +83,7 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.Config.Defaults.Preview.Width - 2*m.ctx.Styles.Sidebar.ContentPadding - m.ctx.Styles.Sidebar.BorderWidth
+	return m.ctx.Config.Defaults.Preview.Width - m.ctx.Styles.Sidebar.ContentPadding - m.ctx.Styles.Sidebar.BorderWidth
 }
 
 func (m *Model) ScrollToTop() {

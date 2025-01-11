@@ -48,12 +48,12 @@ type Model struct {
 	prs           []section.Section
 	issues        []section.Section
 	tabs          tabs.Model
-	ctx           context.ProgramContext
+	ctx           *context.ProgramContext
 	taskSpinner   spinner.Model
 	tasks         map[string]context.Task
 }
 
-func NewModel(repoPath *string, configPath string) Model {
+func NewModel(repoPath string, configPath string) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:        keys.Keys,
@@ -62,7 +62,7 @@ func NewModel(repoPath *string, configPath string) Model {
 		tasks:       map[string]context.Task{},
 	}
 
-	m.ctx = context.ProgramContext{
+	m.ctx = &context.ProgramContext{
 		RepoPath:   repoPath,
 		ConfigPath: configPath,
 		StartTask: func(task context.Task) tea.Cmd {
@@ -83,7 +83,7 @@ func NewModel(repoPath *string, configPath string) Model {
 	m.prSidebar = prsidebar.NewModel(m.ctx)
 	m.issueSidebar = issuesidebar.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
-	m.tabs = tabs.NewModel(&m.ctx)
+	m.tabs = tabs.NewModel(m.ctx)
 
 	return m
 }
@@ -119,14 +119,14 @@ func (m *Model) initScreen() tea.Msg {
 		return initMsg{Config: cfg}
 	}
 
-	var url *string
-	if config.IsFeatureEnabled(config.FF_REPO_VIEW) && m.ctx.RepoPath != nil {
-		res, err := git.GetOriginUrl(*m.ctx.RepoPath)
+	var url string
+	if config.IsFeatureEnabled(config.FF_REPO_VIEW) && m.ctx.RepoPath != "" {
+		res, err := git.GetOriginUrl(m.ctx.RepoPath)
 		if err != nil {
 			showError(err)
 			return initMsg{Config: cfg}
 		}
-		url = &res
+		url = res
 	}
 
 	err = keys.Rebind(
@@ -321,7 +321,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
 				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-				m.tabs.UpdateSectionsConfigs(&m.ctx)
+				m.tabs.UpdateSectionsConfigs(m.ctx)
 
 				currSections := m.getCurrentViewSections()
 				if len(currSections) == 0 {
@@ -408,7 +408,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
 				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-				m.tabs.UpdateSectionsConfigs(&m.ctx)
+				m.tabs.UpdateSectionsConfigs(m.ctx)
 
 				currSections := m.getCurrentViewSections()
 				if len(currSections) == 0 {
@@ -465,7 +465,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.View = m.switchSelectedView()
 				m.syncMainContentWidth()
 				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-				m.tabs.UpdateSectionsConfigs(&m.ctx)
+				m.tabs.UpdateSectionsConfigs(m.ctx)
 
 				currSections := m.getCurrentViewSections()
 				if len(currSections) == 0 {
@@ -486,7 +486,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
-		m.tabs.UpdateSectionsConfigs(&m.ctx)
+		m.tabs.UpdateSectionsConfigs(m.ctx)
 		m.syncMainContentWidth()
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
@@ -649,7 +649,7 @@ func (m Model) View() string {
 
 type initMsg struct {
 	Config  config.Config
-	RepoUrl *string
+	RepoUrl string
 }
 
 func (m *Model) setCurrSectionId(newSectionId int) {
@@ -677,13 +677,13 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 
 func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
-		section.UpdateProgramContext(&m.ctx)
+		section.UpdateProgramContext(m.ctx)
 	}
-	m.footer.UpdateProgramContext(&m.ctx)
-	m.sidebar.UpdateProgramContext(&m.ctx)
-	m.prSidebar.UpdateProgramContext(&m.ctx)
-	m.issueSidebar.UpdateProgramContext(&m.ctx)
-	m.branchSidebar.UpdateProgramContext(&m.ctx)
+	m.footer.UpdateProgramContext(m.ctx)
+	m.sidebar.UpdateProgramContext(m.ctx)
+	m.prSidebar.UpdateProgramContext(m.ctx)
+	m.issueSidebar.UpdateProgramContext(m.ctx)
+	m.branchSidebar.UpdateProgramContext(m.ctx)
 }
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
@@ -792,7 +792,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 	if m.ctx.View == config.PRsView {
 		search := prssection.NewModel(
 			0,
-			&m.ctx,
+			m.ctx,
 			config.PrsSectionConfig{
 				Title:   "",
 				Filters: "archived:false",
@@ -803,7 +803,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 	} else {
 		search := issuessection.NewModel(
 			0,
-			&m.ctx,
+			m.ctx,
 			config.IssuesSectionConfig{
 				Title:   "",
 				Filters: "",

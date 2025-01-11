@@ -433,7 +433,7 @@ func (m *Model) ResetRows() {
 }
 
 func FetchAllSections(
-	ctx context.ProgramContext,
+	ctx *context.ProgramContext,
 	prs []section.Section,
 ) (sections []section.Section, fetchAllCmd tea.Cmd) {
 	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
@@ -441,7 +441,7 @@ func FetchAllSections(
 	for i, sectionConfig := range ctx.Config.PRSections {
 		sectionModel := NewModel(
 			i+1, // 0 is the search section
-			&ctx,
+			ctx,
 			sectionConfig,
 			time.Now(),
 		)

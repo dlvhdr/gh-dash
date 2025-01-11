@@ -365,7 +365,7 @@ func (parser ConfigParser) createConfigFileIfMissing(
 	return nil
 }
 
-func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath *string) (string, error) {
+func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath string) (string, error) {
 	var configFilePath string
 	ghDashConfig := os.Getenv("GH_DASH_CONFIG")
 
@@ -373,8 +373,8 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath *strin
 	if ghDashConfig != "" {
 		configFilePath = ghDashConfig
 		// Then try to see if we're currently in a git repo
-	} else if repoPath != nil {
-		basename := *repoPath + "/." + DashDir
+	} else if repoPath != "" {
+		basename := repoPath + "/." + DashDir
 		repoConfigYml := basename + ".yml"
 		repoConfigYaml := basename + ".yaml"
 		if _, err := os.Stat(repoConfigYml); err == nil {
@@ -463,7 +463,7 @@ func initParser() ConfigParser {
 	return ConfigParser{}
 }
 
-func ParseConfig(path string, repoPath *string) (Config, error) {
+func ParseConfig(path string, repoPath string) (Config, error) {
 	parser := initParser()
 
 	var config Config

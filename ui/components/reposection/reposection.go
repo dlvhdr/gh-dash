@@ -233,7 +233,7 @@ func (m *Model) View() string {
 	}
 
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
-		lipgloss.JoinVertical(lipgloss.Left, m.SearchBar.View(*m.Ctx), view),
+		lipgloss.JoinVertical(lipgloss.Left, m.SearchBar.View(m.Ctx), view),
 	)
 }
 
@@ -470,7 +470,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 
 	var cmds []tea.Cmd
-	if m.Ctx.RepoPath != nil {
+	if m.Ctx.RepoPath != "" {
 		cmds = append(cmds, m.readRepoCmd()...)
 		cmds = append(cmds, m.fetchRepoCmd()...)
 		cmds = append(cmds, m.fetchPRsCmd())
@@ -479,7 +479,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	return cmds
 }
 
-func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
+func FetchAllBranches(ctx *context.ProgramContext) (Model, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 
 	t := config.RepoView
@@ -489,13 +489,13 @@ func FetchAllBranches(ctx context.ProgramContext) (Model, tea.Cmd) {
 	}
 	m := NewModel(
 		0,
-		&ctx,
+		ctx,
 		cfg,
 		time.Now(),
 	)
 	m.refreshId = nextID()
 
-	if ctx.RepoPath != nil {
+	if ctx.RepoPath != "" {
 		cmds = append(cmds, m.readRepoCmd()...)
 		cmds = append(cmds, m.fetchRepoCmd()...)
 		cmds = append(cmds, m.fetchPRsCmd())

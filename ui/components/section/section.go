@@ -303,7 +303,7 @@ func (m *BaseModel) GetMainContent() string {
 }
 
 func (m *BaseModel) View() string {
-	search := m.SearchBar.View(*m.Ctx)
+	search := m.SearchBar.View(m.Ctx)
 	return m.Ctx.Styles.Section.ContainerStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
