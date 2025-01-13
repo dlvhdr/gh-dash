@@ -28,6 +28,8 @@ var validate *validator.Validate
 
 type ViewType string
 
+type KeyList []string
+
 const (
 	PRsView    ViewType = "prs"
 	IssuesView ViewType = "issues"
@@ -111,7 +113,7 @@ type RepoConfig struct {
 }
 
 type Keybinding struct {
-	Key     []string `yaml:"key"`
+	Key     KeyList `yaml:"key"`
 	Command string `yaml:"command"`
 	Builtin string `yaml:"builtin"`
 }
@@ -485,4 +487,23 @@ func ParseConfig(path string, repoPath *string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func (kl *KeyList) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Try unmarshaling into a []string first
+	var list []string
+	if err := unmarshal(&list); err == nil {
+		*kl = list
+		return nil
+	}
+
+	// If that fails, try unmarshaling into a single string
+	var single string
+	if err := unmarshal(&single); err == nil {
+		*kl = []string{single}
+		return nil
+	}
+
+	// If both attempts fail, return an error
+	return fmt.Errorf("key must be either a string or a list of strings")
 }
