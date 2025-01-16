@@ -29,7 +29,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View(ctx context.ProgramContext) string {
+func (m Model) View(ctx *context.ProgramContext) string {
 	sectionTitles := make([]string, 0, len(m.sectionsConfigs))
 	for i, section := range m.sectionsConfigs {
 		title := section.Title

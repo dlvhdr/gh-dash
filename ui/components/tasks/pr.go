@@ -82,7 +82,7 @@ func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifer, branch 
 			"--web",
 			branch,
 			"-R",
-			*ctx.RepoUrl,
+			ctx.RepoUrl,
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Opening PR for branch %s", branch),
@@ -210,7 +210,7 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifer, branchName 
 		"--title",
 		title,
 		"-R",
-		*ctx.RepoUrl,
+		ctx.RepoUrl,
 	)
 
 	taskId := fmt.Sprintf("create_pr_%s", title)

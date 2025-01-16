@@ -19,7 +19,7 @@ type Model struct {
 	status *gitm.NameStatus
 }
 
-func NewModel(ctx context.ProgramContext) Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		branch: nil,
 	}
@@ -86,7 +86,7 @@ func (m *Model) SetRow(b *branch.BranchData) tea.Cmd {
 }
 
 func (m *Model) refreshBranchStatusCmd() tea.Msg {
-	status, err := git.GetStatus(*m.ctx.RepoPath)
+	status, err := git.GetStatus(m.ctx.RepoPath)
 	if err != nil {
 		return nil
 	}

@@ -30,8 +30,8 @@ type Model struct {
 	inputBox inputbox.Model
 }
 
-func NewModel(ctx context.ProgramContext) Model {
-	inputBox := inputbox.NewModel(&ctx)
+func NewModel(ctx *context.ProgramContext) Model {
+	inputBox := inputbox.NewModel(ctx)
 	inputBox.SetHeight(common.InputBoxHeight)
 
 	return Model{

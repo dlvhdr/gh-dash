@@ -25,14 +25,14 @@ type Model struct {
 	ShowConfirmQuit bool
 }
 
-func NewModel(ctx context.ProgramContext) Model {
+func NewModel(ctx *context.ProgramContext) Model {
 	help := bbHelp.New()
 	help.ShowAll = true
 	help.Styles = ctx.Styles.Help.BubbleStyles
 	l := ""
 	r := ""
 	return Model{
-		ctx:          &ctx,
+		ctx:          ctx,
 		help:         help,
 		leftSection:  &l,
 		rightSection: &r,
@@ -70,7 +70,7 @@ func (m Model) View() string {
 			Foreground(m.ctx.Theme.SelectedBackground).
 			Padding(0, 1).
 			Render("? help")
-		viewSwitcher := m.renderViewSwitcher(*m.ctx)
+		viewSwitcher := m.renderViewSwitcher(m.ctx)
 		leftSection := ""
 		if m.leftSection != nil {
 			leftSection = *m.leftSection
@@ -116,7 +116,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.help.Styles = ctx.Styles.Help.BubbleStyles
 }
 
-func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
+func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 	var view string
 	if ctx.View == config.PRsView {
 		view += " PRs"
@@ -124,11 +124,10 @@ func (m *Model) renderViewSwitcher(ctx context.ProgramContext) string {
 		view += " Issues"
 	} else if ctx.View == config.RepoView {
 		repo := m.ctx.RepoPath
-		if m.ctx.RepoUrl != nil {
-			shortName := git.GetRepoShortName(*m.ctx.RepoUrl)
-			repo = &shortName
+		if m.ctx.RepoUrl != "" {
+			repo = git.GetRepoShortName(m.ctx.RepoUrl)
 		}
-		view += fmt.Sprintf(" %s", *repo)
+		view += fmt.Sprintf(" %s", repo)
 	}
 
 	var user string
