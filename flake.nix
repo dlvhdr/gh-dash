@@ -22,7 +22,7 @@
       # by including gh-dash.packages.aarch64-darwin.default in their systemPackages
       packages.${system}.default = pkgs.callPackage ./nix/package.nix { };
 
-      # this allows?
+      # why do I need this?
       overlays.default = final: prev: {
         gh-dash = self.packages.${prev.system}.default;
       };
