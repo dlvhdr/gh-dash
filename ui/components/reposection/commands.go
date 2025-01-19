@@ -369,7 +369,7 @@ func (m *Model) onRefreshPrsMsg() []tea.Cmd {
 func (m *Model) OpenGithub() tea.Cmd {
 	row := m.CurrRow()
 	b := m.getFilteredBranches()[row]
-	return tasks.OpenBranchPR(m.Ctx, tasks.SectionIdentifer{Id: 0, Type: SectionType}, b.Data.Name)
+	return tasks.OpenBranchPR(m.Ctx, tasks.SectionIdentifier{Id: 0, Type: SectionType}, b.Data.Name)
 }
 
 func (m *Model) deleteBranch() tea.Cmd {

@@ -88,7 +88,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				pr := m.GetCurrRow()
-				sid := tasks.SectionIdentifer{Id: m.Id, Type: SectionType}
+				sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
 				if input == "Y" || input == "y" {
 					switch action {
 					case "close":
