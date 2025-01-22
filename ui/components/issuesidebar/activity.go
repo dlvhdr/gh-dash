@@ -1,7 +1,6 @@
 package issuesidebar
 
 import (
-	"regexp"
 	"sort"
 	"time"
 
@@ -71,8 +70,7 @@ func (m *Model) renderComment(comment data.IssueComment, markdownRenderer glamou
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
 	)
 
-	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	body := regex.ReplaceAllString(comment.Body, "")
+	body := lineCleanupRegex.ReplaceAllString(comment.Body, "")
 	body, err := markdownRenderer.Render(body)
 
 	return lipgloss.JoinVertical(
