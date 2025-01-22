@@ -17,6 +17,11 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
 )
 
+var (
+	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
+	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+)
+
 type Model struct {
 	ctx       *context.ProgramContext
 	sectionId int
@@ -288,11 +293,9 @@ func (m *Model) renderLabels() string {
 
 func (m *Model) renderDescription() string {
 	width := m.getIndentedContentWidth()
-	regex := regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
-	body := regex.ReplaceAllString(m.pr.Data.Body, "")
-
-	regex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	body = regex.ReplaceAllString(body, "")
+	// Strip HTML comments from body and cleanup body.
+	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Body, "")
+	body = lineCleanupRegex.ReplaceAllString(body, "")
 
 	body = strings.TrimSpace(body)
 	if body == "" {

@@ -2,7 +2,6 @@ package prsidebar
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"time"
 
@@ -134,8 +133,7 @@ func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRend
 		header = authorAndTime
 	}
 
-	regex := regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	body := regex.ReplaceAllString(comment.Body, "")
+	body := lineCleanupRegex.ReplaceAllString(comment.Body, "")
 	body, err := markdownRenderer.Render(body)
 
 	return lipgloss.JoinVertical(
