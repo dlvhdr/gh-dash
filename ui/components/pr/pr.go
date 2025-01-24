@@ -259,6 +259,28 @@ func (pr *PullRequest) renderUpdateAt() string {
 	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(updatedAtOutput)
 }
 
+func (pr *PullRequest) renderCreatedAt() string {
+	timeFormat := pr.Ctx.Config.Defaults.DateFormat
+
+	createdAtOutput := ""
+	t := pr.Branch.CreatedAt
+	if pr.Data != nil {
+		t = &pr.Data.CreatedAt
+	}
+
+	if t == nil {
+		return ""
+	}
+
+	if timeFormat == "" || timeFormat == "relative" {
+		createdAtOutput = utils.TimeElapsed(*t)
+	} else {
+		createdAtOutput = t.Format(timeFormat)
+	}
+
+	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(createdAtOutput)
+}
+
 func (pr *PullRequest) renderBaseName() string {
 	if pr.Data == nil {
 		return ""
@@ -307,6 +329,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderCiStatus(),
 			pr.renderLines(isSelected),
 			pr.renderUpdateAt(),
+			pr.renderCreatedAt(),
 		}
 	}
 
@@ -321,6 +344,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderCiStatus(),
 		pr.renderLines(isSelected),
 		pr.renderUpdateAt(),
+		pr.renderCreatedAt(),
 	}
 }
 

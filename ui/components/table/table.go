@@ -40,6 +40,7 @@ func NewModel(
 	ctx context.ProgramContext,
 	dimensions constants.Dimensions,
 	lastUpdated time.Time,
+	createdAt time.Time,
 	columns []Column,
 	rows []Row,
 	itemTypeLabel string,
@@ -72,6 +73,7 @@ func NewModel(
 			ctx,
 			dimensions,
 			lastUpdated,
+			createdAt,
 			itemTypeLabel,
 			len(rows),
 			itemHeight,
@@ -320,6 +322,10 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func (m *Model) LastUpdated() time.Time {
 	return m.rowsViewport.LastUpdated
+}
+
+func (m *Model) CreatedAt() time.Time {
+	return m.rowsViewport.CreatedAt
 }
 
 func (m *Model) UpdateLastUpdated(t time.Time) {

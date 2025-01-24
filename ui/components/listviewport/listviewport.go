@@ -21,6 +21,7 @@ type Model struct {
 	NumCurrentItems int
 	NumTotalItems   int
 	LastUpdated     time.Time
+	CreatedAt       time.Time
 	ItemTypeLabel   string
 }
 
@@ -28,6 +29,7 @@ func NewModel(
 	ctx context.ProgramContext,
 	dimensions constants.Dimensions,
 	lastUpdated time.Time,
+	createdAt time.Time,
 	itemTypeLabel string,
 	numItems, listItemHeight int,
 ) Model {
@@ -43,6 +45,7 @@ func NewModel(
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
 		LastUpdated:   lastUpdated,
+		CreatedAt:     createdAt,
 	}
 	model.bottomBoundId = utils.Min(
 		model.NumCurrentItems-1,

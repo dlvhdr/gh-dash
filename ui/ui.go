@@ -798,6 +798,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 				Filters: "archived:false",
 			},
 			time.Now(),
+			time.Now(),
 		)
 		m.prs = append([]section.Section{&search}, newSections...)
 	} else {
@@ -808,6 +809,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 				Title:   "",
 				Filters: "",
 			},
+			time.Now(),
 			time.Now(),
 		)
 		m.issues = append([]section.Section{&search}, newSections...)

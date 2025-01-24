@@ -18,6 +18,7 @@ type IssueData struct {
 		Login string
 	}
 	UpdatedAt  time.Time
+	CreatedAt  time.Time
 	Url        string
 	Repository Repository
 	Assignees  Assignees      `graphql:"assignees(first: 3)"`
@@ -70,6 +71,10 @@ func (data IssueData) GetUrl() string {
 
 func (data IssueData) GetUpdatedAt() time.Time {
 	return data.UpdatedAt
+}
+
+func (data IssueData) GetCreatedAt() time.Time {
+	return data.CreatedAt
 }
 
 func makeIssuesQuery(query string) string {
