@@ -49,15 +49,17 @@ func (m Model) View(ctx *context.ProgramContext) string {
 		}
 	}
 
+	version := lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText).Render(ctx.Version)
+
 	renderedTabs := lipgloss.NewStyle().
-		Width(ctx.ScreenWidth).
-		MaxWidth(ctx.ScreenWidth).
+		Width(ctx.ScreenWidth - lipgloss.Width(version)).
+		MaxWidth(ctx.ScreenWidth - lipgloss.Width(version)).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
 
 	return ctx.Styles.Tabs.TabsRow.
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
-		Render(renderedTabs)
+		Render(lipgloss.JoinHorizontal(lipgloss.Center, renderedTabs, version))
 }
 
 func (m *Model) SetCurrSectionId(id int) {

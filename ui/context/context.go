@@ -38,6 +38,7 @@ type ProgramContext struct {
 	MainContentHeight int
 	Config            *config.Config
 	ConfigPath        string
+	Version           string
 	View              config.ViewType
 	Error             error
 	StartTask         func(task Task) tea.Cmd
