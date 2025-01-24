@@ -2,6 +2,7 @@ package footer
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	bbHelp "github.com/charmbracelet/bubbles/help"
@@ -116,27 +117,47 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.help.Styles = ctx.Styles.Help.BubbleStyles
 }
 
+func (m *Model) renderViewButton(view config.ViewType) string {
+	v := " PRs"
+	if view == config.IssuesView {
+		v = " Issues"
+	}
+
+	if m.ctx.View == view {
+		return m.ctx.Styles.ViewSwitcher.ActiveView.Render(v)
+
+	}
+	return m.ctx.Styles.ViewSwitcher.InactiveView.Render(v)
+}
+
 func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
-	var view string
-	if ctx.View == config.PRsView {
-		view += " PRs"
-	} else if ctx.View == config.IssuesView {
-		view += " Issues"
-	} else if ctx.View == config.RepoView {
-		repo := m.ctx.RepoPath
+	var repo string
+	if m.ctx.RepoPath != "" {
+		name := path.Base(m.ctx.RepoPath)
 		if m.ctx.RepoUrl != "" {
-			repo = git.GetRepoShortName(m.ctx.RepoUrl)
+			name = git.GetRepoShortName(m.ctx.RepoUrl)
 		}
-		view += fmt.Sprintf(" %s", repo)
+		repo = ctx.Styles.Common.FooterStyle.Render(fmt.Sprintf(" %s", name))
 	}
 
 	var user string
 	if ctx.User != "" {
-		user = ctx.Styles.Tabs.ViewSwitcher.Background(ctx.Theme.FaintText).Render("@" + ctx.User)
+		user = ctx.Styles.Common.FooterStyle.Render("@" + ctx.User)
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, ctx.Styles.Tabs.ViewSwitcher.
-		Render(view), user)
+	view := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.PRsView)),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.Render("  "),
+		m.renderViewButton(config.IssuesView),
+		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(ctx.Styles.ViewSwitcher.ViewsSeparator.GetBackground()).Render(" "),
+		repo,
+		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintText).Render(" • "),
+		user,
+		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintBorder).Render(" "),
+	)
+
+	return ctx.Styles.ViewSwitcher.Root.Render(view)
 }
 
 func (m *Model) SetLeftSection(leftSection string) {

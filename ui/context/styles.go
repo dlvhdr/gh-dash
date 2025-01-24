@@ -68,14 +68,16 @@ type Styles struct {
 		RowStyle                 lipgloss.Style
 	}
 	Tabs struct {
-		Tab            lipgloss.Style
-		ActiveTab      lipgloss.Style
-		TabSeparator   lipgloss.Style
-		TabsRow        lipgloss.Style
-		ViewSwitcher   lipgloss.Style
+		Tab          lipgloss.Style
+		ActiveTab    lipgloss.Style
+		TabSeparator lipgloss.Style
+		TabsRow      lipgloss.Style
+	}
+	ViewSwitcher struct {
 		ActiveView     lipgloss.Style
-		ViewsSeparator lipgloss.Style
 		InactiveView   lipgloss.Style
+		Root           lipgloss.Style
+		ViewsSeparator lipgloss.Style
 	}
 }
 
@@ -210,23 +212,21 @@ func InitStyles(theme theme.Theme) Styles {
 		BorderBottom(true).
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderBottomForeground(theme.PrimaryBorder)
-	s.Tabs.ViewSwitcher = lipgloss.NewStyle().
-		Background(theme.SecondaryText).
+	s.ViewSwitcher.Root = lipgloss.NewStyle().
+		Background(s.Common.FooterStyle.GetBackground()).
 		Foreground(theme.InvertedText).
-		Padding(0, 1).
 		Bold(true)
 
-	s.Tabs.ActiveView = lipgloss.NewStyle().
+	s.ViewSwitcher.ActiveView = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Bold(true).
-		Background(theme.SelectedBackground)
-	s.Tabs.ViewsSeparator = lipgloss.NewStyle().
-		BorderForeground(theme.PrimaryBorder).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderRight(true)
-	s.Tabs.InactiveView = lipgloss.NewStyle().
+		Background(theme.FaintBorder)
+	s.ViewSwitcher.ViewsSeparator = lipgloss.NewStyle().
 		Background(theme.FaintBorder).
-		Foreground(theme.SecondaryText)
+		Foreground(theme.PrimaryBorder)
+	s.ViewSwitcher.InactiveView = lipgloss.NewStyle().
+		Background(theme.FaintBorder).
+		Foreground(theme.FaintText)
 
 	return s
 }

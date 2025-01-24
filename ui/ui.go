@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"time"
@@ -62,9 +63,15 @@ func NewModel(repoPath string, configPath string) Model {
 		tasks:       map[string]context.Task{},
 	}
 
+	version := "dev"
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
+		version = info.Main.Version
+	}
+
 	m.ctx = &context.ProgramContext{
 		RepoPath:   repoPath,
 		ConfigPath: configPath,
+		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
 			log.Debug("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
