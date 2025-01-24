@@ -31,6 +31,7 @@ func NewModel(
 	ctx *context.ProgramContext,
 	cfg config.PrsSectionConfig,
 	lastUpdated time.Time,
+	createdAt time.Time,
 ) Model {
 	m := Model{}
 	m.BaseModel = section.NewModel(
@@ -43,6 +44,7 @@ func NewModel(
 			Singular:    m.GetItemSingularForm(),
 			Plural:      m.GetItemPluralForm(),
 			LastUpdated: lastUpdated,
+			CreatedAt:   createdAt,
 		},
 	)
 	m.Prs = []data.PullRequestData{}
@@ -203,6 +205,10 @@ func GetSectionColumns(
 		dLayout.UpdatedAt,
 		sLayout.UpdatedAt,
 	)
+	createdAtLayout := config.MergeColumnConfigs(
+		dLayout.CreatedAt,
+		sLayout.CreatedAt,
+	)
 	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
 	authorLayout := config.MergeColumnConfigs(dLayout.Author, sLayout.Author)
@@ -258,9 +264,14 @@ func GetSectionColumns(
 				Hidden: linesLayout.Hidden,
 			},
 			{
-				Title:  "",
+				Title:  "󱦻",
 				Width:  updatedAtLayout.Width,
 				Hidden: updatedAtLayout.Hidden,
+			},
+			{
+				Title:  "󱡢",
+				Width:  createdAtLayout.Width,
+				Hidden: createdAtLayout.Hidden,
 			},
 		}
 	}
@@ -313,9 +324,14 @@ func GetSectionColumns(
 			Hidden: linesLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  "󱦻",
 			Width:  updatedAtLayout.Width,
 			Hidden: updatedAtLayout.Hidden,
+		},
+		{
+			Title:  "󱡢",
+			Width:  createdAtLayout.Width,
+			Hidden: createdAtLayout.Hidden,
 		},
 	}
 }
@@ -443,6 +459,7 @@ func FetchAllSections(
 			i+1, // 0 is the search section
 			ctx,
 			sectionConfig,
+			time.Now(),
 			time.Now(),
 		)
 		if len(prs) > 0 && len(prs) >= i+1 && prs[i+1] != nil {

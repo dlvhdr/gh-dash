@@ -28,6 +28,7 @@ func (issue *Issue) ToTableRow() table.Row {
 		issue.renderNumComments(),
 		issue.renderNumReactions(),
 		issue.renderUpdateAt(),
+		issue.renderCreatedAt(),
 	}
 }
 
@@ -46,6 +47,19 @@ func (issue *Issue) renderUpdateAt() string {
 	}
 
 	return issue.getTextStyle().Render(updatedAtOutput)
+}
+
+func (issue *Issue) renderCreatedAt() string {
+	timeFormat := issue.Ctx.Config.Defaults.DateFormat
+
+	createdAtOutput := ""
+	if timeFormat == "" || timeFormat == "relative" {
+		createdAtOutput = utils.TimeElapsed(issue.Data.CreatedAt)
+	} else {
+		createdAtOutput = issue.Data.CreatedAt.Format(timeFormat)
+	}
+
+	return issue.getTextStyle().Render(createdAtOutput)
 }
 
 func (issue *Issue) renderRepoName() string {

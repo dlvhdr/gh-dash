@@ -28,6 +28,7 @@ func NewModel(
 	ctx *context.ProgramContext,
 	cfg config.IssuesSectionConfig,
 	lastUpdated time.Time,
+	createdAt time.Time,
 ) Model {
 	m := Model{}
 	m.BaseModel = section.NewModel(
@@ -40,6 +41,7 @@ func NewModel(
 			Singular:    m.GetItemSingularForm(),
 			Plural:      m.GetItemPluralForm(),
 			LastUpdated: lastUpdated,
+			CreatedAt:   createdAt,
 		},
 	)
 	m.Issues = []data.IssueData{}
@@ -166,6 +168,10 @@ func GetSectionColumns(
 		dLayout.UpdatedAt,
 		sLayout.UpdatedAt,
 	)
+	createdAtLayout := config.MergeColumnConfigs(
+		dLayout.CreatedAt,
+		sLayout.CreatedAt,
+	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
@@ -220,9 +226,14 @@ func GetSectionColumns(
 			Hidden: reactionsLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  "󱦻",
 			Width:  updatedAtLayout.Width,
 			Hidden: updatedAtLayout.Hidden,
+		},
+		{
+			Title:  "󱡢",
+			Width:  createdAtLayout.Width,
+			Hidden: createdAtLayout.Hidden,
 		},
 	}
 }
@@ -335,6 +346,7 @@ func FetchAllSections(
 			i+1,
 			ctx,
 			sectionConfig,
+			time.Now(),
 			time.Now(),
 		) // 0 is the search section
 		sections = append(sections, &sectionModel)

@@ -49,6 +49,7 @@ type NewSectionOptions struct {
 	Singular    string
 	Plural      string
 	LastUpdated time.Time
+	CreatedAt   time.Time
 }
 
 func NewModel(
@@ -78,6 +79,7 @@ func NewModel(
 		*ctx,
 		m.GetDimensions(),
 		options.LastUpdated,
+		options.CreatedAt,
 		m.Columns,
 		nil,
 		m.SingularForm,
@@ -321,6 +323,10 @@ func (m *BaseModel) ResetRows() {
 
 func (m *BaseModel) LastUpdated() time.Time {
 	return m.Table.LastUpdated()
+}
+
+func (m *BaseModel) CreatedAt() time.Time {
+	return m.Table.CreatedAt()
 }
 
 func (m *BaseModel) UpdateTotalItemsCount(count int) {

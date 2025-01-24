@@ -23,6 +23,7 @@ type PullRequestData struct {
 		Login string
 	}
 	UpdatedAt      time.Time
+	CreatedAt      time.Time
 	Url            string
 	State          string
 	Mergeable      string
@@ -183,6 +184,10 @@ func (data PullRequestData) GetUrl() string {
 
 func (data PullRequestData) GetUpdatedAt() time.Time {
 	return data.UpdatedAt
+}
+
+func (data PullRequestData) GetCreatedAt() time.Time {
+	return data.CreatedAt
 }
 
 func makePullRequestsQuery(query string) string {

@@ -68,6 +68,7 @@ type ColumnConfig struct {
 
 type PrsLayoutConfig struct {
 	UpdatedAt    ColumnConfig `yaml:"updatedAt,omitempty"`
+	CreatedAt    ColumnConfig `yaml:"createdAt,omitempty"`
 	Repo         ColumnConfig `yaml:"repo,omitempty"`
 	Author       ColumnConfig `yaml:"author,omitempty"`
 	Assignees    ColumnConfig `yaml:"assignees,omitempty"`
@@ -81,6 +82,7 @@ type PrsLayoutConfig struct {
 
 type IssuesLayoutConfig struct {
 	UpdatedAt ColumnConfig `yaml:"updatedAt,omitempty"`
+	CreatedAt ColumnConfig `yaml:"createdAt,omitempty"`
 	State     ColumnConfig `yaml:"state,omitempty"`
 	Repo      ColumnConfig `yaml:"repo,omitempty"`
 	Title     ColumnConfig `yaml:"title,omitempty"`
@@ -222,6 +224,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					UpdatedAt: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
 					},
+					CreatedAt: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
+					},
 					Repo: ColumnConfig{
 						Width: utils.IntPtr(20),
 					},
@@ -242,6 +247,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 				Issues: IssuesLayoutConfig{
 					UpdatedAt: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
+					},
+					CreatedAt: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width("2mo  ")),
 					},
 					Repo: ColumnConfig{
@@ -337,7 +345,6 @@ func (parser ConfigParser) writeDefaultConfigContents(
 	newConfigFile *os.File,
 ) error {
 	_, err := newConfigFile.WriteString(parser.getDefaultConfigYamlContents())
-
 	if err != nil {
 		return err
 	}

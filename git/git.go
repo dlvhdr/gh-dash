@@ -27,6 +27,7 @@ type Repo struct {
 type Branch struct {
 	Name          string
 	LastUpdatedAt *time.Time
+	CreatedAt     *time.Time
 	LastCommitMsg *string
 	CommitsAhead  int
 	CommitsBehind int
@@ -103,6 +104,7 @@ func GetRepo(dir string) (*Repo, error) {
 		branches[i] = Branch{
 			Name:          b,
 			LastUpdatedAt: updatedAt,
+			CreatedAt:     updatedAt,
 			IsCheckedOut:  isHead,
 			Remotes:       remotes,
 			LastCommitMsg: lastCommitMsg,
