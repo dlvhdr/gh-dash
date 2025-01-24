@@ -6,7 +6,7 @@ let
 in
 buildGoModule {
   pname = "gh-dash";
-  version = "v4.9.1";
+  version = "v4.10.0";
 
   src = lib.fileset.toSource {
     root = ../.;
