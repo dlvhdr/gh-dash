@@ -3,28 +3,43 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+  }:
     {
-      self,
-      nixpkgs,
-      ...
-    }:
-    let
-      system = "aarch64-darwin";
-      pkgs = nixpkgs.legacyPackages.${system};
-    in
-    {
-      devShell.${system} = pkgs.callPackage ./nix/devShell.nix { };
-
-      # this allows users to install gh-dash with nix
-      # by including gh-dash.packages.aarch64-darwin.default in their systemPackages
-      packages.${system}.default = pkgs.callPackage ./nix/package.nix { };
-
-      # why do I need this?
       overlays.default = final: prev: {
         gh-dash = self.packages.${prev.system}.default;
       };
-    };
+    }
+    // flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+
+      gh-dash = pkgs.buildGoModule {
+        pname = "gh-dash";
+        version = "v4.10.0";
+        src = ./.;
+        vendorHash = "sha256-lqmz+6Cr9U5IBoJ5OeSN6HKY/nKSAmszfvifzbxG7NE=";
+      };
+    in {
+      packages = {
+        default = gh-dash;
+        inherit gh-dash;
+      };
+
+      devShells.default = pkgs.mkShell {
+        name = "gh-dash";
+        inherit (gh-dash) nativeBuildInputs buildInputs;
+        packages = with pkgs; [
+          gopls
+          golangci-lint
+          golangci-lint-langserver
+          goimports-reviser
+        ];
+      };
+    });
 }
