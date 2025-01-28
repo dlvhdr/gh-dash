@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
+
+	"github.com/dlvhdr/gh-dash/v4/ui/theme"
 )
 
 type IssueData struct {
@@ -17,14 +19,15 @@ type IssueData struct {
 	Author struct {
 		Login string
 	}
-	UpdatedAt  time.Time
-	CreatedAt  time.Time
-	Url        string
-	Repository Repository
-	Assignees  Assignees      `graphql:"assignees(first: 3)"`
-	Comments   IssueComments  `graphql:"comments(first: 15)"`
-	Reactions  IssueReactions `graphql:"reactions(first: 1)"`
-	Labels     IssueLabels    `graphql:"labels(first: 3)"`
+	AuthorAssociation     string
+	UpdatedAt             time.Time
+	CreatedAt             time.Time
+	Url                   string
+	Repository            Repository
+	Assignees             Assignees      `graphql:"assignees(first: 3)"`
+	Comments              IssueComments  `graphql:"comments(first: 15)"`
+	Reactions             IssueReactions `graphql:"reactions(first: 1)"`
+	Labels                IssueLabels    `graphql:"labels(first: 3)"`
 }
 
 type IssueComments struct {
@@ -51,6 +54,14 @@ type Label struct {
 
 type IssueLabels struct {
 	Nodes []Label
+}
+
+func (data IssueData) GetAuthor(theme theme.Theme, showAuthorIcons bool) string {
+	author := data.Author.Login
+	if showAuthorIcons {
+		author += fmt.Sprintf(" %s", GetAuthorRoleIcon(data.AuthorAssociation, theme))
+	}
+	return author
 }
 
 func (data IssueData) GetTitle() string {

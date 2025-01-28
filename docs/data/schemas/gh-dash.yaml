@@ -239,3 +239,14 @@ properties:
             - less
             - delta
         default: less
+  showAuthorIcons:
+    title: Show Author Role Icons
+    description: |
+      Specifies whether to show author-role icons in the dashboard.
+      Set this value to `false` to hide the author-role icons.
+      See the [Theme Icons](theme#icons) section and
+      [Icon Colors](theme#colors.icons) section for
+      configuration options you can set to change the author-role icons and author-role icon colors.
+    type: boolean
+    schematize:
+      weight: 8

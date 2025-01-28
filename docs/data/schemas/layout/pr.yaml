@@ -162,8 +162,27 @@ properties:
         This column displays the username for the person who created the PR.
 
         The heading for this column is ![styled:`Author`]().
+    properties:
     default:
       width: 15
+  authorIcon:
+    title: PR Author Role Icon
+    description: Defines options for the role icon for each PR in a PR section.
+    type: object
+    properties:
+      hidden:
+        title: Hide Author Role Icon
+        description: Specify whether the role icon for PR authors should be hidden from view.
+        schematize:
+          details: |
+            Set this value to `true` to hide the role icon for PR authors.
+        type: boolean
+    schematize:
+      weight: 6
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This setting affects display of the role icon for the person who created the PR.
   assignees:
     title: PR Assignees Column
     description: Defines options for the assignees column in a PR section.
@@ -171,7 +190,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 6
+      weight: 7
       skip_schema_render: true
       format: yaml
       details: |
@@ -188,7 +207,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 7
+      weight: 8
       skip_schema_render: true
       format: yaml
       details: |
@@ -205,7 +224,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 8
+      weight: 9
       skip_schema_render: true
       format: yaml
       details: |
@@ -230,7 +249,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 9
+      weight: 10
       skip_schema_render: true
       format: yaml
       details: |
@@ -255,7 +274,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 10
+      weight: 11
       skip_schema_render: true
       format: yaml
       details: |
