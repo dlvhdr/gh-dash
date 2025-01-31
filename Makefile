@@ -25,3 +25,12 @@ docs-prepare:
 .PHONY: docs
 docs:
 	cd docs && hugo server
+
+.PHONY: mock
+mock:
+		killgrave --config ./imposters/config.yml &
+		FF_MOCK_DATA=true go run . --debug
+
+.PHONY: mock-stop
+mock-stop:
+	killall killgrave
