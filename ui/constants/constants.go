@@ -30,6 +30,7 @@ const (
 	FailureIcon = "󰅙"
 	SuccessIcon = ""
 
+	CommentIcon = ""
 	DraftIcon   = ""
 	BehindIcon  = "󰇮"
 	BlockedIcon = ""

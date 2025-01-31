@@ -134,7 +134,8 @@ type Review struct {
 }
 
 type Reviews struct {
-	Nodes []Review
+	TotalCount int
+	Nodes      []Review
 }
 
 type ReviewThreads struct {
