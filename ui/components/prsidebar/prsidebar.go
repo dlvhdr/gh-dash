@@ -18,8 +18,10 @@ import (
 )
 
 var (
-	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
-	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	htmlCommentRegex  = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
+	lineCleanupRegex  = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	commentPrompt     = "Leave a comment..."
+	approvalPrompt    = "Approve with comment..."
 )
 
 type Model struct {
@@ -28,10 +30,11 @@ type Model struct {
 	pr        *pr.PullRequest
 	width     int
 
-	isCommenting  bool
-	isApproving   bool
-	isAssigning   bool
-	isUnassigning bool
+	ShowConfirmCancel bool
+	isCommenting    bool
+	isApproving     bool
+	isAssigning     bool
+	isUnassigning   bool
 
 	inputBox inputbox.Model
 }
@@ -73,9 +76,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
-				m.inputBox.Blur()
-				m.isCommenting = false
-				return m, nil
+				if !m.ShowConfirmCancel {
+					m.shouldCancelComment()
+				}
+			default:
+				if msg.String() == "Y" || msg.String() == "y" {
+					if m.shouldCancelComment() {
+						return m, nil
+					}
+				}
+				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
+					m.inputBox.SetPrompt(commentPrompt)
+					m.ShowConfirmCancel = false
+					return m, nil
+				}
+				m.inputBox.SetPrompt(commentPrompt)
+				m.ShowConfirmCancel = false
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -94,9 +110,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
-				m.inputBox.Blur()
-				m.isApproving = false
-				return m, nil
+				if m.shouldCancelComment() {
+					return m, nil
+				}
+			default:
+				m.inputBox.SetPrompt(approvalPrompt)
+				m.ShowConfirmCancel = false
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -345,12 +364,25 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputBox.UpdateProgramContext(ctx)
 }
 
+func (m *Model) shouldCancelComment() bool {
+	if !m.ShowConfirmCancel {
+		m.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
+		m.ShowConfirmCancel = true
+		return false
+	}
+	m.inputBox.Blur()
+	m.isCommenting = false
+	m.isApproving = false
+	m.ShowConfirmCancel = false
+	return true
+}
+
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	if !m.isCommenting && isCommenting {
 		m.inputBox.Reset()
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt("Leave a comment...")
+	m.inputBox.SetPrompt(commentPrompt)
 
 	if isCommenting {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -371,7 +403,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isApproving = isApproving
-	m.inputBox.SetPrompt("Approve with comment...")
+	m.inputBox.SetPrompt(approvalPrompt)
 	m.inputBox.SetValue("LGTM")
 
 	if isApproving {
