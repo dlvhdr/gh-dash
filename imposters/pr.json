@@ -5,7 +5,7 @@
         {
           "number": 31944,
           "title": "fix(options): better handling of empty values",
-          "body": "Problem:\n\nWhether an option is allowed to be empty isn't well defined and\nisn't properly checked.\n\nSolution:\n\n- For non-list string options, explicitly check the option value\n  if it is empty.\n- Annotate non-list string options that can accept an empty value.\n  - Adjust command completion to ignore the empty value.\n- Render values in Lua meta files",
+          "body": "",
           "author": {
             "login": "lewis6991"
           },
@@ -113,6 +113,64 @@
           "state": "OPEN",
           "mergeable": "MERGEABLE",
           "reviewDecision": "CHANGES_REQUESTED",
+          "additions": 120,
+          "deletions": 58,
+          "headRefName": "master",
+          "baseRefName": "master",
+          "headRepository": {
+            "name": "dotfiles"
+          },
+          "headRef": {
+            "name": "master"
+          },
+          "repository": {
+            "name": "dotfiles",
+            "nameWithOwner": "dlvhdr/dotfiles",
+            "isArchived": false
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "latestReviews": {
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  }
+                }
+              }
+            ]
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "CLEAN"
+        },
+        {
+          "number": 2505,
+          "title": "feat(nvim): add dap.nvim",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "updatedAt": "2025-01-19T11:42:47Z",
+          "createdAt": "2025-01-18T11:42:47Z",
+          "url": "https://github.com/dlvhdr/dotfiles/pull/1",
+          "state": "OPEN",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "APPROVED",
           "additions": 120,
           "deletions": 58,
           "headRefName": "master",

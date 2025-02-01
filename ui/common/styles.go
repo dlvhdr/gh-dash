@@ -46,7 +46,7 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		MaxHeight(FooterHeight)
 
 	s.WaitingGlyph = lipgloss.NewStyle().
-		Foreground(theme.FaintText).
+		Foreground(theme.WarningText).
 		Render(constants.WaitingIcon)
 	s.FailureGlyph = lipgloss.NewStyle().
 		Foreground(theme.ErrorText).
