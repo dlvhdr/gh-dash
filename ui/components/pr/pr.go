@@ -16,10 +16,10 @@ import (
 )
 
 type PullRequest struct {
-	Ctx     *context.ProgramContext
-	Data    *data.PullRequestData
-	Branch  git.Branch
-	Columns []table.Column
+	Ctx            *context.ProgramContext
+	Data           *data.PullRequestData
+	Branch         git.Branch
+	Columns        []table.Column
 	ShowAuthorIcon bool
 }
 
@@ -43,7 +43,7 @@ func (pr *PullRequest) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("󰌑")
+		return reviewCellStyle.Render("")
 	}
 
 	if pr.Data.LatestReviews.TotalCount > 0 {

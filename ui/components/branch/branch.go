@@ -42,7 +42,7 @@ func (b *Branch) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			b.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("󰌑")
+		return reviewCellStyle.Render("")
 	}
 
 	return reviewCellStyle.Render(b.Ctx.Styles.Common.WaitingGlyph)
