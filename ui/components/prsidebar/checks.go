@@ -13,7 +13,8 @@ func (sidebar *Model) renderChecks() string {
 	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks")
 	w := sidebar.getIndentedContentWidth()
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(sidebar.ctx.Theme.ErrorText).Width(w)
-	review := sidebar.viewCheckCategory("Review required", "Code owner review required", false)
+	// review := sidebar.viewCheckCategory("Review required", "Code owner review required", false)
+	review := sidebar.viewReview()
 
 	checksBar := sidebar.viewChecksBar()
 	checksBottom := lipgloss.JoinVertical(lipgloss.Left, "1 failing, 2 skipped, 15 successful", checksBar)
@@ -70,6 +71,30 @@ func (sidebar *Model) renderChecks() string {
 	// )
 }
 
+func (m *Model) viewReview() string {
+	pr := m.pr
+	var title, subtitle string
+	reviewCellStyle := lipgloss.NewStyle()
+	if pr.Data == nil {
+		title = "-"
+	} else if pr.Data.ReviewDecision == "APPROVED" {
+		title = lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.SuccessGlyph, " ", "Changes approved")
+		subtitle = "2 approving reviews"
+	} else if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
+		title = lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.FailureGlyph, " ", "Changes requested")
+		// title = reviewCellStyle.Render(" Changes requested")
+		subtitle = "1 change requested"
+	} else if pr.Data.LatestReviews.TotalCount > 0 {
+		title = reviewCellStyle.Render(pr.Ctx.Styles.Common.CommentGlyph + " " + "Comments left")
+		subtitle = "2 reviewers left comments"
+	} else {
+		title = reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph + " " + "Review required")
+		subtitle = "Code owner review required"
+	}
+
+	return m.viewCheckCategory(title, subtitle, false)
+}
+
 func (m *Model) viewCheckCategory(top, bottom string, isLast bool) string {
 	w := m.getIndentedContentWidth()
 	part := lipgloss.NewStyle().
@@ -80,10 +105,8 @@ func (m *Model) viewCheckCategory(top, bottom string, isLast bool) string {
 	title := lipgloss.NewStyle().Bold(true)
 	subtitle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
 
-	category := m.ctx.Styles.Common.FailureGlyph + " "
-	margin := lipgloss.Width(category)
-	category = lipgloss.JoinHorizontal(lipgloss.Top, category, title.Render(top))
-	category = lipgloss.JoinVertical(lipgloss.Left, category, subtitle.MarginLeft(margin).Render(bottom))
+	category := title.Render(top)
+	category = lipgloss.JoinVertical(lipgloss.Left, category, subtitle.MarginLeft(2).Render(bottom))
 	return part.Render(category)
 }
 
