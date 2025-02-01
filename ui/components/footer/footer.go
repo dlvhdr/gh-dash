@@ -148,13 +148,13 @@ func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 	view := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.PRsView)),
-		ctx.Styles.ViewSwitcher.ViewsSeparator.Render("  "),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
 		m.renderViewButton(config.IssuesView),
 		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(ctx.Styles.ViewSwitcher.ViewsSeparator.GetBackground()).Render(" "),
 		repo,
 		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintText).Render(" • "),
 		user,
-		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintBorder).Render(" "),
+		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintBorder).Render(" │"),
 	)
 
 	return ctx.Styles.ViewSwitcher.Root.Render(view)
