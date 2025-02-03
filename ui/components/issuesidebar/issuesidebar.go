@@ -131,6 +131,8 @@ func (m Model) View() string {
 
 	s.WriteString(m.renderFullNameAndNumber())
 	s.WriteString("\n")
+	s.WriteString(m.renderUrl())
+	s.WriteString("\n")
 
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n\n")
@@ -158,6 +160,12 @@ func (m *Model) renderFullNameAndNumber() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
 		Render(fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
+}
+
+func (m *Model) renderUrl() string {
+	return lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.SecondaryText).
+		Render(m.issue.Data.GetUrl())
 }
 
 func (m *Model) renderTitle() string {
