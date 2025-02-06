@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
@@ -13,6 +14,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/ui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/keys"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
@@ -101,6 +103,23 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				return &m, tea.Batch(cmd, blinkCmd)
 			}
 			break
+		}
+
+		switch {
+
+		case key.Matches(msg, keys.IssueKeys.ToggleSmartFiltering):
+			if !m.HasRepoNameInConfiguredFilter() {
+				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
+			}
+			searchValue := m.GetSearchValue()
+			if m.SearchValue != searchValue {
+				m.SearchValue = searchValue
+				m.SearchBar.SetValue(searchValue)
+				m.SetIsSearching(false)
+				m.ResetRows()
+				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
+			}
+
 		}
 
 	case UpdateIssueMsg:
