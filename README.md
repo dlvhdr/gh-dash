@@ -130,7 +130,6 @@ Example configurations can be found on GitHub:
 
 - The config for the gh-dash repo under [.gh-dash.yml](https://github.com/dlvhdr/gh-dash/blob/main/.gh-dash.yml)
 - My config under my dotfiles repo [dlvhdr/dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/nix/module/gh-dash/configs/config.yml)
-- My config under my dotfiles repo [dlvhdr/dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/nix/module/gh-dash/configs/config.yml)
 - Many other configs found by [searching GitHub](https://github.com/search?q=path%3Agh-dash%2Fconfig.yml&type=code)
 
 ## 🛞 Under the hood
