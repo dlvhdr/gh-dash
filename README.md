@@ -14,7 +14,7 @@ See the docs site at [dlvhdr.github.io/gh-dash](https://dlvhdr.github.io/gh-dash
 
 Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh-dash can help you manage your GitHub experience.
 
-[![Manage open source like a boss (in the terminal)](./docs/assets/charm-vid-preview.jpg)](https://www.youtube.com/watch?v=StTqXEQ2l-Y "Manage open source like a boss (in the terminal)")
+[![Manage open source like a boss (in the terminal)](./docs/assets/charm-vid-preview.jpg)](https://www.youtube.com/watch?v=5omFxcNjBQk&t "Manage open source like a boss (in the terminal)")
 
 ## ✨ Features
 
