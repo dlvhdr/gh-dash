@@ -17,3 +17,11 @@ check-nerd-font:
 .PHONY: fix-nerd-font
 fix-nerd-font:
 	nerdfix fix --quiet --format=json $$(fd --extension go)
+
+.PHONY: docs-prepare
+docs-prepare:
+	cd docs && hugo mod get
+
+.PHONY: docs
+docs:
+	cd docs && hugo server

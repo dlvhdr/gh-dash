@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -45,6 +46,7 @@
             golangci-lint-langserver
             gopls
             nerdfix
+            (callPackage ./docs { })
           ];
         };
       }
