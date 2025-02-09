@@ -341,7 +341,7 @@ func (m Model) BuildRows() []table.Row {
 	currItem := m.Table.GetCurrItem()
 	for i, currPr := range m.Prs {
 		i := i
-		prModel := pr.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns}
+		prModel := pr.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns, ShowAuthorIcon: m.ShowAuthorIcon}
 		rows = append(
 			rows,
 			prModel.ToTableRow(currItem == i),
@@ -466,6 +466,9 @@ func FetchAllSections(
 			oldSection := prs[i+1].(*Model)
 			sectionModel.Prs = oldSection.Prs
 			sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
+		}
+		if sectionConfig.Layout.AuthorIcon.Hidden != nil {
+			sectionModel.ShowAuthorIcon = !*sectionConfig.Layout.AuthorIcon.Hidden
 		}
 		sections = append(sections, &sectionModel)
 		fetchPRsCmds = append(

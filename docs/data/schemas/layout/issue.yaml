@@ -152,6 +152,24 @@ properties:
         The heading for this column is ![styled:`Creator`]().
     default:
       width: 10
+  creatorIcon:
+    title: Issue Creator Role Icon
+    description: Defines options for the role icon for each issue in an issue section.
+    type: object
+    properties:
+      hidden:
+        title: Hide Creator Icon
+        description: Specify whether the role icon for issue creators should be hidden from view.
+        schematize:
+          details: |
+            Set this value to `true` to hide the role icon for issue creators.
+        type: boolean
+    schematize:
+      weight: 6
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This setting affects display of the role icon for the person who created the issue.
   assignees:
     title: Issue Assignees Column
     description: Defines options for the assignees column in an issue section.
@@ -159,7 +177,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 6
+      weight: 7
       skip_schema_render: true
       format: yaml
       details: |
@@ -176,7 +194,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 7
+      weight: 8
       skip_schema_render: true
       format: yaml
       details: |
@@ -190,7 +208,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 8
+      weight: 9
       skip_schema_render: true
       format: yaml
       details: |

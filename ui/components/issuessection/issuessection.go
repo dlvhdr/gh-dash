@@ -241,7 +241,7 @@ func GetSectionColumns(
 func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	for _, currIssue := range m.Issues {
-		issueModel := issue.Issue{Ctx: m.Ctx, Data: currIssue}
+		issueModel := issue.Issue{Ctx: m.Ctx, Data: currIssue, ShowAuthorIcon: m.ShowAuthorIcon}
 		rows = append(rows, issueModel.ToTableRow())
 	}
 
@@ -349,6 +349,9 @@ func FetchAllSections(
 			time.Now(),
 			time.Now(),
 		) // 0 is the search section
+		if sectionConfig.Layout.CreatorIcon.Hidden != nil {
+			sectionModel.ShowAuthorIcon = !*sectionConfig.Layout.CreatorIcon.Hidden
+		}
 		sections = append(sections, &sectionModel)
 		fetchIssuesCmds = append(
 			fetchIssuesCmds,

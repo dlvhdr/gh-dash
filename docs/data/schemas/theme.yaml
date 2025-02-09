@@ -8,8 +8,8 @@ schematize:
   format: yaml
   details: |
     This setting defines the dashboard's theme. It only effects the presentation of the dashboard,
-    not the data. Currently, the theme only defines colors. To control how table columns and
-    preview pane display for the views, use the [sref:`defaults`], [sref:`prSections`], and
+    not the data. Currently, the theme only defines colors and icons. To control how table columns
+    and preview pane display for the views, use the [sref:`defaults`], [sref:`prSections`], and
     [sref:`issueSections`] settings.
 
     ```alert
@@ -75,13 +75,65 @@ properties:
             schematize:
               skip_schema_render: true
               format: yaml
+  icons:
+    title: Theme Icons
+    description: Defines the author-role icons for the dashboard.
+    type: object
+    schematize:
+      skip_schema_render: true
+      weight: 2
+      details: |
+        This setting defines a map of author-role icons for the dashboard.
+    properties:
+      newcontributor:
+        title: New Contributor Role Icon
+        description: >-
+          Specifies the character to use as the new-contributor-role icon.
+        schematize:
+          weight: 1
+        type: string
+      contributor:
+        title: Contributor Role Icon Color
+        description: >-
+          Specifies the character to use as the contributor-role icon.
+        schematize:
+          weight: 2
+        type: string
+      collaborator:
+        title: Collaborator Role Icon Color
+        description: >-
+          Specifies the character to use as the collaborator-role icon.
+        schematize:
+          weight: 3
+        type: string
+      member:
+        title: Member Role Icon Color
+        description: >-
+          Specifies the character to use as the member-role icon.
+        schematize:
+          weight: 4
+        type: string
+      owner:
+        title: Owner Role Icon Color
+        description: >-
+          Specifies the character to use as the owner-role icon.
+        schematize:
+          weight: 5
+        type: string
+      unknownrole:
+        title: Unknown Role Icon Color
+        description: >-
+          Specifies the character to use as the unknown-role icon.
+        schematize:
+          weight: 6
+        type: string
   colors:
     title: Theme Colors
     description: Defines text, background, and border colors for the dashboard.
     type: object
     schematize:
       skip_schema_render: true
-      weight: 1
+      weight: 3
       details: |
         This setting defines a map of colors for the dashboard's text, background, and border
         colors.
@@ -110,6 +162,7 @@ properties:
           Defines the foreground (text) colors for the dashboard.
         type: object
         schematize:
+          weight: 1
           skip_schema_render: true
           format: yaml
         required:
@@ -276,6 +329,7 @@ properties:
         description: Defines the background colors for the dashboard.
         type: object
         schematize:
+          weight: 2
           skip_schema_render: true
           details: |
             Defines the background colors for the dashboard. By default, the background color for
@@ -312,6 +366,7 @@ properties:
         description: Defines the border colors for the dashboard.
         type: object
         schematize:
+          weight: 3
           skip_schema_render: true
           format: yaml
         required:
@@ -381,6 +436,64 @@ properties:
                 [light]: . "faint-border light"
             type: string
             default: "#000000"
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+      icon:
+        title: Icon Colors
+        description: >-
+          Defines author-role icon colors for the dashboard.
+        type: object
+        schematize:
+          weight: 4
+          skip_schema_render: true
+          format: yaml
+        properties:
+          newcontributor:
+            title: New Contributor Role Icon Color
+            description: >-
+              Specifies the icon color for the new-contributor-role icon.
+            schematize:
+              weight: 1
+            type: string
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+          contributor:
+            title: Contributor Role Icon Color
+            description: >-
+              Specifies the icon color for the contributor-role icon.
+            schematize:
+              weight: 2
+            type: string
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+          collaborator:
+            title: Collaborator Role Icon Color
+            description: >-
+              Specifies the icon color for the collaborator-role icon.
+            schematize:
+              weight: 3
+            type: string
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+          member:
+            title: Member Role Icon Color
+            description: >-
+              Specifies the icon color for the member-role icon.
+            schematize:
+              weight: 4
+            type: string
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+          owner:
+            title: Owner Role Icon Color
+            description: >-
+              Specifies the icon color for the owner-role icon.
+            schematize:
+              weight: 5
+            type: string
+            pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+          unknownrole:
+            title: Unknown Role Icon Color
+            description: >-
+              Specifies the icon color for the unknown-role icon.
+            schematize:
+              weight: 6
+            type: string
             pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
 default:
   ui:

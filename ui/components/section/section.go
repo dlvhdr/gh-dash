@@ -39,6 +39,7 @@ type BaseModel struct {
 	PromptConfirmationAction  string
 	LastFetchTaskId           string
 	IsSearchSupported         bool
+	ShowAuthorIcon            bool
 }
 
 type NewSectionOptions struct {
@@ -74,6 +75,7 @@ func NewModel(
 		TotalCount:            0,
 		PageInfo:              nil,
 		PromptConfirmationBox: prompt.NewModel(ctx),
+		ShowAuthorIcon:        ctx.Config.ShowAuthorIcons,
 	}
 	m.Table = table.NewModel(
 		*ctx,

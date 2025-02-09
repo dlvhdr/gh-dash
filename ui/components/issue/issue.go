@@ -16,6 +16,7 @@ import (
 type Issue struct {
 	Ctx  *context.ProgramContext
 	Data data.IssueData
+	ShowAuthorIcon bool
 }
 
 func (issue *Issue) ToTableRow() table.Row {
@@ -72,7 +73,7 @@ func (issue *Issue) renderTitle() string {
 }
 
 func (issue *Issue) renderOpenedBy() string {
-	return issue.getTextStyle().Render(issue.Data.Author.Login)
+	return issue.getTextStyle().Render(issue.Data.GetAuthor(issue.Ctx.Theme, issue.ShowAuthorIcon))
 }
 
 func (issue *Issue) renderAssignees() string {
