@@ -41,10 +41,11 @@ type PullRequestData struct {
 		Name string
 	}
 	Repository       Repository
-	Assignees        Assignees     `graphql:"assignees(first: 3)"`
-	Comments         Comments      `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews    Reviews       `graphql:"latestReviews(last: 3)"`
-	ReviewThreads    ReviewThreads `graphql:"reviewThreads(last: 20)"`
+	Assignees        Assignees      `graphql:"assignees(first: 3)"`
+	Comments         Comments       `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	LatestReviews    Reviews        `graphql:"latestReviews(last: 3)"`
+	ReviewThreads    ReviewThreads  `graphql:"reviewThreads(last: 20)"`
+	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 10)"`
 	IsDraft          bool
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 3)"`
@@ -149,6 +150,13 @@ type ReviewThreads struct {
 		Line         int
 		Path         string
 		Comments     ReviewComments `graphql:"comments(first: 10)"`
+	}
+}
+
+type ReviewRequests struct {
+	TotalCount int
+	Nodes      []struct {
+		AsCodeOwner bool `graphql:"asCodeOwner"`
 	}
 }
 
