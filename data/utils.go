@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/v4/ui/theme"
 )
 
@@ -13,6 +14,13 @@ type RowData interface {
 	GetNumber() int
 	GetUrl() string
 	GetUpdatedAt() time.Time
+}
+
+func IsStatusSkipped(status string) bool {
+	return status == "PENDING" ||
+		status == "QUEUED" ||
+		status == "IN_PROGRESS" ||
+		status == "WAITING"
 }
 
 func IsStatusWaiting(status string) bool {
@@ -26,7 +34,7 @@ func IsConclusionAFailure(conclusion string) bool {
 	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE"
 }
 
-func GetAuthorRoleIcon(role string, theme theme.Theme)  string {
+func GetAuthorRoleIcon(role string, theme theme.Theme) string {
 	// https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
 	switch role {
 	case "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "NONE":

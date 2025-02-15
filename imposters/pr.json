@@ -14,7 +14,7 @@
           "url": "https://github.com/neovim/neovim/pull/31944",
           "state": "OPEN",
           "mergeable": "MERGEABLE",
-          "reviewDecision": "",
+          "reviewDecision": "APPROVED",
           "additions": 60,
           "deletions": 28,
           "headRefName": "feat/optiontypemeta",
@@ -46,10 +46,26 @@
             "totalCount": 1
           },
           "latestReviews": {
-            "nodes": []
+            "totalCount": 2,
+            "nodes": [
+              {
+                "state": "APPROVED"
+              },
+              {
+                "state": "APPROVED"
+              }
+            ]
           },
           "reviewThreads": {
             "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 2,
+            "nodes": [
+              {
+                "asCodeOwner": false
+              }
+            ]
           },
           "isDraft": true,
           "commits": {
@@ -68,6 +84,130 @@
                           "name": "CodeQL",
                           "status": "COMPLETED",
                           "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "FAILURE",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
                           "checkSuite": {
                             "creator": {
                               "login": ""
@@ -136,7 +276,8 @@
             "totalCount": 0
           },
           "latestReviews": {
-            "nodes": []
+            "totalCount": 1,
+            "nodes": [{ "state": "CHANGES_REQUESTED" }]
           },
           "reviewThreads": {
             "nodes": []
@@ -148,6 +289,61 @@
                 "commit": {
                   "deployments": {
                     "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
                   }
                 }
               }
@@ -160,7 +356,7 @@
         },
         {
           "number": 2505,
-          "title": "feat(nvim): add dap.nvim",
+          "title": "feat(nvim): add snacks.nvim",
           "body": "",
           "author": {
             "login": "dlvhdr"
@@ -170,7 +366,7 @@
           "url": "https://github.com/dlvhdr/dotfiles/pull/1",
           "state": "OPEN",
           "mergeable": "MERGEABLE",
-          "reviewDecision": "APPROVED",
+          "reviewDecision": "REVIEW_REQUIRED",
           "additions": 120,
           "deletions": 58,
           "headRefName": "master",
@@ -193,7 +389,16 @@
             "nodes": [],
             "totalCount": 0
           },
+          "reviewRequests": {
+            "totalCount": 1,
+            "nodes": [
+              {
+                "asCodeOwner": true
+              }
+            ]
+          },
           "latestReviews": {
+            "totalCount": 0,
             "nodes": []
           },
           "reviewThreads": {
@@ -206,6 +411,60 @@
                 "commit": {
                   "deployments": {
                     "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
                   }
                 }
               }
@@ -214,7 +473,7 @@
           "labels": {
             "nodes": []
           },
-          "mergeStateStatus": "CLEAN"
+          "mergeStateStatus": "BLOCKED"
         }
       ],
       "issueCount": 500,
