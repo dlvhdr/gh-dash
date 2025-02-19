@@ -138,7 +138,7 @@ gh-dash uses:
 
 - [bubbletea](https://github.com/charmbracelet/bubbletea) for the TUI
 - [lipgloss](https://github.com/charmbracelet/lipgloss) for the styling
-- [glamour](github.com/charmbracelet/glamour) for rendering mardown
+- [glamour](github.com/charmbracelet/glamour) for rendering markdown
 - [vhs](https://github.com/charmbracelet/vhs) for generating the GIF
 - [cobra](https://github.com/spf13/cobra) for the CLI
 - [gh](https://github.com/cli/cli) for the GitHub functionality
