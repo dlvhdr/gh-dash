@@ -27,6 +27,7 @@ Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh
 - 🔭 view details about a pr/issue with a detailed sidebar
 - 🪟 write multiple configuration files to easily switch between completely different dashboards
 - ♻️ set an interval for auto refreshing the dashboard
+- 📁 smart filtering - auto-filter pr/issue lists to the remote tracked by the current directory
 
 ## 📦 Installation
 

@@ -10,12 +10,13 @@ import (
 )
 
 type IssueKeyMap struct {
-	Assign   key.Binding
-	Unassign key.Binding
-	Comment  key.Binding
-	Close    key.Binding
-	Reopen   key.Binding
-	ViewPRs  key.Binding
+	Assign               key.Binding
+	Unassign             key.Binding
+	Comment              key.Binding
+	Close                key.Binding
+	Reopen               key.Binding
+	ToggleSmartFiltering key.Binding
+	ViewPRs              key.Binding
 }
 
 var IssueKeys = IssueKeyMap{
@@ -39,6 +40,10 @@ var IssueKeys = IssueKeyMap{
 		key.WithKeys("X"),
 		key.WithHelp("X", "reopen"),
 	),
+	ToggleSmartFiltering: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "toggle smart filtering"),
+	),
 	ViewPRs: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "switch to PRs"),
@@ -52,6 +57,7 @@ func IssueFullHelp() []key.Binding {
 		IssueKeys.Comment,
 		IssueKeys.Close,
 		IssueKeys.Reopen,
+		IssueKeys.ToggleSmartFiltering,
 		IssueKeys.ViewPRs,
 	}
 }

@@ -120,6 +120,19 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.PRKeys.Diff):
 			cmd = m.diff()
 
+		case key.Matches(msg, keys.PRKeys.ToggleSmartFiltering):
+			if !m.HasRepoNameInConfiguredFilter() {
+				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
+			}
+			searchValue := m.GetSearchValue()
+			if m.SearchValue != searchValue {
+				m.SearchValue = searchValue
+				m.SearchBar.SetValue(searchValue)
+				m.SetIsSearching(false)
+				m.ResetRows()
+				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
+			}
+
 		case key.Matches(msg, keys.PRKeys.Checkout):
 			cmd, err = m.checkout()
 			if err != nil {

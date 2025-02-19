@@ -23,6 +23,7 @@ and **issues** by filters you care about.
 - ![icon:layout-dashboard](lucide)&nbsp;write multiple configuration files to easily switch between
   completely different dashboards
 - ![icon:recycle](lucide)&nbsp;set an interval for auto refreshing the dashboard
+- ![icon:folder-git](lucide)&nbsp;[smart filtering](/getting-started/smartfiltering) - auto-filter prs/issues to the remote tracked by the current directory
 
 <!-- Link reference definitions -->
 [shield-release]: https://img.shields.io/github/release/dlvhdr/gh-dash.svg

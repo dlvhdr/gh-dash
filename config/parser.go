@@ -82,16 +82,16 @@ type PrsLayoutConfig struct {
 }
 
 type IssuesLayoutConfig struct {
-	UpdatedAt     ColumnConfig `yaml:"updatedAt,omitempty"`
-	CreatedAt     ColumnConfig `yaml:"createdAt,omitempty"`
-	State         ColumnConfig `yaml:"state,omitempty"`
-	Repo          ColumnConfig `yaml:"repo,omitempty"`
-	Title         ColumnConfig `yaml:"title,omitempty"`
-	Creator       ColumnConfig `yaml:"creator,omitempty"`
-	CreatorIcon   ColumnConfig `yaml:"creatorIcon,omitempty"`
-	Assignees     ColumnConfig `yaml:"assignees,omitempty"`
-	Comments      ColumnConfig `yaml:"comments,omitempty"`
-	Reactions     ColumnConfig `yaml:"reactions,omitempty"`
+	UpdatedAt   ColumnConfig `yaml:"updatedAt,omitempty"`
+	CreatedAt   ColumnConfig `yaml:"createdAt,omitempty"`
+	State       ColumnConfig `yaml:"state,omitempty"`
+	Repo        ColumnConfig `yaml:"repo,omitempty"`
+	Title       ColumnConfig `yaml:"title,omitempty"`
+	Creator     ColumnConfig `yaml:"creator,omitempty"`
+	CreatorIcon ColumnConfig `yaml:"creatorIcon,omitempty"`
+	Assignees   ColumnConfig `yaml:"assignees,omitempty"`
+	Comments    ColumnConfig `yaml:"comments,omitempty"`
+	Reactions   ColumnConfig `yaml:"reactions,omitempty"`
 }
 
 type LayoutConfig struct {
@@ -215,16 +215,17 @@ type ThemeConfig struct {
 }
 
 type Config struct {
-	PRSections      []PrsSectionConfig    `yaml:"prSections"`
-	IssuesSections  []IssuesSectionConfig `yaml:"issuesSections"`
-	Repo            RepoConfig            `yaml:"repo"`
-	Defaults        Defaults              `yaml:"defaults"`
-	Keybindings     Keybindings           `yaml:"keybindings"`
-	RepoPaths       map[string]string     `yaml:"repoPaths"`
-	Theme           *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
-	Pager           Pager                 `yaml:"pager"`
-	ConfirmQuit     bool                  `yaml:"confirmQuit"`
-	ShowAuthorIcons bool                  `yaml:"showAuthorIcons"`
+	PRSections             []PrsSectionConfig    `yaml:"prSections"`
+	IssuesSections         []IssuesSectionConfig `yaml:"issuesSections"`
+	Repo                   RepoConfig            `yaml:"repo"`
+	Defaults               Defaults              `yaml:"defaults"`
+	Keybindings            Keybindings           `yaml:"keybindings"`
+	RepoPaths              map[string]string     `yaml:"repoPaths"`
+	Theme                  *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
+	Pager                  Pager                 `yaml:"pager"`
+	ConfirmQuit            bool                  `yaml:"confirmQuit"`
+	ShowAuthorIcons        bool                  `yaml:"showAuthorIcons"`
+	SmartFilteringAtLaunch bool                  `yaml:"smartFilteringAtLaunch" default:"true"`
 }
 
 type configError struct {
@@ -345,8 +346,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 			},
 		},
-		ConfirmQuit: false,
-		ShowAuthorIcons: true,
+		ConfirmQuit:            false,
+		ShowAuthorIcons:        true,
+		SmartFilteringAtLaunch: true,
 	}
 }
 

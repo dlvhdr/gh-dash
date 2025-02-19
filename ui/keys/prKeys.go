@@ -10,19 +10,20 @@ import (
 )
 
 type PRKeyMap struct {
-	Approve     key.Binding
-	Assign      key.Binding
-	Unassign    key.Binding
-	Comment     key.Binding
-	Diff        key.Binding
-	Checkout    key.Binding
-	Close       key.Binding
-	Ready       key.Binding
-	Reopen      key.Binding
-	Merge       key.Binding
-	Update      key.Binding
-	WatchChecks key.Binding
-	ViewIssues  key.Binding
+	Approve              key.Binding
+	Assign               key.Binding
+	Unassign             key.Binding
+	Comment              key.Binding
+	Diff                 key.Binding
+	Checkout             key.Binding
+	Close                key.Binding
+	Ready                key.Binding
+	Reopen               key.Binding
+	Merge                key.Binding
+	Update               key.Binding
+	WatchChecks          key.Binding
+	ToggleSmartFiltering key.Binding
+	ViewIssues           key.Binding
 }
 
 var PRKeys = PRKeyMap{
@@ -74,6 +75,10 @@ var PRKeys = PRKeyMap{
 		key.WithKeys("w"),
 		key.WithHelp("w", "watch checks"),
 	),
+	ToggleSmartFiltering: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "toggle smart filtering"),
+	),
 	ViewIssues: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "switch to issues"),
@@ -94,6 +99,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Merge,
 		PRKeys.Update,
 		PRKeys.WatchChecks,
+		PRKeys.ToggleSmartFiltering,
 		PRKeys.ViewIssues,
 	}
 }
