@@ -41,7 +41,7 @@ gh dash --config path/to/configuration/file.yml
 
 | Aliases |  Type  |                Default                |
 | :------ | :----: | :------------------------------------ |
-| `-c`    | String | `.gh-dash.yml` file if inside a git repo, `$GH_DASH_CONFIG` env var, or if not set, `$XDG_CONFIG_HOME/gh-dash-config.yml` |
+| `-c`    | String | `.gh-dash.yml` file if inside a git repo, `$GH_DASH_CONFIG` env var, or if not set, `$XDG_CONFIG_HOME/gh-dash/config.yml` |
 
 If you don't specify this flag, `gh-dash` uses the default configuration. If the file doesn't exist, gh-dash will create it. The location of the default configuration file depends on your system:
 
