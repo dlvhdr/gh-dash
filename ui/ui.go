@@ -163,6 +163,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		footerCmd       tea.Cmd
 		cmds            []tea.Cmd
 		currSection     = m.getCurrSection()
+		currRowData     = m.getCurrRowData()
 	)
 
 	switch msg := msg.(type) {
@@ -259,13 +260,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.CopyNumber):
-			row := m.getCurrRowData()
 			var cmd tea.Cmd
-			if reflect.ValueOf(row).IsNil() {
+			if currRowData == nil || reflect.ValueOf(currRowData).IsNil() {
 				cmd = m.notifyErr("Current selection isn't associated with a PR/Issue")
 				return m, cmd
 			}
-			number := fmt.Sprint(row.GetNumber())
+			number := fmt.Sprint(currRowData.GetNumber())
 			err := clipboard.WriteAll(number)
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
@@ -276,12 +276,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.CopyUrl):
 			var cmd tea.Cmd
-			row := m.getCurrRowData()
-			if reflect.ValueOf(row).IsNil() {
+			if currRowData == nil || reflect.ValueOf(currRowData).IsNil() {
 				cmd = m.notifyErr("Current selection isn't associated with a PR/Issue")
 				return m, cmd
 			}
-			url := row.GetUrl()
+			url := currRowData.GetUrl()
 			err := clipboard.WriteAll(url)
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
@@ -377,35 +376,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Close):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("close")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Ready):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("ready")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Reopen):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("reopen")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Merge):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("merge")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Update):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("update")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
@@ -455,14 +454,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.IssueKeys.Close):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("close")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.IssueKeys.Reopen):
-				if currSection != nil {
+				if currRowData != nil && currSection != nil {
 					currSection.SetPromptConfirmationAction("reopen")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}

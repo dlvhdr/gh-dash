@@ -18,6 +18,10 @@ import (
 
 func (m *Model) watchChecks() tea.Cmd {
 	pr := m.GetCurrRow()
+	if pr == nil {
+		return nil
+	}
+
 	prNumber := pr.GetNumber()
 	title := pr.GetTitle()
 	url := pr.GetUrl()
