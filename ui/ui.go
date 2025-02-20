@@ -339,7 +339,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.onViewedRowChanged()
 
 			}
-		case m.ctx.View == config.PRsView:
+		case m.ctx.View == config.PRsView && m.prSidebar.PrExists():
 			switch {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
@@ -425,7 +425,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.onViewedRowChanged()
 			}
-		case m.ctx.View == config.IssuesView:
+		case m.ctx.View == config.IssuesView && m.issueSidebar.IssueExists():
 			switch {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())

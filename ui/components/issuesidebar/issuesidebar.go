@@ -342,3 +342,7 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
 }
+
+func (m *Model) IssueExists() bool {
+	return m.issue != nil
+}

@@ -466,3 +466,7 @@ func (m *Model) prAssignees() []string {
 	}
 	return assignees
 }
+
+func (m *Model) PrExists() bool {
+	return m.pr != nil
+}
