@@ -15,6 +15,10 @@ import (
 
 func (m *Model) checkout() (tea.Cmd, error) {
 	pr := m.GetCurrRow()
+	if pr == nil {
+		return nil, errors.New("No pr selected")
+	}
+
 	repoName := pr.GetRepoNameWithOwner()
 	repoPath, ok := common.GetRepoLocalPath(repoName, m.Ctx.Config.RepoPaths)
 

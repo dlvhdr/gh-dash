@@ -271,6 +271,10 @@ func (m *Model) shouldCancelComment() bool {
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+
 	if !m.isCommenting && isCommenting {
 		m.inputBox.Reset()
 	}
@@ -288,6 +292,10 @@ func (m *Model) GetIsAssigning() bool {
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+
 	if !m.isAssigning && isAssigning {
 		m.inputBox.Reset()
 	}
@@ -317,6 +325,10 @@ func (m *Model) GetIsUnassigning() bool {
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+
 	if !m.isUnassigning && isUnassigning {
 		m.inputBox.Reset()
 	}

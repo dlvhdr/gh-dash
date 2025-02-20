@@ -9,11 +9,16 @@ import (
 )
 
 func (m Model) diff() tea.Cmd {
+	currRowData := m.GetCurrRow()
+	if currRowData == nil {
+		return nil
+	}
+
 	c := exec.Command(
 		"gh",
 		"pr",
 		"diff",
-		fmt.Sprint(m.GetCurrRow().GetNumber()),
+		fmt.Sprint(currRowData.GetNumber()),
 		"-R",
 		m.GetCurrRow().GetRepoNameWithOwner(),
 	)

@@ -27,7 +27,7 @@ func (m *Model) openBrowser() tea.Cmd {
 	openCmd := func() tea.Msg {
 		b := browser.New("", os.Stdout, os.Stdin)
 		currRow := m.getCurrRowData()
-		if reflect.ValueOf(currRow).IsNil() {
+		if currRow == nil || reflect.ValueOf(currRow).IsNil() {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: errors.New("Current selection doesn't have a URL")}
 		}
 		err := b.Browse(currRow.GetUrl())
