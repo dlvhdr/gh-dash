@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/dlvhdr/gh-dash/v4/data"
 )
 
@@ -14,8 +15,10 @@ func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Styl
 	currentRowLabels := []string{}
 
 	for _, l := range labels {
+		c := lipgloss.Color("#" + l.Color)
 		currentLabel := pillStyle.
-			Background(lipgloss.Color("#" + l.Color)).
+			BorderForeground(c).
+			Background(c).
 			Render(l.Name)
 
 		currentLabelWidth := lipgloss.Width(currentLabel)

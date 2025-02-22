@@ -175,14 +175,13 @@ func (m Model) View() string {
 	s.WriteString("\n")
 
 	s.WriteString(m.renderTitle())
-	s.WriteString("\n")
+	s.WriteString("\n\n")
 	s.WriteString(m.renderBranches())
 
 	labels := m.renderLabels()
 	if labels != "" {
 		s.WriteString("\n\n")
 		s.WriteString(labels)
-		s.WriteString("\n\n")
 	}
 
 	s.WriteString("\n")
@@ -204,20 +203,23 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return lipgloss.JoinHorizontal(lipgloss.Left, m.renderStatusPill(), lipgloss.NewStyle().
-		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf(" · #%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner())))
+	return lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Render(fmt.Sprintf("#%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner()))
 }
 
 func (m *Model) renderTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).
-		Render(m.pr.Data.Title)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).Render(m.pr.Data.Title),
+	)
 }
 
 func (m *Model) renderBranches() string {
-	return lipgloss.NewStyle().
-		Foreground(m.ctx.Theme.SecondaryText).
-		Render(m.pr.Data.BaseRefName + "  " + m.pr.Data.HeadRefName)
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		m.renderStatusPill(),
+		" ",
+		lipgloss.NewStyle().
+			Foreground(m.ctx.Theme.SecondaryText).
+			Render(m.pr.Data.BaseRefName+"  "+m.pr.Data.HeadRefName))
 }
 
 func (m *Model) renderStatusPill() string {
@@ -236,72 +238,25 @@ func (m *Model) renderStatusPill() string {
 	}
 
 	return m.ctx.Styles.PrSidebar.PillStyle.
+		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(m.pr.RenderState())
-}
-
-func (m *Model) renderMergeablePill() string {
-	status := m.pr.Data.Mergeable
-	if status == "CONFLICTING" {
-		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.ErrorText).
-			Render("󰅖 Merge Conflicts")
-	} else if status == "MERGEABLE" {
-		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.SuccessText).
-			Render("󰃸 No Merge Conflicts")
-	}
-
-	return ""
-}
-
-func (m *Model) renderMergeStateStatusPill() string {
-	status := m.pr.Data.MergeStateStatus
-	if status == "CLEAN" {
-		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.SuccessText).
-			Render("󰄬 Branch Up-To-Date")
-	} else if status == "BLOCKED" {
-		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.ErrorText).
-			Render("󰅖 Branch Blocked")
-	} else if status == "BEHIND" {
-		return m.ctx.Styles.PrSidebar.PillStyle.
-			Background(m.ctx.Theme.WarningText).
-			Render(" Branch Behind")
-	}
-	return ""
-}
-
-func (m *Model) renderChecksPill() string {
-	s := m.ctx.Styles.PrSidebar.PillStyle
-	t := m.ctx.Theme
-
-	status := m.pr.GetStatusChecksRollup()
-	if status == "FAILURE" {
-		return s.
-			Background(t.ErrorText).
-			Render("󰅖 Checks")
-	} else if status == "PENDING" {
-		return s.
-			Background(t.FaintText).
-			Foreground(t.PrimaryText).
-			Faint(true).
-			Render(" Checks")
-	}
-
-	return s.
-		Background(t.SuccessText).
-		Foreground(t.InvertedText).
-		Render("󰄬 Checks")
 }
 
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
 	labels := m.pr.Data.Labels.Nodes
 	style := m.ctx.Styles.PrSidebar.PillStyle
+	if len(labels) == 0 {
+		return ""
+	}
 
-	return common.RenderLabels(width, labels, style)
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Underline(true).Render("Labels"),
+		"",
+		common.RenderLabels(width, labels, style),
+	)
 }
 
 func (m *Model) renderDescription() string {
@@ -312,7 +267,7 @@ func (m *Model) renderDescription() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Render("No description provided.")
+		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
