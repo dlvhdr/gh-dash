@@ -355,8 +355,179 @@
           "mergeStateStatus": "CLEAN"
         },
         {
+          "number": 2504,
+          "title": "feat(nvim): all green",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "updatedAt": "2025-01-19T11:42:47Z",
+          "createdAt": "2025-01-18T11:42:47Z",
+          "url": "https://github.com/dlvhdr/dotfiles/pull/1",
+          "state": "OPEN",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "APPROVED",
+          "additions": 120,
+          "deletions": 58,
+          "headRefName": "master",
+          "baseRefName": "master",
+          "headRepository": {
+            "name": "dotfiles"
+          },
+          "headRef": {
+            "name": "master"
+          },
+          "repository": {
+            "name": "dotfiles",
+            "nameWithOwner": "dlvhdr/dotfiles",
+            "isArchived": false
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "latestReviews": {
+            "totalCount": 1,
+            "nodes": [{ "state": "APPROVED" }]
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "CLEAN"
+        },
+        {
           "number": 2505,
-          "title": "feat(nvim): add snacks.nvim",
+          "title": "feat(nvim): waiting",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "updatedAt": "2025-01-19T11:42:47Z",
+          "createdAt": "2025-01-18T11:42:47Z",
+          "url": "https://github.com/dlvhdr/dotfiles/pull/1",
+          "state": "OPEN",
+          "mergeable": "MERGEABLE",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 120,
+          "deletions": 58,
+          "headRefName": "master",
+          "baseRefName": "master",
+          "headRepository": {
+            "name": "dotfiles"
+          },
+          "headRef": {
+            "name": "master"
+          },
+          "repository": {
+            "name": "dotfiles",
+            "nameWithOwner": "dlvhdr/dotfiles",
+            "isArchived": false
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviewRequests": {
+            "totalCount": 1,
+            "nodes": [
+              {
+                "asCodeOwner": false
+              }
+            ]
+          },
+          "latestReviews": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "CLEAN"
+        },
+        {
+          "number": 2505,
+          "title": "feat(nvim): waiting on code owner",
           "body": "",
           "author": {
             "login": "dlvhdr"
@@ -420,38 +591,6 @@
                           "__typename": "CheckRun",
                           "name": "CodeQL",
                           "status": "IN_PROGRESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
                           "checkSuite": {
                             "creator": {
                               "login": ""

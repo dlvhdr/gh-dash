@@ -10,17 +10,59 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/data"
 )
 
-func (m *Model) renderChecks() string {
-	title := m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks")
-	w := m.getIndentedContentWidth()
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Theme.ErrorText).Width(w)
-	// review := sidebar.viewCheckCategory("Review required", "Code owner review required", false)
-	review := m.viewReview()
+type checkSectionStatus int
 
+const (
+	statusSuccess checkSectionStatus = iota
+	statusFailure
+	statusWaiting
+)
+
+func (m *Model) renderChecks() string {
+	header := m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks")
+	w := m.getIndentedContentWidth()
+
+	review, rStatus := m.viewReviewStatus()
+	checks, cStatus := m.viewChecksStatus()
+	merge, mStatus := m.viewMergeStatus()
+
+	borderColor := m.ctx.Theme.FaintBorder
+	if rStatus == statusFailure || cStatus == statusFailure || mStatus == statusFailure {
+		borderColor = m.ctx.Theme.ErrorText
+	} else if rStatus == statusSuccess && cStatus == statusSuccess && mStatus == statusSuccess {
+		borderColor = m.ctx.Theme.SuccessText
+	}
+
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(borderColor).Width(w)
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		header,
+		box.Render(lipgloss.JoinVertical(lipgloss.Left, review, checks, merge)),
+	)
+
+}
+
+func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
+	checks := ""
 	stats := m.getChecksStats()
+	var icon, title string
+	var status checkSectionStatus
 
 	statStrs := make([]string, 0)
-	checksConclusion := m.viewChecksConclusionTitle()
+	if stats.failed > 0 {
+		icon = m.ctx.Styles.Common.FailureGlyph
+		title = "Some checks were not successful"
+		status = statusFailure
+	} else if stats.inProgress > 0 {
+		icon = m.ctx.Styles.Common.WaitingGlyph
+		title = "Some checks haven't completed yet"
+		status = statusWaiting
+	} else if stats.succeeded > 0 {
+		icon = m.ctx.Styles.Common.SuccessGlyph
+		title = "All checks have passed"
+		status = statusSuccess
+	}
+
 	if stats.failed > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d failing", stats.failed))
 	}
@@ -33,52 +75,58 @@ func (m *Model) renderChecks() string {
 	if stats.succeeded > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d successful", stats.succeeded))
 	}
-
-	checks := ""
-	if checksConclusion != "" {
+	if title != "" {
 		checksBar := m.viewChecksBar()
 		checksBottom := lipgloss.JoinVertical(lipgloss.Left, strings.Join(statStrs, ", "), checksBar)
-		checks = m.viewCheckCategory(checksConclusion, checksBottom, false)
+		checks = m.viewCheckCategory(icon, title, checksBottom, false)
 	}
-
-	mergeTitle := ""
-	mergeSub := ""
-	numReviewOwners := m.numReviewOwners()
-	if m.pr.Data.MergeStateStatus == "CLEAN" {
-		mergeTitle = m.ctx.Styles.Common.SuccessGlyph + " No conflicts with base branch"
-		mergeSub = "Changes can be cleanly merged"
-	} else if m.pr.Data.MergeStateStatus == "BLOCKED" {
-		mergeTitle = m.ctx.Styles.Common.FailureGlyph + " Merging is blocked"
-		if numReviewOwners > 0 {
-			mergeSub = "Waiting on code owner review"
-		}
-	} else if m.pr.Data.Mergeable == "CONFLICTING" {
-		mergeTitle = m.ctx.Styles.Common.FailureGlyph + " This branch has conflicts that must be resolved"
-		if m.pr.Data.MergeStateStatus == "CLEAN" {
-			mergeSub = "Changes can be cleanly merged"
-		}
-	}
-	merge := m.viewCheckCategory(mergeTitle, mergeSub, true)
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		title,
-		box.Render(lipgloss.JoinVertical(lipgloss.Left, review, checks, merge)),
-	)
-
+	return checks, status
 }
 
-func (m *Model) viewReview() string {
+func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
+	var icon, title, subtitle string
+	var status checkSectionStatus
+	numReviewOwners := m.numRequestedReviewOwners()
+	if m.pr.Data.MergeStateStatus == "CLEAN" || m.pr.Data.MergeStateStatus == "UNSTABLE" {
+		icon = m.ctx.Styles.Common.SuccessGlyph
+		title = "No conflicts with base branch"
+		subtitle = "Changes can be cleanly merged"
+		status = statusSuccess
+	} else if m.pr.Data.IsDraft {
+		icon = m.ctx.Styles.Common.DraftGlyph
+		title = "This pull request is still a work in progress"
+		subtitle = "Draft pull requests cannot be merged"
+		status = statusWaiting
+	} else if m.pr.Data.MergeStateStatus == "BLOCKED" {
+		icon = m.ctx.Styles.Common.FailureGlyph
+		title = "Merging is blocked"
+		if numReviewOwners > 0 {
+			subtitle = "Waiting on code owner review"
+		}
+		status = statusFailure
+	} else if m.pr.Data.Mergeable == "CONFLICTING" {
+		icon = m.ctx.Styles.Common.FailureGlyph
+		title = "This branch has conflicts that must be resolved"
+		status = statusFailure
+		if m.pr.Data.MergeStateStatus == "CLEAN" {
+			subtitle = "Changes can be cleanly merged"
+		}
+	}
+	return m.viewCheckCategory(icon, title, subtitle, true), status
+}
+
+func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 	pr := m.pr
 	if pr.Data == nil {
-		return ""
+		return "", statusWaiting
 	}
 
-	var title, subtitle string
-	reviewCellStyle := lipgloss.NewStyle()
-	numReviewOwners := m.numReviewOwners()
+	var icon, title, subtitle string
+	var status checkSectionStatus
+	numReviewOwners := m.numRequestedReviewOwners()
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
-	for _, node := range pr.Data.LatestReviews.Nodes {
+	for _, node := range pr.Data.Reviews.Nodes {
 		if node.State == "APPROVED" {
 			numApproving++
 		} else if node.State == "CHANGES_REQUESTED" {
@@ -91,36 +139,53 @@ func (m *Model) viewReview() string {
 	}
 
 	if pr.Data.ReviewDecision == "APPROVED" {
-		title = lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.SuccessGlyph, " ", "Changes approved")
+		icon = m.ctx.Styles.Common.SuccessGlyph
+		title = "Changes approved"
 		subtitle = fmt.Sprintf("%d approving reviews", numApproving)
+		status = statusSuccess
 	} else if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
-		title = lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.FailureGlyph, " ", "Changes requested")
+		icon = m.ctx.Styles.Common.FailureGlyph
+		title = "Changes requested"
 		subtitle = fmt.Sprintf("%d requested changes", numChangesRequested)
+		status = statusFailure
 	} else if pr.Data.ReviewDecision == "REVIEW_REQUIRED" {
-		title = reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph + " " + "Review Required")
-		if numReviewOwners > 0 {
+		icon = pr.Ctx.Styles.Common.WaitingGlyph
+		title = "Review Required"
+
+		branchRules := m.pr.Data.Repository.BranchProtectionRules.Nodes
+		if len(branchRules) > 0 && branchRules[0].RequiresCodeOwnerReviews && numApproving < 1 {
 			subtitle = "Code owner review required"
+			status = statusFailure
+		} else if numApproving < numReviewOwners {
+			subtitle = "Code owner review required"
+			status = statusFailure
+		} else if len(branchRules) > 0 && numApproving < branchRules[0].RequiredApprovingReviewCount {
+			subtitle = fmt.Sprintf("Need %d more approval", branchRules[0].RequiredApprovingReviewCount-numApproving)
+			status = statusWaiting
 		} else if numCommented > 0 {
 			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
+			status = statusWaiting
 		}
 	}
 
-	return m.viewCheckCategory(title, subtitle, false)
+	return m.viewCheckCategory(icon, title, subtitle, false), status
 }
 
-func (m *Model) viewCheckCategory(top, bottom string, isLast bool) string {
+func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) string {
 	w := m.getIndentedContentWidth()
 	part := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), false, false, !isLast, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Width(w).
 		Padding(1)
-	title := lipgloss.NewStyle().Bold(true)
 
-	category := title.Render(top)
-	if bottom != "" {
-		subtitle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
-		category = lipgloss.JoinVertical(lipgloss.Left, category, subtitle.MarginLeft(2).Render(bottom))
+	sTitle := lipgloss.NewStyle().Bold(true)
+	sSub := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
+
+	category := lipgloss.JoinHorizontal(lipgloss.Top, icon, " ", sTitle.Render(title))
+
+	if subtitle != "" {
+		category = lipgloss.JoinVertical(lipgloss.Left, category, sSub.MarginLeft(2).Render(subtitle))
 	}
 	return part.Render(category)
 }
@@ -166,71 +231,45 @@ func (m *Model) viewChecksBar() string {
 	return strings.Join(sections, " ")
 }
 
-func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) string {
-	conclusionStr := string(checkRun.Conclusion)
-	if data.IsStatusWaiting(string(checkRun.Status)) {
-		return m.ctx.Styles.Common.WaitingGlyph
-	}
+// func renderCheckRunName(checkRun data.CheckRun) string {
+// 	var parts []string
+// 	creator := strings.TrimSpace(string(checkRun.CheckSuite.Creator.Login))
+// 	if creator != "" {
+// 		parts = append(parts, creator)
+// 	}
+//
+// 	workflow := strings.TrimSpace(string(checkRun.CheckSuite.WorkflowRun.Workflow.Name))
+// 	if workflow != "" {
+// 		parts = append(parts, workflow)
+// 	}
+//
+// 	name := strings.TrimSpace(string(checkRun.Name))
+// 	if name != "" {
+// 		parts = append(parts, name)
+// 	}
+//
+// 	return lipgloss.JoinHorizontal(
+// 		lipgloss.Top,
+// 		strings.Join(parts, "/"),
+// 	)
+// }
 
-	if data.IsConclusionAFailure(conclusionStr) {
-		return m.ctx.Styles.Common.FailureGlyph
-	}
-
-	return m.ctx.Styles.Common.SuccessGlyph
-}
-
-func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) string {
-	conclusionStr := string(statusContext.State)
-	if data.IsStatusWaiting(conclusionStr) {
-		return m.ctx.Styles.Common.WaitingGlyph
-	}
-
-	if data.IsConclusionAFailure(conclusionStr) {
-		return m.ctx.Styles.Common.FailureGlyph
-	}
-
-	return m.ctx.Styles.Common.SuccessGlyph
-}
-
-func renderCheckRunName(checkRun data.CheckRun) string {
-	var parts []string
-	creator := strings.TrimSpace(string(checkRun.CheckSuite.Creator.Login))
-	if creator != "" {
-		parts = append(parts, creator)
-	}
-
-	workflow := strings.TrimSpace(string(checkRun.CheckSuite.WorkflowRun.Workflow.Name))
-	if workflow != "" {
-		parts = append(parts, workflow)
-	}
-
-	name := strings.TrimSpace(string(checkRun.Name))
-	if name != "" {
-		parts = append(parts, name)
-	}
-
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		strings.Join(parts, "/"),
-	)
-}
-
-func renderStatusContextName(statusContext data.StatusContext) string {
-	var parts []string
-	creator := strings.TrimSpace(string(statusContext.Creator.Login))
-	if creator != "" {
-		parts = append(parts, creator)
-	}
-
-	context := strings.TrimSpace(string(statusContext.Context))
-	if context != "" && context != "/" {
-		parts = append(parts, context)
-	}
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		strings.Join(parts, "/"),
-	)
-}
+// func renderStatusContextName(statusContext data.StatusContext) string {
+// 	var parts []string
+// 	creator := strings.TrimSpace(string(statusContext.Creator.Login))
+// 	if creator != "" {
+// 		parts = append(parts, creator)
+// 	}
+//
+// 	context := strings.TrimSpace(string(statusContext.Context))
+// 	if context != "" && context != "/" {
+// 		parts = append(parts, context)
+// 	}
+// 	return lipgloss.JoinHorizontal(
+// 		lipgloss.Top,
+// 		strings.Join(parts, "/"),
+// 	)
+// }
 
 type checksStats struct {
 	succeeded  int
@@ -266,27 +305,14 @@ func (m *Model) getChecksStats() checksStats {
 	return res
 }
 
-func (m *Model) viewChecksConclusionTitle() string {
-	stats := m.getChecksStats()
-	if stats.failed > 0 {
-		return m.ctx.Styles.Common.FailureGlyph + " Some checks were not successful"
-	}
-	if stats.inProgress > 0 {
-		return m.ctx.Styles.Common.WaitingGlyph + " Some checks haven't completed yet"
-	}
-	if stats.succeeded > 0 {
-		return m.ctx.Styles.Common.SuccessGlyph + " All checks have passed"
-	}
-
-	return ""
-}
-
-func (m *Model) numReviewOwners() int {
+func (m *Model) numRequestedReviewOwners() int {
 	numOwners := 0
+
 	for _, node := range m.pr.Data.ReviewRequests.Nodes {
 		if node.AsCodeOwner {
 			numOwners++
 		}
 	}
+
 	return numOwners
 }

@@ -16,13 +16,6 @@ type RowData interface {
 	GetUpdatedAt() time.Time
 }
 
-func IsStatusSkipped(status string) bool {
-	return status == "PENDING" ||
-		status == "QUEUED" ||
-		status == "IN_PROGRESS" ||
-		status == "WAITING"
-}
-
 func IsStatusWaiting(status string) bool {
 	return status == "PENDING" ||
 		status == "QUEUED" ||
@@ -30,8 +23,16 @@ func IsStatusWaiting(status string) bool {
 		status == "WAITING"
 }
 
+func IsConclusionASkip(conclusion string) bool {
+	return conclusion == "SKIPPED"
+}
+
 func IsConclusionAFailure(conclusion string) bool {
 	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" || conclusion == "STARTUP_FAILURE"
+}
+
+func IsConclusionASuccess(conclusion string) bool {
+	return conclusion == "SUCCESS"
 }
 
 func GetAuthorRoleIcon(role string, theme theme.Theme) string {

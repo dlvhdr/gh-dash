@@ -25,6 +25,7 @@ type CommonStyles struct {
 	MainTextStyle lipgloss.Style
 	FooterStyle   lipgloss.Style
 	ErrorStyle    lipgloss.Style
+	DraftGlyph    string
 	WaitingGlyph  string
 	FailureGlyph  string
 	SuccessGlyph  string
@@ -57,6 +58,9 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 	s.CommentGlyph = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Render(constants.CommentIcon)
+	s.DraftGlyph = lipgloss.NewStyle().
+		Foreground(theme.PrimaryText).
+		Render(constants.DraftIcon)
 
 	return s
 }

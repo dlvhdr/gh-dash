@@ -58,7 +58,7 @@ func (m *Model) renderActivity() string {
 		})
 	}
 
-	for _, review := range m.pr.Data.LatestReviews.Nodes {
+	for _, review := range m.pr.Data.Reviews.Nodes {
 		renderedReview, err := m.renderReview(review, markdownRenderer)
 		if err != nil {
 			continue
