@@ -106,9 +106,8 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Common = common.BuildStyles(theme)
 
 	s.PrSidebar.PillStyle = s.Common.MainTextStyle.
-		Foreground(theme.InvertedText).
-		PaddingLeft(1).
-		PaddingRight(1)
+		Border(lipgloss.Border{Left: "", Right: ""}, false, true, false, true).
+		Foreground(theme.InvertedText)
 
 	s.Help.Text = lipgloss.NewStyle().Foreground(theme.SecondaryText)
 	s.Help.KeyText = lipgloss.NewStyle().Foreground(theme.PrimaryText)

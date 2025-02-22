@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	htmlCommentRegex  = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
-	lineCleanupRegex  = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt     = "Leave a comment..."
+	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
+	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	commentPrompt    = "Leave a comment..."
 )
 
 type Model struct {
@@ -30,9 +30,9 @@ type Model struct {
 	width     int
 
 	ShowConfirmCancel bool
-	isCommenting  bool
-	isAssigning   bool
-	isUnassigning bool
+	isCommenting      bool
+	isAssigning       bool
+	isUnassigning     bool
 
 	inputBox inputbox.Model
 }
@@ -193,6 +193,7 @@ func (m *Model) renderStatusPill() string {
 	}
 
 	return m.ctx.Styles.PrSidebar.PillStyle.
+		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
 }
@@ -205,7 +206,7 @@ func (m *Model) renderBody() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Render("No description provided.")
+		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)

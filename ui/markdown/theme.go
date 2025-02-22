@@ -43,34 +43,38 @@ var (
 		H1: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
 				Prefix: "# ",
-				Color:  stringPtr("#666CA6"),
+				Color:  stringPtr("255"),
 				Bold:   boolPtr(true),
 			},
 		},
 		H2: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
+				Color:  stringPtr("252"),
 				Prefix: "## ",
 			},
 		},
 		H3: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
+				Color:  stringPtr("251"),
 				Prefix: "### ",
 			},
 		},
 		H4: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
+				Color:  stringPtr("250"),
 				Prefix: "#### ",
 			},
 		},
 		H5: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
+				Color:  stringPtr("249"),
 				Prefix: "##### ",
 			},
 		},
 		H6: ansi.StyleBlock{
 			StylePrimitive: ansi.StylePrimitive{
 				Prefix: "###### ",
-				Color:  stringPtr("35"),
+				Color:  stringPtr("248"),
 				Bold:   boolPtr(false),
 			},
 		},
@@ -238,6 +242,8 @@ var (
 	}
 )
 
-func boolPtr(b bool) *bool       { return &b }
+func boolPtr(b bool) *bool { return &b }
+
 func stringPtr(s string) *string { return &s }
-func uintPtr(u uint) *uint       { return &u }
+
+func uintPtr(u uint) *uint { return &u }
