@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	htmlCommentRegex  = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
-	lineCleanupRegex  = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt     = "Leave a comment..."
-	approvalPrompt    = "Approve with comment..."
+	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
+	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
+	commentPrompt    = "Leave a comment..."
+	approvalPrompt   = "Approve with comment..."
 )
 
 type Model struct {
@@ -31,10 +31,10 @@ type Model struct {
 	width     int
 
 	ShowConfirmCancel bool
-	isCommenting    bool
-	isApproving     bool
-	isAssigning     bool
-	isUnassigning   bool
+	isCommenting      bool
+	isApproving       bool
+	isAssigning       bool
+	isUnassigning     bool
 
 	inputBox inputbox.Model
 }
@@ -177,15 +177,17 @@ func (m Model) View() string {
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n")
 	s.WriteString(m.renderBranches())
-	s.WriteString("\n\n")
-	s.WriteString(m.renderPills())
-	s.WriteString("\n\n")
 
 	labels := m.renderLabels()
 	if labels != "" {
+		s.WriteString("\n\n")
 		s.WriteString(labels)
 		s.WriteString("\n\n")
 	}
+
+	s.WriteString("\n")
+	s.WriteString(lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder).Render(strings.Repeat("―", m.width)))
+	s.WriteString("\n\n")
 
 	s.WriteString(m.renderDescription())
 	s.WriteString("\n\n")
@@ -202,9 +204,9 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return lipgloss.NewStyle().
+	return lipgloss.JoinHorizontal(lipgloss.Left, m.renderStatusPill(), lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("#%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner()))
+		Render(fmt.Sprintf(" · #%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner())))
 }
 
 func (m *Model) renderTitle() string {
@@ -292,14 +294,6 @@ func (m *Model) renderChecksPill() string {
 		Background(t.SuccessText).
 		Foreground(t.InvertedText).
 		Render("󰄬 Checks")
-}
-
-func (m *Model) renderPills() string {
-	statusPill := m.renderStatusPill()
-	mergeablePill := m.renderMergeablePill()
-	checksPill := m.renderChecksPill()
-	uptoDatePill := m.renderMergeStateStatusPill()
-	return lipgloss.JoinHorizontal(lipgloss.Top, statusPill, " ", mergeablePill, " ", checksPill, " ", uptoDatePill)
 }
 
 func (m *Model) renderLabels() string {
