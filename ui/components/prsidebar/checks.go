@@ -22,6 +22,13 @@ func (m *Model) renderChecks() string {
 	header := m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks")
 	w := m.getIndentedContentWidth()
 
+	if m.pr.Data.State == "MERGED" {
+		return lipgloss.JoinVertical(lipgloss.Left,
+			header,
+			m.viewMergedStatus(),
+		)
+	}
+
 	review, rStatus := m.viewReviewStatus()
 	checks, cStatus := m.viewChecksStatus()
 	merge, mStatus := m.viewMergeStatus()
@@ -113,6 +120,17 @@ func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
 		}
 	}
 	return m.viewCheckCategory(icon, title, subtitle, true), status
+}
+
+func (m *Model) viewMergedStatus() string {
+	w := m.getIndentedContentWidth()
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Styles.Colors.MergedPR).Width(w)
+	return box.Render(m.viewCheckCategory(
+		m.ctx.Styles.Common.MergedGlyph,
+		"Pull request successfully merged and closed",
+		"The branch has been merged",
+		true,
+	))
 }
 
 func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
