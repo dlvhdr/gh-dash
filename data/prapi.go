@@ -23,18 +23,18 @@ type PullRequestData struct {
 	Author struct {
 		Login string
 	}
-	AuthorAssociation     string
-	UpdatedAt             time.Time
-	CreatedAt             time.Time
-	Url                   string
-	State                 string
-	Mergeable             string
-	ReviewDecision        string
-	Additions             int
-	Deletions             int
-	HeadRefName           string
-	BaseRefName           string
-	HeadRepository struct {
+	AuthorAssociation string
+	UpdatedAt         time.Time
+	CreatedAt         time.Time
+	Url               string
+	State             string
+	Mergeable         string
+	ReviewDecision    string
+	Additions         int
+	Deletions         int
+	HeadRefName       string
+	BaseRefName       string
+	HeadRepository    struct {
 		Name string
 	}
 	HeadRef struct {
@@ -43,7 +43,7 @@ type PullRequestData struct {
 	Repository       Repository
 	Assignees        Assignees      `graphql:"assignees(first: 3)"`
 	Comments         Comments       `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	LatestReviews    Reviews        `graphql:"latestReviews(last: 3)"`
+	Reviews          Reviews        `graphql:"reviews(last: 3)"`
 	ReviewThreads    ReviewThreads  `graphql:"reviewThreads(last: 20)"`
 	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 10)"`
 	IsDraft          bool

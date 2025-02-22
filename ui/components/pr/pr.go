@@ -46,7 +46,7 @@ func (pr *PullRequest) renderReviewStatus() string {
 		return reviewCellStyle.Render("")
 	}
 
-	if pr.Data.LatestReviews.TotalCount > 0 {
+	if pr.Data.Reviews.TotalCount > 0 {
 		return reviewCellStyle.Render(pr.Ctx.Styles.Common.CommentGlyph)
 	}
 
