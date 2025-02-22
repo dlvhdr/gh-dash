@@ -29,6 +29,13 @@ func (m *Model) renderChecks() string {
 		)
 	}
 
+	if m.pr.Data.State == "CLOSED" {
+		return lipgloss.JoinVertical(lipgloss.Left,
+			header,
+			m.viewClosedStatus(),
+		)
+	}
+
 	review, rStatus := m.viewReviewStatus()
 	checks, cStatus := m.viewChecksStatus()
 	merge, mStatus := m.viewMergeStatus()
@@ -68,6 +75,8 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "All checks have passed"
 		status = statusSuccess
+	} else {
+		return "", statusWaiting
 	}
 
 	if stats.failed > 0 {
@@ -129,6 +138,17 @@ func (m *Model) viewMergedStatus() string {
 		m.ctx.Styles.Common.MergedGlyph,
 		"Pull request successfully merged and closed",
 		"The branch has been merged",
+		true,
+	))
+}
+
+func (m *Model) viewClosedStatus() string {
+	w := m.getIndentedContentWidth()
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Theme.FaintBorder).Width(w)
+	return box.Render(m.viewCheckCategory(
+		"",
+		"Closed with unmerged commits",
+		"This pull request is closed",
 		true,
 	))
 }
