@@ -29,6 +29,7 @@ type CommonStyles struct {
 	WaitingGlyph  string
 	FailureGlyph  string
 	SuccessGlyph  string
+	MergedGlyph   string
 	CommentGlyph  string
 }
 
@@ -61,6 +62,11 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 	s.DraftGlyph = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Render(constants.DraftIcon)
-
+	s.MergedGlyph = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{
+			Light: "#A371F7",
+			Dark:  "#A371F7",
+		}).
+		Render(constants.MergedIcon)
 	return s
 }
