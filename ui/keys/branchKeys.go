@@ -75,8 +75,25 @@ func BranchFullHelp() []key.Binding {
 }
 
 func rebindBranchKeys(keys []config.Keybinding) error {
+	CustomBranchBindings = []key.Binding{}
+
 	for _, branchKey := range keys {
+
 		if branchKey.Builtin == "" {
+			// Handle custom commands
+			if branchKey.Command != "" {
+				name := branchKey.Command
+				if branchKey.Name != "" {
+					name = branchKey.Name
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(branchKey.Key),
+					key.WithHelp(branchKey.Key, name),
+				)
+
+				CustomBranchBindings = append(CustomBranchBindings, customBinding)
+			}
 			continue
 		}
 
@@ -108,7 +125,12 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 		}
 
 		key.SetKeys(branchKey.Key)
-		key.SetHelp(branchKey.Key, key.Help().Desc)
+
+		helpDesc := key.Help().Desc
+		if branchKey.Name != "" {
+			helpDesc = branchKey.Name
+		}
+		key.SetHelp(branchKey.Key, helpDesc)
 	}
 
 	return nil
