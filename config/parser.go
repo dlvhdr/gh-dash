@@ -119,12 +119,17 @@ type Keybinding struct {
 	Key     string `yaml:"key"`
 	Command string `yaml:"command"`
 	Builtin string `yaml:"builtin"`
+	Name    string `yaml:"name,omitempty"`
 }
 
 func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 	helpDesc := ""
 	if previous != nil {
 		helpDesc = previous.Help().Desc
+	}
+
+	if kb.Name != "" {
+		helpDesc = kb.Name
 	}
 
 	return key.NewBinding(

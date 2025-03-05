@@ -117,8 +117,24 @@ func PRFullHelp() []key.Binding {
 }
 
 func rebindPRKeys(keys []config.Keybinding) error {
+	CustomPRBindings = []key.Binding{}
+
 	for _, prKey := range keys {
 		if prKey.Builtin == "" {
+			// Handle custom commands
+			if prKey.Command != "" {
+				name := prKey.Command
+				if prKey.Name != "" {
+					name = prKey.Name
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(prKey.Key),
+					key.WithHelp(prKey.Key, name),
+				)
+
+				CustomPRBindings = append(CustomPRBindings, customBinding)
+			}
 			continue
 		}
 
@@ -162,7 +178,12 @@ func rebindPRKeys(keys []config.Keybinding) error {
 		}
 
 		key.SetKeys(prKey.Key)
-		key.SetHelp(prKey.Key, key.Help().Desc)
+
+		helpDesc := key.Help().Desc
+		if prKey.Name != "" {
+			helpDesc = prKey.Name
+		}
+		key.SetHelp(prKey.Key, helpDesc)
 	}
 
 	return nil
