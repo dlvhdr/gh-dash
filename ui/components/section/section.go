@@ -1,13 +1,16 @@
 package section
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/cli/go-gh/v2/pkg/repository"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
@@ -196,11 +199,14 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 }
 
 func (m *BaseModel) GetSearchValue() string {
-	searchValue := m.SearchValue
+	log.Debug("GetSearchValue", "before", m.SearchValue)
+	searchValue := m.enrichSearchWithTemplateVars()
+	log.Debug("GetSearchValue", "searchValue", searchValue)
 	repo, err := repository.Current()
 	if err != nil {
 		return searchValue
 	}
+
 	if m.HasRepoNameInConfiguredFilter() {
 		return searchValue
 	}
@@ -217,8 +223,25 @@ func (m *BaseModel) GetSearchValue() string {
 	return strings.Join(searchValueWithoutCurrentCloneFilter, " ")
 }
 
+func (m *BaseModel) enrichSearchWithTemplateVars() string {
+	searchValue := m.SearchValue
+	searchVars := struct{ Now time.Time }{
+		Now: time.Now(),
+	}
+	tmpl, err := template.New("search").Parse(searchValue)
+	if err != nil {
+		return searchValue
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, searchVars)
+	if err != nil {
+		return searchValue
+	}
+
+	return buf.String()
+}
+
 func (m *BaseModel) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldDimensions := m.GetDimensions()
 	m.Ctx = ctx
 	newDimensions := m.GetDimensions()
 	tableDimensions := constants.Dimensions{
@@ -227,12 +250,8 @@ func (m *BaseModel) UpdateProgramContext(ctx *context.ProgramContext) {
 	}
 	m.Table.SetDimensions(tableDimensions)
 	m.Table.UpdateProgramContext(ctx)
-
-	if oldDimensions.Height != newDimensions.Height ||
-		oldDimensions.Width != newDimensions.Width {
-		m.Table.SyncViewPortContent()
-		m.SearchBar.UpdateProgramContext(ctx)
-	}
+	m.Table.SyncViewPortContent()
+	m.SearchBar.UpdateProgramContext(ctx)
 }
 
 type SectionRowsFetchedMsg struct {
@@ -340,7 +359,7 @@ func (m *BaseModel) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 }
 
 func (m *BaseModel) GetFilters() string {
-	return m.SearchBar.Value()
+	return m.GetSearchValue()
 }
 
 func (m *BaseModel) IsFilteringByClone() bool {
