@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"github.com/cli/go-gh/v2/pkg/repository"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
@@ -236,8 +235,6 @@ func (m *BaseModel) enrichSearchWithTemplateVars() string {
 	if err != nil {
 		return searchValue
 	}
-
-	log.Debug("template", "err", err, "buf", buf.String())
 
 	return buf.String()
 }
