@@ -521,7 +521,6 @@ func (m Model) GetDimensions() constants.Dimensions {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldDimensions := m.GetDimensions()
 	m.Ctx = ctx
 	newDimensions := m.GetDimensions()
 	tableDimensions := constants.Dimensions{
@@ -530,11 +529,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	}
 	m.Table.SetDimensions(tableDimensions)
 	m.Table.UpdateProgramContext(ctx)
-
-	if oldDimensions.Height != newDimensions.Height ||
-		oldDimensions.Width != newDimensions.Width {
-		m.Table.SyncViewPortContent()
-	}
+	m.Table.SyncViewPortContent()
+	m.SearchBar.UpdateProgramContext(ctx)
 }
 
 func (m *Model) ResetRows() {

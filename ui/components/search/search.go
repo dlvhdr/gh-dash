@@ -51,6 +51,7 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	m.textInput.Width = m.getInputWidth(m.ctx)
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
 }
@@ -82,8 +83,6 @@ func (m *Model) SetValue(val string) {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.textInput.Width = m.getInputWidth(ctx)
-	m.textInput.SetValue(m.textInput.Value())
-	m.textInput.Blur()
 }
 
 func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
