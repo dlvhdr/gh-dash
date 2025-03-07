@@ -199,9 +199,7 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 }
 
 func (m *BaseModel) GetSearchValue() string {
-	log.Debug("GetSearchValue", "before", m.SearchValue)
 	searchValue := m.enrichSearchWithTemplateVars()
-	log.Debug("GetSearchValue", "searchValue", searchValue)
 	repo, err := repository.Current()
 	if err != nil {
 		return searchValue
@@ -228,7 +226,8 @@ func (m *BaseModel) enrichSearchWithTemplateVars() string {
 	searchVars := struct{ Now time.Time }{
 		Now: time.Now(),
 	}
-	tmpl, err := template.New("search").Parse(searchValue)
+	handler := utils.TemplateHandler()
+	tmpl, err := template.New("search").Funcs(handler.Build()).Parse(searchValue)
 	if err != nil {
 		return searchValue
 	}
@@ -237,6 +236,8 @@ func (m *BaseModel) enrichSearchWithTemplateVars() string {
 	if err != nil {
 		return searchValue
 	}
+
+	log.Debug("template", "err", err, "buf", buf.String())
 
 	return buf.String()
 }

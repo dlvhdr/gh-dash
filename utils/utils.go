@@ -32,13 +32,13 @@ func TimeElapsed(then time.Time) string {
 
 	now := time.Now()
 	diff := now.Sub(then)
-	day := math.Floor(diff.Hours() / 24)
-	year := math.Floor(day / ApproxDaysInYear)
-	month := math.Floor(day / ApproxDaysInMonth)
-	week := math.Floor(day / DaysInWeek)
-	hour := math.Floor(math.Abs(diff.Hours()))
-	minute := math.Floor(math.Abs(diff.Minutes()))
-	second := math.Floor(math.Abs(diff.Seconds()))
+	day := math.Round(diff.Hours() / 24)
+	year := math.Round(day / ApproxDaysInYear)
+	month := math.Round(day / ApproxDaysInMonth)
+	week := math.Round(day / DaysInWeek)
+	hour := math.Round(math.Abs(diff.Hours()))
+	minute := math.Round(math.Abs(diff.Minutes()))
+	second := math.Round(math.Abs(diff.Seconds()))
 
 	if year > 0 {
 		parts = append(parts, strconv.Itoa(int(year))+"y")

@@ -21,6 +21,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui"
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 var (
@@ -153,6 +154,8 @@ func init() {
 		if logger != nil {
 			defer logger.Close()
 		}
+
+		utils.InitTemplateHandler()
 
 		p := tea.NewProgram(
 			model,
