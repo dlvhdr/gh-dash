@@ -63,8 +63,24 @@ func IssueFullHelp() []key.Binding {
 }
 
 func rebindIssueKeys(keys []config.Keybinding) error {
+	CustomIssueBindings = []key.Binding{}
+
 	for _, issueKey := range keys {
 		if issueKey.Builtin == "" {
+			// Handle custom commands
+			if issueKey.Command != "" {
+				name := issueKey.Command
+				if issueKey.Name != "" {
+					name = issueKey.Name
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(issueKey.Key),
+					key.WithHelp(issueKey.Key, name),
+				)
+
+				CustomIssueBindings = append(CustomIssueBindings, customBinding)
+			}
 			continue
 		}
 
@@ -90,7 +106,12 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 		}
 
 		key.SetKeys(issueKey.Key)
-		key.SetHelp(issueKey.Key, key.Help().Desc)
+
+		helpDesc := key.Help().Desc
+		if issueKey.Name != "" {
+			helpDesc = issueKey.Name
+		}
+		key.SetHelp(issueKey.Key, helpDesc)
 	}
 
 	return nil
