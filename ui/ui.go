@@ -232,7 +232,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.TogglePreview):
-			log.Debug("======================= TogglePreview")
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
 

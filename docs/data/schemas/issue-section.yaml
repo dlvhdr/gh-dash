@@ -59,14 +59,12 @@ properties:
             is:open
             involves:@me
             -author:@me
+            updated>={{ nowModify "-2w" }}
         ```
 
-        For more information about writing filters for searching GitHub, see
-        [Understanding the search syntax][02] and [Searching issues and pull requests][01] in
-        GitHub's documentation.
+        For more information about writing filters for searching GitHub, see [Searching].
 
-        [01]: https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
-        [02]: https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax
+        [Searching]: /configuration/searching
   layout:
     $ref: ./layout/issue.yaml
     schematize:
@@ -79,7 +77,7 @@ properties:
       weight: 4
       details: |
         This setting defines how many issues the dashboard should fetch for the section when:
-        
+
         - The dashboard first loads.
         - The [sref:fetch interval] elapses.
         - You navigate to the next issue in a table without another fetched issue to display.
