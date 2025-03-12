@@ -361,7 +361,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 	}
 	m.isApproving = isApproving
 	m.inputBox.SetPrompt(approvalPrompt)
-	m.inputBox.SetValue("LGTM")
+	m.inputBox.SetValue(m.ctx.Config.Defaults.PrApproveComment)
 
 	if isApproving {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
