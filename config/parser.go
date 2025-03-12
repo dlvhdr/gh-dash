@@ -102,6 +102,7 @@ type LayoutConfig struct {
 type Defaults struct {
 	Preview                PreviewConfig `yaml:"preview"`
 	PrsLimit               int           `yaml:"prsLimit"`
+	PrApproveComment       string        `yaml:"prApproveComment,omitempty"`
 	IssuesLimit            int           `yaml:"issuesLimit"`
 	View                   ViewType      `yaml:"view"`
 	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
@@ -244,6 +245,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				Width: 50,
 			},
 			PrsLimit:               20,
+			PrApproveComment:       "LGTM",
 			IssuesLimit:            20,
 			View:                   PRsView,
 			RefetchIntervalMinutes: 30,

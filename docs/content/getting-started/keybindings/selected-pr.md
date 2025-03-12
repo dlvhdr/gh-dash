@@ -103,7 +103,8 @@ Press ![kbd:`u`]() to update the PR branch. When you do, the dashboard uses the
 ## `v` - Approve PR { #approve-pr}
 
 Press ![kbd:`v`]() to approve the PR. When you do, the dashboard uses the
-`gh pr review --approve` command to approve the PR. This will prompt you to add an optional comment to the approval.
+`gh pr review --approve` command to approve the PR. This will prompt you to add an optional comment to the approval. The comment prompt will be prefilled with 
+`defaults.prApproveComment` if it is set in your configuration, which defaults to "LGTM".
 
 ## `w` - Watch PR checks { #watch-pr-checks}
 

@@ -29,6 +29,7 @@ default:
     open: true
     width: 50
   prsLimit: 20
+  prApproveComment: LGTM
   issuesLimit: 20
   view: prs
   refetchIntervalMinutes: 30
@@ -190,3 +191,17 @@ properties:
       - issues
       - prs
     default: prs
+  prApproveComment:
+    title: PR Approve Comment
+    description: The default comment prefilled when approving a PR.
+    schematize:
+      weight: 6
+      details: |
+        This setting defines the default comment used as a starting point when [approving a PR].
+        This can be set as an empty string to not prefill a comment.
+
+        By default, the comment is "LGTM".
+
+        [approving a PR]: /getting-started/keybindings/selected-pr/#approve-pr
+    type: string
+    default: LGTM
