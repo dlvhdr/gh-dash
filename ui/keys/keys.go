@@ -42,20 +42,36 @@ func (k KeyMap) ShortHelp() []key.Binding {
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	var additionalKeys []key.Binding
+	var customKeys []key.Binding
+
 	if k.viewType == config.PRsView {
 		additionalKeys = PRFullHelp()
+		customKeys = CustomPRBindings
 	} else if k.viewType == config.RepoView {
 		additionalKeys = BranchFullHelp()
+		customKeys = CustomBranchBindings
 	} else {
 		additionalKeys = IssueFullHelp()
+		customKeys = CustomIssueBindings
 	}
 
-	return [][]key.Binding{
+	if len(CustomUniversalBindings) > 0 {
+		customKeys = append(customKeys, CustomUniversalBindings...)
+	}
+
+	sections := [][]key.Binding{
 		k.NavigationKeys(),
 		k.AppKeys(),
 		additionalKeys,
-		k.QuitAndHelpKeys(),
 	}
+
+	if len(customKeys) > 0 {
+		sections = append(sections, customKeys)
+	}
+
+	sections = append(sections, k.QuitAndHelpKeys())
+
+	return sections
 }
 
 func (k KeyMap) NavigationKeys() []key.Binding {
@@ -178,10 +194,35 @@ func Rebind(universal, issueKeys, prKeys, branchKeys []config.Keybinding) error 
 	return rebindIssueKeys(issueKeys)
 }
 
+// CustomBindings stores custom keybindings that don't have built-in equivalents
+var (
+	CustomUniversalBindings []key.Binding
+	CustomPRBindings        []key.Binding
+	CustomIssueBindings     []key.Binding
+	CustomBranchBindings    []key.Binding
+)
+
 func rebindUniversal(universal []config.Keybinding) error {
 	log.Debug("Rebinding universal keys", "keys", universal)
+
+	CustomUniversalBindings = []key.Binding{}
+
 	for _, kb := range universal {
 		if kb.Builtin == "" {
+			// Handle custom commands
+			if kb.Command != "" {
+				name := kb.Command
+				if kb.Name != "" {
+					name = kb.Name
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(kb.Key),
+					key.WithHelp(kb.Key, name),
+				)
+
+				CustomUniversalBindings = append(CustomUniversalBindings, customBinding)
+			}
 			continue
 		}
 
@@ -229,7 +270,12 @@ func rebindUniversal(universal []config.Keybinding) error {
 		}
 
 		key.SetKeys(kb.Key)
-		key.SetHelp(kb.Key, key.Help().Desc)
+
+		helpDesc := key.Help().Desc
+		if kb.Name != "" {
+			helpDesc = kb.Name
+		}
+		key.SetHelp(kb.Key, helpDesc)
 	}
 
 	return nil
