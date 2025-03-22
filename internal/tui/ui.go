@@ -528,6 +528,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
+		m.tabs.SetCurrSectionId(1)
 		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
 
 	case intervalRefresh:
@@ -670,7 +671,7 @@ func (m Model) View() string {
 
 	s := strings.Builder{}
 	if m.ctx.View != config.RepoView {
-		s.WriteString(m.tabs.View(m.ctx))
+		s.WriteString(m.tabs.View())
 	}
 	s.WriteString("\n")
 	content := "No sections defined"
@@ -736,6 +737,7 @@ func (m *Model) syncProgramContext() {
 	for _, section := range m.getCurrentViewSections() {
 		section.UpdateProgramContext(m.ctx)
 	}
+	m.tabs.UpdateProgramContext(m.ctx)
 	m.footer.UpdateProgramContext(m.ctx)
 	m.sidebar.UpdateProgramContext(m.ctx)
 	m.prSidebar.UpdateProgramContext(m.ctx)

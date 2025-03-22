@@ -2,15 +2,16 @@ package tabs
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/ui/components/carousel"
+	"github.com/dlvhdr/gh-dash/v4/internal/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/internal/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
@@ -22,13 +23,18 @@ type SectionState struct {
 
 type Model struct {
 	sectionsConfigs []config.SectionConfig
-	sectionCounts   []SectionState
-	CurrSectionId   int
+	sectionCounts   []*int
+	carousel        carousel.Model
+	ctx             *context.ProgramContext
+	version         string
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
+	c := carousel.New(carousel.WithHeight(1))
+
 	return Model{
-		CurrSectionId: 1,
+		carousel: c,
+		ctx:      ctx,
 	}
 }
 
@@ -48,57 +54,44 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View(ctx *context.ProgramContext) string {
-	sectionTitles := make([]string, 0, len(m.sectionsConfigs))
-	for i, section := range m.sectionsConfigs {
-		title := section.Title
-		// handle search section
-		if i > 0 {
-			if m.sectionCounts[i].IsLoading {
-				title = fmt.Sprintf("%s %s", title, m.sectionCounts[i].spinner.View())
-			} else {
-				title = fmt.Sprintf("%s (%s)", title, utils.ShortNumber(m.sectionCounts[i].Count))
-			}
-		}
-		sectionTitles = append(sectionTitles, title)
-	}
-
-	var tabs []string
-	for i, sectionTitle := range sectionTitles {
-		if m.CurrSectionId == i {
-			tabs = append(tabs, ctx.Styles.Tabs.ActiveTab.Render(sectionTitle))
-		} else {
-			tabs = append(tabs, ctx.Styles.Tabs.Tab.Render(sectionTitle))
-		}
-	}
-
-	version := lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText).Render(ctx.Version)
-
-	renderedTabs := lipgloss.NewStyle().
-		Width(ctx.ScreenWidth - lipgloss.Width(version)).
-		MaxWidth(ctx.ScreenWidth - lipgloss.Width(version)).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
-
-	return ctx.Styles.Tabs.TabsRow.
-		Width(ctx.ScreenWidth).
-		MaxWidth(ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Center, renderedTabs, version))
+func (m Model) View() string {
+	return m.ctx.Styles.Tabs.TabsRow.
+		Width(m.ctx.ScreenWidth).
+		MaxWidth(m.ctx.ScreenWidth).
+		Render(lipgloss.JoinHorizontal(lipgloss.Center, m.carousel.View(), m.version))
 }
 
 func (m *Model) SetCurrSectionId(id int) {
-	m.CurrSectionId = id
+	log.Debug("SetCurrSectionId", "id", id)
+	m.carousel.SetCursor(id)
+}
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.carousel.SetStyles(carousel.Styles{
+		Item:     ctx.Styles.Tabs.Tab,
+		Selected: ctx.Styles.Tabs.ActiveTab,
+	})
+
+	m.version = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText).Render(ctx.Version)
+	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.version))
+	log.Debug("dolev", "carousel width", m.carousel.Width())
 }
 
 func (m *Model) UpdateSectionsConfigs(ctx *context.ProgramContext) {
 	m.sectionsConfigs = ctx.GetViewSectionsConfig()
-	m.sectionCounts = make([]SectionState, len(m.sectionsConfigs))
-	for i := range m.sectionsConfigs {
-		m.sectionCounts[i] = SectionState{
-			Count:     0,
-			IsLoading: false,
-			spinner:   spinner.New(spinner.WithSpinner(spinner.Dot), spinner.WithStyle(lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).PaddingLeft(2))),
+	sectionTitles := make([]string, 0, len(m.sectionsConfigs))
+	for i, section := range m.sectionsConfigs {
+		title := section.Title
+		// handle search section
+		if i > 0 && len(m.sectionCounts) >= i && m.sectionCounts[i] != nil && ctx.Config.Theme.Ui.SectionsShowCount {
+			title = fmt.Sprintf("%s (%s)", title, utils.ShortNumber(*m.sectionCounts[i]))
 		}
+		sectionTitles = append(sectionTitles, title)
 	}
+	oldCursor := m.carousel.Cursor()
+	m.carousel.SetItems(sectionTitles)
+	m.carousel.SetCursor(oldCursor)
 }
 
 func (m *Model) UpdateSectionCounts(sections []section.Section) {
@@ -106,6 +99,7 @@ func (m *Model) UpdateSectionCounts(sections []section.Section) {
 		m.sectionCounts[i].Count = s.GetTotalCount()
 		m.sectionCounts[i].IsLoading = s.GetIsLoading()
 	}
+	m.UpdateSectionsConfigs(m.ctx)
 }
 
 func (m *Model) SetAllLoading() []tea.Cmd {
