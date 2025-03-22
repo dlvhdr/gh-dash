@@ -281,30 +281,37 @@ func renderCheckRunName(checkRun data.CheckRun) string {
 	)
 }
 
-func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) string {
-	conclusionStr := string(checkRun.Conclusion)
+type CheckCategory int
+
+const (
+	CheckWaiting CheckCategory = iota
+	CheckFailure
+	CheckSuccess
+)
+
+func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory, string) {
 	if data.IsStatusWaiting(string(checkRun.Status)) {
-		return m.ctx.Styles.Common.WaitingGlyph
+		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
-	if data.IsConclusionAFailure(conclusionStr) {
-		return m.ctx.Styles.Common.FailureGlyph
+	if data.IsConclusionAFailure(string(checkRun.Conclusion)) {
+		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
-	return m.ctx.Styles.Common.SuccessGlyph
+	return CheckSuccess, m.ctx.Styles.Common.SuccessGlyph
 }
 
-func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) string {
+func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) (CheckCategory, string) {
 	conclusionStr := string(statusContext.State)
 	if data.IsStatusWaiting(conclusionStr) {
-		return m.ctx.Styles.Common.WaitingGlyph
+		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
 	if data.IsConclusionAFailure(conclusionStr) {
-		return m.ctx.Styles.Common.FailureGlyph
+		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
-	return m.ctx.Styles.Common.SuccessGlyph
+	return CheckSuccess, m.ctx.Styles.Common.SuccessGlyph
 }
 
 func renderStatusContextName(statusContext data.StatusContext) string {
@@ -332,23 +339,37 @@ func (sidebar *Model) renderChecks() string {
 		return ""
 	}
 
-	var checks []string
+	failures := make([]string, 0)
+	waiting := make([]string, 0)
+	rest := make([]string, 0)
 
 	lastCommit := commits[0]
 	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
+		var category CheckCategory
+		var check string
 		if node.Typename == "CheckRun" {
 			checkRun := node.CheckRun
-			renderedStatus := sidebar.renderCheckRunConclusion(checkRun)
+			var renderedStatus string
+			category, renderedStatus = sidebar.renderCheckRunConclusion(checkRun)
 			name := renderCheckRunName(checkRun)
-			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Top, renderedStatus, " ", name))
+			check = lipgloss.JoinHorizontal(lipgloss.Top, renderedStatus, " ", name)
 		} else if node.Typename == "StatusContext" {
 			statusContext := node.StatusContext
-			status := sidebar.renderStatusContextConclusion(statusContext)
-			checks = append(checks, lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext)))
+			var status string
+			category, status = sidebar.renderStatusContextConclusion(statusContext)
+			check = lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext))
+		}
+
+		if category == CheckWaiting {
+			waiting = append(waiting, check)
+		} else if category == CheckFailure {
+			failures = append(failures, check)
+		} else {
+			rest = append(rest, check)
 		}
 	}
 
-	if len(checks) == 0 {
+	if len(waiting)+len(failures)+len(rest) == 0 {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
@@ -360,7 +381,10 @@ func (sidebar *Model) renderChecks() string {
 		)
 	}
 
-	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, checks...)
+	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, failures...)
+	renderedChecks = lipgloss.JoinVertical(lipgloss.Left, renderedChecks, lipgloss.JoinVertical(lipgloss.Left, waiting...))
+	renderedChecks = lipgloss.JoinVertical(lipgloss.Left, renderedChecks, lipgloss.JoinVertical(lipgloss.Left, rest...))
+
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,

@@ -109,7 +109,7 @@
                       "nodes": [
                         {
                           "__typename": "CheckRun",
-                          "name": "CodeQL",
+                          "name": "CodeQL (success)",
                           "status": "COMPLETED",
                           "conclusion": "SUCCESS",
                           "checkSuite": {
@@ -125,99 +125,7 @@
                         },
                         {
                           "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "IN_PROGRESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "IN_PROGRESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "IN_PROGRESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
-                          "status": "IN_PROGRESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": ""
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": ""
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "CodeQL",
+                          "name": "CodeQL (failure)",
                           "status": "COMPLETED",
                           "conclusion": "FAILURE",
                           "checkSuite": {
@@ -233,7 +141,98 @@
                         },
                         {
                           "__typename": "CheckRun",
-                          "name": "CodeQL",
+                          "name": "CodeQL (waiting)",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (waiting)",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (waiting)",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (waiting)",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (waiting)",
+                          "status": "IN_PROGRESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (failure)",
+                          "status": "COMPLETED",
+                          "conclusion": "FAILURE",
+                          "checkSuite": {
+                            "creator": {
+                              "login": ""
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": ""
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "CodeQL (skipped)",
                           "status": "COMPLETED",
                           "conclusion": "SKIPPED",
                           "checkSuite": {
@@ -364,8 +363,7 @@
                         {
                           "__typename": "CheckRun",
                           "name": "CodeQL",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
+                          "status": "IN_PROGRESS",
                           "checkSuite": {
                             "creator": {
                               "login": ""
@@ -381,7 +379,7 @@
                           "__typename": "CheckRun",
                           "name": "CodeQL",
                           "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
+                          "conclusion": "FAILURE",
                           "checkSuite": {
                             "creator": {
                               "login": ""
