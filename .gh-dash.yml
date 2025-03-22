@@ -9,7 +9,21 @@ prSections:
     filters: repo:dlvhdr/gh-dash -author:@me is:open updated:>={{ nowModify "-2.5w" }}
   - title: All
     filters: repo:dlvhdr/gh-dash
+  - title: Very long long long title
+    filters: repo:dlvhdr/gh-dash
+  - title: Very long long long title 2
+    filters: repo:dlvhdr/gh-dash
+  - title: Whoops
+    filters: repo:dlvhdr/gh-dash
+  - title: Very long long long title 3
+    filters: repo:dlvhdr/gh-dash
+  - title: Very long long long title 4
+    filters: repo:dlvhdr/gh-dash
+  - title: Some title
+    filters: repo:dlvhdr/gh-dash
 issuesSections:
+  - title: Very long long long title
+    filters: repo:dlvhdr/gh-dash
   - title: Open
     filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
   - title: Creator
