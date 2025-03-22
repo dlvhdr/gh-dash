@@ -44,11 +44,12 @@ type PullRequestData struct {
 	Assignees        Assignees      `graphql:"assignees(first: 3)"`
 	Comments         Comments       `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
 	Reviews          Reviews        `graphql:"reviews(last: 3)"`
-	ReviewThreads    ReviewThreads  `graphql:"reviewThreads(last: 20)"`
-	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 10)"`
+	ReviewThreads    ReviewThreads  `graphql:"reviewThreads(last: 3)"`
+	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 5)"`
+	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
 	Commits          Commits          `graphql:"commits(last: 1)"`
-	Labels           PRLabels         `graphql:"labels(first: 3)"`
+	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
 }
 
@@ -151,6 +152,18 @@ type ReviewThreads struct {
 		Path         string
 		Comments     ReviewComments `graphql:"comments(first: 10)"`
 	}
+}
+
+type ChangedFile struct {
+	Additions  int
+	Deletions  int
+	Path       string
+	ChangeType string
+}
+
+type ChangedFiles struct {
+	TotalCount int
+	Nodes      []ChangedFile
 }
 
 type ReviewRequests struct {
