@@ -136,6 +136,7 @@ type Section interface {
 	Table
 	Search
 	PromptConfirmation
+	GetConfig() config.SectionConfig
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
 	GetPagerContent() string
@@ -193,6 +194,10 @@ func (m *BaseModel) GetDimensions() constants.Dimensions {
 	}
 }
 
+func (m *BaseModel) GetConfig() config.SectionConfig {
+	return m.Config
+}
+
 func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 	filters := m.Config.Filters
 	for _, token := range strings.Fields(filters) {
@@ -217,7 +222,8 @@ func (m *BaseModel) GetSearchValue() string {
 	var searchValueWithoutCurrentCloneFilter []string
 	for _, token := range strings.Fields(searchValue) {
 		if !strings.HasPrefix(token, currentCloneFilter) {
-			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
+			searchValueWithoutCurrentCloneFilter =
+				append(searchValueWithoutCurrentCloneFilter, token)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {

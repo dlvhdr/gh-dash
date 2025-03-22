@@ -1,0 +1,391 @@
+{
+  "data": {
+    "search": {
+      "nodes": [
+        {
+          "number": 141,
+          "title": "[Feature Request] Support notifications section",
+          "body": "# Feature or problem?\r\nThis is a feature request to manage github notifications. Github notifications are filtered similarly to issues, and prs.\r\n\r\n# Solution I'd like:\r\n* An additional set of panels for notifications, and notification filters.\r\n* Keyboard shortcut to mark a notification as done, subscribe, or bookmark \r\n  * Reading through notifications should be fast, move to next after taking an action \r\n* Optional shortcut to mark all notifications in the filter at once. \r\n\r\n# Alternates I've considered\r\nUsing an alternative plugin to mark all notifications as read.\r\n",
+          "state": "OPEN",
+          "author": {
+            "login": "mtwig"
+          },
+          "authorAssociation": "NONE",
+          "updatedAt": "2025-10-04T16:30:08Z",
+          "createdAt": "2022-06-21T01:35:25Z",
+          "url": "https://github.com/dlvhdr/gh-dash/issues/141",
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "Yeah I would also like that :) good idea",
+                "updatedAt": "2022-07-03T11:45:34Z"
+              }
+            ],
+            "totalCount": 1
+          },
+          "reactions": {
+            "totalCount": 19
+          },
+          "labels": {
+            "nodes": [
+              {
+                "color": "a2eeef",
+                "name": "feat"
+              },
+              {
+                "color": "682b23",
+                "name": "high-pri"
+              }
+            ]
+          }
+        },
+        {
+          "number": 461,
+          "title": "[BUG] Colors from preview can bleed into PR/Issue list on the next line",
+          "body": "**Describe the bug**\r\n\r\nIf preview is not wide enough to contain all the colored \"labels\" at the top, colors can bleed in to PR/Issue list on the next line.  I updated to the latest version this morning, and observed this bug for the first time. So my guess is that this was introduced with ` v4.6.0` or ` v4.7.0`.\r\n\r\n**To Reproduce**\r\n\r\nSet preview with to something sufficiently small:\r\n\r\n```yaml\r\ndefaults:\r\n  preview:\r\n    open: true\r\n    width: 40\r\n```\r\n\r\n**Expected behavior**\r\n\r\nFor the colors not to bleed over to the next line :smile: \r\n\r\n**Screenshots**\r\n\r\nLook how the green color of the Branch \"label\" bleeds into the next line.\r\n![image](https://github.com/user-attachments/assets/0094759b-ef85-42bc-bc43-77b34003d9f1)\r\n\r\n**Desktop (please complete the following information):**\r\n - OS: Ubuntu",
+          "state": "OPEN",
+          "author": {
+            "login": "gbbirkisson"
+          },
+          "authorAssociation": "NONE",
+          "updatedAt": "2025-10-04T16:30:56Z",
+          "createdAt": "2024-10-03T08:33:05Z",
+          "url": "https://github.com/dlvhdr/gh-dash/issues/461",
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [
+              {
+                "author": {
+                  "login": "paveldudka"
+                },
+                "body": "Started facing this bug all of the sudden :(\nAre there any known workarounds besides bumping up default preview width to 80?",
+                "updatedAt": "2025-02-19T02:00:38Z"
+              }
+            ],
+            "totalCount": 1
+          },
+          "reactions": {
+            "totalCount": 17
+          },
+          "labels": {
+            "nodes": [
+              {
+                "color": "d73a4a",
+                "name": "bug"
+              },
+              {
+                "color": "c955dd",
+                "name": "mid-pri"
+              }
+            ]
+          }
+        },
+        {
+          "number": 175,
+          "title": "Add PR approval",
+          "body": "**Is your feature request related to a problem? Please describe.**\r\nSometimes when bumping Terraform module versions, I get a bunch of renovate PRs. I would like to quickly approve them from within dash.\r\n\r\n**Describe the solution you'd like**\r\nI would like to add \"Approve\" as a keybinding like \"Merge\" (https://github.com/dlvhdr/gh-dash/pull/168).\r\nProbably it popups with a message dialog to enter a comment.\r\n\r\n**Describe alternatives you've considered**\r\nCurrently I created my own keybinding.\r\n\r\n**Additional context**\r\nI would like to implement it in the context of #hacktoberfest which is just around the corner.\r\n",
+          "state": "CLOSED",
+          "author": {
+            "login": "jgrumboe"
+          },
+          "authorAssociation": "NONE",
+          "updatedAt": "2024-11-20T13:18:37Z",
+          "createdAt": "2022-09-15T12:45:46Z",
+          "url": "https://github.com/dlvhdr/gh-dash/issues/175",
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "cool yeah that's something I definitely want!\r\nI didn't implement it yet as I needed to think more on the UX of it.\r\nReviewing a PR with `gh pr review` needs flags specifying approving/rejecting and a message body.\r\nI thought I could implement an generic input mechanism similar to vim's `vim.ui.select`.\r\n\r\nSomething like this:\r\n![image](https://user-images.githubusercontent.com/6196971/190410301-131d2c0f-1eec-43a5-ad23-2f66422974b8.png)\r\n",
+                "updatedAt": "2022-09-15T13:01:16Z"
+              },
+              {
+                "author": {
+                  "login": "jgrumboe"
+                },
+                "body": "Would it make sense to use something like the modal window from tview (https://github.com/rivo/tview/wiki/Modal) ?",
+                "updatedAt": "2022-09-15T15:04:30Z"
+              },
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "I'm not sure that'll work with bubbletea, but if it were to work, do you know how much that'll add to the binary size?",
+                "updatedAt": "2022-09-15T17:11:37Z"
+              },
+              {
+                "author": {
+                  "login": "jgrumboe"
+                },
+                "body": "No idea. Honestly,  I'm more or less a copy/paste \"dev\" as my background is more Ops than Dev. 🙂 \r\n\r\nBut as said I would like to try a PR for #hacktoberfest. Are you fine with that?",
+                "updatedAt": "2022-09-15T17:31:47Z"
+              },
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "Yeah sure, give it a try",
+                "updatedAt": "2022-09-15T17:41:27Z"
+              },
+              {
+                "author": {
+                  "login": "jgrumboe"
+                },
+                "body": "After a quick search I know now that bubbletea is already a TUI lib 💡 and that https://github.com/erikgeiser/promptkit could be a good fit. I will explore in the bubbles field.",
+                "updatedAt": "2022-09-15T18:11:25Z"
+              },
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "Yes check out https://github.com/charmbracelet/bubbles",
+                "updatedAt": "2022-09-15T18:47:20Z"
+              },
+              {
+                "author": {
+                  "login": "rpdelaney"
+                },
+                "body": "This would be a big help for us since most of our repos require approval before a PR can be merged",
+                "updatedAt": "2022-12-13T20:04:14Z"
+              },
+              {
+                "author": {
+                  "login": "rpdelaney"
+                },
+                "body": "@dlvhdr \r\n> I needed to think more on the UX of it.\r\n\r\nHaving separate hotkeys for approval and requesting changes would be enough for us. Simple is better than nothing. This is the last feature I need to live in the terminal. :) ",
+                "updatedAt": "2023-02-03T16:45:45Z"
+              },
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "Got it :) Making someone be able to live in the terminal is definitely a motivator 🥰",
+                "updatedAt": "2023-02-03T16:48:41Z"
+              },
+              {
+                "author": {
+                  "login": "dudicoco"
+                },
+                "body": "@rpdelaney but what about reviewing the PR before approving it? You would still need a way to add comments on lines in files. This can be done with octo nvim but if you use it then you can approve the PR through its interface.\r\n",
+                "updatedAt": "2023-12-07T18:18:19Z"
+              },
+              {
+                "author": {
+                  "login": "rpdelaney"
+                },
+                "body": "@dudicoco Not every PR requires that I add comments.",
+                "updatedAt": "2023-12-07T21:53:13Z"
+              },
+              {
+                "author": {
+                  "login": "miniscruff"
+                },
+                "body": "For anyone curious, you can use gh-dash with [Gum](https://github.com/charmbracelet/gum) also from charm to create prompts with input.\r\n\r\nHere is how you can do a pr approval with a comment. Can adjust for request changes, text blocks over inputs etc.\r\n\r\n```yaml\r\nkeybindings:\r\n  prs:\r\n    - key: a\r\n      command: >\r\n        gh pr review --repo {{.RepoName}} --approve --body \"$(gum input --prompt='Approval Comment: ')\" {{.PrNumber}}\r\n\r\n```",
+                "updatedAt": "2024-04-03T00:34:04Z"
+              },
+              {
+                "author": {
+                  "login": "rpdelaney"
+                },
+                "body": "```\r\nkeybindings:\r\n  prs:\r\n    - key: a\r\n      command: >\r\n        gh pr review --repo {{.RepoName}} --approve\r\n```\r\nI did not grok that this was possible already in gh-dash. Thank you so much.",
+                "updatedAt": "2024-04-03T13:54:47Z"
+              },
+              {
+                "author": {
+                  "login": "adamtaylor13"
+                },
+                "body": "Figured this out today, but left me with a quick question—is there a way to adjust the `?` help text? Asking because inevitably I'll need to check my own config several times before I \"learn\" my own key bindings 😂 It would be nice to be able to see my updated key binding in the help text.",
+                "updatedAt": "2024-05-28T17:45:09Z"
+              }
+            ],
+            "totalCount": 18
+          },
+          "reactions": {
+            "totalCount": 11
+          },
+          "labels": {
+            "nodes": []
+          }
+        },
+        {
+          "number": 108,
+          "title": "Some suggestions to the documents",
+          "body": "I just want to address some issues I met and hope it could help others. \r\n\r\n## The folder that stores the config\r\n\r\nAccording https://pkg.go.dev/os#UserConfigDir, the folder is different in each OS.  it is `~/Library/Application Support/gh-dash` on Mac. \r\n\r\nDon't waste your time struggling with the `~/.config/gh-dash` folder..\r\n\r\n## The icons on the UI\r\n\r\nYou may not see the icons correctly even though you already have installed and used a nerd font. \r\n\r\nThat is because some of the icons need to be rendered with the `bold` style. Make sure you have set the bold font correctly. \r\n\r\n\r\n\r\n",
+          "state": "CLOSED",
+          "author": {
+            "login": "wd"
+          },
+          "authorAssociation": "NONE",
+          "updatedAt": "2022-05-28T12:03:51Z",
+          "createdAt": "2022-04-04T02:09:35Z",
+          "url": "https://github.com/dlvhdr/gh-dash/issues/108",
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "Fixed in #135 ",
+                "updatedAt": "2022-05-28T12:03:51Z"
+              }
+            ],
+            "totalCount": 1
+          },
+          "reactions": {
+            "totalCount": 10
+          },
+          "labels": {
+            "nodes": []
+          }
+        },
+        {
+          "number": 107,
+          "title": "Support Horizontal split preview",
+          "body": "**Is your feature request related to a problem? Please describe.**\r\n\r\nRight now, there's only a vertical split for the preview. Would be great to have a horizontal one, especially in situations where the width of your terminal is constrained.",
+          "state": "OPEN",
+          "author": {
+            "login": "macintacos"
+          },
+          "authorAssociation": "NONE",
+          "updatedAt": "2025-10-04T16:31:06Z",
+          "createdAt": "2022-04-03T21:16:07Z",
+          "url": "https://github.com/dlvhdr/gh-dash/issues/107",
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [
+              {
+                "author": {
+                  "login": "adilansari"
+                },
+                "body": "@dlvhdr would a change to `input.SetWidth(xx)` do the trick?\r\n\r\nhttps://github.com/dlvhdr/gh-dash/blob/58a38ca68788efdf1637ecaeeed2500318d8e8fb/ui/components/prsidebar/prsidebar.go#L34",
+                "updatedAt": "2023-05-05T17:28:20Z"
+              },
+              {
+                "author": {
+                  "login": "silky"
+                },
+                "body": "This would be so handy for those of us that wish to have this always-open on a portrait-style monitor ❤️  :)",
+                "updatedAt": "2024-05-28T08:12:41Z"
+              }
+            ],
+            "totalCount": 2
+          },
+          "reactions": {
+            "totalCount": 9
+          },
+          "labels": {
+            "nodes": [
+              {
+                "color": "a2eeef",
+                "name": "feat"
+              },
+              {
+                "color": "80866c",
+                "name": "low-pri"
+              }
+            ]
+          }
+        }
+      ],
+      "issueCount": 226,
+      "pageInfo": {
+        "hasNextPage": true,
+        "startCursor": "Y3Vyc29yOjE=",
+        "endCursor": "Y3Vyc29yOjU="
+      }
+    }
+  }
+}

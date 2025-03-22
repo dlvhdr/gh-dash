@@ -68,10 +68,11 @@ type Styles struct {
 		RowStyle                 lipgloss.Style
 	}
 	Tabs struct {
-		Tab          lipgloss.Style
-		ActiveTab    lipgloss.Style
-		TabSeparator lipgloss.Style
-		TabsRow      lipgloss.Style
+		Tab               lipgloss.Style
+		ActiveTab         lipgloss.Style
+		OverflowIndicator lipgloss.Style
+		TabSeparator      lipgloss.Style
+		TabsRow           lipgloss.Style
 	}
 	ViewSwitcher struct {
 		ActiveView     lipgloss.Style
@@ -204,6 +205,7 @@ func InitStyles(theme theme.Theme) Styles {
 		Bold(true).
 		Background(theme.SelectedBackground).
 		Foreground(theme.PrimaryText)
+	s.Tabs.OverflowIndicator = s.Common.FaintTextStyle.Bold(true).Padding(0, 1)
 	s.Tabs.TabSeparator = lipgloss.NewStyle().
 		Foreground(theme.SecondaryBorder)
 	s.Tabs.TabsRow = lipgloss.NewStyle().

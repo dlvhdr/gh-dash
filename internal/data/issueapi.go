@@ -94,7 +94,10 @@ func makeIssuesQuery(query string) string {
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
 	var err error
-	client, err := gh.DefaultGraphQLClient()
+	if client == nil {
+		client, err = gh.DefaultGraphQLClient()
+	}
+
 	if err != nil {
 		return IssuesResponse{}, err
 	}
@@ -112,7 +115,7 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 	if pageInfo != nil {
 		endCursor = &pageInfo.EndCursor
 	}
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"query":     graphql.String(makeIssuesQuery(query)),
 		"limit":     graphql.Int(limit),
 		"endCursor": (*graphql.String)(endCursor),
