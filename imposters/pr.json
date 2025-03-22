@@ -271,7 +271,7 @@
               {
                 "additions": 27,
                 "deletions": 2,
-                "path": "flake.nix",
+                "path": "/some/file/with/a/long/path/that/extends/to/the/next/line.tsx",
                 "changeType": "MODIFIED"
               }
             ]
