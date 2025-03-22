@@ -85,14 +85,7 @@ func (m *Model) renderActivity() string {
 		body = lipgloss.JoinVertical(lipgloss.Left, renderedActivities...)
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, m.renderActivityTitle(), bodyStyle.Render(body))
-}
-
-func (m *Model) renderActivityTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.
-		MarginBottom(1).
-		Underline(true).
-		Render(" Comments")
+	return bodyStyle.Render(body)
 }
 
 func renderEmptyState() string {

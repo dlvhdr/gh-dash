@@ -10,6 +10,8 @@ import (
 )
 
 type PRKeyMap struct {
+	PrevSidebarTab       key.Binding
+	NextSidebarTab       key.Binding
 	Approve              key.Binding
 	Assign               key.Binding
 	Unassign             key.Binding
@@ -27,6 +29,14 @@ type PRKeyMap struct {
 }
 
 var PRKeys = PRKeyMap{
+	PrevSidebarTab: key.NewBinding(
+		key.WithKeys("["),
+		key.WithHelp("[", "previous sidebar tab"),
+	),
+	NextSidebarTab: key.NewBinding(
+		key.WithKeys("]"),
+		key.WithHelp("]", "next sidebar tab"),
+	),
 	Approve: key.NewBinding(
 		key.WithKeys("v"),
 		key.WithHelp("v", "approve"),
@@ -87,6 +97,8 @@ var PRKeys = PRKeyMap{
 
 func PRFullHelp() []key.Binding {
 	return []key.Binding{
+		PRKeys.PrevSidebarTab,
+		PRKeys.NextSidebarTab,
 		PRKeys.Approve,
 		PRKeys.Assign,
 		PRKeys.Unassign,
@@ -115,6 +127,10 @@ func rebindPRKeys(keys []config.Keybinding) error {
 		var key *key.Binding
 
 		switch prKey.Builtin {
+		case "prevSidebarTab":
+			key = &PRKeys.PrevSidebarTab
+		case "nextSidebarTab":
+			key = &PRKeys.NextSidebarTab
 		case "approve":
 			key = &PRKeys.Approve
 		case "assign":

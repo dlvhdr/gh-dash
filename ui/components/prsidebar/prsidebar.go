@@ -5,16 +5,20 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
+	"github.com/dlvhdr/gh-dash/v4/ui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
+	"github.com/dlvhdr/gh-dash/v4/ui/keys"
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 var (
@@ -29,6 +33,7 @@ type Model struct {
 	sectionId int
 	pr        *pr.PullRequest
 	width     int
+	carousel  carousel.Model
 
 	ShowConfirmCancel bool
 	isCommenting      bool
@@ -39,9 +44,16 @@ type Model struct {
 	inputBox inputbox.Model
 }
 
+var tabs = []string{" Overview", " Checks", " Activity", " Files Changed"}
+
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
 	inputBox.SetHeight(common.InputBoxHeight)
+
+	c := carousel.New(
+		carousel.WithItems(tabs),
+		carousel.WithWidth(ctx.MainContentWidth),
+	)
 
 	return Model{
 		pr: nil,
@@ -50,6 +62,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 		isApproving:   false,
 		isAssigning:   false,
 		isUnassigning: false,
+		carousel:      c,
 
 		inputBox: inputBox,
 	}
@@ -79,6 +92,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if !m.ShowConfirmCancel {
 					m.shouldCancelComment()
 				}
+
 			default:
 				if msg.String() == "Y" || msg.String() == "y" {
 					if m.shouldCancelComment() {
@@ -161,6 +175,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else {
+			switch {
+			case key.Matches(msg, keys.PRKeys.PrevSidebarTab):
+				m.carousel.MoveLeft()
+				return m, nil
+			case key.Matches(msg, keys.PRKeys.NextSidebarTab):
+				m.carousel.MoveRight()
+				return m, nil
+			}
 			return m, nil
 		}
 	}
@@ -177,26 +199,42 @@ func (m Model) View() string {
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderBranches())
+	s.WriteString("\n\n")
+	s.WriteString(lipgloss.NewStyle().Width(m.width).
+		Border(lipgloss.NormalBorder(), false, false, true, false).
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		Render(m.carousel.View()),
+	)
 
-	labels := m.renderLabels()
-	if labels != "" {
+	s.WriteString("\n\n")
+
+	switch m.carousel.SelectedItem() {
+	case tabs[0]:
+		labels := m.renderLabels()
+		if labels != "" {
+			s.WriteString(labels)
+			s.WriteString("\n\n")
+		}
+
+		s.WriteString(m.renderDescription())
 		s.WriteString("\n\n")
-		s.WriteString(labels)
-	}
+		s.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
+		s.WriteString("\n")
+		s.WriteString(m.renderChecksOverview())
 
-	s.WriteString("\n")
-	s.WriteString(lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder).Render(strings.Repeat("―", m.width)))
-	s.WriteString("\n\n")
+		if m.isCommenting || m.isApproving || m.isAssigning || m.isUnassigning {
+			s.WriteString(m.inputBox.View())
+		}
 
-	s.WriteString(m.renderDescription())
-	s.WriteString("\n\n")
-	s.WriteString(m.renderChecks())
+	case tabs[1]:
+		s.WriteString(m.renderChecksOverview())
+		s.WriteString("\n\n")
+		s.WriteString(m.renderChecks())
 
-	s.WriteString("\n\n")
-	s.WriteString(m.renderActivity())
-
-	if m.isCommenting || m.isApproving || m.isAssigning || m.isUnassigning {
-		s.WriteString(m.inputBox.View())
+	case tabs[2]:
+		s.WriteString(m.renderActivity())
+	case tabs[3]:
+		s.WriteString(m.renderChangedFiles())
 	}
 
 	return s.String()
@@ -253,7 +291,7 @@ func (m *Model) renderLabels() string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Underline(true).Render("Labels"),
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render("Labels"),
 		"",
 		common.RenderLabels(width, labels, style),
 	)
@@ -265,9 +303,28 @@ func (m *Model) renderDescription() string {
 	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
+	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Description")
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.CreatedAt))
+	title := lipgloss.JoinVertical(
+		lipgloss.Left,
+		desc,
+		"",
+		lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
+			" ",
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("commented", time, "ago"),
+		),
+		"",
+	)
+	sbody := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(m.ctx.Theme.FaintBorder).Width(width)
+
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			title,
+			sbody.Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided."),
+		)
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
@@ -276,11 +333,13 @@ func (m *Model) renderDescription() string {
 		return ""
 	}
 
-	return lipgloss.NewStyle().
-		Width(width).
-		MaxWidth(width).
-		Align(lipgloss.Left).
-		Render(rendered)
+	return lipgloss.JoinVertical(lipgloss.Left, title,
+		lipgloss.NewStyle().
+			Width(width).
+			MaxWidth(width).
+			Align(lipgloss.Left).
+			Render(rendered),
+	)
 }
 
 func (m *Model) SetSectionId(id int) {
@@ -297,6 +356,7 @@ func (m *Model) SetRow(d *data.PullRequestData) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
+	m.carousel.SetWidth(width)
 	m.inputBox.SetWidth(width)
 }
 
@@ -311,6 +371,12 @@ func (m *Model) GetIsCommenting() bool {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
+	m.carousel.SetStyles(
+		carousel.Styles{
+			Item:     lipgloss.NewStyle().Padding(0, 1).Foreground(m.ctx.Theme.FaintText),
+			Selected: lipgloss.NewStyle().Padding(0, 1).Bold(true),
+		},
+	)
 }
 
 func (m *Model) shouldCancelComment() bool {

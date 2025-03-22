@@ -340,6 +340,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case m.ctx.View == config.PRsView:
 			switch {
+
+			case key.Matches(msg, keys.PRKeys.PrevSidebarTab), key.Matches(msg, keys.PRKeys.NextSidebarTab):
+				var scmd tea.Cmd
+				m.prSidebar, scmd = m.prSidebar.Update(msg)
+				m.syncSidebar()
+				return m, scmd
+
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
 
