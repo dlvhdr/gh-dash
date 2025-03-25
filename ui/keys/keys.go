@@ -44,19 +44,19 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	var additionalKeys []key.Binding
 	var customKeys []key.Binding
 
-	if k.viewType == config.PRsView {
-		additionalKeys = PRFullHelp()
-		customKeys = CustomPRBindings
-	} else if k.viewType == config.RepoView {
-		additionalKeys = BranchFullHelp()
-		customKeys = CustomBranchBindings
-	} else {
-		additionalKeys = IssueFullHelp()
-		customKeys = CustomIssueBindings
-	}
-
 	if len(CustomUniversalBindings) > 0 {
 		customKeys = append(customKeys, CustomUniversalBindings...)
+	}
+
+	if k.viewType == config.PRsView {
+		additionalKeys = PRFullHelp()
+		customKeys = append(customKeys, CustomPRBindings...)
+	} else if k.viewType == config.RepoView {
+		additionalKeys = BranchFullHelp()
+		customKeys = append(customKeys, CustomBranchBindings...)
+	} else {
+		additionalKeys = IssueFullHelp()
+		customKeys = append(customKeys, CustomIssueBindings...)
 	}
 
 	sections := [][]key.Binding{
@@ -274,6 +274,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 		helpDesc := key.Help().Desc
 		if kb.Name != "" {
 			helpDesc = kb.Name
+		} else if kb.Command != "" {
+			helpDesc = kb.Command
 		}
 		key.SetHelp(kb.Key, helpDesc)
 	}
