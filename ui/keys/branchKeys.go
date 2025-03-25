@@ -82,9 +82,9 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 		if branchKey.Builtin == "" {
 			// Handle custom commands
 			if branchKey.Command != "" {
-				name := branchKey.Command
-				if branchKey.Name != "" {
-					name = branchKey.Name
+				name := branchKey.Name
+				if branchKey.Name == "" {
+					name = config.TruncateCommand(branchKey.Command)
 				}
 
 				customBinding := key.NewBinding(

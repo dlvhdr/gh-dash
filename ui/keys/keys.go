@@ -211,9 +211,9 @@ func rebindUniversal(universal []config.Keybinding) error {
 		if kb.Builtin == "" {
 			// Handle custom commands
 			if kb.Command != "" {
-				name := kb.Command
-				if kb.Name != "" {
-					name = kb.Name
+				name := kb.Name
+				if kb.Name == "" {
+					name = config.TruncateCommand(kb.Command)
 				}
 
 				customBinding := key.NewBinding(
