@@ -123,9 +123,9 @@ func rebindPRKeys(keys []config.Keybinding) error {
 		if prKey.Builtin == "" {
 			// Handle custom commands
 			if prKey.Command != "" {
-				name := prKey.Command
-				if prKey.Name != "" {
-					name = prKey.Name
+				name := prKey.Name
+				if prKey.Name == "" {
+					name = config.TruncateCommand(prKey.Command)
 				}
 
 				customBinding := key.NewBinding(

@@ -69,9 +69,9 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 		if issueKey.Builtin == "" {
 			// Handle custom commands
 			if issueKey.Command != "" {
-				name := issueKey.Command
-				if issueKey.Name != "" {
-					name = issueKey.Name
+				name := issueKey.Name
+				if issueKey.Name == "" {
+					name = config.TruncateCommand(issueKey.Command)
 				}
 
 				customBinding := key.NewBinding(

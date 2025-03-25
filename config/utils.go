@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 func (cfg Config) GetFullScreenDiffPagerEnv() []string {
@@ -53,4 +54,12 @@ func MergeColumnConfigs(defaultCfg, sectionCfg ColumnConfig) ColumnConfig {
 		colCfg.Hidden = sectionCfg.Hidden
 	}
 	return colCfg
+}
+
+func TruncateCommand(cmd string) string {
+	cmd = strings.ReplaceAll(cmd, "\n", "")
+	if len(cmd) > 30 {
+		return cmd[:30] + "..."
+	}
+	return cmd
 }
