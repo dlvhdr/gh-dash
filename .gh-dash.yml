@@ -42,22 +42,27 @@ repoPaths:
 keybindings:
   universal:
     - key: g
+      name: lazygit
       command: >
         cd {{.RepoPath}} && lazygit
   prs:
     - key: O
       builtin: checkout
     - key: C
+      name: code review
       command: >
         tmux new-window -c {{.RepoPath}} '
         nvim -c ":silent Octo pr edit {{.PrNumber}}"
         '
-    - key: b
-      command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} --json statusCheckRollup | command jq -rcj '.statusCheckRollup.[] | select(.context == "buildkite/mono") | .targetUrl' | xargs open
+    # - key: b
+    #   name: code review
+    #   command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} --json statusCheckRollup | command jq -rcj '.statusCheckRollup.[] | select(.context == "buildkite/mono") | .targetUrl' | xargs open
     - key: a
+      name: lazygit add
       command: >
         cd {{.RepoPath}} && git add -A && lazygit
     - key: v
+      name: approve
       command: >
         gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
 

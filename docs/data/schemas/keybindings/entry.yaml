@@ -11,9 +11,12 @@ schematize:
     combination in the view where those keys are bound, the dashboard shells out and executes the
     command.
 
+    To help you identify your custom commands, an additional [sref:`name`] property can be supplied to describe it in the help menu.
+
     [sref:`keybindings.prs`]: keybindings.prs
     [sref:`keybindings.issues`]: keybindings.issues
     [sref:`key`]: keybindings.entry.key
+    [sref:`name`]: keybindings.entry.name
     [sref:`command`]: keybindings.entry.command
 required:
   - key
@@ -29,6 +32,16 @@ properties:
         Specifies one or more keys to bind to the [sref:`command`] for an entry.
 
         [sref:`command`]: keybindings.entry.command
+  name:
+    title: Command name
+    description: A descriptive name for the command
+    type: string
+    schematize:
+      weight: 1
+      details: |
+        To help you identify your custom commands, an additional [sref:`name`] property can be supplied to describe it in the help menu.
+
+        [sref:`name`]: keybindings.entry.name
   command:
     title: Bound Command
     description: The shell command that runs when you press the key combination.
