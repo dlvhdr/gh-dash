@@ -142,7 +142,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 				}
 				m.Issues[i] = currIssue
-				m.Table.SetIsLoading(false)
+				m.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
@@ -156,7 +156,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Issues = msg.Issues
 			}
 			m.TotalCount = msg.TotalCount
-			m.Table.SetIsLoading(false)
+			m.SetIsLoading(false)
 			m.PageInfo = &msg.PageInfo
 			m.Table.SetRows(m.BuildRows())
 			m.UpdateLastUpdated(time.Now())
@@ -435,19 +435,16 @@ func (m Model) GetItemPluralForm() string {
 	return "Issues"
 }
 
-func (m Model) GetTotalCount() *int {
-	if m.IsLoading() {
-		return nil
-	}
-	c := m.TotalCount
-	return &c
+func (m Model) GetTotalCount() int {
+	return m.TotalCount
 }
 
-func (m Model) IsLoading() bool {
-	return m.Table.IsLoading()
+func (m *Model) GetIsLoading() bool {
+	return m.IsLoading
 }
 
 func (m *Model) SetIsLoading(val bool) {
+	m.IsLoading = val
 	m.Table.SetIsLoading(val)
 }
 

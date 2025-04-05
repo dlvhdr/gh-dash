@@ -171,7 +171,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Mergeable = ""
 				}
 				m.Prs[i] = currPr
-				m.Table.SetIsLoading(false)
+				m.SetIsLoading(false)
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
@@ -186,7 +186,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 			m.TotalCount = msg.TotalCount
 			m.PageInfo = &msg.PageInfo
-			m.Table.SetIsLoading(false)
+			m.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
 			m.Table.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
@@ -448,10 +448,10 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	cmds = append(cmds, fetchCmd)
 
+	m.IsLoading = true
 	if isFirstFetch {
-		m.Table.SetIsLoading(true)
+		m.SetIsLoading(true)
 		cmds = append(cmds, m.Table.StartLoadingSpinner())
-
 	}
 
 	return cmds
@@ -533,19 +533,12 @@ func (m Model) GetItemPluralForm() string {
 	return "PRs"
 }
 
-func (m Model) GetTotalCount() *int {
-	if m.IsLoading() {
-		return nil
-	}
-	c := m.TotalCount
-	return &c
-}
-
-func (m Model) IsLoading() bool {
-	return m.Table.IsLoading()
+func (m Model) GetTotalCount() int {
+	return m.TotalCount
 }
 
 func (m *Model) SetIsLoading(val bool) {
+	m.IsLoading = val
 	m.Table.SetIsLoading(val)
 }
 

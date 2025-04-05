@@ -45,6 +45,7 @@ type BaseModel struct {
 	IsSearchSupported         bool
 	ShowAuthorIcon            bool
 	IsFilteredByCurrentRemote bool
+	IsLoading                 bool
 }
 
 type NewSectionOptions struct {
@@ -135,7 +136,7 @@ type Section interface {
 	GetPagerContent() string
 	GetItemSingularForm() string
 	GetItemPluralForm() string
-	GetTotalCount() *int
+	GetTotalCount() int
 }
 
 type Identifier interface {
@@ -159,7 +160,7 @@ type Table interface {
 	FetchNextPageSectionRows() []tea.Cmd
 	BuildRows() []table.Row
 	ResetRows()
-	IsLoading() bool
+	GetIsLoading() bool
 	SetIsLoading(val bool)
 }
 
@@ -293,6 +294,10 @@ func (m *BaseModel) IsSearchFocused() bool {
 	return m.IsSearching
 }
 
+func (m *BaseModel) GetIsLoading() bool {
+	return m.IsLoading
+}
+
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
@@ -412,10 +417,6 @@ func (m *BaseModel) CreatedAt() time.Time {
 
 func (m *BaseModel) UpdateTotalItemsCount(count int) {
 	m.Table.UpdateTotalItemsCount(count)
-}
-
-func (m *BaseModel) IsLoading() bool {
-	return m.Table.IsLoading()
 }
 
 func (m *BaseModel) GetPromptConfirmation() string {
