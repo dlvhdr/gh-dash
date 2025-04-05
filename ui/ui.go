@@ -604,6 +604,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	m.tabs, tabsCmd = m.tabs.Update(msg)
 	m.tabs.UpdateSectionCounts(m.getCurrentViewSections())
 
 	sectionCmd := m.updateCurrentSection(msg)
@@ -766,15 +767,23 @@ func (m *Model) syncSidebar() tea.Cmd {
 }
 
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
+	cmds := make([]tea.Cmd, 0)
+	cmds = append(cmds, m.tabs.SetAllLoading()...)
+
 	if m.ctx.View == config.RepoView {
 		var cmd tea.Cmd
 		s, cmd := reposection.FetchAllBranches(m.ctx)
+		cmds = append(cmds, cmd)
 		m.repo = &s
-		return nil, cmd
+		return nil, tea.Batch(cmds...)
 	} else if m.ctx.View == config.PRsView {
-		return prssection.FetchAllSections(m.ctx, m.prs)
+		s, prcmds := prssection.FetchAllSections(m.ctx, m.prs)
+		cmds = append(cmds, prcmds)
+		return s, tea.Batch(cmds...)
 	} else {
-		return issuessection.FetchAllSections(m.ctx)
+		s, issuecmds := issuessection.FetchAllSections(m.ctx)
+		cmds = append(cmds, issuecmds)
+		return s, tea.Batch(cmds...)
 	}
 }
 
