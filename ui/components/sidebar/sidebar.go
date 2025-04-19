@@ -76,7 +76,9 @@ func (m Model) View() string {
 
 func (m *Model) SetContent(data string) {
 	m.data = data
-	m.viewport.SetContent(data)
+
+	c := lipgloss.NewStyle().Width(m.viewport.Width).Render(data)
+	m.viewport.SetContent(c)
 }
 
 func (m *Model) GetSidebarContentWidth() int {
