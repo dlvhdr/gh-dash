@@ -12,6 +12,7 @@ type KeyMap struct {
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
 	Refresh       key.Binding
+	Redraw        key.Binding
 	PageDown      key.Binding
 	PageUp        key.Binding
 	NextSection   key.Binding

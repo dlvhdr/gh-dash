@@ -18,6 +18,7 @@ type KeyMap struct {
 	LastLine      key.Binding
 	TogglePreview key.Binding
 	OpenGithub    key.Binding
+	Redraw        key.Binding
 	Refresh       key.Binding
 	RefreshAll    key.Binding
 	PageDown      key.Binding
@@ -91,6 +92,7 @@ func (k KeyMap) AppKeys() []key.Binding {
 	return []key.Binding{
 		k.Refresh,
 		k.RefreshAll,
+		k.Redraw,
 		k.TogglePreview,
 		k.OpenGithub,
 		k.CopyNumber,
@@ -135,6 +137,10 @@ var Keys = &KeyMap{
 	RefreshAll: key.NewBinding(
 		key.WithKeys("R"),
 		key.WithHelp("R", "refresh all"),
+	),
+	Redraw: key.NewBinding(
+		key.WithKeys("ctrl+l"),
+		key.WithHelp("Ctrl+l", "redraw display"),
 	),
 	PageDown: key.NewBinding(
 		key.WithKeys("ctrl+d"),
@@ -247,6 +253,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 			key = &Keys.Refresh
 		case "refreshAll":
 			key = &Keys.RefreshAll
+		case "redraw":
+			key = &Keys.Redraw
 		case "pageDown":
 			key = &Keys.PageDown
 		case "pageUp":
