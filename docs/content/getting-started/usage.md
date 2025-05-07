@@ -45,14 +45,15 @@ gh dash --config path/to/configuration/file.yml
 
 If you don't specify this flag, `gh-dash` uses the default configuration. If the file doesn't exist, gh-dash will create it. The location of the default configuration file depends on your system:
 
-1. If Inside a git repo, `gh-dash` will look for a `.gh-dash.yml` file in the root of the repo.
-2. If `$GH_DASH_CONFIG` is a non-empty string, `gh-dash` will use this file for
+1. If `$GH_DASH_CONFIG` is a non-empty string, `gh-dash` will use this file for
     its configuration.
-3. If `$GH_DASH_CONFIG` isn't set and `$XDG_CONFIG_HOME` is a non-empty string,
-    the default path is `$XDG_CONFIG_HOME/gh-dash/config.yml`.
-4. If neither `$GH_DASH_CONFIG` or `$XDG_CONFIG_HOME` are set, then:
-   - On Linux and macOS systems, the default path is `$HOME/gh-dash/config.yml`.
-   - On Windows systems, the default path is `%USERPROFILE%\gh-dash\config.yml`.
+2. If `$GH_DASH_CONFIG` isn't set and you're in a git repository, it will look for `.gh-dash.yml` or `.gh-dash.yaml` 
+    in the repository root.
+3. If neither of the above applies, then:
+   - If `$XDG_CONFIG_HOME` is a non-empty string, the default path is `$XDG_CONFIG_HOME/gh-dash/config.yml`.
+   - If `$XDG_CONFIG_HOME` isn't set, then:
+     - On Linux and macOS systems, the default path is `$HOME/.config/gh-dash/config.yml`.
+     - On Windows systems, the default path is `%USERPROFILE%\.config\gh-dash\config.yml`.
 
 For more information about authoring configurations, see [Configuration][02].
 
