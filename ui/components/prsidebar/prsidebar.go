@@ -310,7 +310,7 @@ func (m *Model) renderDescription() string {
 		desc,
 		"",
 		lipgloss.JoinHorizontal(lipgloss.Top,
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
 			" ",
 			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("commented", time, "ago"),
 		),
@@ -496,4 +496,8 @@ func (m *Model) prAssignees() []string {
 		assignees = append(assignees, n.Login)
 	}
 	return assignees
+}
+
+func (m *Model) GoToFirstTab() {
+	m.carousel.SetCursor(0)
 }

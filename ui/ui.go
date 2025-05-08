@@ -351,6 +351,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			case key.Matches(msg, keys.PRKeys.Approve):
+				m.prSidebar.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsApproving(true)
 				m.syncMainContentWidth()
@@ -359,6 +360,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Assign):
+				m.prSidebar.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsAssigning(true)
 				m.syncMainContentWidth()
@@ -367,6 +369,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Unassign):
+				m.prSidebar.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsUnassigning(true)
 				m.syncMainContentWidth()
@@ -375,6 +378,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Comment):
+				m.prSidebar.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prSidebar.SetIsCommenting(true)
 				m.syncMainContentWidth()
@@ -672,6 +676,7 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
+	m.prSidebar.GoToFirstTab()
 	cmd := m.syncSidebar()
 	m.sidebar.ScrollToTop()
 	return cmd
