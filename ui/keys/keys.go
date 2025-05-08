@@ -20,6 +20,7 @@ type KeyMap struct {
 	OpenGithub    key.Binding
 	Refresh       key.Binding
 	RefreshAll    key.Binding
+	Redraw        key.Binding
 	PageDown      key.Binding
 	PageUp        key.Binding
 	NextSection   key.Binding
@@ -247,6 +248,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 			key = &Keys.Refresh
 		case "refreshAll":
 			key = &Keys.RefreshAll
+		case "redraw":
+			key = &Keys.Redraw
 		case "pageDown":
 			key = &Keys.PageDown
 		case "pageUp":
