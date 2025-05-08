@@ -41,8 +41,18 @@ func (m *Model) renderChecksOverview() string {
 	}
 
 	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(borderColor).Width(w)
+	parts := make([]string, 0)
+	if review != "" {
+		parts = append(parts, review)
+	}
+	if checks != "" {
+		parts = append(parts, checks)
+	}
+	if merge != "" {
+		parts = append(parts, merge)
+	}
 
-	return box.Render(lipgloss.JoinVertical(lipgloss.Left, review, checks, merge))
+	return box.Render(lipgloss.JoinVertical(lipgloss.Left, parts...))
 }
 
 func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
@@ -213,6 +223,9 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 
 	if subtitle != "" {
 		category = lipgloss.JoinVertical(lipgloss.Left, category, sSub.MarginLeft(2).Render(subtitle))
+	}
+	if category == "" {
+		return ""
 	}
 	return part.Render(category)
 }
