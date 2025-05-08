@@ -48,6 +48,8 @@ keybindings:
   prs:
     - key: O
       builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
     - key: C
       name: code review
       command: >
