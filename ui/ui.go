@@ -246,6 +246,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
 
+		case key.Matches(msg, m.keys.Redraw):
+			// can't find a way to just ask to send bubbletea's internal repaintMsg{},
+			// so this seems like the lightest-weight alternative
+			return m, tea.Batch(tea.ExitAltScreen, tea.EnterAltScreen)
+
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
 				cmd = currSection.SetIsSearching(true)
