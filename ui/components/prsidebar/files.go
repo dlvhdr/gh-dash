@@ -60,14 +60,24 @@ func (m *Model) renderFile(file data.ChangedFile) string {
 	icon := m.renderChangeTypeIcon(file.ChangeType)
 	additions := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText).Width(5).Render(fmt.Sprintf("+%d", file.Additions))
 	deletions := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Width(5).Render(fmt.Sprintf("-%d", file.Deletions))
-	return lipgloss.NewStyle().MaxWidth(m.width).Render(lipgloss.JoinHorizontal(
-		lipgloss.Center,
-		lipgloss.JoinHorizontal(lipgloss.Center, additions, deletions),
+	prefix := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		lipgloss.JoinHorizontal(lipgloss.Top, additions, deletions),
 		" ",
 		icon,
-		" ",
-		file.Path,
-	))
+		" ")
+
+	path := file.Path
+	remaining := m.getIndentedContentWidth() - lipgloss.Width(prefix)
+	if len(path) > remaining {
+		path = lipgloss.JoinVertical(lipgloss.Left, path[0:remaining], " "+path[remaining:])
+	}
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		prefix,
+		path,
+	)
 }
 
 func (m *Model) renderChangeTypeIcon(changeType string) string {
