@@ -224,6 +224,10 @@ func (m Model) View() string {
 
 		body.WriteString(m.renderSummary())
 		body.WriteString("\n\n")
+		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"))
+		body.WriteString("\n")
+		body.WriteString(m.renderChangesOverview())
+		body.WriteString("\n\n")
 		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
 		body.WriteString("\n")
 		body.WriteString(m.renderChecksOverview())
