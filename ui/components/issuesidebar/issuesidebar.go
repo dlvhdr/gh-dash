@@ -166,7 +166,7 @@ func (m Model) View() string {
 		s.WriteString(m.inputBox.View())
 	}
 
-	return s.String()
+	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
 }
 
 func (m *Model) renderFullNameAndNumber() string {

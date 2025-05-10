@@ -156,7 +156,6 @@ func InitStyles(theme theme.Theme) Styles {
 	s.Sidebar.BorderWidth = 1
 	s.Sidebar.ContentPadding = 2
 	s.Sidebar.Root = lipgloss.NewStyle().
-		Padding(0, s.Sidebar.ContentPadding).
 		BorderLeft(true).
 		BorderStyle(lipgloss.Border{
 			Top:         "",

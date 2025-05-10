@@ -439,6 +439,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.onViewedRowChanged()
+
+			case key.Matches(msg, keys.PRKeys.SummaryViewMore):
+				m.prSidebar.SetSummaryViewMore()
+				m.syncSidebar()
+				return m, nil
 			}
 		case m.ctx.View == config.IssuesView:
 			switch {
@@ -681,6 +686,7 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
+	m.prSidebar.SetSummaryViewLess()
 	m.prSidebar.GoToFirstTab()
 	cmd := m.syncSidebar()
 	m.sidebar.ScrollToTop()

@@ -26,6 +26,7 @@ var (
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 	commentPrompt    = "Leave a comment..."
 	approvalPrompt   = "Approve with comment..."
+	foldBodyLen      = 600
 )
 
 type Model struct {
@@ -40,6 +41,7 @@ type Model struct {
 	isApproving       bool
 	isAssigning       bool
 	isUnassigning     bool
+	summaryViewMore   bool
 
 	inputBox inputbox.Model
 }
@@ -191,68 +193,83 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	s := strings.Builder{}
+	header := strings.Builder{}
 
-	s.WriteString(m.renderFullNameAndNumber())
-	s.WriteString("\n")
+	header.WriteString(m.renderFullNameAndNumber())
+	header.WriteString("\n")
 
-	s.WriteString(m.renderTitle())
-	s.WriteString("\n\n")
-	s.WriteString(m.renderBranches())
-	s.WriteString("\n\n")
-	s.WriteString(lipgloss.NewStyle().Width(m.width).
+	header.WriteString(m.renderTitle())
+	header.WriteString("\n\n")
+	header.WriteString(m.renderBranches())
+	header.WriteString("\n\n")
+	header.WriteString(m.renderAuthor())
+	header.WriteString("\n\n")
+	header.WriteString(lipgloss.NewStyle().Width(m.width).
 		Border(lipgloss.NormalBorder(), false, false, true, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Render(m.carousel.View()),
 	)
 
-	s.WriteString("\n\n")
+	header.WriteString("\n")
+
+	body := strings.Builder{}
 
 	switch m.carousel.SelectedItem() {
 	case tabs[0]:
 		labels := m.renderLabels()
 		if labels != "" {
-			s.WriteString(labels)
-			s.WriteString("\n\n")
+			body.WriteString(labels)
+			body.WriteString("\n\n")
 		}
 
-		s.WriteString(m.renderDescription())
-		s.WriteString("\n\n")
-		s.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
-		s.WriteString("\n")
-		s.WriteString(m.renderChecksOverview())
+		body.WriteString(m.renderSummary())
+		body.WriteString("\n\n")
+		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
+		body.WriteString("\n")
+		body.WriteString(m.renderChecksOverview())
 
 		if m.isCommenting || m.isApproving || m.isAssigning || m.isUnassigning {
-			s.WriteString(m.inputBox.View())
+			body.WriteString(m.inputBox.View())
 		}
 
 	case tabs[1]:
-		s.WriteString(m.renderChecksOverview())
-		s.WriteString("\n\n")
-		s.WriteString(m.renderChecks())
+		body.WriteString(m.renderChecksOverview())
+		body.WriteString("\n\n")
+		body.WriteString(m.renderChecks())
 
 	case tabs[2]:
-		s.WriteString(m.renderActivity())
+		body.WriteString(m.renderActivity())
 	case tabs[3]:
-		s.WriteString(m.renderChangedFiles())
+		body.WriteString(m.renderChangedFiles())
 	}
 
-	return s.String()
+	return lipgloss.JoinVertical(lipgloss.Left,
+		header.String(),
+		lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(body.String()),
+	)
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Render(fmt.Sprintf("#%d · %s", m.pr.Data.GetNumber(), m.pr.Data.GetRepoNameWithOwner()))
+	return lipgloss.NewStyle().
+		PaddingLeft(1).
+		Width(m.width).
+		Background(m.ctx.Theme.SelectedBackground).
+		Foreground(m.ctx.Theme.SecondaryText).
+		Render(fmt.Sprintf("%s · #%d", m.pr.Data.GetRepoNameWithOwner(), m.pr.Data.GetNumber()))
 }
 
 func (m *Model) renderTitle() string {
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).Render(m.pr.Data.Title),
+	return lipgloss.NewStyle().Height(3).Width(m.width).Background(m.ctx.Theme.SelectedBackground).PaddingLeft(1).Render(
+		lipgloss.PlaceVertical(3, lipgloss.Center, m.ctx.Styles.Common.MainTextStyle.
+			Background(m.ctx.Theme.SelectedBackground).
+			Render(m.pr.Data.Title),
+		),
 	)
 }
 
 func (m *Model) renderBranches() string {
 	return lipgloss.JoinHorizontal(lipgloss.Left,
+		" ",
 		m.renderStatusPill(),
 		" ",
 		lipgloss.NewStyle().
@@ -297,27 +314,35 @@ func (m *Model) renderLabels() string {
 	)
 }
 
-func (m *Model) renderDescription() string {
+func (m *Model) renderAuthor() string {
+	authorAssociation := m.pr.Data.AuthorAssociation
+	if authorAssociation == "" {
+		authorAssociation = "unknown role"
+	}
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.CreatedAt))
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		" by ",
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.AuthorAssociation, m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+		),
+	)
+}
+
+func (m *Model) renderSummary() string {
 	width := m.getIndentedContentWidth()
 	// Strip HTML comments from body and cleanup body.
 	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
-	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Description")
-	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.CreatedAt))
+	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Summary")
 	title := lipgloss.JoinVertical(
 		lipgloss.Left,
 		desc,
 		"",
-		lipgloss.JoinHorizontal(lipgloss.Top,
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
-			" ",
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("commented", time, "ago"),
-		),
-		"",
 	)
-	sbody := lipgloss.NewStyle().Border(lipgloss.RoundedBorder(), true).BorderForeground(m.ctx.Theme.FaintBorder).Width(width)
-
+	sbody := lipgloss.NewStyle().Width(m.getIndentedContentWidth())
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return lipgloss.JoinVertical(
@@ -331,6 +356,20 @@ func (m *Model) renderDescription() string {
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""
+	}
+
+	if !m.summaryViewMore && len(rendered) > foldBodyLen {
+		rendered = rendered[0:foldBodyLen]
+		rendered = lipgloss.JoinVertical(lipgloss.Left,
+			rendered,
+			"",
+			lipgloss.PlaceHorizontal(m.getIndentedContentWidth(), lipgloss.Center,
+				lipgloss.JoinHorizontal(lipgloss.Top,
+					lipgloss.NewStyle().Bold(true).Italic(true).Render("Press "),
+					lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground).Foreground(m.ctx.Theme.PrimaryText).Render("e"),
+					lipgloss.NewStyle().Bold(true).Italic(true).Render(" to read more...")),
+			),
+		)
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, title,
@@ -410,7 +449,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) getIndentedContentWidth() int {
-	return m.width - 4
+	return m.width - 3*m.ctx.Styles.Sidebar.ContentPadding
 }
 
 func (m *Model) GetIsApproving() bool {
@@ -500,4 +539,12 @@ func (m *Model) prAssignees() []string {
 
 func (m *Model) GoToFirstTab() {
 	m.carousel.SetCursor(0)
+}
+
+func (m *Model) SetSummaryViewMore() {
+	m.summaryViewMore = true
+}
+
+func (m *Model) SetSummaryViewLess() {
+	m.summaryViewMore = false
 }
