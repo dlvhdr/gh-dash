@@ -394,14 +394,15 @@ func (sidebar *Model) renderChecks() string {
 		)
 	}
 
-	renderedChecks := lipgloss.JoinVertical(lipgloss.Left, failures...)
-	renderedChecks = lipgloss.JoinVertical(lipgloss.Left, renderedChecks, lipgloss.JoinVertical(lipgloss.Left, waiting...))
-	renderedChecks = lipgloss.JoinVertical(lipgloss.Left, renderedChecks, lipgloss.JoinVertical(lipgloss.Left, rest...))
+	parts := make([]string, 0)
+	parts = append(parts, failures...)
+	parts = append(parts, waiting...)
+	parts = append(parts, rest...)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(renderedChecks),
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(lipgloss.JoinVertical(lipgloss.Left, parts...)),
 	)
 }
 

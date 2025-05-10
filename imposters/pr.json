@@ -272,7 +272,7 @@
               {
                 "additions": 27,
                 "deletions": 2,
-                "path": "/some/file/with/a/long/path/that/extends/to/the/next/line.tsx",
+                "path": "/some/file/with/a/long/path/that/is/really/long/and/extends/to/the/next/line.tsx",
                 "changeType": "MODIFIED"
               }
             ]
