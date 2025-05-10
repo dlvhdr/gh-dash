@@ -38,10 +38,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, keys.Keys.PageDown):
-			m.viewport.HalfViewDown()
+			m.viewport.HalfPageDown()
 
 		case key.Matches(msg, keys.Keys.PageUp):
-			m.viewport.HalfViewUp()
+			m.viewport.HalfPageUp()
 		}
 	}
 
@@ -83,7 +83,7 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.Config.Defaults.Preview.Width - 2*m.ctx.Styles.Sidebar.ContentPadding - m.ctx.Styles.Sidebar.BorderWidth
+	return m.ctx.Config.Defaults.Preview.Width - m.ctx.Styles.Sidebar.BorderWidth
 }
 
 func (m *Model) ScrollToTop() {

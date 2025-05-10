@@ -19,6 +19,7 @@ type PRKeyMap struct {
 	Diff                 key.Binding
 	Checkout             key.Binding
 	Close                key.Binding
+	SummaryViewMore      key.Binding
 	Ready                key.Binding
 	Reopen               key.Binding
 	Merge                key.Binding
@@ -64,6 +65,10 @@ var PRKeys = PRKeyMap{
 	Close: key.NewBinding(
 		key.WithKeys("x"),
 		key.WithHelp("x", "close"),
+	),
+	SummaryViewMore: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "expand description"),
 	),
 	Reopen: key.NewBinding(
 		key.WithKeys("X"),
@@ -173,6 +178,8 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			key = &PRKeys.WatchChecks
 		case "viewIssues":
 			key = &PRKeys.ViewIssues
+		case "summaryViewMore":
+			key = &PRKeys.SummaryViewMore
 		default:
 			return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
 		}

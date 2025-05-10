@@ -33,7 +33,7 @@ defaults:
 
   preview:
     open: true
-    width: 70
+    width: 84
   prsLimit: 20
   issuesLimit: 20
 repoPaths:

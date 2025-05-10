@@ -9,6 +9,7 @@
           "author": {
             "login": "lewis6991"
           },
+          "authorAssociation": "OWNER",
           "updatedAt": "2025-01-10T11:42:47Z",
           "createdAt": "2025-01-09T11:42:47Z",
           "url": "https://github.com/neovim/neovim/pull/31944",
