@@ -6,7 +6,46 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/utils"
 )
+
+func (m *Model) renderChangesOverview() string {
+	changes := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), false, false, true, false).
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		Width(m.getIndentedContentWidth()).
+		Padding(1)
+
+	commits := lipgloss.NewStyle().
+		Width(m.getIndentedContentWidth()).
+		Padding(1)
+
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder(), true).
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		Width(m.getIndentedContentWidth())
+
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.UpdatedAt))
+	return box.Render(
+		lipgloss.JoinVertical(lipgloss.Left,
+			changes.Render(
+				lipgloss.JoinHorizontal(lipgloss.Top,
+					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
+					fmt.Sprintf("%d files changed", m.pr.Data.Files.TotalCount),
+					" ",
+					m.pr.RenderLines(false)),
+			),
+			commits.Render(
+				lipgloss.JoinHorizontal(lipgloss.Top,
+					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
+					fmt.Sprintf("%d commits", m.pr.Data.Files.TotalCount),
+					" ",
+					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("%s ago", time)),
+				),
+			),
+		),
+	)
+}
 
 func (m *Model) renderChangedFiles() string {
 	files := make([]string, 0)

@@ -134,7 +134,7 @@ func (pr *PullRequest) renderCiStatus() string {
 	return ciCellStyle.Render(constants.FailureIcon)
 }
 
-func (pr *PullRequest) renderLines(isSelected bool) string {
+func (pr *PullRequest) RenderLines(isSelected bool) string {
 	if pr.Data == nil {
 		return "-"
 	}
@@ -332,7 +332,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderBaseName(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
-			pr.renderLines(isSelected),
+			pr.RenderLines(isSelected),
 			pr.renderUpdateAt(),
 			pr.renderCreatedAt(),
 		}
@@ -347,7 +347,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderBaseName(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
-		pr.renderLines(isSelected),
+		pr.RenderLines(isSelected),
 		pr.renderUpdateAt(),
 		pr.renderCreatedAt(),
 	}
