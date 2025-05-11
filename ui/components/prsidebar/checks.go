@@ -16,6 +16,7 @@ const (
 	statusSuccess checkSectionStatus = iota
 	statusFailure
 	statusWaiting
+	statusNonRequested
 )
 
 func (m *Model) renderChecksOverview() string {
@@ -163,6 +164,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 	numReviewOwners := m.numRequestedReviewOwners()
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
+
 	for _, node := range pr.Data.Reviews.Nodes {
 		if node.State == "APPROVED" {
 			numApproving++
@@ -203,6 +205,11 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
 			status = statusWaiting
 		}
+	} else {
+		icon = pr.Ctx.Styles.Common.PersonGlyph
+		title = "Reviews"
+		subtitle = "Non requested"
+		status = statusNonRequested
 	}
 
 	return m.viewCheckCategory(icon, title, subtitle, false), status
