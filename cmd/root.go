@@ -14,6 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
@@ -146,6 +147,8 @@ func init() {
 			log.Fatal("Cannot parse debug flag", err)
 		}
 
+		zone.NewGlobal()
+
 		// see https://github.com/charmbracelet/lipgloss/issues/73
 		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
@@ -161,6 +164,7 @@ func init() {
 			model,
 			tea.WithAltScreen(),
 			tea.WithReportFocus(),
+			tea.WithMouseCellMotion(),
 		)
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)

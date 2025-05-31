@@ -38,6 +38,7 @@ const (
 	MergedIcon  = ""
 	OpenIcon    = ""
 	ClosedIcon  = ""
+	DonateIcon  = "󱃱"
 
 	// New contributors: users who created a PR for the repo for the first time
 	NewContributorIcon = "󰎔" // \udb80\udf94 nf-md-new_box
