@@ -238,6 +238,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
 			currSection.ResetRows()
+			m.syncSidebar()
 			currSection.SetIsLoading(true)
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
