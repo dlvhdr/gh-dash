@@ -1,14 +1,16 @@
-[{
-        "request": {
-            "method": "POST",
-            "endpoint": "/api/graphql"            
-        },
-        "response": {
-            "status": 200,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "bodyFile": "pr.json"
-        }
+[
+  {
+    "request": {
+      "method": "POST",
+      "endpoint": "/api/graphql"
+    },
+    "response": {
+      "status": 200,
+      "delay": "1s",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "bodyFile": "pr.json"
     }
+  }
 ]
