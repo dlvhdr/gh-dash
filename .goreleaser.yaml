@@ -48,7 +48,8 @@ builds:
         goarch: arm
 
 archives:
-  - formats: [binary]
+  - formats:
+      - binary
     name_template: "gh-dash_{{ .Tag }}_{{ .Os }}-{{ .Arch }}{{if .Arm}}_{{.Arm}}{{end}}"
 checksum:
   name_template: "checksums.txt"
