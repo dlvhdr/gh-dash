@@ -38,7 +38,7 @@ func (m *Model) renderChangesOverview() string {
 			commits.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d commits", m.pr.Data.Files.TotalCount),
+					fmt.Sprintf("%d commits", m.pr.Data.Commits.TotalCount),
 					" ",
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("%s ago", time)),
 				),

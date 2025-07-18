@@ -98,6 +98,7 @@ type Commits struct {
 			}
 		}
 	}
+	TotalCount int
 }
 
 type Comment struct {
