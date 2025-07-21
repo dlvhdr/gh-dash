@@ -17,10 +17,10 @@ For example, this section, shows open PRs authored by anyone but me, which were 
 ```yaml
 prsSections:
   - title: Review
-    filter: >-
+    filters: >-
       is:open
       -author:@me
-      updated>={{ nowModify "-2w" }}
+      updated:>={{ nowModify "-2w" }}
 ```
 
 Note: don't specify `is:pr` for this setting. The dashboard always adds that filter for PR
