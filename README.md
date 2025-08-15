@@ -2,7 +2,7 @@
 
 ✨ A GitHub (`gh`) CLI extension to display a dashboard with **pull requests** and **issues** by filters you care about.
 
-<a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
+<a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
 
 <img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
 
@@ -32,8 +32,6 @@ Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh
 ## 📦 Installation
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
-
-   _Installation requires a minimum version (2.0.0) of the GitHub CLI that supports extensions._
 
 2. Install this extension:
 

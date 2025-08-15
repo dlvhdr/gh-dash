@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: entry.schema.yaml
+title: Valid Keybinding Entry
+description: A keybinding to run a shell command in a view.
+type: object
+schematize:
+  details: |
+    Every valid entry for the [sref:`keybindings.prs`] and [sref:`keybindings.issues`] configuration
+    options must have a [sref:`key`] and [sref:`command`]. When a user presses the key or key
+    combination in the view where those keys are bound, the dashboard shells out and executes the
+    command.
+
+    To help you identify your custom commands, an additional [sref:`name`] property can be supplied to describe it in the help menu.
+
+    [sref:`keybindings.prs`]: keybindings.prs
+    [sref:`keybindings.issues`]: keybindings.issues
+    [sref:`key`]: keybindings.entry.key
+    [sref:`name`]: keybindings.entry.name
+    [sref:`command`]: keybindings.entry.command
+required:
+  - key
+properties:
+  key:
+    title: Bound Key
+    description: The combination of keys that trigger the command.
+    type: string
+    schematize:
+      weight: 1
+      details: |
+        Specifies one or more keys to bind to the [sref:`command`] for an entry.
+
+        [sref:`command`]: keybindings.entry.command
+  name:
+    title: Command name
+    description: A descriptive name for the command
+    type: string
+    schematize:
+      weight: 1
+      details: |
+        To help you identify your custom commands, an additional [sref:`name`] property can be supplied to describe it in the help menu.
+
+        [sref:`name`]: keybindings.entry.name
+  command:
+    title: Bound Command
+    description: The shell command that runs when you press the key combination.
+    type: string
+    schematize:
+      weight: 2
+      details: |
+        Specifies the command bound to the [sref:`key`] for an entry.
+
+        [sref:`key`]: keybindings.entry.key
+  builtin:
+    title: Builtin Command
+    description: One of gh-dash's builtin commands that will run when you press the key combination
+    type: string
+    schematize:
+      weight: 2
+      details: |
+        Specifies the builtin command bound to the the [sref:`key`] for an entry.
+
+        For global actions, the available builtin commands are: `up`, `down`, `firstLine`, `lastLine`, `togglePreview`, `openGithub`, `refresh`, `refreshAll`, `pageDown`, `pageUp`, `nextSection`, `prevSection`, `search`, `copyurl`, `copyNumber`, `help`, `quit`.
+
+        For PRs, the available builtin commands are: `prevSidebarTab`, `nextSidebarTab`, `approve`, `assign`, `unassign`, `comment`, `diff`, `checkout`, `close`, `ready`, `reopen`, `merge`, `update`, `watchChecks`, `viewIssues`, `summaryViewMore`.
+
+        For Issues, the available builtin commands are: `assign`, `unassign`, `comment`, `close`, `reopen`, `viewPrs`.
+
+        [sref:`key`]: keybindings.entry.key

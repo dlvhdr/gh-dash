@@ -1,0 +1,15 @@
+@font-face {
+  font-family: "Mona Sans";
+  src:
+    url("./Mona-Sans.woff2") format("woff2 supports variations"),
+    url("./Mona-Sans.woff2") format("woff2-variations");
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
+}
+
+@font-face {
+  font-family: "CommitMono NFM";
+  font-weight: normal;
+  font-style: normal;
+  src: url("./CommitMonoNerdFontMono-Regular.otf") format("opentype");
+}

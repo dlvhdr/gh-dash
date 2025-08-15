@@ -1,0 +1,45 @@
+---
+title: Valid Options
+---
+
+## Valid Layout Options
+
+Any column can define the [`grow`], [`width`], and [`hidden`] options.
+
+[`hidden`]: #hide-column
+[`grow`]: #grow-column
+[`width`]: #column-width
+
+## Grow Column
+
+| Property | Type    | Default |
+| :------- | :------ | :------ |
+| `grow`   | boolean | false   |
+
+Specify whether the column should grow to fill the available space.
+
+Set this value to `true` and the column's width expands to fill any leftover space in the
+terminal after accounting for other columns and the preview pane. Set this value to `false`
+to use the value of [`width`] instead.
+
+We recommend only setting this for one column in a given section layout.
+
+[`width`]: #column-width
+
+## Column Width
+
+| Property | Type    | Minimum |
+| :------- | :------ | :------ |
+| `width`  | integer | 1       |
+
+Specify the column's width by character count. Because the dashboard expects the terminal
+font to be monospace, this is a reliable way to ensure a minimum width for readability.
+
+## Hide Column
+
+| Property | Type    | Default |
+| :------- | :------ | :------ |
+| `hidden` | boolean | false   |
+
+Specify whether the column should be hidden from view. Set this value to `true` to hide the
+column or `true` to show it.

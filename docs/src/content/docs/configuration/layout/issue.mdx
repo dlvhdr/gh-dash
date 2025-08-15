@@ -1,0 +1,167 @@
+---
+title: Issue Layout
+---
+
+import { Aside, Code } from "@astrojs/starlight/components";
+import NerdFontIcon from "../../../../components/NerdFontIcon.astro";
+
+# Issues Section Layout
+
+You can define how an Issue section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+[`width`]: /configuration/layout/options#column-width
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+
+By default, Issue views display the following columns in the order they're listed:
+
+1. [`updatedAt`] with a width of 7 columns.
+1. [`state`] with a width of 3 columns.
+1. [`repo`] with a width of 15 columns.
+1. [`title`], set to grow to fill available space.
+1. [`creator`] with a width of 10 columns.
+1. [`comments`] with a width of 3 columns.
+1. [`reactions`] with a width of 3 columns.
+
+<Aside type="caution" title="Watch out!">
+  Even though the `state`, `title`, `comments`, and `reactions` settings
+  aren't explicitly defined in your configuration file, they're added to
+  the table unless you set their [`hidden`] option to `false`.
+
+[`hidden`]: /configuration/layout/options#hide-column
+
+</Aside>
+      
+[`updatedAt`]:    #issues-updated-at-column
+[`state`]:        #issues-state-column
+[`repo`]:         #issues-repo-column
+[`title`]:        #issues-title-column
+[`creator`]:       #issues-creator-column
+[`comments`]:           #issues-comments-column
+[`reactions`]:        #issues-reactions-column
+
+```yaml
+title:
+  grow: true
+assignees:
+  hidden: true
+  width: 20
+creator:
+  width: 10
+repo:
+  width: 15
+updatedAt:
+  width: 7
+```
+
+## Issue Updated At Column
+
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `updatedAt` | yaml | <Code code={`width: 7`} lang="yaml" frame="none"/> |
+
+This column displays how recently the Issue was updated. The entry shows the time elapsed
+since the last update, like `1h` or `3d`.
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+## Issue State Column
+
+| Property | Type | Default                                            |
+| :------- | :--- | :------------------------------------------------- |
+| `state`  | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the issue's state. When an issue is open, the column displays the icon <NerdFontIcon icon=""/>
+with the color set to `#42a0fa`. When an issue is closed, the
+column displays the icon <NerdFontIcon icon=""/> with the color set to
+[`theme.colors.text.faint`].
+
+The heading for this column is <NerdFontIcon icon=""/>.
+
+[`theme.colors.text.faint`]: /configuration/theme#faint-text-color
+
+## Issue Repo Column
+
+| Property | Type | Default                                             |
+| :------- | :--- | :-------------------------------------------------- |
+| `repo`   | yaml | <Code code={`width: 15`} lang="yaml" frame="none"/> |
+
+This column displays the name of the repository the Issue is filed in. The entry shows the
+name of the repository without the owner, like `gh-dash` for the
+`https://github.com/dlvhdr/gh-dash` repository.
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+[`width`]: /configuration/layout/options#column-width
+
+## Issue Title Column
+
+| Property | Type | Default                                              |
+| :------- | :--- | :--------------------------------------------------- |
+| `title`  | yaml | <Code code={`grow: true`} lang="yaml" frame="none"/> |
+
+This column displays the Issue's number followed by its title. This column is always displayed
+unless you set [`hidden`] to `false`. By default, it grows to fill the available space
+in the terminal after accounting for other column widths.
+
+The heading for this column is `Title`.
+
+The [`theme.colors.text.primary`] setting defines the issue number's color.
+
+[`hidden`]: /configuration/layout/options#hide-column
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+
+## Issue Creator Column
+
+| Property  | Type | Default                                             |
+| :-------- | :--- | :-------------------------------------------------- |
+| `creator` | yaml | <Code code={`width: 10`} lang="yaml" frame="none"/> |
+
+This column displays the username for the person who created the Issue.
+
+The heading for this column is `Creator`.
+
+## Issue Author Role Icon
+
+| Property      | Type | Default                                                |
+| :------------ | :--- | :----------------------------------------------------- |
+| `creatorIcon` | yaml | <Code code={`hidden: true`} lang="yaml" frame="none"/> |
+
+This setting affects display of the role icon for the person who created the Issue.
+
+## Issue Assignees Column
+
+| Property    | Type | Default                                                           |
+| :---------- | :--- | :---------------------------------------------------------------- |
+| `assignees` | yaml | <Code code={`width: 20\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the usernames for the people assigned to the Issue.
+
+The heading for this column is `Assignees`.
+
+## Issue Comments Column
+
+| Property   | Type | Default                                            |
+| :--------- | :--- | :------------------------------------------------- |
+| `comments` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the count of comments on the issue as an integer.
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+## Issue Reactions Column
+
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `reactions` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the count of all reactions on the issue as an integer.
+
+The heading for this column is <NerdFontIcon icon=""/>

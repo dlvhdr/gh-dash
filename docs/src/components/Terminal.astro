@@ -1,0 +1,18 @@
+---
+import "../styles/terminal.css";
+const {className} = Astro.props;
+---
+
+<div class={`terminal ${className}`}>
+  <div class="top">
+    <div class="btns">
+      <span class="circle red"></span>
+      <span class="circle yellow"></span>
+      <span class="circle green"></span>
+    </div>
+    <div class="terminal-title">gh dash -- 70x32</div>
+  </div>
+  <div class="body">
+    <slot />
+  </div>
+</div>

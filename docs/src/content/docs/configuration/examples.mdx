@@ -1,0 +1,146 @@
+---
+title: Examples
+---
+
+These examples show a few ways you might configure your dashboard.
+
+## Complete Examples
+
+- The config for the `gh-dash` repo under [.gh-dash.yml](https://github.com/dlvhdr/gh-dash/blob/main/.gh-dash.yml)
+- My config under my dotfiles repo [dlvhdr/dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/nix/module/gh-dash/configs/config.yml)
+- Many other configs found by [searching GitHub](https://github.com/search?q=path%3Agh-dash%2Fconfig.yml&type=code)
+
+## Default Values
+
+<div style="max-height: 500px; overflow-y:scroll;">
+
+```yaml
+prSections:
+  - title: "My Pull Requests"
+    filters: "is:open author:@me"
+  - title: "Needs My Review"
+    filters: "is:open review-requested:@me"
+  - title: "Involved"
+    filters: "is:open involves:@me -author:@me"
+
+issuesSections:
+  - title: "My Issues"
+    filters: "is:open author:@me"
+  - title: "Assigned"
+    filters: "is:open assignee:@me"
+  - title: "Involved"
+    filters: "is:open involves:@me -author:@me"
+
+pager:
+  diff: less
+showAuthorIcons: true
+smartFilteringAtLaunch: true
+
+defaults:
+  view: prs
+  refetchIntervalMinutes: 5
+  layout:
+    prs:
+      repoName:
+        grow: true,
+        width: 10
+        hidden: false
+      base:
+        hidden: true
+  preview:
+    open: true
+    width: 84
+  prsLimit: 20
+  issuesLimit: 20
+
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      compact: false
+  colors:
+    text:
+      primary: "#E2E1ED"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#B0B3BF"
+      warning: "#E0AF68"
+      success: "#3DF294"
+    background:
+      selected: "#1B1B33"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"
+```
+
+</div>
+
+## Theming Example
+
+The color palette in this example is inspired by the [Monokai Pro Spectrum Filter][01] palette.
+
+```yaml
+theme:
+  colors:
+    text:
+      primary: "#F7F1FF"
+      secondary: "#5AD4E6"
+      inverted: "#F7F1FF"
+      faint: "#3E4057"
+      warning: "#FC618D"
+      success: "#7BD88F"
+    background:
+      selected: "#535155"
+    border:
+      primary: "#948AE3"
+      secondary: "#7BD88F"
+      faint: "#3E4057"
+```
+
+[01]: https://www.vscolors.com/themes/f5d7ffda-c1d6-4070-ba80-803c705a1ee6-3ed72ace
+
+## Custom Keybindings Example
+
+Utilizing `tmux` we can launch other TUIs:
+
+```yaml
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+  prs:
+    - key: O
+      builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+    - key: C
+      name: code review
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"
+        '
+    - key: a
+      name: lazygit add
+      command: >
+        cd {{.RepoPath}} && git add -A && lazygit
+    - key: v
+      name: approve
+      command: >
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+```
+
+## Repo Paths Example
+
+Configure [`repoPaths`](/configuration/repo-paths) in order to check out PRs in
+the right git directory.
+
+```yaml
+repoPaths:
+  dlvhdr/*: ~/code/personal/*
+  my-work-org/*: ~/code/my-work-org/*
+  charmbracelet/*: ~/code/charm/*
+  dlvhdr/dotfiles: ~/dotfiles
+```

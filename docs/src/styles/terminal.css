@@ -1,0 +1,60 @@
+.terminal {
+  position: relative;
+  border: 1px solid var(--sl-color-gray-5);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+
+  * {
+    padding: 0;
+    margin: 0;
+  }
+}
+.terminal .top {
+  font-size: 0.75rem;
+  background: none;
+  color: var(--sl-color-gray-3);
+  padding: 4px;
+  border-bottom: 1px solid var(--sl-color-gray-5);
+  border-radius: 5px 5px 0 0;
+}
+.terminal .btns {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  top: 10px;
+  left: 12px;
+}
+.terminal .circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border-style: solid;
+}
+.terminal-title {
+  color: var(--sl-color-gray-3);
+  text-align: center;
+}
+.red {
+  background: #ec6a5f;
+  border-color: #d04e42;
+}
+.green {
+  background: #64cc57;
+  border-color: #4ea73b;
+}
+.yellow {
+  background: #f5c04f;
+  border-color: #d6a13d;
+}
+.clear {
+  clear: both;
+}
+.terminal .body {
+  background: black;
+  color: #7afb4c;
+  padding: 2px;
+  flex-grow: 1;
+  overflow: auto;
+}

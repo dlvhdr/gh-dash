@@ -1,0 +1,217 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: issue.schema.yaml
+title: Issue Section Layout
+description: Defines the columns an issue section displays in its table.
+schematize:
+  details: |
+    You can define how an issue section displays items in its table by setting options for the
+    available columns. You can define a column's width, whether it grows to fill available space,
+    and whether the column should be visible at all.
+
+    Note that if the length of a column's text exceeds the defined column [sref:`width`], the view
+    truncates the column's text to two characters shorter than the column's width. For example, if
+    the width is `6`, `gh-dash` displays as ![styled:`gh-d`]().
+
+    Column headings have their color defined by the [sref:`theme.colors.text.primary`] setting.
+
+    [sref:`width`]:                     layout.options.width
+    [sref:`theme.colors.text.primary`]: theme.colors.text.primary
+  format: yaml
+  default:
+    details: |
+      By default, issue views display the following columns in the order they're listed:
+
+      1. [sref:`updatedAt`] with a width of 7 columns.
+      1. [sref:`state`] with a width of 3 columns.
+      1. [sref:`repo`] with a width of 15 columns.
+      1. [sref:`title`], set to grow to fill available space.
+      1. [sref:`creator`] with a width of 10 columns.
+      1. [sref:`comments`] with a width of 3 columns.
+      1. [sref:`reactions`] with a width of 3 columns.
+
+      ```alert
+      ---
+      variant: primary
+      ---
+      Even though the `state`, `title`, `comments`, and `reactions` settings
+      aren't explicitly defined in your configuration file, they're added to
+      the table unless you set their [sref:`hidden`] option to `false`.
+
+      [sref:`hidden`]:    layout.options.hidden
+      ```
+      
+      [sref:`updatedAt`]: layout.issue.updatedAt
+      [sref:`state`]:     layout.issue.state
+      [sref:`repo`]:      layout.issue.repo
+      [sref:`title`]:     layout.issue.title
+      [sref:`creator`]:   layout.issue.creator
+      [sref:`comments`]:  layout.issue.comments
+      [sref:`reactions`]: layout.issue.reactions
+type: object
+default:
+  updatedAt:
+    width: 7
+  repo:
+    width: 15
+  creator:
+    width: 10
+  assignees:
+    width: 20
+    hidden: true
+properties:
+  updatedAt:
+    title: Issue Updated At Column
+    description: Defines options for the updated at column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 1
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays how recently the issue was updated. The entry shows the time elapsed
+        since the last update, like ![styled:`1h`]() or ![styled:`3d`]().
+
+        The heading for this column is ![styled:``]().
+    default:
+      width: 7
+  state:
+    title: Issue State Column
+    description: Defines options for the state column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 2
+      skip_schema_render: true
+      details: |
+        This column displays the issue's state. When an issue is open, the column displays the icon
+        ![styled:``](. "open-issue") with the color set to `#42a0fa`. When an issue is closed, the
+        column displays the icon ![styled:``](. "faint-text") with the color set to
+        [sref:`theme.colors.text.faint`].
+
+        The heading for this column is ![styled:``]().
+
+        [sref:`theme.colors.text.faint`]: theme.colors.text.faint
+  repo:
+    title: Issue Repo Column
+    description: Defines options for the repo column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 3
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the name of the repository the issue is filed in. The entry shows the
+        name of the repository without the owner, like ![styled:`gh-dash`]() for the
+        `https://github.com/dlvhdr/gh-dash` repository.
+
+        The heading for this column is ![styled:``]().
+
+        [sref:`width`]: layout.options.width
+    default:
+      width: 15
+  title:
+    title: Issue Title Column
+    description: Defines options for the title column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 4
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the issue's number followed by its title. This column is always
+        displayed unless you set [sref:`hidden`] to `false`. By default, it grows to fill the
+        available space in the terminal after accounting for other column widths.
+
+        The heading for this column is ![styled:`Title`]().
+
+        The [sref:`theme.colors.text.primary`] setting defines the issue number's color.
+
+        [sref:`hidden`]:                    layout.options.hidden
+        [sref:`theme.colors.text.primary`]: theme.colors.text.primary
+  creator:
+    title: Issue Creator Column
+    description: Defines options for the creator column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 5
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the username for the person who created the issue.
+
+        The heading for this column is ![styled:`Creator`]().
+    default:
+      width: 10
+  creatorIcon:
+    title: Issue Creator Role Icon
+    description: Defines options for the role icon for each issue in an issue section.
+    type: object
+    properties:
+      hidden:
+        title: Hide Creator Icon
+        description: Specify whether the role icon for issue creators should be hidden from view.
+        schematize:
+          details: |
+            Set this value to `true` to hide the role icon for issue creators.
+        type: boolean
+    schematize:
+      weight: 6
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This setting affects display of the role icon for the person who created the issue.
+  assignees:
+    title: Issue Assignees Column
+    description: Defines options for the assignees column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 7
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the usernames for the people assigned to the issue.
+
+        The heading for this column is ![styled:`Assignees`]().
+    default:
+      width: 20
+      hidden: true
+  comments:
+    title: Issue Comments Column
+    description: Defines options for the comments column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 8
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the count of comments on the issue as an integer.
+
+        The heading for this column is ![styled:``]().
+  reactions:
+    title: Issue Reactions Column
+    description: Defines options for the reactions column in an issue section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 9
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column ddisplays the count of all reactions on the issue as an integer.
+
+        The heading for this column is ![styled:``]().

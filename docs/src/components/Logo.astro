@@ -1,0 +1,26 @@
+---
+const { className } = Astro.props;
+---
+
+<style>
+  [aria-label="DASH ASCII Logo"] {
+    transform: skew(-20deg);
+    width: fit-content;
+    background-image: var(--hdr-gradient);
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+    background-repeat: repeat;
+  }
+</style>
+
+<div
+  aria-label="DASH ASCII Logo"
+  class={`leading-[1.09] text-blue-300 not-dark:text-blue-500 ${className}`}
+>
+  ▜▔▚▐▔▌▚▔▐ ▌<br />
+  ▟▁▞▐▔▌▁▚▐▔▌
+</div>

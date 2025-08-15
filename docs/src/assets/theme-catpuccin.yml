@@ -1,0 +1,39 @@
+prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me owner:dlvhdr
+  - title: Needs My Review
+    filters: review-requested:@me owner:dlvhdr
+issuesSections:
+  - title: Ghostty
+    filters: is:open ghostty-org/ghostty
+  - title: Neovim
+    filters: is:open neovim/neovim
+
+defaults:
+  preview:
+    open: true
+    width: 50
+  prsLimit: 20
+  issuesLimit: 20
+  view: repo
+keybindings:
+  prs: []
+repoPaths: {}
+pager:
+  diff: diffnav
+theme:
+  colors:
+    text:
+      primary: "#89b4fa"
+      secondary: "#b4befe"
+      inverted: "#181825"
+      faint: "#7f849c"
+      warning: "#f9e2af"
+      success: "#a6e3a1"
+    background:
+      selected: "#313244"
+    border:
+      primary: "#9399b2"
+      secondary: "#585b70"
+      faint: "#313244"
+smartFilteringAtLaunch: false

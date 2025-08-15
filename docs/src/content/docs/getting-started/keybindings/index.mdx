@@ -1,0 +1,50 @@
+---
+title: Overview
+weight: 3
+summary: >-
+  Get started using key presses to interact with the dashboard.
+---
+
+import { LinkCard, CardGrid } from "@astrojs/starlight/components";
+
+When you use `dash` to display a dashboard for your GitHub work items, you can interact with the
+dashboard using key combinations.
+
+This section lists the default keybindings for the dashboard's commands and what they do. Most of
+the commands are universal across the dashboard's views. There are also commands that are specific
+to the [PRs][01] and [Issues][02] views.
+
+You can also define your own custom keybindings with the `keybindings` setting in your dashboard's
+[configuration file][03].
+
+<CardGrid>
+  <LinkCard
+    title="Global"
+    href="./global"
+    description="Lists the default keybindings for controlling the dashboard globally."
+  />
+  <LinkCard
+    title="Selected Item"
+    href="./selected-item"
+    description="Lists the default keybindings for interacting with active items in the dashboard in any view."
+  />
+  <LinkCard
+    title="Selected PR"
+    href="./selected-pr"
+    description="Lists the default keybindings for interacting with an actively selected item in the PRs view for the dashboard."
+  />
+  <LinkCard
+    title="Selected Issue"
+    href="./selected-issue"
+    description="Lists the default keybindings for interacting with an actively selected item in the Issues view for the dashboard."
+  />
+  <LinkCard
+    title="Preview Pane"
+    href="./preview"
+    description="Lists the default keybindings for interacting with the preview pane in the Dashboard."
+  />
+</CardGrid>
+
+[01]: ./selected-pr
+[02]: ./selected-issue
+[03]: /configuration/

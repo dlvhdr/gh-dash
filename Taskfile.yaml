@@ -59,10 +59,15 @@ tasks:
 
   docs-prepare:
     cmds:
-      - cd docs && hugo mod get
+      - cd docs && pnpm i
 
-  docs:
+  docs-dev:
+    cmds:
+      - cd docs && pnpm dev
+    desc: Start docs server
+
+  docs-build:
     cmds:
       - task: docs-prepare
-      - cd docs && hugo server
-    desc: Start docs server
+      - cd docs && pnpm build
+    desc: Run docs production build

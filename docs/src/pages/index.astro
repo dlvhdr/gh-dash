@@ -1,0 +1,175 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import "../styles/index.css";
+import { Code } from "@astrojs/starlight/components";
+import Terminal from "../components/Terminal.astro";
+import Footer from "../components/Footer.astro";
+import Box from "../components/Box.astro";
+import Showcase from "../components/Showcase.astro";
+import FadeImages from "../components/FadeImages.astro";
+import prSectionsImage from "../assets/pr-sections.png";
+import { Image } from "astro:assets";
+import helpSrc from "../assets/help.png"
+import tokyonightSrc from "../assets/tokyo.png"
+import catppuccinSrc from "../assets/catpuccin.png"
+import gruvSrc from "../assets/gruv.png"
+import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
+---
+
+<StarlightPage frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}>
+  <div class="flex flex-row items-center gap-1">
+    <button
+      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+      >v4.16.2</button
+    >
+    <button
+      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+      >Build: passing</button
+    >
+  </div>
+  <div id="hero" class="mb-24">
+    <div
+      class="flex w-full flex-col lg:flex-row items-center justify-center gap-4 lg:gap-12 pt-2 lg:pt-8 pb-4"
+    >
+      <h2 class="text-center !text-xl lg:!text-2xl font-normal text-pretty lg:w-[30ch]">
+        A rich terminal UI for GitHub that doesn't break your flow
+      </h2>
+      <div id="main-buttons" class="flex flex-col items-center gap-4">
+        <form action="/getting-started/">
+          <button
+            class="bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
+            >Get started →</button
+          >
+        </form>
+        <form class="m-0" action="https://github.com/dlvhdr/gh-dash" target="_blank">
+          <button
+            class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
+            >View on GitHub </button
+          >
+        </form>
+      </div>
+    </div>
+    <div class="relative -mx-[2.5vw]">
+      <Terminal>
+        <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
+          <source src="/overview.webm" type="video/webm" />
+          <source src="/overview.mp4" type="video/mp4" />
+        </video>
+      </Terminal>
+      <div
+        class="hidden lg:block absolute lg:-right-32 lg:-bottom-2 h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)]"
+      >
+        <div>⌄</div>
+        <div class="relative -top-8 mt-0">⌄</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-[var(--sl-color-gray-5)] mt-0 mb-16">
+    ──◇──
+  </div>
+
+  <div class="flex flex-col gap-8 w-[95vw] lg:w-80rem items-center lg:gap-16">
+    <Showcase>
+      <Box header="︎ Define Custom GitHub Filters">
+        <Code
+          class="overflow-auto"
+          lang="yaml"
+          code={`prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me
+  - title: Needs My Review
+    filters: is:open review-requested:@me
+issuesSections:
+  - title: Ghostty
+    filters: is:open ghostty-org/ghostty
+  - title: Neovim
+    filters: is:open neovim/neovim
+`}
+        />
+      </Box>
+      <Terminal className="w-[95vw] lg:w-[800px]">
+        <video autoplay loop muted playsinline >
+          <source src="/sections.webm" type="video/webm" />
+          <source src="/sections.mp4" type="video/mp4" />
+        </video>
+      </Terminal>
+    </Showcase>
+    <Showcase reversed={true}>
+      <Box header=" Native Vim Keybindings" src={prSectionsImage}>
+        <ul>
+          <li><kbd>h/j/k/l</kbd> to move between rows/sections</li>
+          <li><kbd>ctrl+d/u</kbd> to move in sidebar</li>
+          <li><kbd>o</kbd> to open in browser</li>
+          <li><kbd>y/Y</kbd> to copy pr number/url</li>
+          <li>and more...</li>
+        </ul>
+      </Box>
+      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[800px] border border-[var(--sl-color-gray-5)] box-border m-0">
+        <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
+          <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
+          <Image class="my-0 scale-160" src={helpSrc} aria-hidden={true} alt="duplicate image for marquee effect"/>
+        </div>
+      </div>
+    </Showcase>
+    <Showcase>
+      <Box header=" Set Custom Commands" src={prSectionsImage}>
+        <Code
+          lang="yaml"
+          code={`- key: g
+  name: laygit
+  command: lazygit
+- key: C
+  name: code review
+  command: >
+    tmux new-window -c {{.RepoPath}}
+    'nvim -c
+    ":silent Octo pr edit {{.PrNumber}}"'
+        `}
+        />
+      </Box>
+      <Terminal>
+        <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
+          <source src="/custom-commands.webm" type="video/webm" />
+          <source src="/custom-commands.mp4" type="video/mp4" />
+        </video>
+      </Terminal>
+    </Showcase>
+    <Showcase reversed={true}>
+      <Box header=" Use Custom Themes" src={prSectionsImage}>
+        <Code
+          lang="yaml"
+          code={`ui:
+  sectionsShowCount: true
+table:
+  showSeparators: true
+  compact: false
+colors:
+  text:
+    primary: "#ffffff"
+    secondary: "#c6c6c6"
+# rest of theme...`}
+        />
+      </Box>
+      <Terminal className="lg:w-[800px]">
+        <FadeImages>
+          <Image src={catppuccinSrc} alt="Dash running with the catppuccin theme"/>
+          <Image src={gruvSrc} alt="Dash running with the gruvbox theme"/>
+          <Image src={tokyonightSrc} alt="Dash running with the tokyo-night theme"/>
+        </FadeImages>
+      </Terminal>
+    </Showcase>
+  </div>
+  <div class="flex flex-col items-center mt-28">
+    <h2 class="mb-2 !text-4xl">
+      Why use DASH?
+    </h2>
+    <p class="mb-6 lg:w-[60ch] text-center">
+      Check out this 10/10 video by <a href="https://charm.sh">charm.sh ✨</a> explaining how DASH can help you manage your GitHub experience
+    </p>
+    <a href="https://www.youtube.com/watch?v=5omFxcNjBQk&t" target="_blank">
+      <Image src={charmVidPreviewSrc} alt="YouTube video - Manage open source like a boss (in the terminal)" class="w-[95vw] lg:w-[800px]" />
+    </a>
+  </div>
+  <Footer className="mt-20" />
+</StarlightPage>
