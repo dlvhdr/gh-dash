@@ -193,7 +193,7 @@ properties:
       - schematize:
           title: Pin an Issue
           details: |
-            This example binds ![kbd:`P`]() in the Issues view of the dashboard to the
+            This example binds <kbd>P</kbd> in the Issues view of the dashboard to the
             `gh issue pin` command to pin the selected issue in the repository.
         issues:
           - key: P
@@ -201,7 +201,7 @@ properties:
       - schematize:
           title: Review PRs
           details: |
-            This example binds ![kbd:`c`]() and ![kbd:`v`]() in the PRs view of the dashboard to
+            This example binds <kbd>c`]() and ![kbd:`v</kbd> in the PRs view of the dashboard to
             checkout the selected PR and open the repository in Neovim and VS Code respectively.
 
             The Neovim keybinding opens the editor in another `tmux` window.

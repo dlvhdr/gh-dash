@@ -4,26 +4,26 @@ summary: >-
   This is an example site for digital books, built on Platen!
 ---
 
-![icon:stars](lucide)&nbsp;A GitHub (`gh`) CLI extension to display a dashboard with **pull requests**
+ A GitHub (`gh`) CLI extension to display a dashboard with **pull requests**
 and **issues** by filters you care about.
 
 [![Latest Release][shield-release]][releases]
 
 ![Preview gif showing gh-dash in the terminal][preview]
 
-## ![icon:stars](lucide)&nbsp;Features
+##  Features
 
-- ![icon:settings](lucide)&nbsp;fully configurable - define sections using github filters
-- ![icon:search](lucide)&nbsp;search for both prs and issues
-- ![icon:edit](lucide)&nbsp;customize columns with `hidden`, `width` and `grow` props
-- ![icon:zap](lucide)&nbsp;act on prs and issues with checkout, comment, open, merge, diff, etc...
-- ![icon:keyboard](lucide)&nbsp;set custom actions with new keybindings
-- ![icon:palette](lucide)&nbsp;use custom themes
-- ![icon:view](lucide)&nbsp;view details about a pr/issue with a detailed sidebar
-- ![icon:layout-dashboard](lucide)&nbsp;write multiple configuration files to easily switch between
+-  fully configurable - define sections using github filters
+-  search for both prs and issues
+-  customize columns with `hidden`, `width` and `grow` props
+-  act on prs and issues with checkout, comment, open, merge, diff, etc...
+-  set custom actions with new keybindings
+-  use custom themes
+-  view details about a pr/issue with a detailed sidebar
+-  write multiple configuration files to easily switch between
   completely different dashboards
-- ![icon:recycle](lucide)&nbsp;set an interval for auto refreshing the dashboard
-- ![icon:folder-git](lucide)&nbsp;[smart filtering](/getting-started/smartfiltering) - auto-filter prs/issues to the remote tracked by the current directory
+-  set an interval for auto refreshing the dashboard
+-  [smart filtering](/getting-started/smartfiltering) - auto-filter prs/issues to the remote tracked by the current directory
 
 <!-- Link reference definitions -->
 [shield-release]: https://img.shields.io/github/release/dlvhdr/gh-dash.svg

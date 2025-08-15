@@ -1,7 +1,7 @@
 ---
 title: Theme
 linkTitle: >-
-  ![icon:palette](lucide)&nbsp;Theme
+   Theme
 summary: >-
   Documentation for configuring your GitHub dashboard's theme.
 weight: 7
@@ -11,4 +11,4 @@ outputs:
   - Schematize
 ---
 
-{{% schematize %}}
+

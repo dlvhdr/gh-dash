@@ -1,7 +1,7 @@
 ---
 title: Installation
 linkTitle: >-
-  ![icon:package-open](lucide)&nbsp;Installation
+  Installation
 summary: >-
   Get started installing `gh-dash`.
 weight: 1

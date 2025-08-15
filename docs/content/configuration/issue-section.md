@@ -1,7 +1,7 @@
 ---
 title: Issue Section
 linkTitle: >-
-  ![icon:circle-dot](lucide)&nbsp;Issue Section
+   Issue Section
 summary: >-
   Documentation for configuring the issues sections of your GitHub dashboard.
 weight: 3
@@ -11,4 +11,4 @@ outputs:
   - Schematize
 ---
 
-{{% schematize %}}
+

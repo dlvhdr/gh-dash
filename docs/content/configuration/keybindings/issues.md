@@ -1,7 +1,7 @@
 ---
 title: Issues
 linkTitle: >-
-  ![icon:circle-dot](lucide)&nbsp;Issues
+   Issues
 weight: 2
 summary: >-
   Documentation for defining commands in the Issues view of your GitHub dashboard.
@@ -11,4 +11,4 @@ outputs:
   - Schematize
 ---
 
-{{% schematize %}}
+

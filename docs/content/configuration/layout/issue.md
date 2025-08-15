@@ -1,7 +1,7 @@
 ---
 title: Issue Layout
 linkTitle: >-
-  ![icon:circle-dot](lucide)&nbsp;Issue Layout
+   Issue Layout
 weight: 2
 summary: >-
   Documentation for defining the layout of an issue section in your GitHub dashboard.
@@ -11,4 +11,4 @@ outputs:
   - Schematize
 ---
 
-{{% schematize %}}
+

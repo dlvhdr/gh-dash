@@ -1,7 +1,7 @@
 ---
 title: Usage
 linkTitle: >-
-  ![icon:terminal](lucide)&nbsp;Usage
+   Usage
 summary: >-
   Get started using `gh-dash`.
 weight: 2
@@ -15,7 +15,7 @@ To use `gh-dash`, follow these steps after you've [installed it][01]:
    gh dash
    ```
 
-2. Press ![kbd:`?`]() for help.
+2. Press <kbd>?</kbd> for help.
 3. Run `gh dash --help` for more info:
 
    ```text
@@ -132,10 +132,10 @@ goarch: amd64
 When you use `gh-dash`, it displays the dashboard as a terminal UI (TUI). In the TUI, you can use
 several commands by pressing key combinations to navigate and interact with the dashboard.
 
-You can press the ![kbd:`?`]() key to toggle the help menu in the UI. The help menu lists the available
+You can press the <kbd>?</kbd> key to toggle the help menu in the UI. The help menu lists the available
 keybindings for the current context.
 
-You can press the ![kbd:`q`]() key to quit the dashboard and return to your normal terminal view.
+You can press the <kbd>q</kbd> key to quit the dashboard and return to your normal terminal view.
 
 For more information about the keybindings for the dashboard, see [Keybindings][04].
 

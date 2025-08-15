@@ -1,7 +1,7 @@
 ---
 title: Searching
 linkTitle: >-
-  ![icon:search](lucide)&nbsp;Searching
+   Searching
 summary: >-
   How to search and filter issues and prs
 weight: 3

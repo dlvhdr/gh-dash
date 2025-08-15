@@ -1,7 +1,7 @@
 ---
 title: Keybindings
 linkTitle: >-
-  ![icon:keyboard](lucide)&nbsp;Keybindings
+   Keybindings
 summary: Documentation for defining commands for your GitHub dashboard.
 weight: 6
 platen:

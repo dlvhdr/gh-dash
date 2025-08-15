@@ -1,32 +1,32 @@
 ---
 title: Navigation
 linkTitle: >-
-  ![icon:navigation](lucide)&nbsp;Navigation
+   Navigation
 weight: 2
 summary: >-
   Lists the default keybindings for navigating the dashboard.
 ---
 
-## `↑/k` - Move Up { #move-up }
+## `↑/k` - Move Up 
 
-Press ![kbd:`Up`]() or ![kbd:`k`]() to move to the previous work item in the current section.
+Press <kbd>Up`]() or ![kbd:`k</kbd> to move to the previous work item in the current section.
 
-## `↓/j` - Move Down { #move-down }
+## `↓/j` - Move Down 
 
-Press ![kbd:`Down`]() or ![kbd:`j`]() to move to the next work item in the current section.
+Press <kbd>Down`]() or ![kbd:`j</kbd> to move to the next work item in the current section.
 
-## `󰁍/h` - Previous Section { #previous-section }
+## `󰁍/h` - Previous Section 
 
-Press ![kbd:`Left`]() or ![kbd:`h`]() to move to the previous section in the current view.
+Press <kbd>Left`]() or ![kbd:`h</kbd> to move to the previous section in the current view.
 
-## `󰁔/l` - Next Section { #next-section }
+## `󰁔/l` - Next Section 
 
-Press ![kbd:`Right`]() or ![kbd:`l`]() to move to the next section in the current view.
+Press <kbd>Right`]() or ![kbd:`l</kbd> to move to the next section in the current view.
 
-## `g/home` - First Item { #first-item }
+## `g/home` - First Item 
 
-Press ![kbd:`g`]() or ![kbd:`Home`]() to move to the first work item in the current section.
+Press <kbd>g`]() or ![kbd:`Home</kbd> to move to the first work item in the current section.
 
-## `G/end` - Last Item { #last-item }
+## `G/end` - Last Item 
 
-Press ![kbd:`G`]() or ![kbd:`End`]() to move to the last work item in the current section.
+Press <kbd>G`]() or ![kbd:`End</kbd> to move to the last work item in the current section.

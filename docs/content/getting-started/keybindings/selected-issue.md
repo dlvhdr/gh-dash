@@ -1,16 +1,16 @@
 ---
 title: Selected Issue
 linkTitle: >-
-  ![icon:circle-dot](lucide)&nbsp;Selected Issue
+   Selected Issue
 weight: 4
 summary: >-
   Lists the default keybindings for interacting with an actively selected item
   in the Issues view for the dashboard.
 ---
 
-## `a` - Assign Issue { #assign-issue }
+## `a` - Assign Issue 
 
-Press ![kbd:`a`]() to assign one or more users to the issue. When you do, the dashboard opens the
+Press <kbd>a</kbd> to assign one or more users to the issue. When you do, the dashboard opens the
 preview pane and displays a new input.
 
 When the unassign input is active, you can specify one or more GitHub usernames to assign to the
@@ -19,14 +19,14 @@ already assigned, the input is empty by default.
 
 To assign more than one user to the issue, specify additional users after one or more whitespace
 characters, like a space, tab, or newline. We recommend separating the additional users with a
-newline by pressing ![kbd:`Enter`]() after each username.
+newline by pressing <kbd>Enter</kbd> after each username.
 
-To submit the list of users to assign to the issue, press ![kbd:`Ctrl`+`d`](). To cancel the
-change instead, press ![kbd:`Ctrl`+`c`]() or ![kbd:`Esc`]().
+To submit the list of users to assign to the issue, press <kbd>Ctrl`+`d</kbd>. To cancel the
+change instead, press <kbd>Ctrl`+`c`]() or ![kbd:`Esc</kbd>.
 
-## `A` - Unassign Issue { #unassign-issue }
+## `A` - Unassign Issue 
 
-Press ![kbd:`A`]() to unassign one or more users from the issue. When you do, the dashboard opens
+Press <kbd>A</kbd> to unassign one or more users from the issue. When you do, the dashboard opens
 the preview pane and displays a new input.
 
 When the unassign input is active, you can specify one or more GitHub usernames to unassign from
@@ -35,22 +35,22 @@ the issue. By default, the input includes all assigned users separated by newlin
 Make sure the list of users to unassign only includes the users you want to unassign before you
 submit the list.
 
-To submit the list of users to unassign from the issue, press ![kbd:`Ctrl`+`d`](). To cancel the
-change instead, press ![kbd:`Ctrl`+`c`]() or ![kbd:`Esc`]().
+To submit the list of users to unassign from the issue, press <kbd>Ctrl`+`d</kbd>. To cancel the
+change instead, press <kbd>Ctrl`+`c`]() or ![kbd:`Esc</kbd>.
 
-## `c` - Comment on Issue { #comment-on-issue }
+## `c` - Comment on Issue 
 
-Press ![kbd:`c`]() to add a comment to the issue. When you do, the dashboard opens a preview pane and
+Press <kbd>c</kbd> to add a comment to the issue. When you do, the dashboard opens a preview pane and
 displays a new input.
 
 You can write your comment as GitHub-flavored Markdown in the input.
 
-To submit the comment on the issue, press ![kbd:`Ctrl`+`d`](). To cancel the comment instead, press
-![kbd:`Ctrl`+`c`]() or ![kbd:`Esc`]().
+To submit the comment on the issue, press <kbd>Ctrl`+`d</kbd>. To cancel the comment instead, press
+<kbd>Ctrl`+`c`]() or ![kbd:`Esc</kbd>.
 
-## `x` - Close Issue { #close-issue }
+## `x` - Close Issue 
 
-Press ![kbd:`x`]() to close the issue. When you do, the dashboard uses the `gh issue close` command
+Press <kbd>x</kbd> to close the issue. When you do, the dashboard uses the `gh issue close` command
 to close the issue.
 
 ```alert
@@ -69,9 +69,9 @@ add a comment that explains why you're closing the issue, use the
 [comment](#c---comment-on-issue) command before or after you use this one.
 ```
 
-## `X` - Reopen Issue { #reopen-issue }
+## `X` - Reopen Issue 
 
-Press ![kbd:`X`]() to reopen a closed issue. When you do, the dashboard uses the `gh issue reopen`
+Press <kbd>X</kbd> to reopen a closed issue. When you do, the dashboard uses the `gh issue reopen`
 command to reopen the issue.
 
 ```alert

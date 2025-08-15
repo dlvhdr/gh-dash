@@ -1,7 +1,7 @@
 ---
 title: Keybindings
 linkTitle: >-
-  ![icon:keyboard](lucide)&nbsp;Keybindings
+   Keybindings
 weight: 3
 summary: >-
   Get started using key presses to interact with the dashboard.

@@ -1,20 +1,20 @@
 ---
 title: Selected Item
 linkTitle: >-
-  ![icon:box-select](lucide)&nbsp;Selected Item
+   Selected Item
 weight: 3
 summary: >-
   Lists the default keybindings for interacting with active items in the dashboard in any view.
 ---
 
-## `o` - Open in GitHub { #open-in-github }
+## `o` - Open in GitHub 
 
-Press ![kbd:`o`]() to open the selected item on GitHub in your default web browser.
+Press <kbd>o</kbd> to open the selected item on GitHub in your default web browser.
 
-## `y` - Copy Number { #copy-number }
+## `y` - Copy Number 
 
-Press ![kbd:`y`]() to copy the selected item's issue or PR number without the `#` prefix.
+Press <kbd>y</kbd> to copy the selected item's issue or PR number without the `#` prefix.
 
-## `Y` - Copy URL { #copy-url }
+## `Y` - Copy URL 
 
-Press ![kbd:`Y`]() to copy the URL to the selected item on GitHub.
+Press <kbd>Y</kbd> to copy the URL to the selected item on GitHub.
