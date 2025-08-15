@@ -1,0 +1,87 @@
+html:not([data-has-sidebar]) {
+  --sl-content-width: 100%;
+}
+
+@media (width >= 64rem) {
+  :root {
+    --sl-content-width: 80rem;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+main {
+  overflow-x: hidden;
+}
+
+#main-buttons button {
+  padding: 8px;
+  width: 20ch;
+}
+
+.content-panel {
+  padding-bottom: 0px;
+  padding-top: 16px;
+  border-top: none;
+}
+
+.sl-container .sl-markdown-content {
+  @apply flex w-full flex-col items-center;
+}
+
+#main-buttons button[variant-="background0"] {
+  background: var(--background0);
+  font-weight: 400;
+  color: var(--sl-color-white);
+}
+
+pre,
+code {
+  border: none;
+  padding-block: 0;
+  background-color: var(--sl-color-black);
+}
+
+li code {
+  color: var(--color-green-200);
+  background-color: var(--color-gray-800);
+}
+
+ul {
+  margin-top: 0px;
+}
+
+li {
+  margin-top: 8px;
+
+  kbd {
+    margin-bottom: 0;
+  }
+}
+
+div.copy button[title="Copy to clipboard"] {
+  display: none;
+}
+
+footer {
+  display: none;
+}
+
+@layer overrides {
+  html {
+    --sl-content-width: 100%;
+  }
+
+  th {
+    font-weight: normal;
+  }
+
+  @media (width <= 64rem) {
+    header {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+}

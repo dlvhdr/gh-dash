@@ -1,0 +1,384 @@
+---
+title: Theme
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+# Theme Options
+
+This setting defines the dashboard's theme. It only effects the presentation of the dashboard,
+not the data. Currently, the theme only defines colors and icons. To control how table columns
+and preview pane display for the views, use the [`defaults`], [`prSections`], and
+[`issueSections`] settings.
+
+To define any color for your dashboard, you **must** define **every** color. All properties are
+required properties. Every color for the dashboard's theme must be a valid [hex color], like
+`#a3c` or `#aa33cc`.
+
+To find hex colors to use in your dashboard, visit [`color-hex.com`]. You can browse colors,
+inspect a given color, get alternate shades and tints for a color, derive a color palette, and
+more.
+
+[`defaults`]: /configuration/defaults
+[`prSections`]: /configuration/pr-section
+[`issueSections`]: /configuration/issue-section
+[hex color]: https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color
+[`color-hex.com`]: https://www.color-hex.com/
+
+## Defaults
+
+```yaml
+ui:
+  sectionsShowCount: true
+table:
+  showSeparators: true
+  compact: false
+colors:
+  text:
+    primary: "#ffffff"
+    secondary: "#c6c6c6"
+    inverted: "#303030"
+    faint: "#8a8a8a"
+    warning: "#800000"
+    success: "#008000"
+  background:
+    selected: "#808080"
+  border:
+    primary: "#808080"
+    secondary: "#c0c0c0"
+    faint: "#000000"
+  inline:
+    icons:
+      newcontributor: "077"
+      contributor: "075"
+      collaborator: "178"
+      member: "178"
+      owner: "178"
+      unknownrole: "178"
+icons:
+  inline:
+    newcontributor: "󰎔"
+    contributor: ""
+    collaborator: ""
+    member: ""
+    owner: "󱇐"
+    unknownrole: "󱐡"
+```
+
+## UI Settings (`ui`)
+
+### Sections Show Count
+
+| Property            | Type    | default |
+| :------------------ | :------ | :------ |
+| `sectionsShowCount` | boolean | true    |
+
+Whether the number of results show up next to each section's title in the tab bar.
+
+### Table Settings (`table`)
+
+#### Show Separators
+
+| Property         | Type    | default |
+| :--------------- | :------ | :------ |
+| `showSeparators` | boolean | true    |
+
+Whether to show the separators between lines in the prs/issues tables.
+
+#### Compact
+
+| Property  | Type    | default |
+| :-------- | :------ | :------ |
+| `compact` | boolean | false   |
+
+Whether to show table rows in a compact way or not
+
+## Theme Colors (`colors`)
+
+This setting defines a map of colors for the dashboard's text, background, and border
+colors.
+
+The following elements can't be styled through your configuration and have their colors
+set as:
+
+| Element                                 |          Color           |
+| :-------------------------------------- | :----------------------: |
+| Search input terms when inactive        | Terminal default (faint) |
+| Search input terms when active          |     Terminal default     |
+| Inactive section names in the tab list  |     Terminal default     |
+| The status icon for open issues and PRs |        `#42A0FA`         |
+| The status icon for closed issues       |        `#C38080`         |
+| The status icon for closed PRs          |        `#C38080`         |
+| The status icon for merged PRs          |        `#A371F7`         |
+
+Required:
+
+- text
+- background
+- border
+
+### Text Colors (`text`)
+
+Defines the foreground (text) colors for the dashboard.
+
+#### Primary Text Color
+
+| Property  | Type | default                                   |
+| :-------- | :--- | :---------------------------------------- |
+| `primary` | hex  | `#ffffff` for dark or `#000000` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The active section's name in the tab list
+- The active view's name
+- The column headers for the section's table of work items
+- Open work item entries in the table except when a column's icon has an alternate
+  color.
+- The keybindings in the help view
+- The title of the work item in the preview pane heading
+- The comments and checks headers in the preview pane.
+- The username for comment authors in the preview pane.
+
+#### Secondary Text Color
+
+| Property    | Type | default                                   |
+| :---------- | :--- | :---------------------------------------- |
+| `secondary` | hex  | `#c6c6c6` for dark or `#808080` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The search icon, `is:pr`, and `is:issue` components of the search bar
+- The inactive view's name
+- The work item number in the table entries
+- The work item number and repository name in the preview pane heading
+- The base and target branch in the preview pane for PRs
+
+#### Inverted Text Color
+
+| Property   | Type | default                                   |
+| :--------- | :--- | :---------------------------------------- |
+| `inverted` | hex  | `#303030` for dark or `#ffffff` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The work item status in the preview pane
+- Work item labels
+
+#### Faint Text Color
+
+| Property | Type | default                                   |
+| :------- | :--- | :---------------------------------------- |
+| `faint`  | hex  | `#8a8a8a` for dark or `#c0c0c0` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- Closed work item entries in the table
+- The current time, active/total work item count, and fetched work item count
+  beneath the table
+- The help text for the keybinding commands
+- The percentage scrolled at the bottom of the preview pane
+- The date/time information on comments in the preview pane
+- The review status icon when a PR is waiting for a review
+
+#### Warning Text Color
+
+| Property  | Type | default                                   |
+| :-------- | :--- | :---------------------------------------- |
+| `warning` | hex  | `#800000` for dark or `#800000` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The icon for the `reviewStatus` column's icon when a PR has requested changes
+- The icon for the `ci` column's icon when a PR has failing checks
+- The icon for failing checks for PRs in the preview pane
+- Error messages for commands, like when the dashboard fails to fetch work items.
+
+#### Success Text Color
+
+| Property  | Type | default                                  |
+| :-------- | :--- | :--------------------------------------- |
+| `success` | hex  | `#008000` for dark or `008000` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The icon for the `reviewStatus` column's icon when a PR is approved
+- The icon for the `ci` column's icon when a PR's checks are all passing
+- The icon for passing checks for PRs in the preview pane
+- Success messages for commands, like when the dashboard fetches work items.
+
+### Background Colors (`background`)
+
+Defines the background colors for the dashboard. By default, the background color for
+all elements in the dashboard UI is the terminal's background color.
+
+Required:
+
+- selected
+
+#### Selected Background Color
+
+| Property   | Type | default                                   |
+| :--------- | :--- | :---------------------------------------- |
+| `selected` | hex  | `#808080` for dark or `#c0c0c0` for light |
+
+This setting determines the background color for the following elements in the
+dashboard UI:
+
+- The active section's name in the tab list
+- The active view's name
+- The active entry in the section's work item table.
+
+### Border Colors (`border`)
+
+| Property | Type | default                                   |
+| :------- | :--- | :---------------------------------------- |
+| `border` | hex  | `#808080` for dark or `#c0c0c0` for light |
+
+Defines the border colors for the dashboard.
+
+Required:
+
+- primary
+- secondary
+- faint
+
+#### Primary Border Color
+
+| Property  | Type | default                                   |
+| :-------- | :--- | :---------------------------------------- |
+| `primary` | hex  | `#808080` for dark or `#ff00ff` for light |
+
+This setting determines the color for the following elements in the dashboard UI:
+
+- The border beneath the section tabs
+- The border around the search input
+- The border between the table and the preview pane
+- The border above the command help info
+
+#### Secondary Border Color
+
+| Property    | Type | default                                   |
+| :---------- | :--- | :---------------------------------------- |
+| `secondary` | hex  | `#c0c0c0` for dark or `#808080` for light |
+
+This setting determines the color for the following elements in the dashboard UI:
+
+- The borders that separate the sections in the tab list
+
+#### Faint Border Color
+
+| Property | Type | default                                   |
+| :------- | :--- | :---------------------------------------- |
+| `faint`  | hex  | `#000000` for dark or `#e4e4e4` for light |
+
+This setting determines the color for the following elements in the dashboard UI:
+
+- The border between rows in the table
+
+### Icon Colors (`inline.icons`)
+
+Defines author-role icon colors for the dashboard.
+
+#### New Contributor Role Icon Color
+
+`newcontributor`
+| Property | Type | default |
+| :-------- | :--- | :---------------------------------------- |
+| `newcontributor` | hex | |
+
+Specifies the icon color for the new-contributor-role icon.
+
+#### Contributor Role Icon Color
+
+| Property      | Type | default |
+| :------------ | :--- | :------ |
+| `contributor` | hex  |         |
+
+Specifies the icon color for the contributor-role icon.
+
+#### Collaborator Role Icon Color
+
+collaborator:
+| Property | Type | default |
+| :-------- | :--- | :---------------------------------------- |
+| `collaborator` | hex | |
+
+Specifies the icon color for the collaborator-role icon.
+
+#### Member Role Icon Color
+
+| Property | Type | default |
+| :------- | :--- | :------ |
+| `member` | hex  |         |
+
+Specifies the icon color for the member-role icon.
+
+#### Owner Role Icon Color
+
+Specifies the icon color for the owner-role icon.
+
+#### Unknown Role Icon Color
+
+| Property  | Type | default |
+| :-------- | :--- | :------ |
+| `unknown` | hex  |         |
+
+Specifies the icon color for the unknown-role icon.
+
+## Icons (`icons.inline`)
+
+This setting defines a map of author-role icons for the dashboard.
+
+### New Contributor Role Icon
+
+Specifies the character to use as the new-contributor-role icon.
+
+| Property         | Type   | default |
+| :--------------- | :----- | :------ |
+| `newcontributor` | string | 󰎔       |
+
+### Contributor Role Icon Color
+
+Specifies the character to use as the contributor-role icon.
+
+| Property      | Type   | default |
+| :------------ | :----- | :------ |
+| `contributor` | string |        |
+
+### Collaborator Role Icon Color
+
+Specifies the character to use as the collaborator-role icon.
+
+| Property       | Type   | default |
+| :------------- | :----- | :------ |
+| `collaborator` | string |        |
+
+### Member Role Icon Color
+
+Specifies the character to use as the member-role icon.
+
+| Property | Type   | default |
+| :------- | :----- | :------ |
+| `member` | string |        |
+
+### Owner Role Icon Color
+
+Specifies the character to use as the owner-role icon.
+
+| Property | Type   | default |
+| :------- | :----- | :------ |
+| `owner`  | string | 󱇐       |
+
+### Unknown Role Icon Color
+
+Specifies the character to use as the unknown-role icon.
+
+| Property      | Type   | default |
+| :------------ | :----- | :------ |
+| `unknownrole` | string | 󱐡       |

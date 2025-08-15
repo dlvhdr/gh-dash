@@ -1,0 +1,116 @@
+---
+title: Selected PR
+weight: 5
+summary: >-
+  Lists the default keybindings for interacting with an actively selected item
+  in the PRs view for the dashboard.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## `a` - Assign PR
+
+Press <kbd>a</kbd> to assign one or more users to the PR. When you do, the dashboard opens the
+preview pane and displays a new input.
+
+When the unassign input is active, you can specify one or more GitHub usernames to assign to the
+PR. By default, the input includes your username if you're not already assigned. If you're already
+assigned, the input is empty by default.
+
+To assign more than one user to the PR, specify additional users after one or more whitespace
+characters, like a space, tab, or newline. We recommend separating the additional users with a
+newline by pressing <kbd>Enter</kbd> after each username.
+
+To submit the list of users to assign to the PR, press <kbd>Ctrl</kbd>+<kbd>d</kbd>. To cancel the
+change instead, press <kbd>Ctrl</kbd>+<kbd>c</kbd> or <kbd>Esc</kbd>.
+
+## `A` - Unassign PR
+
+Press <kbd>A</kbd> to unassign one or more users from the PR. When you do, the dashboard opens the
+preview pane and displays a new input.
+
+When the unassign input is active, you can specify one or more GitHub usernames to unassign from
+the PR. By default, the input includes all assigned users separated by newlines.
+
+Make sure the list of users to unassign only includes the users you want to unassign before you
+submit the list.
+
+To submit the list of users to unassign from the PR, press <kbd>Ctrl</kbd>+<kbd>d</kbd>. To cancel the
+change instead, press <kbd>Ctrl</kbd>+<kbd>c</kbd> or <kbd>Esc</kbd>.
+
+## `c` - Comment on PR
+
+Press <kbd>c</kbd> to add a comment to the PR. When you do, the dashboard opens a preview pane and
+displays a new input.
+
+You can write your comment as GitHub-flavored Markdown in the input.
+
+To submit the comment on the PR, press <kbd>Ctrl</kbd>+<kbd>d</kbd>. To cancel the comment instead, press <kbd>Ctrl</kbd>+<kbd>c</kbd> or <kbd>Esc</kbd>.
+
+## `C` - Checkout PR
+
+Press <kbd>C</kbd> to checkout the PR locally. The dashboard checks for the `repoPaths` key in your
+configuration to find the repository on your local filesystem.
+
+The dashboard errors if you haven't defined `repoPaths` in your configuration or if the dashboard
+can't determine where the repository for this PR is located using that setting.
+
+If the dashboard is able to locate the repository for the PR on your local filesystem, it uses the
+`gh pr checkout` command to checkout the PR locally.
+
+## `d` - View PR Diff
+
+Press <kbd>d</kbd> to display the PRs diff in the terminal. The dashboard uses the `pager.diff`
+setting in your configuration, which defaults to `less`, to display the diff.
+
+The dashboard view is replaced by PRs change diff displayed with the configured pager. When you
+exit the pager, the view returns to the dashboard.
+
+## `e` - Expand Description
+
+Press <kbd>e</kbd> to display the full description for the PR.
+By default `dash` only displays the first 5 lines.
+
+## `m` - Merge PR
+
+Press <kbd>m</kbd> to merge the PR. When you do, the dashboard uses the `gh pr merge` command to
+merge the PR.
+
+## `u` - Update PR
+
+Press <kbd>u</kbd> to update the PR branch. When you do, the dashboard uses the
+`gh pr update-branch` command to update the PR. This command updates the branch with a merge commit.
+
+## `v` - Approve PR
+
+Press <kbd>v</kbd> to approve the PR. When you do, the dashboard uses the
+`gh pr review --approve` command to approve the PR. This will prompt you to add an optional comment to the approval. The comment prompt will be prefilled with
+`defaults.prApproveComment` if it is set in your configuration, which defaults to "LGTM".
+
+## `w` - Watch PR checks
+
+Press <kbd>w</kbd> to watch the PR check and get a desktop notification if they succeed or fail. When you do, the dashboard uses the
+`gh pr checks --watch` command to watch the PR checks.
+
+## `W` - Mark PR as Ready for Review
+
+Press <kbd>W</kbd> to mark the PR as ready for review. When you do, the dashboard uses the
+`gh pr ready` command to convert the PR from draft status to ready for review.
+
+## `x` - Close PR
+
+Press <kbd>x</kbd> to close the PR. When you do, the dashboard uses the `gh pr close` command to
+close the PR.
+
+## `X` - Reopen PR
+
+Press <kbd>X</kbd> to reopen a closed PR. When you do, the dashboard uses the `gh pr reopen`
+command to reopen the PR.
+
+<Aside type="caution" title="Watch out!">
+**Prior to v3.10.0:** When you use some commands, the dashboard acts immediately and without
+prompting for confirmation.
+
+**Since v3.10.0:** When you use these command,s the dashboard displays a confirmation prompt.
+
+</Aside>

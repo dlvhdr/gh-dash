@@ -1,0 +1,223 @@
+---
+title: PR Layout
+---
+
+import { Aside, Code } from "@astrojs/starlight/components";
+import NerdFontIcon from "../../../../components/NerdFontIcon.astro";
+
+# PR Section Layout
+
+You can define how a PR section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+[`width`]: /configuration/layout/options/#column-width
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+
+By default, PR views display the following columns in the order they're listed:
+
+1. [`updatedAt`] with a width of 7 columns.
+1. [`state`] with a width of 3 columns.
+1. [`repo`] with a width of 15 columns.
+1. [`title`], set to grow to fill available space.
+1. [`author`] with a width of 10 columns.
+1. [`reviewStatus`] with a width of 3 columns.
+1. [`ci`] with a width of 3 columns.
+1. [`lines`] with a width of 16 columns.
+
+<Aside type="caution" title="Watch out!">
+  Even though the `state`, `title`, `comments`, and `reactions` settings
+  aren't explicitly defined in your configuration file, they're added to
+  the table unless you set their [`hidden`] option to `false`.
+
+[`hidden`]: /configuration/layout/options/#hide-column
+
+</Aside>
+      
+[`updatedAt`]:    #pr-updated-at-column
+[`state`]:        #pr-updated-at-column
+[`repo`]:         #pr-repo-column
+[`title`]:        #pr-title-column
+[`author`]:       #pr-author-column
+[`reviewStatus`]: #pr-review-status-column
+[`ci`]:           #pr-continuous-integration-column
+[`lines`]:        #pr-lines-column
+
+```yaml
+updatedAt:
+  width: 7
+repo:
+  width: 15
+title:
+  grow: true
+author:
+  width: 15
+assignees:
+  width: 20
+  hidden: true
+base:
+  width: 15
+  hidden: true
+lines:
+  width: 16
+```
+
+## PR Updated At Column
+
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `updatedAt` | yaml | <Code code={`width: 7`} lang="yaml" frame="none"/> |
+
+This column displays how recently the PR was updated. The entry shows the time elapsed
+since the last update, like `1h` or `3d`.
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+## PR State Column
+
+| Property | Type | Default                                            |
+| :------- | :--- | :------------------------------------------------- |
+| `state`  | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the PR's state as one of the following icons:
+
+- When a PR is open and ready for review, the icon is <NerdFontIcon icon=""/> and
+  the color is `#42a0fa`.
+- When a PR is in draft mode, the icon is <NerdFontIcon icon=""/> and the color is
+  set to the value of [`theme.colors.text.faint`].
+- When a PR is merged, the icon is <NerdFontIcon icon=""/> and the color is `#a371f7`.
+- When a PR is closed without merging, the icon is <NerdFontIcon icon=""/> and the
+  color is `#c38080`.
+
+This heading for this column is <NerdFontIcon icon=""/>
+
+[`theme.colors.text.faint`]: /configuration/theme#faint-text-color
+
+## PR Repo Column
+
+| Property | Type | Default                                             |
+| :------- | :--- | :-------------------------------------------------- |
+| `repo`   | yaml | <Code code={`width: 15`} lang="yaml" frame="none"/> |
+
+This column displays the name of the repository the PR is filed in. The entry shows the
+name of the repository without the owner, like `gh-dash` for the
+`https://github.com/dlvhdr/gh-dash` repository.
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+[`width`]: /configuration/layout/options/#column-width
+
+## PR Title Column
+
+| Property | Type | Default                                                         |
+| :------- | :--- | :-------------------------------------------------------------- |
+| `title`  | yaml | <Code code={`width: 15\ngrow: true`} lang="yaml" frame="none"/> |
+
+This column displays the PR's number followed by its title. This column is always displayed
+unless you set [`hidden`] to `false`. By default, it grows to fill the available space
+in the terminal after accounting for other column widths.
+
+The heading for this column is `Title`.
+
+The [`theme.colors.text.primary`] setting defines the issue number's color.
+
+[`hidden`]: /configuration/layout/options/#hide-column
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+
+## PR Author Column
+
+| Property | Type | Default                                             |
+| :------- | :--- | :-------------------------------------------------- |
+| `author` | yaml | <Code code={`width: 15`} lang="yaml" frame="none"/> |
+
+This column displays the username for the person who created the PR.
+
+The heading for this column is `Author`.
+
+## PR Author Role Icon
+
+| Property     | Type | Default                                            |
+| :----------- | :--- | :------------------------------------------------- |
+| `authorIcon` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This setting affects display of the role icon for the person who created the PR.
+
+## PR Assignees Column
+
+| Property    | Type | Default                                                           |
+| :---------- | :--- | :---------------------------------------------------------------- |
+| `assignees` | yaml | <Code code={`width: 20\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the usernames for the people assigned to the PR.
+
+The heading for this column is `Assignees`.
+
+## PR Base Column
+
+| Property | Type | Default                                                           |
+| :------- | :--- | :---------------------------------------------------------------- |
+| `base`   | yaml | <Code code={`width: 15\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the base branch the PR is targeting, like `main`.
+
+The heading for this column is `Base`.
+
+# PR Review Status Column
+
+| Property       | Type | Default                                            |
+| :------------- | :--- | :------------------------------------------------- |
+| `reviewStatus` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the review status of a PR as an icon:
+
+- When the PR hasn't been reviewed, the icon is <NerdFontIcon icon="" /> and the
+  color is the value of [`theme.colors.text.faint`].
+- When the PR is approved, the icon is <NerdFontIcon icon="󰄬" /> and the color is
+  the value of [`theme.colors.text.primary`].
+- When the PR has requested changes, the icon is <NerdFontIcon icon="󰌑" /> and the
+  color is the value of [`theme.colors.text.warning`].
+
+The heading for this column is <NerdFontIcon icon="󰯢"/>.
+
+[`theme.colors.text.faint`]: /configuration/theme#faint-text-color
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+[`theme.colors.text.warning`]: /configuration/theme#warning-text-color
+
+## PR Continuous Integration Column
+
+| Property | Type | Default                                            |
+| :------- | :--- | :------------------------------------------------- |
+| `ci`     | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
+
+This column displays the CI status of a PR as an icon:
+
+- When the checks haven't finished running, the icon is <NerdFontIcon icon=""/> and
+  the color is the value of [`theme.colors.text.faint`].
+- When the checks have all passed, the icon is <NerdFontIcon icon=""/> and the
+  color is the value of [`theme.colors.text.success`].
+- When at least one check failed, the icon is <NerdFontIcon icon="󰅙"/> and the
+  color is the value of [`theme.colors.text.warning`].
+
+The heading for this column is <NerdFontIcon icon=""/>
+
+[`theme.colors.text.faint`]: /configuration/theme#faint-text-color
+[`theme.colors.text.primary`]: /configuration/theme#primary-text-color
+[`theme.colors.text.warning`]: /configuration/theme#warning-text-color
+
+# PR Lines Column
+
+| Property | Type | Default                                             |
+| :------- | :--- | :-------------------------------------------------- |
+| `lines`  | yaml | <Code code={`width: 16`} lang="yaml" frame="none"/> |
+
+This column displays the line changes for a PR. The column represents the changes as
+`<added> / -<removed>`. For example, `66 / -46` indicates 66 lines added and 46
+lines removed.
+
+The heading for this column is <NerdFontIcon icon=""/>.

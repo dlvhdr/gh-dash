@@ -1,0 +1,86 @@
+---
+title: PR Sections
+---
+
+# PR Section Options (`prSections`)
+
+Defines a section in the dashboard's PRs view.
+
+- Every section must define a [`title`] and [`filters`].
+- When you define [`limit`] for a section, that value overrides the
+  [`defaults.prsLimit`] setting.
+- When you define [`layout`] for a section, that value overrides the
+  [`defaults.layout.pr`] setting.
+
+[`title`]: #pr-title-title
+[`filters`]: #pr-filters-filters
+[`limit`]: #pr-fetch-limit-limit
+[`layout`]: #pr-section-layout-layout
+[`defaults.prsLimit`]: /configuration/defaults/#pr-fetch-limit
+[`defaults.layout.pr`]: /configuration/defaults/#layout-options-layout
+
+## PR Title (`title`)
+
+This setting defines the section's name. The dashboard displays this value in the tabs for
+the PRs view.
+
+## PR Filters (`filters`)
+
+This setting defines the [GitHub search filters][01] for the PRs in the section's table.
+
+Don't specify `is:pr` for this setting. The dashboard always adds that filter for PR
+sections.
+
+You can define any combination of search filters. To make it easier to read and maintain
+your filters, we recommend using the `>-` syntax after the `filter` key and writing one
+filter per line.
+
+For example:
+
+```yaml
+- # Involved
+  filter: >-
+    is:open
+    involves:@me
+    -author:@me
+    updated>={{ nowModify "-2w" }}
+```
+
+For more information about writing filters for searching GitHub, see [Searching].
+
+[Searching]: /configuration/searching
+
+## PR Section Layout (`layout`)
+
+You can define how a PR section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+[`width`]: /configuration/layout/options#layout-options-width
+[`theme.colors.text.primary`]: /configuration/theme
+
+## PR Fetch Limit (`limit`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   20    |
+
+This setting defines how many PRs the dashboard should fetch for the section when:
+
+- The dashboard first loads.
+- The [fetch interval] elapses.
+- You navigate to the next issue in a table without another fetched issue to display.
+- You use the [refresh current section] or [refresh all sections] commands.
+
+This setting overrides the [`defaults.prsLimit`] setting.
+
+[fetch interval]: /configuration/defaults/#refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+[`defaults.prsLimit`]: /configuration/defaults/#pr-fetch-limit

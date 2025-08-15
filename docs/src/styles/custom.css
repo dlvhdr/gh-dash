@@ -1,0 +1,274 @@
+@layer base, starlight, theme, components, utilities, overrides;
+
+@import "@astrojs/starlight-tailwind";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --animate-bannermove: bannermove 10s linear infinite;
+
+  @keyframes bannermove {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(-100%, 0);
+    }
+  }
+}
+
+button {
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1 {
+  font-size: var(--text-4xl);
+}
+h2 {
+  font-size: var(--text-2xl);
+}
+h3 {
+  font-size: var(--text-xl);
+}
+
+:root {
+  --sl-font: var(--font-family);
+  --sl-nav-height: 4rem;
+  --sl-nav-pad-x: 16px;
+  --sl-color-bg-nav: var(--sl-color-bg);
+  --sl-color-bg-sidebar: var(--sl-color-bg);
+  --sl-color-hairline-shade: none;
+}
+
+.sidebar-pane {
+  --sl-color-hairline-shade: var(--sl-color-gray-6);
+}
+
+@media (width <= 64rem) {
+  :root {
+    --sl-nav-pad-x: 8px;
+  }
+}
+
+/* Dark mode colors. */
+:root {
+  --hdr-gradient: linear-gradient(
+    to right in oklab,
+    oklch(90% 0.5 200),
+    oklch(80% 0.3 230)
+  );
+
+  --sl-color-bg: #03030a;
+  --sl-color-accent-low: var(--color-blue-200);
+  --sl-color-accent: var(--color-blue-300);
+  --sl-color-accent-high: #0ff;
+  --sl-color-white: #c0caf5;
+  --sl-color-gray-1: #eceef2;
+  --sl-color-gray-2: #c0c2c7;
+  --sl-color-gray-3: #6d728e;
+  --sl-color-gray-4: #4e5673;
+  --sl-color-gray-5: #292e42;
+  --sl-color-gray-6: #1a1b26;
+
+  --sl-color-black: #0f0f1c;
+}
+/* Light mode colors. */
+:root[data-theme="light"] {
+  --hdr-gradient: linear-gradient(
+    to right in oklab,
+    oklch(16% 0.5 200) 0%,
+    oklch(65% 0.3 230) 100%
+  );
+
+  --sl-color-bg: #f5f6f8;
+  --sl-color-accent-low: var(--color-blue-600);
+  --sl-color-accent: var(--color-blue-500);
+  --sl-color-accent-high: var(--color-blue-400);
+  --sl-color-white: #17181c;
+  --sl-color-gray-1: #24272f;
+  --sl-color-gray-2: #353841;
+  --sl-color-gray-3: #545861;
+  --sl-color-gray-4: #888b96;
+  --sl-color-gray-5: #c0c2c7;
+  --sl-color-gray-6: #eceef2;
+  --sl-color-gray-7: #f5f6f8;
+  --sl-color-black: #ffffff;
+}
+
+@layer base {
+  :root {
+    --font-family: "CommitMono NFM";
+    --font-size: 16px;
+  }
+
+  ul,
+  ol {
+    padding-left: 32px;
+  }
+
+  .copy button {
+    background-image: none;
+  }
+}
+
+.sidebar-content {
+  font-size: 1em;
+  line-height: 1;
+
+  --foreground0: var(--sl-color-white);
+  --foreground1: var(--sl-color-gray-1);
+  --foreground2: var(--sl-color-gray-2);
+
+  ul > li {
+    font-family: "CommitMono NFM";
+    --sl-sidebar-item-padding-inline: 0;
+    color: var(--foreground2);
+    text-decoration: none;
+    outline: none;
+    display: flex;
+    border-left: none;
+    padding-block: 2px;
+
+    & a {
+      font-size: 1em;
+      text-decoration: none;
+      padding-block: 0;
+      padding-inline: 4px;
+      line-height: 1.3;
+
+      &[aria-current="page"] {
+        color: var(--sl-color-gray-6);
+      }
+    }
+
+    &::before {
+      content: " ├ ";
+      padding-right: 5px;
+      color: var(--sl-color-gray-5);
+    }
+
+    &:last-of-type::before {
+      content: " └ ";
+    }
+
+    &.active {
+      color: var(--foreground0);
+      text-decoration: underline;
+      font-weight: var(--font-weight-bold);
+      background-color: var(--background1);
+    }
+
+    &:focus {
+      background-color: var(--background1);
+    }
+  }
+
+  li:has(details) {
+    &::before {
+      content: "";
+    }
+
+    summary {
+      padding-top: 0;
+      font-weight: var(--font-weight-bold);
+      --sl-text-base: 1.2em;
+      .group-label::before {
+        color: var(--foreground2);
+        font-size: 0.5ch;
+        padding-right: 1ch;
+        content: "\eab6\ ";
+      }
+
+      & svg {
+        display: none;
+      }
+
+      &:hover,
+      &:focus {
+        background-color: var(--background1);
+      }
+    }
+
+    details[open] {
+      summary {
+        .group-label::before {
+          font-size: 1em;
+          padding-right: 0ch;
+          content: "\eab4\ ";
+          color: var(--foreground2);
+        }
+      }
+    }
+  }
+
+  details[open] a.hidden,
+  details.hidden,
+  .hidden {
+    display: none;
+  }
+}
+
+code {
+  font-family: "CommitMono NFM";
+  color: var(--sl-color-accent);
+}
+
+pre {
+  font-family: "CommitMono NFM";
+  background: var(--background0);
+
+  code span {
+    padding-inline: 0;
+  }
+}
+
+kbd:not(.sl-hidden) {
+  margin-top: 0;
+  display: inline-block;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.25rem;
+  background-color: var(--sl-color-gray-6);
+  box-shadow:
+    0 1px 1px var(--sl-color-gray-5),
+    0 2px 0 0 var(--sl-color-gray-6) inset;
+  font-size: var(--sl-text-xs);
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.hero {
+  padding-bottom: 16px;
+}
+
+@layer overrides {
+  th {
+    font-weight: normal;
+  }
+
+  starlight-theme-select select {
+    width: 20px;
+  }
+
+  header {
+    @apply mx-2 my-2 w-[calc(100vw-16px)] max-w-[100vw] rounded border border-[var(--sl-color-gray-5)] p-0 lg:mx-6 lg:w-[calc(100vw-48px)];
+    box-shadow: 0px -8px 0px var(--sl-color-bg);
+  }
+
+  starlight-menu-button button {
+    display: none;
+  }
+
+  mobile-starlight-toc nav {
+    border-top: none;
+    margin-top: 8px;
+
+    & summary {
+      padding-inline: 8px;
+    }
+  }
+}

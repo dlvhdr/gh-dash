@@ -1,0 +1,81 @@
+---
+title: Custom Keybindings
+---
+
+`dash` allows you to override existing keybindings as well as add custom ones.
+
+Every valid entry for the configuration options must have a `key` and `command`.
+When a user presses the key or key combination the dashboard shells out and executes the command.
+
+To help you identify your custom commands, an additional `name` property can be supplied to describe it in the help menu.
+
+There are 3 types of keybindings: `universal`, `prs` and `issues`.
+
+## Universal Keybindings
+
+Define keybindings that will work in any view.
+
+For example:
+
+```yaml
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+```
+
+## PR Keybindings
+
+Define any number of keybindings for the PRs view or override existing ones.
+
+For example:
+
+```yaml
+keybindings:
+  prs:
+    - key: O
+      builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+    - key: g
+      name: lazygit add
+      command: >
+        cd {{.RepoPath}} && git add -A && lazygit
+    - key: v
+      name: approve
+      command: >
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+```
+
+The available arguments are:
+
+| Argument      | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `RepoName`    | The full name of the repo (e.g. `dlvhdr/gh-dash`)                               |
+| `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
+| `PrNumber`    | The PR number                                                                   |
+| `HeadRefName` | The PR's remote branch name                                                     |
+
+## Issue Keybindings
+
+Define any number of keybindings for the issues view or override existing ones.
+
+For example:
+
+```yaml
+keybindings:
+  issues:
+    key: "P"
+    command: >
+      gh issue pin {{ .IssueNumber }} --repo {{ .RepoName }}
+```
+
+The available arguments are:
+
+| Argument      | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `RepoName`    | The full name of the repo (e.g. `dlvhdr/gh-dash`)                               |
+| `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
+| `IssueNumber` | The issue number                                                                |

@@ -1,0 +1,63 @@
+---
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import Logo from "./Logo.astro";
+
+const isHomepage = Astro.locals.starlightRoute.id === "";
+---
+
+<style>
+  @keyframes dash-in {
+    from {
+      opacity: 0;
+      filter: blur(1rem);
+      translate: -50vw 0;
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+      translate: 0 0;
+    }
+  }
+ 
+  #title-logo {
+    animation: dash-in 400ms ease-out;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    h1 {
+      line-height: 1.3;
+      background-image: var(--hdr-gradient);
+      background-size: 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -moz-background-clip: text;
+      -moz-text-fill-color: transparent;
+      background-repeat: repeat;
+    }
+    transform: skew(-20deg);
+
+    & > [aria-label="DASH ASCII Logo"] {
+      transform: skew(0);
+    }
+  }
+</style>
+
+{
+  isHomepage ? (
+    <div
+      id="title-logo"
+      class="relative flex gap-[2ch] lg:gap-[3ch] pt-8 lg:pt-16 text-white flex-col lg:flex-row lg:items-baseline-last"
+    >
+      <Logo className="inline text-3xl lg:text-4xl" />
+      <h1 class="w-full lg:w-auto !text-2xl lg:!text-4xl text-center translate-x-8 -indent-4 lg:indent-0 lg:text-left lg:translate-x-0">
+        Through <br />Your GitHub
+      </h1>
+    </div>
+  ) : (
+    <Default>
+      <slot />
+    </Default>
+  )
+}

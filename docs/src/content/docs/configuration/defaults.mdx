@@ -1,0 +1,203 @@
+---
+title: Defaults
+---
+
+## Default Options (`defaults`)
+
+These settings define the default behavior for the dashboard. You can override many of these
+settings on a per-section basis.
+
+```yaml
+defaults:
+  issuesLimit: 20
+  prApproveComment: LGTM
+  preview:
+    open: true
+    width: 50
+  prsLimit: 20
+  refetchIntervalMinutes: 30
+  view: prs
+```
+
+By default, the dashboard is configured to:
+
+- Display the preview pane with a width of 50 columns for all work items.
+- Only fetch 20 PRs and issues at a time for each section.
+- Display the PRs view when the dashboard loads.
+- Refetch PRs and issues for each section every 30 minutes.
+- Display dates using relative values.
+
+For more details on the default layouts, see the documentation for [PR] and [issue] layout definitions.
+
+[PR]: /configuration/layout/pr/
+[issue]: /configuration/layout/issue/
+
+### Layout Options (`layout`)
+
+This setting defines the layout for the work item tables in the dashboard. You can override
+these settings in any section you define in the [`prSections`] or [`issueSections`] settings.
+
+They determine which columns are displayed and how.
+
+[`prSections`]: /configuration/pr-section
+[`issueSections`]: /configuration/issue-section
+
+#### PR Section Layout
+
+You can define how a PR section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+For more information, see [PR Section Layout](/configuration/layout/pr).
+
+[`width`]: /configuration/layout/options
+[`theme.colors.text.primary`]: /configuration/theme
+
+#### Issue Section Layout (`issues`)
+
+You can define how an issue section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+For more information, see [Issue Section Layout](/configuration/layout/issue).
+
+[`width`]: layout.options.width
+[`theme.colors.text.primary`]: theme.colors.text.primary
+
+### PR Fetch Limit
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   20    |
+
+This setting defines how many PRs the dashboard should fetch for each section when:
+
+- The dashboard first loads.
+- The [fetch interval] elapses.
+- You navigate to the next PR in a table without another fetched PR to display.
+- You use the [refresh current section] or [refresh all sections] commands.
+
+[fetch interval]: #refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+
+### Issue Fetch Limit (`issuesLimit`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   20    |
+
+This setting defines how many issues the dashboard should fetch for each section when:
+
+- The dashboard first loads.
+- The [fetch interval] elapses.
+- You navigate to the next issue in a table without another fetched issue to display.
+- You use the [refresh current section] or [refresh all sections] commands.
+
+[fetch interval]: #refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+
+## Preview Pane (`preview`)
+
+These settings define how the preview pane displays in the dashboard. You can specify
+whether the preview pane is open by default and how many columns wide it should be when
+
+### Open on Load (`open`)
+
+| Type    | Default |
+| :------ | :-----: |
+| Boolean |  true   |
+
+Specifies whether the preview pane should be open by default for the selected work item
+when the dashboard loads. You can always use the [toggle preview pane] command to
+toggle the preview pane's visibility.
+
+By default, the dashboard displays the preview pane.
+
+[toggle preview pane]: /getting-started/keybindings/preview/#p---toggle-preview-pane
+
+### Preview Pane Width (`width`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   50    |
+
+Specifies how many columns wide the preview pane should be when displayed.
+
+By default, the preview pane is 50 columns wide.
+
+## Refetch Interval in Minutes (`refetchIntervalMinutes`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    0    |   30    |
+
+This setting defines how often the dashboard should fetch issues and PRs from GitHub. The
+dashboard fetches work items for every section in the active view when the dashboard loads
+and the first time you switch to the inactive view.
+
+After the dashboard fetches the work items for the first time, it waits until this setting's
+defined interval elapses before fetching the work items again.
+
+By default, the dashboard refetches work items every 30 minutes.
+
+To disable the refetching interval set it to 0.
+
+You can always use the [refresh current section] or [refresh all sections] command to
+refetch work items in the current view. If you change the search query for a view, the
+dashboard fetches results for the updated query immediately.
+
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+
+## Date format (`dateFormat`)
+
+| Type   |  Default   |
+| :----- | :--------: |
+| String | "relative" |
+
+This setting defines how dates are formatted. The format either be "relative" or a [go time format].
+
+By default, the format is "relative" which fits just inside the default column width of
+updated at in the issues and pull request layouts.
+
+You may need to adjust the layout column width depending on your format.
+
+[go time format]: https://pkg.go.dev/time#pkg-constants
+
+## Default View (`view`)
+
+| Type   |     Options     | Default |
+| :----- | :-------------: | :-----: |
+| String | "prs", "issues" |   20    |
+
+This setting defines whether the dashboard should display the PRs or Issues view when it
+first loads.
+
+By default, the dashboard displays the PRs view.
+
+## PR Approval (`prApproveComment`)
+
+| Type   | Default |
+| :----- | :-----: |
+| String | "LGTM"  |
+
+This setting defines the default comment used as a starting point when [approving a PR].
+This can be set as an empty string to not prefill a comment.
+
+By default, the comment is "LGTM".
+
+[approving a PR]: /getting-started/keybindings/selected-pr/#v---approve-pr

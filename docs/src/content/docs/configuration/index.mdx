@@ -1,0 +1,84 @@
+---
+title: How to Configure
+weight: 2
+summary: >-
+  Learn how to configure your terminal dashboard for GitHub with gh-dash.
+platen:
+  menu:
+    flatten_section: true
+cascade:
+  platen:
+    title_as_heading: false
+---
+
+import { Aside, LinkCard, CardGrid } from "@astrojs/starlight/components";
+
+`dash` has extensive configuration options.
+
+- The config is usually created under `$HOME/.config/gh-dash/config.yml`, but this
+  changes between operating systems and `dash` has many ways to override that.
+- `dash` will also look for a `.gh-dash.yml` file if in a git repository to allow
+  for project specific configuration.
+- Use the [`--config`][01] flag or `$GH_DASH_CONFIG` to specify an alternate configuration.
+
+<details>
+  <summary>How does `dash` determine which configuration file to use?</summary>
+  Using the following logic:
+1. If `$GH_DASH_CONFIG` is a non-empty string, `dash` will use this file for
+   its configuration.
+2. If `$GH_DASH_CONFIG` isn't set and you're in a git repository, it will look for `.gh-dash.yml` or `.gh-dash.yaml`
+   in the repository root.
+3. If neither of the above applies, then:
+  - If `$XDG_CONFIG_HOME` is a non-empty string, the default path is `$XDG_CONFIG_HOME/gh-dash/config.yml`.
+  - If `$XDG_CONFIG_HOME` isn't set, then:
+    - On Linux and macOS systems, the default path is `$HOME/.config/gh-dash/config.yml`.
+    - On Windows systems, the default path is `%USERPROFILE%\.config\gh-dash\config.yml`.
+
+</details>
+
+## Options
+
+The configuration for `dash` is schematized. The pages in this section list the configuration
+options, their defaults, and how you can use them.
+
+### Schema
+
+Documentation and schema for the configuration of your GitHub dashboard.
+
+<CardGrid>
+  <LinkCard
+    title="PR Section"
+    href="./pr-section"
+    description="Documentation for configuring the PR sections of your GitHub dashboard."
+  />
+  <LinkCard
+    title="Issue Section"
+    href="./issue-section"
+    description="Documentation for configuring the issue's sections of your GitHub dashboard."
+  />
+  <LinkCard
+    title="Keybindings"
+    href="./keybindings"
+    description="Documentation for defining commands for your GitHub dashboard."
+  />
+  <LinkCard
+    title="Searching"
+    href="./searching"
+    description="How to search and filter issues and prs"
+  />
+  <LinkCard
+    title="Defaults"
+    href="./defaults"
+    description="Documentation for the default setting options for your GitHub dashboard."
+  />
+  <LinkCard
+    title="Layout"
+    href="./layout"
+    description="Documentation for configuring your GitHub dashboard’s layout."
+  />
+  <LinkCard
+    title="Theme"
+    href="./theme"
+    description="Documentation for configuring your GitHub dashboard’s theme."
+  />
+</CardGrid>

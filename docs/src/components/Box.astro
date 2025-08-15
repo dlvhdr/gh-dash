@@ -1,0 +1,16 @@
+---
+const { header } = Astro.props;
+---
+
+<div class="relative flex flex-row gap-6 max-w-full w-full lg:w-auto">
+  <div
+    class="lg:w-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] p-2 py-6 lg:p-6 w-full"
+  >
+    <div
+      class="max-w-full absolute -top-4 left-2 right-2 lg:right-auto rounded-2xl bg-[var(--sl-color-gray-6)] is-dark:bg-[var(--sl-color-gray-5)] px-2 lg:px-3 z-10"
+    >
+      <h3 class="!text-base text-[var(--sl-color-accent)]">{header}</h3>
+    </div>
+    <slot />
+  </div>
+</div>

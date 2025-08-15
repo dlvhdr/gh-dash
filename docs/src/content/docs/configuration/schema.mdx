@@ -1,0 +1,50 @@
+---
+title: Schema
+---
+
+The `dash` configuration schema is published here:
+
+[`https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json`][02]
+
+## Using the Schema in Neovim
+
+1. Install the [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) LSP
+2. Follow the guide in [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#yamlls) to set it up
+3. Add the following line to the top of your configuration file:
+
+   ```
+   # yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
+   ```
+
+With the directive comment at the top of your configuration or the VS Code settings file, you can
+then open your configurations and edit them with support for validation. When you hover on an
+option in your configuration file, you'll get a brief synopsis of the option and a link to its
+documentation on this site.
+
+## Using the Schema in VS Code
+
+You can get edit-time feedback, validation, and IntelliSense for your configurations in VS Code by
+following these steps:
+
+1. Install [Red Hat's YAML extension for VS Code][03].
+1. Open your `dash` configuration file.
+1. Add the following line to the top of your configuration file:
+
+   ```
+   # yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
+   ```
+
+1. Instead of adding a comment to your configuration file, you could create the
+   `.vscode/settings.json` file in your `dash` configuration folder and add this setting:
+
+   ```json
+   {
+     "yaml.schemas": {
+       "https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json": "*.yml"
+     }
+   }
+   ```
+
+[01]: /getting-started/usage#--config
+[02]: /schema.json
+[03]: https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml
