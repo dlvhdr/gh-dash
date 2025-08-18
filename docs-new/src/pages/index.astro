@@ -1,0 +1,38 @@
+---
+// Import the `<StarlightPage>` component first to set up cascade layers.
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { LinkButton } from '@astrojs/starlight/components';
+
+// Import any other components you want to use in your custom page.
+import AnchorHeading from '@astrojs/starlight/components/AnchorHeading.astro';
+---
+
+<StarlightPage frontmatter={{ title: 'DASH', template: "splash" }}>
+  <div class="flex flex-row gap-8">
+    <div class="pt-10">
+<p class="text-xl">A rich terminal UI to view and perform actions on <strong>GitHub</strong> PRs and issues that <i>doesn't break your flow.</i></p>
+      <div class="flex flex-row gap-2">
+        <LinkButton href="/getting-started/" icon="right-arrow" iconPlacement="start">Docs</LinkButton>
+        <LinkButton href="https://github.com/dlvhdr/gh-dash" icon="external" iconPlacement="start" variant="minimal">View on GitHub</LinkButton>
+      </div>
+    </div>
+    <img width="700" alt="A demo of the gh-dash TUI, showing the user viewing his PRs and issues, taking actions on them like diffing, commenting, approving etc." src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
+  </div>
+
+  <AnchorHeading level="2" id="features">Features</AnchorHeading> 
+
+  <ul>
+    <li>Fully configurable - define sections using GitHub filters</li>
+    <li>Search for both PRs and issues</li>
+    <li>Customize columns with `hidden`, `width` and `grow` props</li>
+    <li>Act on PRs and issues with checkout, comment, open, merge, diff, etc.</li>
+    <li>Set custom actions with new keybindings</li>
+    <li>Use custom themes</li>
+    <li>View details about a PR/issue with a detailed sidebar</li>
+    <li>Write multiple configuration files to easily switch between</li>
+    <li>Completely different dashboards</li>
+    <li>Set an interval for auto refreshing the dashboard</li>
+    <li>[Smart Filtering](/getting-started/smartfiltering) - auto-filter prs/issues to the remote tracked by the current directory</li>
+  </ul>
+</StarlightPage>
+

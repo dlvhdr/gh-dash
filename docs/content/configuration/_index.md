@@ -21,9 +21,9 @@ configuration file doesn't already exist, `gh-dash` creates it. The location of 
 configuration file depends on your system:
 
 1. If `$GH_DASH_CONFIG` is a non-empty string, `gh-dash` will use this file for
-    its configuration.
-2. If `$GH_DASH_CONFIG` isn't set and you're in a git repository, it will look for `.gh-dash.yml` or `.gh-dash.yaml` 
-    in the repository root.
+   its configuration.
+2. If `$GH_DASH_CONFIG` isn't set and you're in a git repository, it will look for `.gh-dash.yml` or `.gh-dash.yaml`
+   in the repository root.
 3. If neither of the above applies, then:
    - If `$XDG_CONFIG_HOME` is a non-empty string, the default path is `$XDG_CONFIG_HOME/gh-dash/config.yml`.
    - If `$XDG_CONFIG_HOME` isn't set, then:
@@ -38,13 +38,14 @@ The configuration for `gh-dash` is schematized. The pages in this section list t
 options, their defaults, and how you can use them.
 
 ```section
+
 ```
 
 ## Using the Schema in VS Code
 
 The `gh-dash` configuration schema is published here:
 
-[`https://dlvdhr.github.io/gh-dash/configuration/gh-dash/schema.json`][02]
+[`https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json`][02]
 
 You can get edit-time feedback, validation, and IntelliSense for your configurations in VS Code by
 following these steps:
@@ -62,9 +63,9 @@ following these steps:
 
    ```json
    {
-       "yaml.schemas": {
-           "https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json": "*.yml"
-       }
+     "yaml.schemas": {
+       "https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json": "*.yml"
+     }
    }
    ```
 

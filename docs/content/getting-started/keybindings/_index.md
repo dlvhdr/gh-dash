@@ -1,7 +1,7 @@
 ---
 title: Keybindings
 linkTitle: >-
-   Keybindings
+  Keybindings
 weight: 3
 summary: >-
   Get started using key presses to interact with the dashboard.
@@ -21,9 +21,11 @@ You can also define your own custom keybindings with the `keybindings` setting i
 [configuration file][03].
 
 ```section
+
 ```
 
 <!-- Link reference definitions -->
+
 [01]: ./selected-pr.md
 [02]: ./selected-issue.md
 [03]: ../../configuration/_index.md

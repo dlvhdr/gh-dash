@@ -33,8 +33,6 @@ Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh
 
 1. Install the `gh` CLI - see the [installation](https://github.com/cli/cli#installation)
 
-   _Installation requires a minimum version (2.0.0) of the GitHub CLI that supports extensions._
-
 2. Install this extension:
 
    ```sh

@@ -66,29 +66,15 @@ setting in your configuration, which defaults to `less`, to display the diff.
 The dashboard view is replaced by PRs change diff displayed with the configured pager. When you
 exit the pager, the view returns to the dashboard.
 
-<Aside type="caution" title="Watch out!">
-There's a known bug when using this command on Windows. When you do, the diff
-is sent to the terminal but the dashboard doesn't wait for you it to exit.
+## `e` - Expand Description
 
-Instead, the diff is displayed in your terminal output without paging when you
-exit the dashboard.
-
-</Aside>
+Press <kbd>e</kbd> to display the full description for the PR.
+By default `Dash` only displays the first 5 lines.
 
 ## `m` - Merge PR
 
 Press <kbd>m</kbd> to merge the PR. When you do, the dashboard uses the `gh pr merge` command to
 merge the PR.
-
-<Aside type="danger">
-**Prior to v3.10.0:** When you use this command, the dashboard merges the PR immediately and without
-prompting for confirmation. Only use this command when you're sure you want to
-merge the PR.
-
-**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
-merges the PR only after you approve the action.
-
-</Aside>
 
 ## `u` - Update PR
 
@@ -116,31 +102,15 @@ Press <kbd>W</kbd> to mark the PR as ready for review. When you do, the dashboar
 Press <kbd>x</kbd> to close the PR. When you do, the dashboard uses the `gh pr close` command to
 close the PR.
 
-<Aside type="caution" title="Watch out!">
-**Prior to v3.10.0:** When you use this command, the dashboard closes the PR immediately and without
-prompting for confirmation. Only use this command when you're sure you want to
-close the PR.
-
-**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
-closes the PR only after you approve the action.
-
-This command doesn't support closing the PR with a comment. If you want to add
-a comment that explains why you're closing the PR, use the
-[comment](#c---comment-on-pr) command before or after you use this one.
-
-</Aside>
-
 ## `X` - Reopen PR
 
 Press <kbd>X</kbd> to reopen a closed PR. When you do, the dashboard uses the `gh pr reopen`
 command to reopen the PR.
 
 <Aside type="caution" title="Watch out!">
-**Prior to v3.10.0:** When you use this command, the dashboard reopens the PR immediately and without
-prompting for confirmation. Only use this command when you're sure you want to
-reopen the closed PR.
+**Prior to v3.10.0:** When you use some commands, the dashboard acts immediately and without
+prompting for confirmation.
 
-**Since v3.10.0:** When you use this command, the dashboard displays a confirmation prompt and
-reopens the PR only after you approve the action.
+**Since v3.10.0:** When you use these command,s the dashboard displays a confirmation prompt.
 
 </Aside>

@@ -19,7 +19,7 @@ To use `Dash`, follow these steps after you've [installed it][01]:
 2. Press <kbd>?</kbd> for help.
 3. Run `gh dash --help` for more info:
 
-   ```text
+   ```bash
    Usage:
      gh dash [flags]
 
@@ -44,7 +44,10 @@ gh dash --config path/to/configuration/file.yml
 | :------ | :----: | :------------------------------------------------------------------------------------------------------------------------ |
 | `-c`    | String | `.gh-dash.yml` file if inside a git repo, `$GH_DASH_CONFIG` env var, or if not set, `$XDG_CONFIG_HOME/gh-dash/config.yml` |
 
-If you don't specify this flag, `Dash` uses the default configuration. If the file doesn't exist, gh-dash will create it. The location of the default configuration file depends on your system:
+If you don't specify this flag, `Dash` uses the default configuration.
+If the file doesn't exist, `Dash` will create it.
+
+The location of the default configuration file depends on your system:
 
 1. If `$GH_DASH_CONFIG` is a non-empty string, `Dash` will use this file for
    its configuration.
@@ -140,7 +143,7 @@ You can press the <kbd>q</kbd> key to quit the dashboard and return to your norm
 
 For more information about the keybindings for the dashboard, see [Keybindings][04].
 
-[01]: ./installation.md
-[02]: ../configuration/_index.md
+[01]: /getting-started/
+[02]: /configuration/
 [03]: https://github.com/dlvhdr/gh-dash/releases/tag/v3.7.7
-[04]: keybindings/_index.md
+[04]: /getting-started/keybindings/
