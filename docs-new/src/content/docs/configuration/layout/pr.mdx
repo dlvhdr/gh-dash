@@ -1,14 +1,198 @@
 ---
 title: PR Layout
-linkTitle: >-
-  ![icon:git-pull-request](lucide)&nbsp;PR Layout
-weight: 1
-summary: >-
-  Documentation for defining the layout of a PR section in your GitHub dashboard.
-schematize: layout.pr
-outputs:
-  - HTML
-  - Schematize
 ---
 
+import { Aside } from "@astrojs/starlight/components";
 
+# PR Section Layout
+
+You can define how a PR section displays items in its table by setting options for the
+available columns. You can define a column's width, whether it grows to fill available space,
+and whether the column should be visible at all.
+
+Note that if the length of a column's text exceeds the defined column [`width`], the view
+truncates the column's text to two characters shorter than the column's width. For example, if
+the width is `6`, `gh-dash` displays as `gh-d`.
+
+Column headings have their color defined by the [`theme.colors.text.primary`] setting.
+
+[`width`]: layout.options.width
+[`theme.colors.text.primary`]: theme.colors.text.primary
+
+By default, PR views display the following columns in the order they're listed:
+
+1. [`updatedAt`] with a width of 7 columns.
+1. [`state`] with a width of 3 columns.
+1. [`repo`] with a width of 15 columns.
+1. [`title`], set to grow to fill available space.
+1. [`author`] with a width of 10 columns.
+1. [`reviewStatus`] with a width of 3 columns.
+1. [`ci`] with a width of 3 columns.
+1. [`lines`] with a width of 16 columns.
+
+<Aside type="caution" title="Watch out!">
+      Even though the `state`, `title`, `comments`, and `reactions` settings
+      aren't explicitly defined in your configuration file, they're added to
+      the table unless you set their [`hidden`] option to `false`.
+
+      [`hidden`]: layout.options.hidden
+
+</Aside>
+      
+[`updatedAt`]:    layout.pr.updatedAt
+[`state`]:        layout.pr.state
+[`repo`]:         layout.pr.repo
+[`title`]:        layout.pr.title
+[`author`]:       layout.pr.author
+[`reviewStatus`]: layout.pr.reviewStatus
+[`ci`]:           layout.pr.ci
+[`lines`]:        layout.pr.lines
+
+```yaml
+updatedAt:
+  width: 7
+repo:
+  width: 15
+author:
+  width: 15
+assignees:
+  width: 20
+  hidden: true
+base:
+  width: 15
+  hidden: true
+lines:
+  width: 16
+```
+
+## PR Updated At Column (`updatedAt`)
+
+This column displays how recently the PR was updated. The entry shows the time elapsed
+since the last update, like `1h` or `3d`.
+
+The heading for this column is ``.
+
+default:
+width: 7
+
+## PR State Column (`state`)
+
+This column displays the PR's state as one of the following icons:
+
+- When a PR is open and ready for review, the icon is `` and
+  the color is `#42a0fa`.
+- When a PR is in draft mode, the icon is `` and the color is
+  set to the value of [`theme.colors.text.faint`].
+- When a PR is merged, the icon is `` and the color is `#a371f7`.
+- When a PR is closed without merging, the icon is `` and the
+  color is `#c38080`.
+
+This heading for this column is ``.
+
+[`theme.colors.text.faint`]: theme.colors.text.faint
+
+## PR Repo Column (`repo`)
+
+This column displays the name of the repository the PR is filed in. The entry shows the
+name of the repository without the owner, like `gh-dash` for the
+`https://github.com/dlvhdr/gh-dash` repository.
+
+The heading for this column is ``.
+
+[`width`]: layout.options.width
+
+default:
+width: 15
+title:
+
+## PR Title Column
+
+This column displays the PR's number followed by its title. This column is always displayed
+unless you set [`hidden`] to `false`. By default, it grows to fill the available space
+in the terminal after accounting for other column widths.
+
+The heading for this column is `Title`.
+
+The [`theme.colors.text.primary`] setting defines the issue number's color.
+
+[`hidden`]: layout.options.hidden
+[`theme.colors.text.primary`]: theme.colors.text.primary
+
+## PR Author Column (`author`)
+
+This column displays the username for the person who created the PR.
+
+The heading for this column is `Author`.
+
+width: 15
+
+## PR Author Role Icon (`authorIcon`)
+
+This setting affects display of the role icon for the person who created the PR.
+
+## PR Assignees Column (`assignees`)
+
+This column displays the usernames for the people assigned to the PR.
+
+The heading for this column is `Assignees`.
+
+default:
+width: 20
+hidden: true
+
+## PR Base Column (`base`)
+
+This column displays the base branch the PR is targeting, like `main`.
+
+    The heading for this column is `Base`.
+
+default:
+width: 15
+hidden: true
+
+# PR Review Status Column (`reviewStatus`)
+
+description: Defines options for the review status column in a PR section.
+type: object
+This column displays the review status of a PR as an icon:
+
+- When the PR hasn't been reviewed, the icon is `` and the
+  color is the value of [`theme.colors.text.faint`].
+- When the PR is approved, the icon is `󰄬` and the color is
+  the value of [`theme.colors.text.primary`].
+- When the PR has requested changes, the icon is `󰌑` and the
+  color is the value of [`theme.colors.text.warning`].
+
+The heading for this column is `󰯢`.
+
+[`theme.colors.text.faint`]: theme.colors.text.faint
+[`theme.colors.text.primary`]: theme.colors.text.primary
+[`theme.colors.text.warning`]: theme.colors.text.warning
+
+## PR Continuous Integration Column (`ci`)
+
+This column displays the CI status of a PR as an icon:
+
+- When the checks haven't finished running, the icon is `` and
+  the color is the value of [`theme.colors.text.faint`].
+- When the checks have all passed, the icon is `` and the
+  color is the value of [`theme.colors.text.success`].
+- When at least one check failed, the icon is `󰅙` and the
+  color is the value of [`theme.colors.text.warning`].
+
+The heading for this column is ``.
+
+[`theme.colors.text.faint`]: theme.colors.text.faint
+[`theme.colors.text.success`]: theme.colors.text.success
+[`theme.colors.text.warning`]: theme.colors.text.warning
+
+# PR Lines Column (`lines`)
+
+This column displays the line changes for a PR. The column represents the changes as
+`<added> / -<removed>`. For example, `66 / -46` indicates 66 lines added and 46
+lines removed.
+
+The heading for this column is ``.
+
+default:
+width: 16

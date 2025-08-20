@@ -33,17 +33,18 @@ export default defineConfig({
           label: "Configuration",
           items: [
             "configuration",
-            "configuration/keybindings",
+            "configuration/examples",
             "configuration/defaults",
-            "configuration/issue-section",
             "configuration/pr-section",
+            "configuration/issue-section",
             {
               label: "Layout",
               autogenerate: { directory: "configuration/layout" },
             },
-            "configuration/schema",
+            "configuration/keybindings",
             "configuration/searching",
             "configuration/theme",
+            "configuration/schema",
           ],
         },
         { slug: "contributing" },
@@ -54,4 +55,3 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 });
-

@@ -39,8 +39,8 @@ these settings in any section you define in the [`prSections`] or [`issueSection
 
 They determine which columns are displayed and how.
 
-[`prSections`]: gh-dash.prSections
-[`issueSections`]: gh-dash.issueSections
+[`prSections`]: /configuration/pr-section
+[`issueSections`]: /configuration/issue-section
 
 #### PR Section Layout
 
@@ -56,8 +56,8 @@ Column headings have their color defined by the [`theme.colors.text.primary`] se
 
 For more information, see [PR Section Layout](/configuration/layout/pr).
 
-[`width`]: layout.options.width
-[`theme.colors.text.primary`]: theme.colors.text.primary
+[`width`]: /configuration/layout/options
+[`theme.colors.text.primary`]: /configuration/theme
 
 #### Issue Section Layout (`issues`)
 
@@ -89,9 +89,9 @@ This setting defines how many PRs the dashboard should fetch for each section wh
 - You navigate to the next PR in a table without another fetched PR to display.
 - You use the [refresh current section] or [refresh all sections] commands.
 
-[fetch interval]: defaults.fetchIntervalMinutes
-[refresh current section]: /getting-started/keybindings/global/#refresh-current-section
-[refresh all sections]: /getting-started/keybindings/global/#refresh-all-sections
+[fetch interval]: #refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 
 ### Issue Fetch Limit (`issuesLimit`)
 
@@ -106,13 +106,13 @@ This setting defines how many issues the dashboard should fetch for each section
 - You navigate to the next issue in a table without another fetched issue to display.
 - You use the [refresh current section] or [refresh all sections] commands.
 
-[fetch interval]: defaults.fetchIntervalMinutes
-[refresh current section]: /getting-started/keybindings/global/#refresh-current-section
-[refresh all sections]: /getting-started/keybindings/global/#refresh-all-sections
+[fetch interval]: #refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 
 ## Preview Pane (`preview`)
 
-These settings define the how the preview pane displays in the dashboard. You can specify
+These settings define how the preview pane displays in the dashboard. You can specify
 whether the preview pane is open by default and how many columns wide it should be when
 
 ### Open on Load (`open`)
@@ -127,7 +127,7 @@ toggle the preview pane's visibility.
 
 By default, the dashboard displays the preview pane.
 
-[toggle preview pane]: /getting-started/keybindings/preview/#toggle-preview-pane
+[toggle preview pane]: /getting-started/keybindings/preview/#p---toggle-preview-pane
 
 ### Preview Pane Width (`width`)
 
@@ -139,7 +139,7 @@ Specifies how many columns wide the preview pane should be when displayed.
 
 By default, the preview pane is 50 columns wide.
 
-### Refetch Interval in Minutes (`refetchIntervalMinutes`)
+## Refetch Interval in Minutes (`refetchIntervalMinutes`)
 
 | Type    | Minimum | Default |
 | :------ | :-----: | :-----: |
@@ -160,10 +160,10 @@ You can always use the [refresh current section] or [refresh all sections] comma
 refetch work items in the current view. If you change the search query for a view, the
 dashboard fetches results for the updated query immediately.
 
-[refresh current section]: /getting-started/keybindings/global/#refresh-current-section
-[refresh all sections]: /getting-started/keybindings/global/#refresh-all-sections
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 
-### Date format (`dateFormat`)
+## Date format (`dateFormat`)
 
 | Type   |  Default   |
 | :----- | :--------: |
@@ -178,7 +178,7 @@ You may need to adjust the layout column width depending on your format.
 
 [go time format]: https://pkg.go.dev/time#pkg-constants
 
-### Default View (`view`)
+## Default View (`view`)
 
 | Type   |     Options     | Default |
 | :----- | :-------------: | :-----: |
@@ -189,7 +189,7 @@ first loads.
 
 By default, the dashboard displays the PRs view.
 
-### PR Approval (`prApproveComment`)
+## PR Approval (`prApproveComment`)
 
 | Type   | Default |
 | :----- | :-----: |
@@ -200,4 +200,4 @@ This can be set as an empty string to not prefill a comment.
 
 By default, the comment is "LGTM".
 
-[approving a PR]: /getting-started/keybindings/selected-pr/#approve-pr
+[approving a PR]: /getting-started/keybindings/selected-pr/#v---approve-pr

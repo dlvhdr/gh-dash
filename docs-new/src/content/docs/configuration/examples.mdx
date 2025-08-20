@@ -1,0 +1,65 @@
+---
+title: Examples
+---
+
+These examples show a few ways you might configure your dashboard.
+
+## Complete Examples
+
+- The config for the `gh-dash` repo under [.gh-dash.yml](https://github.com/dlvhdr/gh-dash/blob/main/.gh-dash.yml)
+- My config under my dotfiles repo [dlvhdr/dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/nix/module/gh-dash/configs/config.yml)
+- Many other configs found by [searching GitHub](https://github.com/search?q=path%3Agh-dash%2Fconfig.yml&type=code)
+
+## Theming example
+
+The color palette in this example is inspired by the [Monokai Pro Spectrum Filter][01] palette.
+
+```yaml
+theme:
+  colors:
+    text:
+      primary: "#F7F1FF"
+      secondary: "#5AD4E6"
+      inverted: "#F7F1FF"
+      faint: "#3E4057"
+      warning: "#FC618D"
+      success: "#7BD88F"
+    background:
+      selected: "#535155"
+    border:
+      primary: "#948AE3"
+      secondary: "#7BD88F"
+      faint: "#3E4057"
+```
+
+## Custom Keybindings Example
+
+Utilizing `tmux` we can launch other TUIs:
+
+```yaml
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+  prs:
+    - key: O
+      builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+    - key: C
+      name: code review
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"
+        '
+    - key: a
+      name: lazygit add
+      command: >
+        cd {{.RepoPath}} && git add -A && lazygit
+    - key: v
+      name: approve
+      command: >
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+```

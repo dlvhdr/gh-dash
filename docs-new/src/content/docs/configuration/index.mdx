@@ -126,64 +126,6 @@ then open your configurations and edit them with support for validation. When yo
 option in your configuration file, you'll get a brief synopsis of the option and a link to its
 documentation on this site.
 
-## Examples
-
-These examples show a few ways you might configure your dashboard.
-
-### Theming example
-
-The color palette in this example is inspired by the [Monokai Pro Spectrum Filter][01] palette.
-
-```yaml
-theme:
-  colors:
-    text:
-      primary: "#F7F1FF"
-      secondary: "#5AD4E6"
-      inverted: "#F7F1FF"
-      faint: "#3E4057"
-      warning: "#FC618D"
-      success: "#7BD88F"
-    background:
-      selected: "#535155"
-    border:
-      primary: "#948AE3"
-      secondary: "#7BD88F"
-      faint: "#3E4057"
-```
-
-### Custom Keybindings Example
-
-Utilizing `tmux` we can launch other TUIs:
-
-```yaml
-keybindings:
-  universal:
-    - key: g
-      name: lazygit
-      command: >
-        cd {{.RepoPath}} && lazygit
-  prs:
-    - key: O
-      builtin: checkout
-    - key: m
-      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
-    - key: C
-      name: code review
-      command: >
-        tmux new-window -c {{.RepoPath}} '
-        nvim -c ":silent Octo pr edit {{.PrNumber}}"
-        '
-    - key: a
-      name: lazygit add
-      command: >
-        cd {{.RepoPath}} && git add -A && lazygit
-    - key: v
-      name: approve
-      command: >
-        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
-```
-
 [01]: /getting-started/usage#--config
 [02]: /configuration/schema.json
 [03]: https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml
