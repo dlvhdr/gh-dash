@@ -1,0 +1,72 @@
+@import "@webtui/css/components/pre.css";
+@import "@webtui/css/components/view.css";
+
+main {
+  --sl-content-width: 60rem;
+}
+
+.content-panel button {
+  height: 2lh;
+  padding: 0;
+  width: 20ch;
+  background: var(--sl-color-accent-high);
+  color: var(--sl-color-gray-6);
+  font-weight: bold;
+}
+
+#hero {
+  margin-left: -200px;
+  padding-left: 100px;
+  padding-right: 100px;
+  width: 150%;
+}
+
+.content-panel {
+  border-top: none;
+}
+
+.content-panel button[variant-="background0"] {
+  background: var(--background0);
+  font-weight: 400;
+  color: var(--sl-color-gray-1);
+}
+
+.hero {
+  grid-template-columns: 12fr;
+}
+
+main span {
+  background-color: var(--sl-color-black);
+  padding: 0 1ch;
+}
+
+pre,
+code {
+  padding-block: 0;
+  background-color: var(--sl-color-black);
+}
+
+li code {
+  color: var(--color-green-200);
+  background-color: var(--color-gray-800);
+}
+
+ul {
+  margin-top: 0px;
+}
+
+li {
+  margin-top: 8px;
+
+  kbd {
+    margin-bottom: 0;
+  }
+}
+
+div.copy button[title="Copy to clipboard"] {
+  display: none;
+}
+
+footer {
+  display: none;
+}

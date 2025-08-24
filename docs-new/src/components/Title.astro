@@ -1,0 +1,29 @@
+---
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import Logo from './Logo.astro';
+
+const isHomepage = Astro.locals.starlightRoute.id === '';
+---
+
+<style>
+  #title-logo {
+    position: relative;
+    top: 30px;
+    &::after {
+      display: block;
+      margin-top: 12px;
+      content: '---------->';
+      width: 100%;
+    }
+  }
+</style>
+
+{
+  isHomepage ? (
+<div class="flex pt-16 items-baseline-last gap-[3ch] text-white w-[150%] relative left-[100px]"><Logo className="inline text-5xl" /><h1>Through<br/> Your GitHub</h1></div>
+  ) : (
+    <Default>
+      <slot />
+    </Default>
+  )
+}

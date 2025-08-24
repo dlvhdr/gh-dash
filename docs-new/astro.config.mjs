@@ -9,7 +9,11 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "DASH",
-      customCss: ["./src/styles/custom.css"],
+      customCss: ["./src/styles/custom.css", "./src/fonts/font-face.css"],
+      components: {
+        Header: "./src/components/Header.astro",
+        PageTitle: "./src/components/Title.astro",
+      },
       social: [
         {
           icon: "github",
@@ -19,7 +23,7 @@ export default defineConfig({
       ],
       sidebar: [
         {
-          label: "Start Here",
+          label: "Getting Started",
           items: [
             "getting-started",
             "getting-started/usage",
@@ -34,17 +38,23 @@ export default defineConfig({
           items: [
             "configuration",
             "configuration/examples",
+            "configuration/schema",
             "configuration/defaults",
             "configuration/pr-section",
             "configuration/issue-section",
-            {
-              label: "Layout",
-              autogenerate: { directory: "configuration/layout" },
-            },
+            "configuration/repo-paths",
+
             "configuration/keybindings",
             "configuration/searching",
             "configuration/theme",
-            "configuration/schema",
+            {
+              label: "Layout",
+              items: [
+                "configuration/layout/options",
+                "configuration/layout/pr",
+                "configuration/layout/issue",
+              ],
+            },
           ],
         },
         { slug: "contributing" },

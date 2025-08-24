@@ -1,0 +1,54 @@
+---
+title: Repo Paths
+---
+
+You can use the `repoPaths` setting to map repository names (as keys) to local paths
+(as values). This map configures where to locate repositories when checking out PRs.
+
+The mappings can be exact matches, like the full name or path of a repository, or wildcard
+matches using the `owner` and a partial path.
+
+An exact match for the full repository name to a full path takes priority over a matching
+wildcard. Wildcard keys must match to a wildcard path.
+
+The `RepoName` and `RepoPath` keybinding arguments are fully expanded when sent to the
+command.
+
+## Examples
+
+### Matching Repositories
+
+```yaml
+repoPaths:
+  dlvhdr/*: ~/code/repos/*
+  dlvhdr/gh-dash: ~/code/gh-dash
+```
+
+In this example, the first key is defined with a wildcard (`*`) as `dlvhdr/*`, so the
+dashboard will use this entry to resolve the path for any repo in the `dlvhdr`
+namespace, like `dlvhdr/jb` or `dlvhdr/harbor`. Note that the value for this key
+also uses a wildcard. If the key specifies a wildcard, the value must specify one too.
+
+If a repository in the `dlvhdr` namespace has been cloned into the `~/code/repos`
+folder, the dashboard will be able to checkout PRs for that repository locally.
+
+If the repository isn't found, the checkout command raises an error.
+
+The second key defines an exact mapping between the `dlvhdr/gh-dash` repository and the
+`~/code/gh-dash` folder. Because this is a non-wildcard mapping, the dashboard will use
+this value to resolve the repository path for `dlvhdr/gh-dash` even though there's also
+an entry for `dlvhdr/*`.
+
+## Pattern Properties
+
+### With a Wildcard
+
+If the key for an `repoPath` entry ends with a wildcard (`*`), its value must also have
+a wildcard. If a key ends with a wildcard but the value doesn't, `gh-dash` won't be
+able to correctly map repositories to folders.
+
+### Without a Wildcard
+
+If the key for an `repoPath` entry doesn't have a wildcard (`*`), its value must not
+have a wildcard. If a key ends without a wildcard but the value does, `gh-dash` won't
+be able to correctly map repositories to folders.

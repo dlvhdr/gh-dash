@@ -1,39 +1,153 @@
 ---
-// Import the `<StarlightPage>` component first to set up cascade layers.
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { LinkButton } from '@astrojs/starlight/components';
-
-// Import any other components you want to use in your custom page.
-import AnchorHeading from '@astrojs/starlight/components/AnchorHeading.astro';
+import "../styles/index.css";
+import { CardGrid, Code, } from "@astrojs/starlight/components";
+import TerminalDemo from '../components/TerminalDemo.astro';
+import Footer from '../components/Footer.astro';
+import prSectionsImage from '../assets/pr-sections.png';
+import { Image } from 'astro:assets';
 ---
 
-<StarlightPage frontmatter={{ title: 'DASH', template: "splash" }}>
-  <div class="flex flex-row gap-8">
-    <div class="pt-10">
-<p class="text-xl">A rich terminal UI to view and perform actions on <strong>GitHub</strong> PRs and issues that <i>doesn't break your flow.</i></p>
-      <div class="flex flex-row gap-2">
-        <LinkButton href="/getting-started/" icon="right-arrow" iconPlacement="start">Docs</LinkButton>
-        <LinkButton href="https://github.com/dlvhdr/gh-dash" icon="external" iconPlacement="start" variant="minimal">View on GitHub</LinkButton>
+
+<StarlightPage frontmatter={{title: "DASH Through Your GitHub", template: "splash"}}>
+  <div id="hero" class="flex gap-16 justify-start w-full">
+    <TerminalDemo />
+    <div class="pt-16">
+      <h2 class="w-[90%] text-balance text-gray-300 pb-6">
+        A rich terminal UI for GitHub that <strong class="underline"><i>doesn't break your flow.</i></strong>
+      </h2>
+      <div class="flex flex-col gap-4 items-start">
+        <form action="/getting-started/">
+          <button>Get started →</button>
+        </form>
+        <form class="m-0" action="https://github.com/dlvhdr/gh-dash">
+          <button variant-="background0">View on GitHub </button>
+        </form>
       </div>
     </div>
-    <img width="700" alt="A demo of the gh-dash TUI, showing the user viewing his PRs and issues, taking actions on them like diffing, commenting, approving etc."
-      src="/src/assets/demo.gif" />
   </div>
 
-  <AnchorHeading level="2" id="features">Features</AnchorHeading> 
+  <div class="pt-8"></div>
 
-  <ul>
-    <li>Fully configurable - define sections using GitHub filters</li>
-    <li>Search for both PRs and issues</li>
-    <li>Customize columns with `hidden`, `width` and `grow` props</li>
-    <li>Act on PRs and issues with checkout, comment, open, merge, diff, etc.</li>
-    <li>Set custom actions with new keybindings</li>
-    <li>Use custom themes</li>
-    <li>View details about a PR/issue with a detailed sidebar</li>
-    <li>Write multiple configuration files to easily switch between</li>
-    <li>Completely different dashboards</li>
-    <li>Set an interval for auto refreshing the dashboard</li>
-    <li>[Smart Filtering](/getting-started/smartfiltering) - auto-filter prs/issues to the remote tracked by the current directory</li>
-  </ul>
+  <CardGrid stagger>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span>︎ Define sections using GitHub filters</span>
+      </div>
+      <Image src={prSectionsImage} alt="" />
+      <Code lang="yaml" code={`
+prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me
+  - title: Needs My Review
+    filters: is:open review-requested:@me
+  - title: Involved
+    filters: is:open involves:@me -author:@me
+      `} />
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> First class vim keybindings</span>
+      </div>
+      <div class="pl-6 pr-6">
+        <ul>
+          <li><kbd>h/j/k/l</kbd> to move between rows/sections</li> 
+          <li><kbd>ctrl+d/u</kbd> to move in sidebar</li> 
+          <li><kbd>o</kbd> to open in browser</li> 
+          <li><kbd>y/Y</kbd> to copy pr number/url</li> 
+          <li>and more...</li> 
+        </ul>
+      </div>
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> Manage your issues</span>
+      </div>
+      <Code lang="yaml" code={`
+issuesSections:
+  - title: Ghostty
+    filters: is:open ghostty-org/ghostty
+  - title: Neovim
+    filters: is:open neovim/neovim
+  - title: Bubbletea
+    filters: repo:charmbracelet/bubbletea
+    `} />
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> Customize the layout to your liking</span>
+      </div>
+      <Code lang="yaml" code={`
+repo:
+  width: 15
+title:
+  grow: true
+assignees:
+  hidden: true
+base:
+  hidden: true
+`}/>
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span>⚡ Act on PRs and issues</span>
+      </div>
+      <div class="pl-6 pr-6">
+        <ul>
+          <li><kbd>v</kbd> to approve</li>
+          <li><kbd>d</kbd> to show diff</li>
+          <li><kbd>c</kbd> to add a comment</li>
+          <li><kbd>m</kbd> to merge</li>
+          <li>and more...</li>
+        </ul>
+      </div>
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> Set custom commands</span>
+      </div>
+      <Code lang="yaml" code={`
+- key: g
+  name: lazygit
+  command: lazygit
+- key: C
+  name: code review
+  command: tmux new-window -c {{.RepoPath}} nvim -c ":silent Octo pr edit {{.PrNumber}}"
+      `} />
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> Use custom themes</span>
+      </div>
+        <Code lang="yaml" code={`
+ui:
+  sectionsShowCount: true
+  table:
+    showSeparators: true
+    compact: false
+colors:
+  text:
+    primary: "#ffffff"
+    secondary: "#c6c6c6"
+# rest of theme...
+      `} />
+    </div>
+    <div box-="round" shear-="top">
+      <div class="header">
+        <span> Easily switch between configurations</span>
+      </div>
+      <div class="pl-6 pr-6">
+        <ul>
+          <li>For your open source contributions</li>
+          <ul><li><code>gh dash --config open-source.yml</code></li></ul>
+          <li>For your work repos</li>
+          <ul><li><code>gh dash --config work.yml</code></li></ul>
+          <li>For your side projects</li>
+          <ul><li><code>gh dash --config side-projects.yml</code></li></ul>
+          <li>Auto detect <code>.gh-dash.yml</code> in a git repo</li>
+        </ul>
+      </div>
+    </div>
+  </CardGrid>
+  <Footer />
 </StarlightPage>
-

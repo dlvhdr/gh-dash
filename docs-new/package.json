@@ -13,6 +13,8 @@
     "@astrojs/starlight": "^0.35.2",
     "@astrojs/starlight-tailwind": "^4.0.1",
     "@tailwindcss/vite": "^4.1.12",
+    "@webtui/css": "^0.1.5",
+    "@webtui/theme-catppuccin": "^0.0.3",
     "astro": "^5.6.1",
     "sharp": "^0.34.2",
     "tailwindcss": "^4.1.12"

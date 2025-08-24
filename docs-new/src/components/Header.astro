@@ -1,0 +1,23 @@
+---
+import Default from '@astrojs/starlight/components/Header.astro';
+import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
+import Search from '@astrojs/starlight/components/Search.astro';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import Logo from './Logo.astro';
+---
+
+<div class="flex flex-row gap-8 items-center p-0">
+  <div class="grow">
+    <a href="/" class="no-underline">
+      <Logo />
+    </a>
+  </div>
+  <div class="flex items-center gap-2 text-gray-400">
+    <span class="text-4xl no-underline hover:no-underline"></span>
+    <a class="text-gray-400 no-underline hover:underline" target="_blank" href="https://github.com/dlvhdr/gh-dash">8.6k</a>
+  </div>
+  <a class="flex items-center gap-2 text-blue-400 no-underline hover:underline" href="/getting-started"><span class="text-3xl"></span> Docs</a>
+  <Search />
+  <ThemeSelect />
+</div>

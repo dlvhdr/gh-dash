@@ -2,11 +2,12 @@
 title: Issue Layout
 ---
 
-import { Aside } from "@astrojs/starlight/components";
+import { Aside, Code } from "@astrojs/starlight/components";
+import NerdFontIcon from "../../../../components/NerdFontIcon.astro";
 
 # Issues Section Layout
 
-You can define how a Issues section displays items in its table by setting options for the
+You can define how an Issue section displays items in its table by setting options for the
 available columns. You can define a column's width, whether it grows to fill available space,
 and whether the column should be visible at all.
 
@@ -16,98 +17,97 @@ the width is `6`, `gh-dash` displays as `gh-d`.
 
 Column headings have their color defined by the [`theme.colors.text.primary`] setting.
 
-[`width`]: layout.options.width
-[`theme.colors.text.primary`]: theme.colors.text.primary
+[`width`]: /configuration/layout/options#column-width
+[`theme.colors.text.primary`]: /configuration/theme
 
-By default, Issues views display the following columns in the order they're listed:
+By default, Issue views display the following columns in the order they're listed:
 
 1. [`updatedAt`] with a width of 7 columns.
 1. [`state`] with a width of 3 columns.
 1. [`repo`] with a width of 15 columns.
 1. [`title`], set to grow to fill available space.
-1. [`author`] with a width of 10 columns.
-1. [`reviewStatus`] with a width of 3 columns.
-1. [`ci`] with a width of 3 columns.
-1. [`lines`] with a width of 16 columns.
+1. [`creator`] with a width of 10 columns.
+1. [`comments`] with a width of 3 columns.
+1. [`reactions`] with a width of 3 columns.
 
 <Aside type="caution" title="Watch out!">
-      Even though the `state`, `title`, `comments`, and `reactions` settings
-      aren't explicitly defined in your configuration file, they're added to
-      the table unless you set their [`hidden`] option to `false`.
+  Even though the `state`, `title`, `comments`, and `reactions` settings
+  aren't explicitly defined in your configuration file, they're added to
+  the table unless you set their [`hidden`] option to `false`.
 
-      [`hidden`]: layout.options.hidden
+[`hidden`]: /configuration/layout/options#hide-column
 
 </Aside>
       
-[`updatedAt`]:    layout.issue.updatedAt
-[`state`]:        layout.issue.state
-[`repo`]:         layout.issue.repo
-[`title`]:        layout.issue.title
-[`author`]:       layout.issue.author
-[`reviewStatus`]: layout.issue.reviewStatus
-[`ci`]:           layout.issue.ci
-[`lines`]:        layout.issue.lines
+[`updatedAt`]:    #issues-updated-at-column
+[`state`]:        #issues-state-column
+[`repo`]:         #issues-repo-column
+[`title`]:        #issues-title-column
+[`creator`]:       #issues-creator-column
+[`comments`]:           #issues-comments-column
+[`reactions`]:        #issues-reactions-column
 
 ```yaml
-updatedAt:
-  width: 7
+title:
+  grow: true
+assignees:
+  hidden: true
+  width: 20
+creator:
+  width: 10
 repo:
   width: 15
-author:
-  width: 15
-assignees:
-  width: 20
-  hidden: true
-base:
-  width: 15
-  hidden: true
-lines:
-  width: 16
+updatedAt:
+  width: 7
 ```
 
-## Issues Updated At Column (`updatedAt`)
+## Issue Updated At Column
 
-This column displays how recently the Issues was updated. The entry shows the time elapsed
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `updatedAt` | yaml | <Code code={`width: 7`} lang="yaml" frame="none"/> |
+
+This column displays how recently the Issue was updated. The entry shows the time elapsed
 since the last update, like `1h` or `3d`.
 
-The heading for this column is ``.
+The heading for this column is <NerdFontIcon icon=""/>
 
-default:
-width: 7
+## Issue State Column
 
-## Issues State Column (`state`)
+| Property | Type | Default                                            |
+| :------- | :--- | :------------------------------------------------- |
+| `state`  | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
 
-This column displays the Issues's state as one of the following icons:
+This column displays the issue's state. When an issue is open, the column displays the icon <NerdFontIcon icon=""/>
+with the color set to `#42a0fa`. When an issue is closed, the
+column displays the icon <NerdFontIcon icon=""/> with the color set to
+[sref:`theme.colors.text.faint`].
 
-- When a Issues is open and ready for review, the icon is `` and
-  the color is `#42a0fa`.
-- When a Issues is in draft mode, the icon is `` and the color is
-  set to the value of [`theme.colors.text.faint`].
-- When a Issues is merged, the icon is `` and the color is `#a371f7`.
-- When a Issues is closed without merging, the icon is `` and the
-  color is `#c38080`.
+The heading for this column is <NerdFontIcon icon=""/>.
 
-This heading for this column is ``.
+[sref:`theme.colors.text.faint`]: theme.colors.text.faint
 
-[`theme.colors.text.faint`]: theme.colors.text.faint
+## Issue Repo Column
 
-## Issues Repo Column (`repo`)
+| Property | Type | Default                                             |
+| :------- | :--- | :-------------------------------------------------- |
+| `repo`   | yaml | <Code code={`width: 15`} lang="yaml" frame="none"/> |
 
-This column displays the name of the repository the Issues is filed in. The entry shows the
+This column displays the name of the repository the Issue is filed in. The entry shows the
 name of the repository without the owner, like `gh-dash` for the
 `https://github.com/dlvhdr/gh-dash` repository.
 
-The heading for this column is ``.
+The heading for this column is <NerdFontIcon icon=""/>
 
-[`width`]: layout.options.width
+[`width`]: /configuration/layout/options#column-width
 
-default:
-width: 15
-title:
+## Issue Title Column
 
-## Issues Title Column
+| Property | Type | Default                                              |
+| :------- | :--- | :--------------------------------------------------- |
+| `title`  | yaml | <Code code={`grow: true`} lang="yaml" frame="none"/> |
 
-This column displays the Issues's number followed by its title. This column is always displayed
+This column displays the Issue's number followed by its title. This column is always displayed
 unless you set [`hidden`] to `false`. By default, it grows to fill the available space
 in the terminal after accounting for other column widths.
 
@@ -115,84 +115,53 @@ The heading for this column is `Title`.
 
 The [`theme.colors.text.primary`] setting defines the issue number's color.
 
-[`hidden`]: layout.options.hidden
-[`theme.colors.text.primary`]: theme.colors.text.primary
+[`hidden`]: /configuration/layout/options#hide-column
+[`theme.colors.text.primary`]: /configuration/theme
 
-## Issues Author Column (`author`)
+## Issue Creator Column
 
-This column displays the username for the person who created the Issues.
+| Property  | Type | Default                                             |
+| :-------- | :--- | :-------------------------------------------------- |
+| `creator` | yaml | <Code code={`width: 10`} lang="yaml" frame="none"/> |
 
-The heading for this column is `Author`.
+This column displays the username for the person who created the Issue.
 
-width: 15
+The heading for this column is `Creator`.
 
-## Issues Author Role Icon (`authorIcon`)
+## Issue Author Role Icon
 
-This setting affects display of the role icon for the person who created the Issues.
+| Property      | Type | Default                                                |
+| :------------ | :--- | :----------------------------------------------------- |
+| `creatorIcon` | yaml | <Code code={`hidden: true`} lang="yaml" frame="none"/> |
 
-## Issues Assignees Column (`assignees`)
+This setting affects display of the role icon for the person who created the Issue.
 
-This column displays the usernames for the people assigned to the Issues.
+## Issue Assignees Column
+
+| Property    | Type | Default                                                           |
+| :---------- | :--- | :---------------------------------------------------------------- |
+| `assignees` | yaml | <Code code={`width: 20\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the usernames for the people assigned to the Issue.
 
 The heading for this column is `Assignees`.
 
-default:
-width: 20
-hidden: true
+## Issue Comments Column
 
-## Issues Base Column (`base`)
+| Property   | Type | Default                                            |
+| :--------- | :--- | :------------------------------------------------- |
+| `comments` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
 
-This column displays the base branch the Issues is targeting, like `main`.
+This column displays the count of comments on the issue as an integer.
 
-    The heading for this column is `Base`.
+The heading for this column is <NerdFontIcon icon=""/>
 
-default:
-width: 15
-hidden: true
+## Issue Reactions Column
 
-# Issues Review Status Column (`reviewStatus`)
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `reactions` | yaml | <Code code={`width: 3`} lang="yaml" frame="none"/> |
 
-description: Defines options for the review status column in a Issues section.
-type: object
-This column displays the review status of a Issues as an icon:
+This column displays the count of all reactions on the issue as an integer.
 
-- When the Issues hasn't been reviewed, the icon is `` and the
-  color is the value of [`theme.colors.text.faint`].
-- When the Issues is approved, the icon is `󰄬` and the color is
-  the value of [`theme.colors.text.primary`].
-- When the Issues has requested changes, the icon is `󰌑` and the
-  color is the value of [`theme.colors.text.warning`].
-
-The heading for this column is `󰯢`.
-
-[`theme.colors.text.faint`]: theme.colors.text.faint
-[`theme.colors.text.primary`]: theme.colors.text.primary
-[`theme.colors.text.warning`]: theme.colors.text.warning
-
-## Issues Continuous Integration Column (`ci`)
-
-This column displays the CI status of a Issues as an icon:
-
-- When the checks haven't finished running, the icon is `` and
-  the color is the value of [`theme.colors.text.faint`].
-- When the checks have all passed, the icon is `` and the
-  color is the value of [`theme.colors.text.success`].
-- When at least one check failed, the icon is `󰅙` and the
-  color is the value of [`theme.colors.text.warning`].
-
-The heading for this column is ``.
-
-[`theme.colors.text.faint`]: theme.colors.text.faint
-[`theme.colors.text.success`]: theme.colors.text.success
-[`theme.colors.text.warning`]: theme.colors.text.warning
-
-# Issues Lines Column (`lines`)
-
-This column displays the line changes for a Issues. The column represents the changes as
-`<added> / -<removed>`. For example, `66 / -46` indicates 66 lines added and 46
-lines removed.
-
-The heading for this column is ``.
-
-default:
-width: 16
+The heading for this column is <NerdFontIcon icon=""/>

@@ -4,17 +4,236 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
+@import "@webtui/css/base.css";
+
+/* Utils */
+@import "@webtui/css/utils/box.css";
+
+header .header span {
+  background: none;
+}
+
+div[box-="round"] .header span {
+  background: var(--sl-color-gray-6);
+  border-radius: 16px;
+  font-weight: bold;
+}
+
+button {
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1 {
+  font-size: var(--text-5xl);
+}
+h2 {
+  font-size: var(--text-3xl);
+}
+h3 {
+  font-size: var(--text-xl);
+}
+
+:root {
+  --sl-font: var(--font-family);
+}
+
+/* Dark mode colors. */
+:root {
+  --sl-color-accent-low: #192339;
+  --sl-color-accent: var(--color-blue-300);
+  --sl-color-accent-high: var(--color-blue-400);
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eceef2;
+  --sl-color-gray-2: #c0c2c7;
+  --sl-color-gray-3: #888b96;
+  --sl-color-gray-4: #545861;
+  --sl-color-gray-5: #353841;
+  --sl-color-gray-6: #24272f;
+  --sl-color-black: #17181c;
+}
+/* Light mode colors. */
+:root[data-theme="light"] {
+  --sl-color-accent-low: var(--color-blue-300);
+  --sl-color-accent: var(--color-blue-400);
+  --sl-color-accent-high: var(--color-blue-500);
+  --sl-color-white: #17181c;
+  --sl-color-gray-1: #24272f;
+  --sl-color-gray-2: #353841;
+  --sl-color-gray-3: #545861;
+  --sl-color-gray-4: #888b96;
+  --sl-color-gray-5: #c0c2c7;
+  --sl-color-gray-6: #eceef2;
+  --sl-color-gray-7: #f5f6f8;
+  --sl-color-black: #ffffff;
+}
+
+@layer base {
+  :root {
+    --font-family: "FiraCode NFM", "JetBrains Mono", Menlo, Monaco, monospace,
+      "Symbols Nerd Font";
+
+    --box-border-color: var(--sl-color-accent-low);
+    [box-~="round"] {
+      --box-border-width: 1px;
+
+      p {
+        padding-inline: 16px;
+      }
+    }
+
+    --font-size: 16px;
+    --background0: var(--sl-color-gray-6);
+    --background1: var(--sl-color-gray-5);
+    --background2: var(--sl-color-gray-4);
+    --background3: var(--sl-color-gray-3);
+
+    --foreground0: var(--sl-color-gray-1);
+    --foreground1: var(--sl-color-gray-2);
+    --foreground2: var(--sl-color-gray-3);
+    --box-border-color: var(--sl-color-gray-6);
+    --table-border-color: var(--foreground0);
+    --separator-color: var(--foreground0);
+  }
+
+  ul,
+  ol {
+    padding-left: 32px;
+  }
+
+  .copy button {
+    background-image: none;
+  }
+}
+
+.sidebar-content {
+  font-size: 1em;
+  line-height: 1;
+
+  --foreground0: var(--sl-color-white);
+  --foreground1: var(--sl-color-gray-1);
+  --foreground2: var(--sl-color-gray-2);
+
+  ul > li {
+    font-family: "FiraCode NFM";
+    --sl-sidebar-item-padding-inline: 0;
+    color: var(--foreground2);
+    text-decoration: none;
+    outline: none;
+    display: flex;
+    border-left: none;
+    padding-block: 2px;
+
+    & a {
+      font-size: 1em;
+      text-decoration: none;
+      padding-block: 0;
+      padding-inline: 4px;
+      line-height: 1.3;
+
+      &[aria-current="page"] {
+        color: var(--sl-color-gray-6);
+      }
+    }
+
+    &::before {
+      content: " ├ ";
+      padding-right: 5px;
+      color: var(--sl-color-gray-5);
+    }
+
+    &:last-of-type::before {
+      content: " └ ";
+    }
+
+    &.active {
+      color: var(--foreground0);
+      text-decoration: underline;
+      font-weight: var(--font-weight-bold);
+      background-color: var(--background1);
+    }
+
+    &:focus {
+      background-color: var(--background1);
+    }
+  }
+
+  li:has(details) {
+    &::before {
+      content: "";
+    }
+
+    summary {
+      padding-top: 0;
+      font-weight: var(--font-weight-bold);
+      --sl-text-base: 1.2em;
+      .group-label::before {
+        color: var(--foreground2);
+        font-size: 0.5ch;
+        padding-right: 1ch;
+        content: "\eab6\ ";
+      }
+
+      & svg {
+        display: none;
+      }
+
+      &:hover,
+      &:focus {
+        background-color: var(--background1);
+      }
+    }
+
+    details[open] {
+      summary {
+        .group-label::before {
+          font-size: 1em;
+          padding-right: 0ch;
+          content: "\eab4\ ";
+          color: var(--foreground2);
+        }
+      }
+    }
+  }
+
+  details[open] a.hidden,
+  details.hidden,
+  .hidden {
+    display: none;
+  }
+}
+
+code {
+  font-family: "FiraCode NFM";
+}
+
+pre {
+  font-family: "FiraCode NFM";
+  background: var(--background0);
+
+  code span {
+    padding-inline: 0;
+  }
+}
+
 kbd {
-  margin-top: 0 !important; //override sl-content margin of 1rem
+  margin-top: 0 !important;
   display: inline-block;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.25rem;
   background-color: var(--sl-color-gray-6);
-  box-shadow: 0 1px 1px var(--sl-color-gray-5), 0 2px 0 0 var(
-        --sl-color-gray-6
-      ) inset;
+  box-shadow:
+    0 1px 1px var(--sl-color-gray-5),
+    0 2px 0 0 var(--sl-color-gray-6) inset;
   font-size: var(--sl-text-xs);
   font-weight: 700;
   line-height: 1;
   padding: 2px 4px;
+}
+
+.hero {
+  padding-bottom: 16px;
 }

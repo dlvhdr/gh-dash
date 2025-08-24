@@ -77,8 +77,11 @@ GitHub remotes configured for that clone in the following order:
 …and, otherwise, if `Dash` finds no remotes with any of those names, then it uses the repo name
 for the first remote in the output that `git remote` shows.
 
-To disable Smart Filtering at launch, set [`smartFilteringAtLaunch`](/configuration/gh-dash/#smartfilteringatlaunch)
-to `false` in your [configuration](/configuration).
+To disable Smart Filtering at launch, set `smartFilteringAtLaunch` to `false` in your [configuration](/configuration).
+
+```yaml
+smartFilteringAtLaunch: false
+```
 
 To toggle Smart Filtering on or off for the current section you’re currently viewing, either use the
 `t` key — or else use whatever custom keybinding you have set for the `togglesearch` builtin in the
