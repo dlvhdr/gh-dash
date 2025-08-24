@@ -5,10 +5,18 @@ prSections:
     layout:
       author:
         hidden: true
+      repoName:
+        hidden: true
   - title: Review
     filters: repo:dlvhdr/gh-dash -author:@me is:open updated:>={{ nowModify "-2.5w" }}
+    layout:
+      repoName:
+        hidden: true
   - title: All
     filters: repo:dlvhdr/gh-dash
+    layout:
+      repoName:
+        hidden: true
 issuesSections:
   - title: Open
     filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
@@ -25,9 +33,7 @@ defaults:
   layout:
     prs:
       repoName:
-        grow: true,
-        width: 10
-        hidden: false
+        hidden: true
       base:
         hidden: true
 

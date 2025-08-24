@@ -5,3 +5,4 @@ gh-dash
 .direnv/
 /result*
 .DS_Store
+.killgrave.log

@@ -1,0 +1,68 @@
+# https://taskfile.dev
+
+version: "3"
+silent: true
+
+tasks:
+  default:
+    cmds:
+      - go run . {{.CLI_ARGS}}
+    interactive: true
+    desc: Run
+
+  debug:
+    cmds:
+      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
+      - DEBUG=true go run . --debug {{.CLI_ARGS}}
+    interactive: true
+    desc: Run in debug mode. Run `task logs` to watch the logs.
+
+  logs:
+    cmds:
+      - rm -f ./debug.log
+      - touch ./debug.log
+      - tail -f ./debug.log
+    interactive: true
+    desc: Tail the debug logs
+
+  mock:
+    cmds:
+      - task: start-mock-server
+      - defer: { task: stop-mock-server }
+      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
+      - cmd: DEBUG=true FF_MOCK_DATA=true go run . --debug
+    desc: Run with mocks
+
+  start-mock-server:
+    cmds:
+      - echo "starting mock server..."
+      - killgrave --config ./imposters/config.yml &> ./.killgrave.log &
+
+  stop-mock-server:
+    cmds:
+      - pkill killgrave
+
+  test:
+    cmds:
+      - go test -v ./...
+    desc: Run tests
+
+  check-nerd-font:
+    cmds:
+      - nerdfix check $(fd --extension go)
+    desc: Find broken nerdfont characters
+
+  fix-nerd-font:
+    cmds:
+      - nerdfix fix --format=json $(fd --extension go)
+    desc: Fix broken nerdfont icons
+
+  docs-prepare:
+    cmds:
+      - cd docs && hugo mod get
+
+  docs:
+    cmds:
+      - task: docs-prepare
+      - cd docs && hugo server
+    desc: Start docs server
