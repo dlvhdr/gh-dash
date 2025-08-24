@@ -665,11 +665,11 @@
           "mergeStateStatus": "BLOCKED"
         }
       ],
-      "issueCount": 500,
+      "issueCount": 23,
       "pageInfo": {
-        "hasNextPage": true,
+        "hasNextPage": false,
         "startCursor": "Y3Vyc29yOjE=",
-        "endCursor": "Y3Vyc29yOjIw"
+        "endCursor": "Y3Vyc29yOjE="
       }
     }
   }
