@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"runtime/pprof"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,7 +23,6 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/git"
 	"github.com/dlvhdr/gh-dash/v4/ui"
 	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
-	"github.com/dlvhdr/gh-dash/v4/utils"
 )
 
 var (
@@ -55,7 +55,8 @@ func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.
 
 	if debug {
 		var fileErr error
-		newConfigFile, fileErr := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		newConfigFile, fileErr := os.OpenFile("debug.log",
+			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if fileErr == nil {
 			log.SetOutput(newConfigFile)
 			log.SetTimeFormat(time.Kitchen)
@@ -122,6 +123,12 @@ func init() {
 		"passing this flag will allow writing debug output to debug.log",
 	)
 
+	rootCmd.Flags().String(
+		"cpuprofile",
+		"",
+		"write cpu profile to file",
+	)
+
 	rootCmd.Flags().BoolP(
 		"help",
 		"h",
@@ -158,7 +165,18 @@ func init() {
 			defer logger.Close()
 		}
 
-		utils.InitTemplateHandler()
+		cpuprofile, err := rootCmd.Flags().GetString("cpuprofile")
+		if err != nil {
+			log.Fatal("Cannot parse cpuprofile flag", err)
+		}
+		if cpuprofile != "" {
+			f, err := os.Create(cpuprofile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			_ = pprof.StartCPUProfile(f)
+			defer pprof.StopCPUProfile()
+		}
 
 		p := tea.NewProgram(
 			model,
