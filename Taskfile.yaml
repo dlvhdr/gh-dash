@@ -59,10 +59,15 @@ tasks:
 
   docs-prepare:
     cmds:
-      - cd docs && hugo mod get
+      - cd docs-new && yarn
 
-  docs:
+  docs-dev:
+    cmds:
+      - cd docs-new && yarn dev
+    desc: Start docs server
+
+  docs-build:
     cmds:
       - task: docs-prepare
-      - cd docs && hugo server
-    desc: Start docs server
+      - cd docs-new && yarn build
+    desc: Run docs production build

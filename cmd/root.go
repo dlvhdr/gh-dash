@@ -55,7 +55,8 @@ func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.
 
 	if debug {
 		var fileErr error
-		newConfigFile, fileErr := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		newConfigFile, fileErr := os.OpenFile("debug.log",
+			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if fileErr == nil {
 			log.SetOutput(newConfigFile)
 			log.SetTimeFormat(time.Kitchen)

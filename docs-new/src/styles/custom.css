@@ -43,6 +43,8 @@ h3 {
 
 /* Dark mode colors. */
 :root {
+  --sl-nav-height: 5rem;
+
   --sl-color-accent-low: #192339;
   --sl-color-accent: var(--color-blue-300);
   --sl-color-accent-high: var(--color-blue-400);
