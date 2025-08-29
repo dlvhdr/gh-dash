@@ -34,7 +34,6 @@ func (or *TemplateRegistry) NowModify(input string) (string, error) {
 		return "", err
 	}
 
-	log.Info("parsed duration", "duration", duration)
 	return now.Add(duration).Format("2006-01-02"), nil
 }
 
