@@ -85,6 +85,7 @@ func NewModel(
 	ctx *context.ProgramContext,
 	options NewSectionOptions,
 ) BaseModel {
+	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
 	m := BaseModel{
 		Ctx:          ctx,
 		Id:           options.Id,
@@ -96,11 +97,11 @@ func NewModel(
 		PluralForm:   options.Plural,
 		SearchBar: search.NewModel(ctx, search.SearchOptions{
 			Prefix:       fmt.Sprintf("is:%s", options.Type),
-			InitialValue: options.GetConfigFiltersWithCurrentRemoteAdded(ctx),
+			InitialValue: filters,
 		}),
-		SearchValue:               options.GetConfigFiltersWithCurrentRemoteAdded(ctx),
+		SearchValue:               filters,
 		IsSearching:               false,
-		IsFilteredByCurrentRemote: options.GetConfigFiltersWithCurrentRemoteAdded(ctx) != options.Config.Filters,
+		IsFilteredByCurrentRemote: filters != options.Config.Filters,
 		TotalCount:                0,
 		PageInfo:                  nil,
 		PromptConfirmationBox:     prompt.NewModel(ctx),
