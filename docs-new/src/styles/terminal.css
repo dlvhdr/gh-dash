@@ -1,6 +1,8 @@
 .terminal {
   position: relative;
   border: 1px solid var(--sl-color-gray-5);
+  display: flex;
+  flex-direction: column;
 
   * {
     padding: 0;
@@ -52,6 +54,7 @@
   background: black;
   color: #7afb4c;
   padding: 2px;
+  flex-grow: 1;
   overflow: auto;
 }
 .space {

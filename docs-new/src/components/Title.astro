@@ -1,12 +1,27 @@
 ---
-import Default from '@astrojs/starlight/components/PageTitle.astro';
-import Logo from './Logo.astro';
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import Logo from "./Logo.astro";
 
-const isHomepage = Astro.locals.starlightRoute.id === '';
+const isHomepage = Astro.locals.starlightRoute.id === "";
 ---
 
 <style>
+  @keyframes dash-in {
+    from {
+      opacity: 0;
+      filter: blur(1rem);
+      translate: -50vw 0;
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+      translate: 0 0;
+    }
+  }
+ 
   #title-logo {
+    animation: dash-in 400ms ease-out;
     justify-content: center;
     align-items: center;
     display: flex;
@@ -16,14 +31,14 @@ const isHomepage = Astro.locals.starlightRoute.id === '';
       background-size: 100%;
       background-clip: text;
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent; 
+      -webkit-text-fill-color: transparent;
       -moz-background-clip: text;
       -moz-text-fill-color: transparent;
       background-repeat: repeat;
     }
     transform: skew(-20deg);
 
-    & > [aria-label='DASH ASCII Logo'] {
+    & > [aria-label="DASH ASCII Logo"] {
       transform: skew(0);
     }
   }
@@ -31,7 +46,18 @@ const isHomepage = Astro.locals.starlightRoute.id === '';
 
 {
   isHomepage ? (
-<div id="title-logo" class="flex pt-16 items-baseline-last gap-[3ch] text-white relative"><Logo className="inline text-4xl" /><h1>Through<br/> Your GitHub</h1></div>
+    <div
+      id="title-logo"
+      class="relative flex items-baseline-last gap-[3ch] pt-16 text-white"
+    >
+      <>
+        <Logo className="inline text-4xl" />
+        <h1>
+          Through
+          <br /> Your GitHub
+        </h1>
+      </>
+    </div>
   ) : (
     <Default>
       <slot />

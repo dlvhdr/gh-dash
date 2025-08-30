@@ -1,23 +1,10 @@
-@import "@webtui/css/components/pre.css";
-@import "@webtui/css/components/view.css";
-
 main {
-  --sl-content-width: 60rem;
+  --sl-content-width: 80rem;
 }
 
 #main-buttons button {
   padding: 8px;
   width: 20ch;
-  background: var(--sl-color-accent-high);
-  color: var(--sl-color-gray-6);
-  font-weight: bold;
-}
-
-#hero {
-  /* margin-left: -200px; */
-  /* padding-left: 100px; */
-  /* padding-right: 100px; */
-  /* width: 160%; */
 }
 
 .content-panel {
@@ -36,10 +23,6 @@ main {
   color: var(--sl-color-white);
 }
 
-/* .hero { */
-/*   grid-template-columns: 12fr; */
-/* } */
-
 main span {
   background-color: var(--sl-color-black);
   padding: 0 1ch;
@@ -47,6 +30,7 @@ main span {
 
 pre,
 code {
+  border: none;
   padding-block: 0;
   background-color: var(--sl-color-black);
 }

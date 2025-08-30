@@ -1,0 +1,11 @@
+---
+const {href, target} = Astro.props;
+---
+<a
+  class="flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline"
+  href={href}
+  target={target}>
+  <div class="flex items-center gap-2 rounded-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-1 text-[var(--sl-color-accent-low)]">
+    <slot />
+  </div>
+</a>

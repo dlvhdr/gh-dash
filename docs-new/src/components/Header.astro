@@ -1,26 +1,26 @@
 ---
-import Search from '@astrojs/starlight/components/Search.astro';
-import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
-import Logo from './Logo.astro';
-import { Icon } from '@astrojs/starlight/components';
+import Search from "@astrojs/starlight/components/Search.astro";
+import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+import Logo from "./Logo.astro";
+import { Icon } from "@astrojs/starlight/components";
+import PillLink from './PillLink.astro';
 ---
 
-<div class="flex flex-row gap-3 items-center py-0 px-4">
+<div class="flex flex-row items-center gap-3 px-4 py-0">
   <div class="grow">
     <a href="/" class="no-underline">
       <Logo />
     </a>
   </div>
-  <div class="flex items-center gap-2 px-2 py-1 bg-[var(--sl-color-black)] border border-[var(--sl-color-gray-5)] text-[var(--sl-color-accent-low)] rounded-lg">
-    <a class="flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline" href="/getting-started"><Icon name="document" /> Docs</a>
-  </div>
-  <div class="flex items-center gap-2 px-2 py-1 bg-[var(--sl-color-black)] border border-[var(--sl-color-gray-5)] text-[var(--sl-color-accent-low)] rounded-lg">
-    <Icon name="github" />
-    <a class="text-[var(--sl-color-accent-low)] no-underline hover:underline" target="_blank" href="https://github.com/dlvhdr/gh-dash">8.6k</a>
-  </div>
-  <div class="flex items-center gap-2 px-2 py-1 bg-[var(--sl-color-black)] border border-[var(--sl-color-gray-5)] text-[var(--sl-color-accent-low)] rounded-lg">
-    <a class="flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline" href="https://github.com/sponsors/dlvhdr"><Icon name="heart" color="var(--color-red-500)" /> Donate</a>
-  </div>
+  <PillLink href="/getting-started">
+    <Icon name="document" /> Docs
+  </PillLink>
+  <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
+    <Icon name="github" /> 8.7k
+  </PillLink >
+  <PillLink href="./donating">
+    <Icon name="heart" color="var(--color-red-500)" /> Donate
+  </PillLink>
   <Search />
   <ThemeSelect />
 </div>

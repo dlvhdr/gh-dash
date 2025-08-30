@@ -1,0 +1,60 @@
+.fadein {
+  position: relative;
+  height: 100%;
+}
+.fadein img {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  -webkit-animation-name: fade;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-duration: 6s;
+  animation-name: fade;
+  animation-iteration-count: infinite;
+  animation-duration: 6s;
+}
+
+@-webkit-keyframes fade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 1;
+  }
+  53% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 1;
+  }
+  53% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+img:nth-child(1) {
+  position: relative;
+}
+img:nth-child(2) {
+  -webkit-animation-delay: -4s;
+}
+img:nth-child(3) {
+  -webkit-animation-delay: -2s;
+}

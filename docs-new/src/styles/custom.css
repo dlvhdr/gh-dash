@@ -4,19 +4,17 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
-@import "@webtui/css/base.css";
+@theme {
+  --animate-bannermove: bannermove 10s linear infinite;
 
-/* Utils */
-@import "@webtui/css/utils/box.css";
-
-header .header span {
-  background: none;
-}
-
-div[box-="round"] .header span {
-  background: var(--sl-color-gray-6);
-  border-radius: 16px;
-  font-weight: bold;
+  @keyframes bannermove {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(-100%, 0);
+    }
+  }
 }
 
 button {
@@ -60,7 +58,7 @@ h3 {
   --sl-color-gray-1: #eceef2;
   --sl-color-gray-2: #c0c2c7;
   --sl-color-gray-3: #6d728e;
-  --sl-color-gray-4: #545861;
+  --sl-color-gray-4: #4e5673;
   --sl-color-gray-5: #292e42;
   --sl-color-gray-6: #1a1b26;
 
@@ -85,28 +83,7 @@ h3 {
 @layer base {
   :root {
     --font-family: "CommitMono NFM";
-
-    --box-border-color: var(--sl-color-accent-low);
-    [box-~="round"] {
-      --box-border-width: 1px;
-
-      p {
-        padding-inline: 16px;
-      }
-    }
-
     --font-size: 16px;
-    --background0: var(--sl-color-gray-6);
-    --background1: var(--sl-color-gray-5);
-    --background2: var(--sl-color-gray-4);
-    --background3: var(--sl-color-gray-3);
-
-    --foreground0: var(--sl-color-gray-1);
-    --foreground1: var(--sl-color-gray-2);
-    --foreground2: var(--sl-color-gray-3);
-    --box-border-color: var(--sl-color-gray-6);
-    --table-border-color: var(--foreground0);
-    --separator-color: var(--foreground0);
   }
 
   ul,
