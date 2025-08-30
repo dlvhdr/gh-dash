@@ -10,13 +10,16 @@ import { Image } from 'astro:assets';
 
 
 <StarlightPage frontmatter={{title: "DASH Through Your GitHub", template: "splash"}}>
-  <div id="hero" class="flex gap-16 justify-start w-full">
-    <TerminalDemo />
-    <div class="pt-16">
-      <h2 class="w-[90%] text-balance text-gray-300 pb-6">
-        A rich terminal UI for GitHub that <strong class="underline"><i>doesn't break your flow.</i></strong>
+  <div class="flex gap-1 items-center flex-row">
+    <button class="bg-[var(--sl-color-black)] rounded-lg px-2 py-1 text-sm m-0 text-[var(--sl-color-accent-low)]">v4.16.2</button>
+    <button class="bg-[var(--sl-color-black)] rounded-lg px-2 py-1 text-sm m-0 text-[var(--sl-color-accent-low)]">Build: passing</button>
+  </div>
+  <div id="hero">
+    <div class="pt-8 pb-4 flex flex-row gap-12 items-center justify-center w-full">
+      <h2 class="font-normal text-balance text-center">
+        A rich terminal UI for GitHub<br/> that doesn't break your flow
       </h2>
-      <div class="flex flex-col gap-4 items-start">
+      <div id="main-buttons" class="flex flex-col gap-4 items-center">
         <form action="/getting-started/">
           <button>Get started →</button>
         </form>
@@ -25,7 +28,15 @@ import { Image } from 'astro:assets';
         </form>
       </div>
     </div>
+    <div class="relative">
+      <TerminalDemo />
+      <div class="absolute -bottom-2 -right-16 animate-bounce border-gray-700 text-[var(--sl-color-accent)] border h-10 p-1 rounded-2xl">
+        <div>⌄</div>
+        <div class="relative -top-8 mt-0">⌄</div>
+      </div>
+    </div>
   </div>
+
 
   <div class="pt-8"></div>
 
@@ -75,7 +86,7 @@ issuesSections:
     </div>
     <div box-="round" shear-="top">
       <div class="header">
-        <span> Customize the layout to your liking</span>
+        <span> Customie the layout to your liking</span>
       </div>
       <Code lang="yaml" code={`
 repo:
@@ -108,7 +119,7 @@ base:
       </div>
       <Code lang="yaml" code={`
 - key: g
-  name: lazygit
+  name: laygit
   command: lazygit
 - key: C
   name: code review

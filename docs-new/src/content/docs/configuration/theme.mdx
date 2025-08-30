@@ -47,6 +47,22 @@ colors:
     primary: "#808080"
     secondary: "#c0c0c0"
     faint: "#000000"
+  inline:
+    icons:
+      newcontributor: "077"
+      contributor: "075"
+      collaborator: "178"
+      member: "178"
+      owner: "178"
+      unknownrole: "178"
+icons:
+  inline:
+    newcontributor: "󰎔"
+    contributor: ""
+    collaborator: ""
+    member: ""
+    owner: "󱇐"
+    unknownrole: "󱐡"
 ```
 
 ## UI Settings (`ui`)
@@ -77,51 +93,7 @@ Whether to show the separators between lines in the prs/issues tables.
 
 Whether to show table rows in a compact way or not
 
-### Theme Icons (`icons`)
-
-This setting defines a map of author-role icons for the dashboard.
-
-#### New Contributor Role Icon
-
-| Property         | Type   | default |
-| :--------------- | :----- | :------ |
-| `newcontributor` | string | 󰎔       |
-
-Specifies the character to use as the contributor-role icon.
-
-#### Collaborator Role Icon Color
-
-| Property       | Type   | default |
-| :------------- | :----- | :------ |
-| `collaborator` | string |        |
-
-Specifies the character to use as the collaborator-role icon.
-
-#### Member Role Icon Color
-
-| Property | Type   | default |
-| :------- | :----- | :------ |
-| `member` | string |        |
-
-Specifies the character to use as the member-role icon.
-
-#### Owner Role Icon Color
-
-| Property | Type   | default |
-| :------- | :----- | :------ |
-| `owner`  | string | 󱇐       |
-
-Specifies the character to use as the owner-role icon.
-
-#### Unknown Role Icon Color
-
-| Property      | Type   | default |
-| :------------ | :----- | :------ |
-| `unknownrole` | string | 󱐡       |
-
-Specifies the character to use as the unknown-role icon.
-
-### Theme Colors (`colors`)
+## Theme Colors (`colors`)
 
 This setting defines a map of colors for the dashboard's text, background, and border
 colors.
@@ -145,11 +117,11 @@ Required:
 - background
 - border
 
-#### Text Colors (`text`)
+### Text Colors (`text`)
 
 Defines the foreground (text) colors for the dashboard.
 
-##### Primary Text Color
+#### Primary Text Color
 
 | Property  | Type | default                                   |
 | :-------- | :--- | :---------------------------------------- |
@@ -168,7 +140,7 @@ dashboard UI:
 - The comments and checks headers in the preview pane.
 - The username for comment authors in the preview pane.
 
-##### Secondary Text Color
+#### Secondary Text Color
 
 | Property    | Type | default                                   |
 | :---------- | :--- | :---------------------------------------- |
@@ -183,7 +155,7 @@ dashboard UI:
 - The work item number and repository name in the preview pane heading
 - The base and target branch in the preview pane for PRs
 
-##### Inverted Text Color
+#### Inverted Text Color
 
 | Property   | Type | default                                   |
 | :--------- | :--- | :---------------------------------------- |
@@ -195,7 +167,7 @@ dashboard UI:
 - The work item status in the preview pane
 - Work item labels
 
-##### Faint Text Color
+#### Faint Text Color
 
 | Property | Type | default                                   |
 | :------- | :--- | :---------------------------------------- |
@@ -212,7 +184,7 @@ dashboard UI:
 - The date/time information on comments in the preview pane
 - The review status icon when a PR is waiting for a review
 
-##### Warning Text Color
+#### Warning Text Color
 
 | Property  | Type | default                                   |
 | :-------- | :--- | :---------------------------------------- |
@@ -226,7 +198,7 @@ dashboard UI:
 - The icon for failing checks for PRs in the preview pane
 - Error messages for commands, like when the dashboard fails to fetch work items.
 
-##### Success Text Color
+#### Success Text Color
 
 | Property  | Type | default                                  |
 | :-------- | :--- | :--------------------------------------- |
@@ -240,7 +212,7 @@ dashboard UI:
 - The icon for passing checks for PRs in the preview pane
 - Success messages for commands, like when the dashboard fetches work items.
 
-#### Background Colors (`background`)
+### Background Colors (`background`)
 
 Defines the background colors for the dashboard. By default, the background color for
 all elements in the dashboard UI is the terminal's background color.
@@ -249,7 +221,7 @@ Required:
 
 - selected
 
-##### Selected Background Color
+#### Selected Background Color
 
 | Property   | Type | default                                   |
 | :--------- | :--- | :---------------------------------------- |
@@ -262,7 +234,7 @@ dashboard UI:
 - The active view's name
 - The active entry in the section's work item table.
 
-#### Border Colors (`border`)
+### Border Colors (`border`)
 
 | Property | Type | default                                   |
 | :------- | :--- | :---------------------------------------- |
@@ -276,7 +248,7 @@ Required:
 - secondary
 - faint
 
-##### Primary Border Color
+#### Primary Border Color
 
 | Property  | Type | default                                   |
 | :-------- | :--- | :---------------------------------------- |
@@ -289,7 +261,7 @@ This setting determines the color for the following elements in the dashboard UI
 - The border between the table and the preview pane
 - The border above the command help info
 
-##### Secondary Border Color
+#### Secondary Border Color
 
 | Property    | Type | default                                   |
 | :---------- | :--- | :---------------------------------------- |
@@ -299,7 +271,7 @@ This setting determines the color for the following elements in the dashboard UI
 
 - The borders that separate the sections in the tab list
 
-##### Faint Border Color
+#### Faint Border Color
 
 | Property | Type | default                                   |
 | :------- | :--- | :---------------------------------------- |
@@ -309,7 +281,7 @@ This setting determines the color for the following elements in the dashboard UI
 
 - The border between rows in the table
 
-### Icon Colors (`icon`)
+### Icon Colors (`inline.icons`)
 
 Defines author-role icon colors for the dashboard.
 
@@ -358,3 +330,55 @@ Specifies the icon color for the owner-role icon.
 | `unknown` | hex  |         |
 
 Specifies the icon color for the unknown-role icon.
+
+## Icons (`icons.inline`)
+
+This setting defines a map of author-role icons for the dashboard.
+
+### New Contributor Role Icon
+
+Specifies the character to use as the new-contributor-role icon.
+
+| Property         | Type   | default |
+| :--------------- | :----- | :------ |
+| `newcontributor` | string | 󰎔       |
+
+### Contributor Role Icon Color
+
+Specifies the character to use as the contributor-role icon.
+
+| Property      | Type   | default |
+| :------------ | :----- | :------ |
+| `contributor` | string |        |
+
+### Collaborator Role Icon Color
+
+Specifies the character to use as the collaborator-role icon.
+
+| Property       | Type   | default |
+| :------------- | :----- | :------ |
+| `collaborator` | string |        |
+
+### Member Role Icon Color
+
+Specifies the character to use as the member-role icon.
+
+| Property | Type   | default |
+| :------- | :----- | :------ |
+| `member` | string |        |
+
+### Owner Role Icon Color
+
+Specifies the character to use as the owner-role icon.
+
+| Property | Type   | default |
+| :------- | :----- | :------ |
+| `owner`  | string | 󱇐       |
+
+### Unknown Role Icon Color
+
+Specifies the character to use as the unknown-role icon.
+
+| Property      | Type   | default |
+| :------------ | :----- | :------ |
+| `unknownrole` | string | 󱐡       |

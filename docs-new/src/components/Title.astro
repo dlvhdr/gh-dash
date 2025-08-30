@@ -7,20 +7,31 @@ const isHomepage = Astro.locals.starlightRoute.id === '';
 
 <style>
   #title-logo {
-    position: relative;
-    top: 30px;
-    &::after {
-      display: block;
-      margin-top: 12px;
-      content: '---------->';
-      width: 100%;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    h1 {
+      line-height: 1.3;
+      background-image: var(--hdr-gradient);
+      background-size: 100%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; 
+      -moz-background-clip: text;
+      -moz-text-fill-color: transparent;
+      background-repeat: repeat;
+    }
+    transform: skew(-20deg);
+
+    & > [aria-label='DASH ASCII Logo'] {
+      transform: skew(0);
     }
   }
 </style>
 
 {
   isHomepage ? (
-<div class="flex pt-16 items-baseline-last gap-[3ch] text-white w-[150%] relative left-[100px]"><Logo className="inline text-5xl" /><h1>Through<br/> Your GitHub</h1></div>
+<div id="title-logo" class="flex pt-16 items-baseline-last gap-[3ch] text-white relative"><Logo className="inline text-4xl" /><h1>Through<br/> Your GitHub</h1></div>
   ) : (
     <Default>
       <slot />

@@ -40,12 +40,11 @@ export default defineConfig({
             "configuration/examples",
             "configuration/schema",
             "configuration/defaults",
+            "configuration/searching",
             "configuration/pr-section",
             "configuration/issue-section",
             "configuration/repo-paths",
-
             "configuration/keybindings",
-            "configuration/searching",
             "configuration/theme",
             {
               label: "Layout",
@@ -58,6 +57,7 @@ export default defineConfig({
           ],
         },
         { slug: "contributing" },
+        { slug: "donating" },
       ],
     }),
   ],

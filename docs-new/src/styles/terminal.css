@@ -1,6 +1,6 @@
 .terminal {
-  border-radius: 8px 8px 0 0;
   position: relative;
+  border: 1px solid var(--sl-color-gray-5);
 
   * {
     padding: 0;
@@ -8,23 +8,25 @@
   }
 }
 .terminal .top {
-  background: #000;
-  color: black;
-  padding: 5px;
+  font-size: 0.75rem;
+  background: none;
+  color: var(--sl-color-gray-3);
+  padding: 4px;
+  border-bottom: 1px solid var(--sl-color-gray-5);
   border-radius: 5px 5px 0 0;
 }
 .terminal .btns {
   position: absolute;
-  top: 7px;
-  left: 5px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  top: 10px;
+  left: 12px;
 }
 .terminal .circle {
-  width: 12px;
-  height: 12px;
-  display: inline-block;
-  border-radius: 15px;
-  margin-left: 2px;
-  border-width: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   border-style: solid;
 }
 .terminal-title {

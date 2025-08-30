@@ -1,4 +1,4 @@
-@layer base, starlight, theme, components, utilities;
+@layer base, starlight, theme, components, utilities, overrides;
 
 @import "@astrojs/starlight-tailwind";
 @import "tailwindcss/theme.css" layer(theme);
@@ -28,10 +28,10 @@ button {
 }
 
 h1 {
-  font-size: var(--text-5xl);
+  font-size: var(--text-4xl);
 }
 h2 {
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
 }
 h3 {
   font-size: var(--text-xl);
@@ -43,19 +43,28 @@ h3 {
 
 /* Dark mode colors. */
 :root {
-  --sl-nav-height: 5rem;
+  --hdr-gradient: linear-gradient(
+    to right in oklab,
+    oklch(90% 0.5 200),
+    oklch(80% 0.3 230)
+  );
+  --sdr-gradient: linear-gradient(to right, #0ff, #00d4ff);
 
-  --sl-color-accent-low: #192339;
+  --sl-nav-height: 4rem;
+
+  --sl-color-bg: #03030a;
+  --sl-color-accent-low: var(--color-blue-200);
   --sl-color-accent: var(--color-blue-300);
-  --sl-color-accent-high: var(--color-blue-400);
-  --sl-color-white: #ffffff;
+  --sl-color-accent-high: #0ff;
+  --sl-color-white: #c0caf5;
   --sl-color-gray-1: #eceef2;
   --sl-color-gray-2: #c0c2c7;
-  --sl-color-gray-3: #888b96;
+  --sl-color-gray-3: #6d728e;
   --sl-color-gray-4: #545861;
-  --sl-color-gray-5: #353841;
-  --sl-color-gray-6: #24272f;
-  --sl-color-black: #17181c;
+  --sl-color-gray-5: #292e42;
+  --sl-color-gray-6: #1a1b26;
+
+  --sl-color-black: #0f0f1c;
 }
 /* Light mode colors. */
 :root[data-theme="light"] {
@@ -75,8 +84,7 @@ h3 {
 
 @layer base {
   :root {
-    --font-family: "FiraCode NFM", "JetBrains Mono", Menlo, Monaco, monospace,
-      "Symbols Nerd Font";
+    --font-family: "CommitMono NFM";
 
     --box-border-color: var(--sl-color-accent-low);
     [box-~="round"] {
@@ -120,7 +128,7 @@ h3 {
   --foreground2: var(--sl-color-gray-2);
 
   ul > li {
-    font-family: "FiraCode NFM";
+    font-family: "CommitMono NFM";
     --sl-sidebar-item-padding-inline: 0;
     color: var(--foreground2);
     text-decoration: none;
@@ -209,11 +217,11 @@ h3 {
 }
 
 code {
-  font-family: "FiraCode NFM";
+  font-family: "CommitMono NFM";
 }
 
 pre {
-  font-family: "FiraCode NFM";
+  font-family: "CommitMono NFM";
   background: var(--background0);
 
   code span {
@@ -238,4 +246,10 @@ kbd {
 
 .hero {
   padding-bottom: 16px;
+}
+
+@layer overrides {
+  th {
+    font-weight: normal;
+  }
 }

@@ -8,6 +8,8 @@
 }
 
 @font-face {
-  font-family: "FiraCode NFM";
-  src: url("fira-code-retina-nf.ttf") format("ttf");
+  font-family: "CommitMono NFM";
+  font-weight: normal;
+  font-style: normal;
+  src: url("./CommitMonoNerdFontMono-Regular.otf") format("opentype");
 }

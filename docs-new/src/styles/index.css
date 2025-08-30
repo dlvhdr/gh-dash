@@ -5,9 +5,8 @@ main {
   --sl-content-width: 60rem;
 }
 
-.content-panel button {
-  height: 2lh;
-  padding: 0;
+#main-buttons button {
+  padding: 8px;
   width: 20ch;
   background: var(--sl-color-accent-high);
   color: var(--sl-color-gray-6);
@@ -15,25 +14,31 @@ main {
 }
 
 #hero {
-  margin-left: -200px;
-  padding-left: 100px;
-  padding-right: 100px;
-  width: 160%;
+  /* margin-left: -200px; */
+  /* padding-left: 100px; */
+  /* padding-right: 100px; */
+  /* width: 160%; */
 }
 
 .content-panel {
+  padding-bottom: 0px;
+  padding-top: 16px;
   border-top: none;
 }
 
-.content-panel button[variant-="background0"] {
-  background: var(--background0);
-  font-weight: 400;
-  color: var(--sl-color-gray-1);
+.sl-container .sl-markdown-content {
+  @apply flex flex-col items-center;
 }
 
-.hero {
-  grid-template-columns: 12fr;
+#main-buttons button[variant-="background0"] {
+  background: var(--background0);
+  font-weight: 400;
+  color: var(--sl-color-white);
 }
+
+/* .hero { */
+/*   grid-template-columns: 12fr; */
+/* } */
 
 main span {
   background-color: var(--sl-color-black);
