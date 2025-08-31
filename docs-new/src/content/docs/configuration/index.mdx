@@ -13,18 +13,18 @@ cascade:
 
 import { Aside, LinkCard, CardGrid } from "@astrojs/starlight/components";
 
-`Dash` has extensive configuration options.
+`dash` has extensive configuration options.
 
 - The config is usually created under `$HOME/.config/gh-dash/config.yml`, but this
-  changes between operating systems and `Dash` has many ways to override that.
-- `Dash` will also look for a `.gh-dash.yml` file if in a git repository to allow
+  changes between operating systems and `dash` has many ways to override that.
+- `dash` will also look for a `.gh-dash.yml` file if in a git repository to allow
   for project specific configuration.
 - Use the [`--config`][01] flag or `$GH_DASH_CONFIG` to specify an alternate configuration.
 
 <details>
-  <summary>How does `Dash` determine which configuration file to use?</summary>
+  <summary>How does `dash` determine which configuration file to use?</summary>
   Using the following logic:
-1. If `$GH_DASH_CONFIG` is a non-empty string, `Dash` will use this file for
+1. If `$GH_DASH_CONFIG` is a non-empty string, `dash` will use this file for
    its configuration.
 2. If `$GH_DASH_CONFIG` isn't set and you're in a git repository, it will look for `.gh-dash.yml` or `.gh-dash.yaml`
    in the repository root.
@@ -38,7 +38,7 @@ import { Aside, LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 ## Options
 
-The configuration for `Dash` is schematized. The pages in this section list the configuration
+The configuration for `dash` is schematized. The pages in this section list the configuration
 options, their defaults, and how you can use them.
 
 ### Schema

@@ -16,9 +16,7 @@ import gruvSrc from "../assets/gruv.png"
 import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
 ---
 
-<StarlightPage
-  frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}
->
+<StarlightPage frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}>
   <div class="flex flex-row items-center gap-1">
     <button
       class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
@@ -29,7 +27,7 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
       >Build: passing</button
     >
   </div>
-  <div id="hero" class="mb-8 lg:mb-36">
+  <div id="hero" class="mb-36">
     <div
       class="flex w-full flex-col lg:flex-row items-center justify-center gap-4 lg:gap-12 pt-2 lg:pt-8 pb-4"
     >
@@ -51,7 +49,7 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
         </form>
       </div>
     </div>
-    <div class="relative">
+    <div class="relative -mx-[2.5vw]">
       <Terminal>
         <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
           <source src="/src/assets/overview.webm" type="video/webm" />
@@ -66,9 +64,9 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
     </div>
   </div>
 
-  <div class="flex flex-col gap-12 w-[95vw] lg:w-full">
+  <div class="flex flex-col gap-36 w-[95vw] lg:w-80rem items-center lg:gap-48">
     <Showcase>
-      <Box header="︎ Define sections using GitHub filters">
+      <Box header="︎ Define Custom GitHub Filters">
         <Code
           class="overflow-auto"
           lang="yaml"
@@ -92,14 +90,8 @@ issuesSections:
         </video>
       </Terminal>
     </Showcase>
-    <Showcase>
-      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[50%] border border-[var(--sl-color-gray-5)] p-4 box-border">
-        <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
-          <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
-          <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
-        </div>
-      </div>
-      <Box header=" First class Vim keybindings" src={prSectionsImage} alt="">
+    <Showcase reversed={true}>
+      <Box header=" Native Vim Keybindings" src={prSectionsImage}>
         <ul>
           <li><kbd>h/j/k/l</kbd> to move between rows/sections</li>
           <li><kbd>ctrl+d/u</kbd> to move in sidebar</li>
@@ -108,9 +100,15 @@ issuesSections:
           <li>and more...</li>
         </ul>
       </Box>
+      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[800px] border border-[var(--sl-color-gray-5)] box-border m-0">
+        <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
+          <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
+          <Image class="my-0 scale-160" src={helpSrc} aria-hidden={true} alt="duplicate image for marquee effect"/>
+        </div>
+      </div>
     </Showcase>
     <Showcase>
-      <Box header=" Set custom commands" src={prSectionsImage} alt="">
+      <Box header=" Set Custom Commands" src={prSectionsImage}>
         <Code
           lang="yaml"
           code={`- key: g
@@ -132,15 +130,8 @@ issuesSections:
         </video>
       </Terminal>
     </Showcase>
-    <Showcase>
-      <Terminal className="w-full">
-        <FadeImages>
-          <Image src={catppuccinSrc} alt="Dash running with the catppuccin theme"/>
-          <Image src={gruvSrc} alt="Dash running with the gruvbox theme"/>
-          <Image src={tokyonightSrc} alt="Dash running with the tokyo-night theme"/>
-        </FadeImages>
-      </Terminal>
-      <Box header=" Use custom themes" src={prSectionsImage} alt="">
+    <Showcase reversed={true}>
+      <Box header=" Use Custom Themes" src={prSectionsImage}>
         <Code
           lang="yaml"
           code={`ui:
@@ -155,13 +146,20 @@ colors:
 # rest of theme...`}
         />
       </Box>
+      <Terminal className="lg:w-[800px]">
+        <FadeImages>
+          <Image src={catppuccinSrc} alt="Dash running with the catppuccin theme"/>
+          <Image src={gruvSrc} alt="Dash running with the gruvbox theme"/>
+          <Image src={tokyonightSrc} alt="Dash running with the tokyo-night theme"/>
+        </FadeImages>
+      </Terminal>
     </Showcase>
   </div>
-  <div class="flex flex-col items-center mt-16">
+  <div class="flex flex-col items-center mt-28">
     <h2 class="mb-2 !text-4xl">
       Why use DASH?
     </h2>
-    <p class="mb-4 lg:w-[60ch] text-center">
+    <p class="mb-6 lg:w-[60ch] text-center">
       Check out this 10/10 video by <a href="https://charm.sh">charm.sh ✨</a> explaining how DASH can help you manage your GitHub experience
     </p>
     <a href="https://www.youtube.com/watch?v=5omFxcNjBQk&t" target="_blank">

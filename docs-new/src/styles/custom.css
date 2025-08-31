@@ -37,6 +37,14 @@ h3 {
 
 :root {
   --sl-font: var(--font-family);
+  --sl-nav-height: 4rem;
+  --sl-nav-pad-x: 32px;
+}
+
+@media (width <= 64rem) {
+  :root {
+    --sl-nav-pad-x: 8px;
+  }
 }
 
 /* Dark mode colors. */
@@ -47,9 +55,6 @@ h3 {
     oklch(80% 0.3 230)
   );
   --sdr-gradient: linear-gradient(to right, #0ff, #00d4ff);
-
-  --sl-nav-height: 4rem;
-  --sl-nav-pad-x: 16px;
 
   --sl-color-bg: #03030a;
   --sl-color-accent-low: var(--color-blue-200);
@@ -196,6 +201,7 @@ h3 {
 
 code {
   font-family: "CommitMono NFM";
+  color: var(--sl-color-accent);
 }
 
 pre {
@@ -207,8 +213,8 @@ pre {
   }
 }
 
-kbd {
-  margin-top: 0 !important;
+kbd:not(.sl-hidden) {
+  margin-top: 0;
   display: inline-block;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.25rem;
@@ -229,5 +235,11 @@ kbd {
 @layer overrides {
   th {
     font-weight: normal;
+  }
+
+  @media (width <= 64rem) {
+    header {
+      padding-left: 16px;
+    }
   }
 }

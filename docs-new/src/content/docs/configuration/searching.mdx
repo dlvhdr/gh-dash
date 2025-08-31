@@ -55,26 +55,26 @@ The available units are:
 
 ## Smart Filtering
 
-By default, if the directory you launch `Dash` from is a clone of a remote GitHub repo (or if you
+By default, if the directory you launch `dash` from is a clone of a remote GitHub repo (or if you
 have the `GH_REPO` environment variable set to a particular remote), then for any of your PR
 sections and issue sections with `filters` values in your [configuration](/configuration) that don’t
-have an explicit `repo:` field, `Dash` adds a `repo:<RepoName>` field to the search-bar value for
+have an explicit `repo:` field, `dash` adds a `repo:<RepoName>` field to the search-bar value for
 them (where _`<RepoName>`_ is the name of the remote repo).
 
-That is, `Dash` further filters those sections down to only the PRs/issues for the GitHub
+That is, `dash` further filters those sections down to only the PRs/issues for the GitHub
 repo name specified in your `GH_REPO` environment variable — or else the repo name of the remote
-tracked by the clone directory from which `Dash` launched.
+tracked by the clone directory from which `dash` launched.
 
-For that, `Dash` first checks and uses the repo name in the `GH_REPO` environment variable (if
-you have that set). If `Dash` doesn’t find that, then it next checks for the value of the remote
-repo name tracked by the clone directory from which you launched `Dash` — by looking through all
+For that, `dash` first checks and uses the repo name in the `GH_REPO` environment variable (if
+you have that set). If `dash` doesn’t find that, then it next checks for the value of the remote
+repo name tracked by the clone directory from which you launched `dash` — by looking through all
 GitHub remotes configured for that clone in the following order:
 
 1. `upstream`
 2. `github`
 3. `origin`
 
-…and, otherwise, if `Dash` finds no remotes with any of those names, then it uses the repo name
+…and, otherwise, if `dash` finds no remotes with any of those names, then it uses the repo name
 for the first remote in the output that `git remote` shows.
 
 To disable Smart Filtering at launch, set `smartFilteringAtLaunch` to `false` in your [configuration](/configuration).

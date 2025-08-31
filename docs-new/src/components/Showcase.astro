@@ -1,6 +1,7 @@
 ---
+const {reversed} = Astro.props;
 ---
 
-<div class="flex flex-col lg:flex-row gap-8 items-center">
+<div class={`flex flex-col gap-0 items-center lg:gap-8 ${reversed ? "lg:flex-row-reverse" : "lg:flex-row"}`}>
   <slot />
 </div>

@@ -1,15 +1,19 @@
-main {
-  --sl-content-width: 100vw;
+html:not([data-has-sidebar]) {
+  --sl-content-width: 100%;
 }
 
 @media (width >= 64rem) {
-  main {
+  :root {
     --sl-content-width: 80rem;
   }
 }
 
 * {
   box-sizing: border-box;
+}
+
+main {
+  overflow-x: hidden;
 }
 
 #main-buttons button {
@@ -24,7 +28,7 @@ main {
 }
 
 .sl-container .sl-markdown-content {
-  @apply flex flex-col items-center w-full;
+  @apply flex w-full flex-col items-center;
 }
 
 #main-buttons button[variant-="background0"] {
@@ -63,4 +67,22 @@ div.copy button[title="Copy to clipboard"] {
 
 footer {
   display: none;
+}
+
+@layer overrides {
+  html {
+    --sl-content-width: 100%;
+  }
+
+  th {
+    font-weight: normal;
+  }
+
+  @media (width <= 64rem) {
+    header {
+      width: 100vw;
+      padding-left: 16px;
+      padding-right: 8px;
+    }
+  }
 }
