@@ -29,11 +29,11 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
       >Build: passing</button
     >
   </div>
-  <div id="hero" class="mb-36">
+  <div id="hero" class="mb-8 lg:mb-36">
     <div
-      class="flex w-full flex-row items-center justify-center gap-12 pt-8 pb-4"
+      class="flex w-full flex-col lg:flex-row items-center justify-center gap-4 lg:gap-12 pt-2 lg:pt-8 pb-4"
     >
-      <h2 class="text-center font-normal text-balance">
+      <h2 class="text-center font-normal text-pretty">
         A rich terminal UI for GitHub<br /> that doesn't break your flow
       </h2>
       <div id="main-buttons" class="flex flex-col items-center gap-4">
@@ -43,7 +43,7 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
             >Get started →</button
           >
         </form>
-        <form class="m-0" action="https://github.com/dlvhdr/gh-dash">
+        <form class="m-0" action="https://github.com/dlvhdr/gh-dash" target="_blank">
           <button
             class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
             >View on GitHub </button
@@ -53,12 +53,12 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
     </div>
     <div class="relative">
       <Terminal>
-        <video autoplay loop muted playsinline width="800">
+        <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
           <source src="/src/assets/overview.webm" type="video/webm" />
         </video>
       </Terminal>
       <div
-        class="absolute -right-16 -bottom-2 h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)]"
+        class="hidden lg:visible absolute lg:-right-16 lg:-bottom-2 h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)]"
       >
         <div>⌄</div>
         <div class="relative -top-8 mt-0">⌄</div>
@@ -66,10 +66,11 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
     </div>
   </div>
 
-  <div class="flex flex-col gap-12">
+  <div class="flex flex-col gap-12 w-[95vw] lg:w-full">
     <Showcase>
       <Box header="︎ Define sections using GitHub filters">
         <Code
+          class="overflow-auto"
           lang="yaml"
           code={`prSections:
   - title: My Pull Requests
@@ -84,15 +85,15 @@ issuesSections:
 `}
         />
       </Box>
-      <Terminal>
-        <video autoplay loop muted playsinline width="800">
+      <Terminal className="w-[95vw] lg:w-[800px]">
+        <video autoplay loop muted playsinline >
           <source src="/src/assets/sections.webm" type="video/webm" />
           <source src="/src/assets/sections.mp4" type="video/mp4" />
         </video>
       </Terminal>
     </Showcase>
     <Showcase>
-      <div class="overflow-hidden relative h-[300px] w-[50%] border border-[var(--sl-color-gray-5)] p-4 box-border">
+      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[50%] border border-[var(--sl-color-gray-5)] p-4 box-border">
         <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
           <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
           <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
@@ -118,13 +119,14 @@ issuesSections:
 - key: C
   name: code review
   command: >
-    tmux new-window -c {{.RepoPath}} 'nvim
-      -c ":silent Octo pr edit {{.PrNumber}}"'
+    tmux new-window -c {{.RepoPath}}
+    'nvim -c
+    ":silent Octo pr edit {{.PrNumber}}"'
         `}
         />
       </Box>
       <Terminal>
-        <video autoplay loop muted playsinline width="800">
+        <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
           <source src="/src/assets/custom-commands.webm" type="video/webm" />
           <source src="/src/assets/custom-commands.mp4" type="video/mp4" />
         </video>
@@ -159,11 +161,11 @@ colors:
     <h2 class="mb-2 !text-4xl">
       Why use DASH?
     </h2>
-    <p class="mb-4 w-[60ch] text-center">
+    <p class="mb-4 lg:w-[60ch] text-center">
       Check out this 10/10 video by <a href="https://charm.sh">charm.sh ✨</a> explaining how DASH can help you manage your GitHub experience
     </p>
     <a href="https://www.youtube.com/watch?v=5omFxcNjBQk&t" target="_blank">
-      <Image src={charmVidPreviewSrc} width="800" alt="YouTube video - Manage open source like a boss (in the terminal)"/>
+      <Image src={charmVidPreviewSrc} alt="YouTube video - Manage open source like a boss (in the terminal)" class="w-[95vw] lg:w-[800px]" />
     </a>
   </div>
   <Footer className="mt-20" />

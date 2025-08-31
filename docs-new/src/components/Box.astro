@@ -4,10 +4,10 @@ const { header } = Astro.props;
 
 <div class="relative flex flex-row gap-6">
   <div
-    class="w-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-6 py-6"
+    class="lg:w-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] lg:p-6"
   >
     <div
-      class="absolute -top-4 left-2 rounded-2xl bg-[var(--sl-color-gray-5)] px-3"
+      class="max-w-[95vw] absolute -top-4 lg:left-2 rounded-2xl bg-[var(--sl-color-gray-5)] lg:px-3"
     >
       <h3 class="!text-base text-[var(--sl-color-accent)]">{header}</h3>
     </div>

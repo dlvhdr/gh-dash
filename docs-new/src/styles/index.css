@@ -1,5 +1,15 @@
 main {
-  --sl-content-width: 80rem;
+  --sl-content-width: 100vw;
+}
+
+@media (width >= 64rem) {
+  main {
+    --sl-content-width: 80rem;
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 #main-buttons button {
@@ -14,18 +24,13 @@ main {
 }
 
 .sl-container .sl-markdown-content {
-  @apply flex flex-col items-center;
+  @apply flex flex-col items-center w-full;
 }
 
 #main-buttons button[variant-="background0"] {
   background: var(--background0);
   font-weight: 400;
   color: var(--sl-color-white);
-}
-
-main span {
-  background-color: var(--sl-color-black);
-  padding: 0 1ch;
 }
 
 pre,

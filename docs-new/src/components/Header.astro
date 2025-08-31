@@ -6,21 +6,23 @@ import { Icon } from "@astrojs/starlight/components";
 import PillLink from './PillLink.astro';
 ---
 
-<div class="flex flex-row items-center gap-3 px-4 py-0">
+<div class="flex flex-row items-center gap-1 lg:gap-3 py-0 max-w-[100vw]">
   <div class="grow">
     <a href="/" class="no-underline">
       <Logo />
     </a>
   </div>
   <PillLink href="/getting-started">
-    <Icon name="document" /> Docs
+    <Icon name="document" /><span class="hidden lg:visible"> Docs</span>
   </PillLink>
   <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
-    <Icon name="github" /> 8.7k
+    <Icon name="github" /><span class="hidden lg:visible"> 8.7k</span>
   </PillLink >
   <PillLink href="./donating">
-    <Icon name="heart" color="var(--color-red-500)" /> Donate
+    <Icon name="heart" color="var(--color-red-500)" /><span class="hidden lg:visible"> Donate</span>
   </PillLink>
   <Search />
-  <ThemeSelect />
+  <div class="sl-hidden md:sl-flex" >
+    <ThemeSelect />
+  </div>
 </div>

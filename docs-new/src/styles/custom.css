@@ -49,6 +49,7 @@ h3 {
   --sdr-gradient: linear-gradient(to right, #0ff, #00d4ff);
 
   --sl-nav-height: 4rem;
+  --sl-nav-pad-x: 16px;
 
   --sl-color-bg: #03030a;
   --sl-color-accent-low: var(--color-blue-200);
