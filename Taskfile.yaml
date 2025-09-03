@@ -59,15 +59,15 @@ tasks:
 
   docs-prepare:
     cmds:
-      - cd docs-new && yarn
+      - cd docs && yarn
 
   docs-dev:
     cmds:
-      - cd docs-new && yarn dev
+      - cd docs && yarn dev
     desc: Start docs server
 
   docs-build:
     cmds:
       - task: docs-prepare
-      - cd docs-new && yarn build
+      - cd docs && yarn build
     desc: Run docs production build
