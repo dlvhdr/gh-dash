@@ -37,8 +37,16 @@ h3 {
 
 :root {
   --sl-font: var(--font-family);
-  --sl-nav-height: 4rem;
-  --sl-nav-pad-x: 32px;
+  --sl-nav-height: 5rem;
+  --sl-nav-pad-x: 16px;
+  --sl-color-bg-nav: var(--sl-color-bg);
+  --sl-color-bg-sidebar: var(--sl-color-bg);
+  --sl-color-hairline-shade: none;
+  /* --sl-color-hairline-shade: */
+}
+
+.sidebar-pane {
+  --sl-color-hairline-shade: var(--sl-color-gray-6);
 }
 
 @media (width <= 64rem) {
@@ -54,7 +62,6 @@ h3 {
     oklch(90% 0.5 200),
     oklch(80% 0.3 230)
   );
-  --sdr-gradient: linear-gradient(to right, #0ff, #00d4ff);
 
   --sl-color-bg: #03030a;
   --sl-color-accent-low: var(--color-blue-200);
@@ -72,9 +79,16 @@ h3 {
 }
 /* Light mode colors. */
 :root[data-theme="light"] {
-  --sl-color-accent-low: var(--color-blue-300);
-  --sl-color-accent: var(--color-blue-400);
-  --sl-color-accent-high: var(--color-blue-500);
+  --hdr-gradient: linear-gradient(
+    to right in oklab,
+    oklch(16% 0.5 200) 0%,
+    oklch(65% 0.3 230) 100%
+  );
+
+  --sl-color-bg: #f5f6f8;
+  --sl-color-accent-low: var(--color-blue-600);
+  --sl-color-accent: var(--color-blue-500);
+  --sl-color-accent-high: var(--color-blue-400);
   --sl-color-white: #17181c;
   --sl-color-gray-1: #24272f;
   --sl-color-gray-2: #353841;

@@ -1,10 +1,13 @@
 ---
 import PillLink from './PillLink.astro';
+import DecorationTop from "./DecorationTop.astro";
+import DecorationBottom from "./DecorationBottom.astro";
 
 const { className } = Astro.props;
 ---
 
 <div class={`text-center items-center !text-sm flex flex-col p-8 ${className}`}>
+  <DecorationTop />
   <p class="mb-2">
     Created and maintained by <a href="https://github.com/dlvhdr">@dlvdr</a> and the <a href="https://github.com/dlvhdr/gh-dash/graphs/contributors">community</a>
   </p>
@@ -16,4 +19,5 @@ const { className } = Astro.props;
       Theme: Tokyo Night
     </PillLink>
   </div>
+  <DecorationBottom />
 </div>

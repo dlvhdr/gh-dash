@@ -2,11 +2,16 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import tailwindcss from "@tailwindcss/vite";
+import astroBrokenLinksChecker from "astro-broken-links-checker";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://dlvhdr.github.io/gh-dash/",
   integrations: [
+    astroBrokenLinksChecker({
+      logFilePath: "broken-links.log", // Optional: specify the log file path
+      checkExternalLinks: false, // Optional: check external links (currently, caching to disk is not supported, and it is slow )
+    }),
     starlight({
       title: "DASH",
       customCss: ["./src/styles/custom.css", "./src/fonts/font-face.css"],
