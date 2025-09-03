@@ -59,15 +59,15 @@ tasks:
 
   docs-prepare:
     cmds:
-      - cd docs && yarn
+      - cd docs && pnpm i
 
   docs-dev:
     cmds:
-      - cd docs && yarn dev
+      - cd docs && pnpm dev
     desc: Start docs server
 
   docs-build:
     cmds:
       - task: docs-prepare
-      - cd docs && yarn build
+      - cd docs && pnpm build
     desc: Run docs production build
