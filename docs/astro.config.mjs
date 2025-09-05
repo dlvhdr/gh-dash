@@ -4,9 +4,12 @@ import starlight from "@astrojs/starlight";
 import tailwindcss from "@tailwindcss/vite";
 import astroBrokenLinksChecker from "astro-broken-links-checker";
 
+import node from "@astrojs/node";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://gh-dash.dev",
+
   integrations: [
     astroBrokenLinksChecker({
       logFilePath: "broken-links.log", // Optional: specify the log file path
@@ -66,7 +69,12 @@ export default defineConfig({
       ],
     }),
   ],
+
   vite: {
     plugins: [tailwindcss()],
   },
+
+  adapter: node({
+    mode: "standalone",
+  }),
 });
