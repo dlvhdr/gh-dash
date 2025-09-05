@@ -6,8 +6,7 @@ import astroBrokenLinksChecker from "astro-broken-links-checker";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://dlvhdr.github.io",
-  base: "/gh-dash",
+  site: "https://gh-dash.dev",
   integrations: [
     astroBrokenLinksChecker({
       logFilePath: "broken-links.log", // Optional: specify the log file path
