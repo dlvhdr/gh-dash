@@ -2,7 +2,7 @@ name: Build Docs Docker image
 
 on:
   push:
-    branches: ["main"]
+    branches: ["dlvhdr/new-docs"]
 
 jobs:
   build-and-push-dockerfile-image:
