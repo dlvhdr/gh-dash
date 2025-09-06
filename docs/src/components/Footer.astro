@@ -1,5 +1,4 @@
 ---
-import PillLink from './PillLink.astro';
 import DecorationTop from "./DecorationTop.astro";
 import DecorationBottom from "./DecorationBottom.astro";
 
@@ -12,12 +11,16 @@ const { class: className } = Astro.props;
     Created and maintained by <a href="https://github.com/dlvhdr">@dlvdr</a> and the <a href="https://github.com/dlvhdr/gh-dash/graphs/contributors">community</a>
   </p>
   <div class="flex gap-3">
-    <PillLink href="https://charm.sh" target="_blank" class="!text-xs border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-0 rounded-lg">
-      Built with: Charm
-    </PillLink>
-    <PillLink href="https://github.com/tokyo-night/tokyo-night-vscode-theme" target="_blank" class="!text-xs border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-0 rounded-lg">
-      Theme: Tokyo Night
-    </PillLink>
+    <a
+      class={"flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline rounded-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-1 text-xs"}
+    href="https://charm.sh" target="_blank">
+      Built with: <span class="underline">Charm</span>
+    </a>
+    <a
+      class={"flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline rounded-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-1 text-xs"}
+    href="https://github.com/tokyo-night/tokyo-night-vscode-theme" target="_blank">
+      Theme: <span class="underline">Tokyo Night</span>
+    </a>
   </div>
   <DecorationBottom />
 </div>

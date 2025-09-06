@@ -18,14 +18,17 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
 
 <StarlightPage frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}>
   <div class="flex flex-row items-center gap-1">
+    <form action="https://github.com/dlvhdr/gh-dash/releases">
+      <button
+        class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+        >v4.16.2</button
+      >
+    </form>
     <button
-      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
-      >v4.16.2</button
-    >
-    <button
-      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
-      >Build: passing</button
-    >
+      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]">
+      Build: passing
+    </button>
+
   </div>
   <div id="hero" class="mb-24">
     <div
@@ -105,7 +108,7 @@ issuesSections:
           <li>and more...</li>
         </ul>
       </Box>
-      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[800px] border border-[var(--sl-color-gray-5)] box-border m-0">
+      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[800px] border border-[var(--sl-color-gray-5)] box-border m-0 bg-[#010101]">
         <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
           <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
           <Image class="my-0 scale-160" src={helpSrc} aria-hidden={true} alt="duplicate image for marquee effect"/>
@@ -171,5 +174,5 @@ colors:
       <Image src={charmVidPreviewSrc} alt="YouTube video - Manage open source like a boss (in the terminal)" class="w-[95vw] lg:w-[800px]" />
     </a>
   </div>
-  <Footer className="mt-20" />
+  <Footer class="mt-20" />
 </StarlightPage>
