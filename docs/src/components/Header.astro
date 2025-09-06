@@ -15,7 +15,7 @@ const isHomepage = Astro.locals.starlightRoute.id === "";
     </a>
   </div>
   {isHomepage ? (
-    <PillLink href="/getting-started" className="hidden md:block">
+    <PillLink href="/getting-started" class="hidden lg:block">
         <Icon name="document" size="20px" /><span class="hidden lg:block"> Docs</span>
     </PillLink>
     ) : null

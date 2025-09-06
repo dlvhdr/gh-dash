@@ -3,19 +3,19 @@ import PillLink from './PillLink.astro';
 import DecorationTop from "./DecorationTop.astro";
 import DecorationBottom from "./DecorationBottom.astro";
 
-const { className } = Astro.props;
+const { class: className } = Astro.props;
 ---
 
-<div class={`text-center items-center !text-sm flex flex-col p-8 ${className}`}>
+<div class:list={["text-center items-center !text-sm flex flex-col p-8", className]}>
   <DecorationTop />
   <p class="mb-2">
     Created and maintained by <a href="https://github.com/dlvhdr">@dlvdr</a> and the <a href="https://github.com/dlvhdr/gh-dash/graphs/contributors">community</a>
   </p>
   <div class="flex gap-3">
-    <PillLink href="https://charm.sh" target="_blank">
+    <PillLink href="https://charm.sh" target="_blank" class="!text-xs border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-0 rounded-lg">
       Built with: Charm
     </PillLink>
-    <PillLink href="https://github.com/tokyo-night/tokyo-night-vscode-theme" target="_blank">
+    <PillLink href="https://github.com/tokyo-night/tokyo-night-vscode-theme" target="_blank" class="!text-xs border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-0 rounded-lg">
       Theme: Tokyo Night
     </PillLink>
   </div>
