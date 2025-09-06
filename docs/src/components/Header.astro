@@ -4,6 +4,7 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
 import Logo from "./Logo.astro";
 import { Icon } from "@astrojs/starlight/components";
 import PillLink from './PillLink.astro';
+import MobileMenuToggle from "@astrojs/starlight/components/MobileMenuToggle.astro";
 
 const isHomepage = Astro.locals.starlightRoute.id === "";
 ---
@@ -31,4 +32,5 @@ const isHomepage = Astro.locals.starlightRoute.id === "";
   </PillLink>
   <Search />
   <ThemeSelect />
+  {isHomepage ? null : (<MobileMenuToggle />)}
 </div>
