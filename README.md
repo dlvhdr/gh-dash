@@ -1,4 +1,4 @@
-<p align="center"><a href="https://gh-dash.dev"><img src="./docs/public/logo.png" alt="gh dash logo - DASH Through Your GitHub" /></a></p>
+<p align="center"><a href="https://gh-dash.dev"><img src="./docs/public/logo.png" width="400" alt="gh dash logo - DASH Through Your GitHub" /></a></p>
 
 <p align="center">
     <a href="https://gh-dash.dev" target="_blank">→ https://gh-dash.dev ←</a>
