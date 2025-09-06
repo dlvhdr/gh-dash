@@ -10,6 +10,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/config"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/utils"
 )
@@ -74,15 +75,17 @@ func (m Model) View(ctx *context.ProgramContext) string {
 
 	version := lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText).Render(ctx.Version)
 
+	w := ctx.ScreenWidth - lipgloss.Width(version) - lipgloss.Width(constants.Logo) - 1
 	renderedTabs := lipgloss.NewStyle().
-		Width(ctx.ScreenWidth - lipgloss.Width(version)).
-		MaxWidth(ctx.ScreenWidth - lipgloss.Width(version)).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
+		Width(w).
+		MaxWidth(w).
+		Render(lipgloss.JoinHorizontal(lipgloss.Top,
+			strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
 
 	return ctx.Styles.Tabs.TabsRow.
 		Width(ctx.ScreenWidth).
 		MaxWidth(ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Center, renderedTabs, version))
+		Render(lipgloss.JoinHorizontal(lipgloss.Center, renderedTabs, constants.Logo, " ", version))
 }
 
 func (m *Model) SetCurrSectionId(id int) {
@@ -96,7 +99,8 @@ func (m *Model) UpdateSectionsConfigs(ctx *context.ProgramContext) {
 		m.sectionCounts[i] = SectionState{
 			Count:     0,
 			IsLoading: false,
-			spinner:   spinner.New(spinner.WithSpinner(spinner.Dot), spinner.WithStyle(lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).PaddingLeft(2))),
+			spinner: spinner.New(spinner.WithSpinner(spinner.Dot),
+				spinner.WithStyle(lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).PaddingLeft(2))),
 		}
 	}
 }

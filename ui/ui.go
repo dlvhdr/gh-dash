@@ -173,7 +173,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.Debug("Key pressed", "key", msg.String())
 		m.ctx.Error = nil
 
-		if currSection != nil && (currSection.IsSearchFocused() || currSection.IsPromptConfirmationFocused()) {
+		if currSection != nil && (currSection.IsSearchFocused() ||
+			currSection.IsPromptConfirmationFocused()) {
 			cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 			return m, cmd
 		}
@@ -262,9 +263,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Help):
 			if !m.footer.ShowAll {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.FooterHeight - common.ExpandedHelpHeight
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight +
+					common.FooterHeight - common.ExpandedHelpHeight
 			} else {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight + common.ExpandedHelpHeight - common.FooterHeight
+				m.ctx.MainContentHeight = m.ctx.MainContentHeight +
+					common.ExpandedHelpHeight - common.FooterHeight
 			}
 
 		case key.Matches(msg, m.keys.CopyNumber):
@@ -349,7 +352,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case m.ctx.View == config.PRsView:
 			switch {
 
-			case key.Matches(msg, keys.PRKeys.PrevSidebarTab), key.Matches(msg, keys.PRKeys.NextSidebarTab):
+			case key.Matches(msg, keys.PRKeys.PrevSidebarTab),
+				key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				var scmd tea.Cmd
 				m.prSidebar, scmd = m.prSidebar.Update(msg)
 				m.syncSidebar()
@@ -472,6 +476,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.IssueKeys.Comment):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsCommenting(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case key.Matches(msg, keys.IssueKeys.AddLabels):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsAddingLabels(true)
 				m.syncMainContentWidth()
 				m.syncSidebar()
 				m.sidebar.ScrollToBottom()

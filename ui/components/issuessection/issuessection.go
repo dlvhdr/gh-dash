@@ -106,7 +106,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		switch {
-
 		case key.Matches(msg, keys.IssueKeys.ToggleSmartFiltering):
 			if !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
@@ -119,7 +118,6 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.ResetRows()
 				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
-
 		}
 
 	case UpdateIssueMsg:
@@ -136,10 +134,12 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currIssue.Comments.Nodes = append(currIssue.Comments.Nodes, *msg.NewComment)
 				}
 				if msg.AddedAssignees != nil {
-					currIssue.Assignees.Nodes = addAssignees(currIssue.Assignees.Nodes, msg.AddedAssignees.Nodes)
+					currIssue.Assignees.Nodes = addAssignees(
+						currIssue.Assignees.Nodes, msg.AddedAssignees.Nodes)
 				}
 				if msg.RemovedAssignees != nil {
-					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+					currIssue.Assignees.Nodes = removeAssignees(
+						currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 				}
 				m.Issues[i] = currIssue
 				m.SetIsLoading(false)
@@ -392,6 +392,7 @@ type UpdateIssueMsg struct {
 	IsClosed         *bool
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
+	AddedLabels      []string
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {

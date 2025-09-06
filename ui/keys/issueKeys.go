@@ -16,6 +16,8 @@ type IssueKeyMap struct {
 	Close                key.Binding
 	Reopen               key.Binding
 	ToggleSmartFiltering key.Binding
+	AddLabels            key.Binding
+	RemoveLabels         key.Binding
 	ViewPRs              key.Binding
 }
 
@@ -44,6 +46,14 @@ var IssueKeys = IssueKeyMap{
 		key.WithKeys("t"),
 		key.WithHelp("t", "toggle smart filtering"),
 	),
+	AddLabels: key.NewBinding(
+		key.WithKeys("m"),
+		key.WithHelp("m", "add labels"),
+	),
+	RemoveLabels: key.NewBinding(
+		key.WithKeys("M"),
+		key.WithHelp("M", "remove labels"),
+	),
 	ViewPRs: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "switch to PRs"),
@@ -57,6 +67,7 @@ func IssueFullHelp() []key.Binding {
 		IssueKeys.Comment,
 		IssueKeys.Close,
 		IssueKeys.Reopen,
+		IssueKeys.AddLabels,
 		IssueKeys.ToggleSmartFiltering,
 		IssueKeys.ViewPRs,
 	}
@@ -99,6 +110,8 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 			key = &IssueKeys.Close
 		case "reopen":
 			key = &IssueKeys.Reopen
+		case "addLabels":
+			key = &IssueKeys.AddLabels
 		case "viewPrs":
 			key = &IssueKeys.ViewPRs
 		default:

@@ -33,6 +33,7 @@ type Model struct {
 	isCommenting      bool
 	isAssigning       bool
 	isUnassigning     bool
+	isAddingLabels    bool
 
 	inputBox inputbox.Model
 }
@@ -44,9 +45,10 @@ func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		issue: nil,
 
-		isCommenting:  false,
-		isAssigning:   false,
-		isUnassigning: false,
+		isCommenting:   false,
+		isAssigning:    false,
+		isUnassigning:  false,
+		isAddingLabels: false,
 
 		inputBox: inputBox,
 	}
@@ -133,6 +135,26 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
+		} else if m.isAddingLabels {
+			switch msg.Type {
+
+			case tea.KeyCtrlD:
+				labels := strings.Fields(m.inputBox.Value())
+				if len(labels) > 0 {
+					cmd = m.addLabels(labels)
+				}
+				m.inputBox.Blur()
+				m.isAddingLabels = false
+				return m, cmd
+
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.inputBox.Blur()
+				m.isAddingLabels = false
+				return m, nil
+			}
+
+			m.inputBox, taCmd = m.inputBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
 		} else {
 			return m, nil
 		}
@@ -162,7 +184,7 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning {
+	if m.isCommenting || m.isAssigning || m.isUnassigning || m.isAddingLabels {
 		s.WriteString(m.inputBox.View())
 	}
 
@@ -252,7 +274,7 @@ func (m *Model) SetRow(data *data.IssueData) {
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isUnassigning
+	return m.isCommenting || m.isAssigning || m.isUnassigning || m.isAddingLabels
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -288,8 +310,21 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	return nil
 }
 
-func (m *Model) GetIsAssigning() bool {
-	return m.isAssigning
+func (m *Model) SetIsAddingLabels(isAddingLabels bool) tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+
+	if !m.isAddingLabels && isAddingLabels {
+		m.inputBox.Reset()
+	}
+	m.isAddingLabels = isAddingLabels
+	m.inputBox.SetPrompt("Add labels (whitespace-separated)...")
+
+	if isAddingLabels {
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	}
+	return nil
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
@@ -319,10 +354,6 @@ func (m *Model) userAssignedToIssue(login string) bool {
 		}
 	}
 	return false
-}
-
-func (m *Model) GetIsUnassigning() bool {
-	return m.isUnassigning
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
