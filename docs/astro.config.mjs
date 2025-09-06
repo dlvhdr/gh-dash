@@ -6,6 +6,9 @@ import astroBrokenLinksChecker from "astro-broken-links-checker";
 
 import node from "@astrojs/node";
 
+const ogUrl = new URL("og.png", "https://gh-dash.dev/").href;
+const ogImageAlt = "DASH Through Your GitHub";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://gh-dash.dev",
@@ -19,6 +22,16 @@ export default defineConfig({
       title: "DASH",
       favicon: "/favicon.png",
       customCss: ["./src/styles/custom.css", "./src/fonts/font-face.css"],
+      head: [
+        {
+          tag: "meta",
+          attrs: { property: "og:image", content: ogUrl },
+        },
+        {
+          tag: "meta",
+          attrs: { property: "og:image:alt", content: ogImageAlt },
+        },
+      ],
       components: {
         Header: "./src/components/Header.astro",
         PageTitle: "./src/components/Title.astro",
