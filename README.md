@@ -8,8 +8,8 @@
   <br />
   <br />
   <a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
-  <img src="https://img.shields.io/discord/1413193703476035755?label=discord" alt="Discord"/>
-  <img src="https://img.shields.io/github/sponsors/dlvhdr?logo=githubsponsors&color=EA4AAA" />
+  <a href="https://discord.gg/SXNXp9NctV"><img src="https://img.shields.io/discord/1413193703476035755?label=discord" alt="Discord"/></a>
+  <a href="https://github.com/sponsors/dlvhdr"><img src=https://img.shields.io/github/sponsors/dlvhdr?logo=githubsponsors&color=EA4AAA /></a>
 </p>
 
 <br />
