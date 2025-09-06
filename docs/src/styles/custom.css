@@ -1,4 +1,4 @@
-@layer base, starlight, theme, components, utilities, overrides;
+@layer base, starlight, theme, components, utilities, my-overrides;
 
 @import "@astrojs/starlight-tailwind";
 @import "tailwindcss/theme.css" layer(theme);
@@ -245,7 +245,7 @@ kbd:not(.sl-hidden) {
   padding-bottom: 16px;
 }
 
-@layer overrides {
+@layer my-overrides {
   th {
     font-weight: normal;
   }
@@ -254,8 +254,8 @@ kbd:not(.sl-hidden) {
     width: 20px;
   }
 
-  header {
-    @apply mx-2 my-2 w-[calc(100vw-16px)] max-w-[100vw] rounded border border-[var(--sl-color-gray-5)] p-0 lg:mx-6 lg:w-[calc(100vw-48px)];
+  header.header {
+    @apply mx-2 my-2 w-[calc(100vw_-_((100vw_-_100%)_+_16px))] max-w-[100vw] rounded border border-[var(--sl-color-gray-5)] p-0 lg:mx-6 lg:w-[calc(100vw_-_((100vw_-_100%)_+_48px))];
     box-shadow: 0px -8px 0px var(--sl-color-bg);
   }
 
