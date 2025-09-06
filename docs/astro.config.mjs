@@ -17,6 +17,7 @@ export default defineConfig({
     }),
     starlight({
       title: "DASH",
+      favicon: "/favicon.png",
       customCss: ["./src/styles/custom.css", "./src/fonts/font-face.css"],
       components: {
         Header: "./src/components/Header.astro",
@@ -78,4 +79,3 @@ export default defineConfig({
     mode: "standalone",
   }),
 });
-
