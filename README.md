@@ -1,20 +1,33 @@
-# gh-dash
+<p align="center"><a href="https://gh-dash.dev"><img src="./docs/public/logo.png" alt="gh dash logo - DASH Through Your GitHub" /></a></p>
 
-✨ A GitHub (`gh`) CLI extension to display a dashboard with **pull requests** and **issues** by filters you care about.
+<p align="center">
+    <a href="https://gh-dash.dev" target="_blank">→ https://gh-dash.dev ←</a>
+</p>
+<p align="center">
+  A rich terminal UI for GitHub that doesn't break your flow.
+  <br />
+  <br />
+  <a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
+  <img src="https://img.shields.io/discord/1413193703476035755?label=discord" alt="Discord"/>
+  <img src="https://img.shields.io/github/sponsors/dlvhdr?logo=githubsponsors&color=EA4AAA" />
+</p>
 
-<a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
+<br />
 
-<img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" />
+<img src="./docs/src/assets/overview.gif" />
+
+<!-- <img src="https://user-images.githubusercontent.com/6196971/198704107-6775a0ba-669d-418b-9ae9-59228aaa84d1.gif" /> -->
 
 ## 📃 Docs
 
-See the docs site at [dlvhdr.github.io/gh-dash](https://dlvhdr.github.io/gh-dash) to get started.
+> [!TIP]  
+> See the docs site at [https://gh-dash.dev](https://gh-dash.dev) to get started
 
 ## ❓ Why use gh-dash
 
 Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh-dash can help you manage your GitHub experience.
 
-[![Manage open source like a boss (in the terminal)](./docs/assets/charm-vid-preview.jpg)](https://www.youtube.com/watch?v=5omFxcNjBQk&t "Manage open source like a boss (in the terminal)")
+[![Manage open source like a boss (in the terminal)](./docs/src/assets/charm-vid-preview.jpg)](https://www.youtube.com/watch?v=5omFxcNjBQk&t "Manage open source like a boss (in the terminal)")
 
 ## ✨ Features
 
@@ -86,14 +99,6 @@ gh extension upgrade dlvhdr/gh-dash
 
 </details>
 
-<details>
-   <summary>How do I get these exact colors and font?</summary>
-
-> I'm using [Alacritty](https://github.com/alacritty/alacritty) with the [tokyonight theme](https://github.com/folke/tokyonight.nvim) and the [Fira Code](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) Nerd Font.
-> For my full setup check out [my dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/.config/alacritty/alacritty.yml).
-
-</details>
-
 ## ⚡️ Usage
 
 Run
@@ -123,13 +128,7 @@ Flags:
 
 ## ⚙️ Configuring
 
-You can find all the details in the docs site under [gh-dash/configuration](https://dlvhdr.github.io/gh-dash/configuration).
-
-Example configurations can be found on GitHub:
-
-- The config for the gh-dash repo under [.gh-dash.yml](https://github.com/dlvhdr/gh-dash/blob/main/.gh-dash.yml)
-- My config under my dotfiles repo [dlvhdr/dotfiles](https://github.com/dlvhdr/dotfiles/blob/main/nix/module/gh-dash/configs/config.yml)
-- Many other configs found by [searching GitHub](https://github.com/search?q=path%3Agh-dash%2Fconfig.yml&type=code)
+See the docs at [https://gh-dash.dev/configuration](https://gh-dash.dev/configuration).
 
 ## 🛞 Under the hood
 
