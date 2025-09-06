@@ -84,4 +84,13 @@ footer {
       padding-right: 8px;
     }
   }
+
+  @media (width <= 64rem) {
+    starlight-theme-select {
+      margin-right: 0px;
+      & select {
+        width: 8px;
+      }
+    }
+  }
 }

@@ -250,8 +250,23 @@ kbd:not(.sl-hidden) {
     font-weight: normal;
   }
 
-  starlight-theme-select select {
-    width: 20px;
+  @media (width <= 64rem) {
+    starlight-theme-select {
+      margin-right: 8px;
+      & select {
+        width: 8px;
+      }
+
+      & svg.icon.caret {
+        display: none;
+      }
+    }
+  }
+
+  @media (width > 64rem) {
+    starlight-theme-select select {
+      width: 20px;
+    }
   }
 
   header.header {
@@ -260,7 +275,10 @@ kbd:not(.sl-hidden) {
   }
 
   starlight-menu-button button {
-    display: none;
+    top: 24px;
+    right: 12px;
+    background-color: var(--sl-color-gray-4);
+    color: var(--sl-color-gray-1);
   }
 
   mobile-starlight-toc nav {
