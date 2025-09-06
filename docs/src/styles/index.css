@@ -80,8 +80,7 @@ footer {
 
   @media (width <= 64rem) {
     header {
-      width: 100vw;
-      padding-left: 16px;
+      padding-left: 8px;
       padding-right: 8px;
     }
   }

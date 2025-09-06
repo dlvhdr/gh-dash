@@ -37,12 +37,11 @@ h3 {
 
 :root {
   --sl-font: var(--font-family);
-  --sl-nav-height: 5rem;
+  --sl-nav-height: 4rem;
   --sl-nav-pad-x: 16px;
   --sl-color-bg-nav: var(--sl-color-bg);
   --sl-color-bg-sidebar: var(--sl-color-bg);
   --sl-color-hairline-shade: none;
-  /* --sl-color-hairline-shade: */
 }
 
 .sidebar-pane {
@@ -251,9 +250,25 @@ kbd:not(.sl-hidden) {
     font-weight: normal;
   }
 
-  @media (width <= 64rem) {
-    header {
-      padding-left: 16px;
+  starlight-theme-select select {
+    width: 20px;
+  }
+
+  header {
+    @apply mx-2 my-2 w-[calc(100vw-16px)] max-w-[100vw] rounded border border-[var(--sl-color-gray-5)] p-0 lg:mx-6 lg:w-[calc(100vw-48px)];
+    box-shadow: 0px -8px 0px var(--sl-color-bg);
+  }
+
+  starlight-menu-button button {
+    display: none;
+  }
+
+  mobile-starlight-toc nav {
+    border-top: none;
+    margin-top: 8px;
+
+    & summary {
+      padding-inline: 8px;
     }
   }
 }
