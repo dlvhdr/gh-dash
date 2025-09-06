@@ -12,7 +12,6 @@ const ogImageAlt = "DASH Through Your GitHub";
 // https://astro.build/config
 export default defineConfig({
   site: "https://gh-dash.dev",
-
   integrations: [
     astroBrokenLinksChecker({
       logFilePath: "broken-links.log", // Optional: specify the log file path
@@ -30,6 +29,14 @@ export default defineConfig({
         {
           tag: "meta",
           attrs: { property: "og:image:alt", content: ogImageAlt },
+        },
+        {
+          tag: "meta",
+          attrs: {
+            name: "description",
+            content:
+              "DASH - a rich terminal UI for GitHub that doesn't break your flow",
+          },
         },
       ],
       components: {
