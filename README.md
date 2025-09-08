@@ -25,7 +25,7 @@
 
 ## ❓ Why use gh-dash
 
-Check out this 10/10 video by [charm.sh ✨](https://charm.sh) explaining how gh-dash can help you manage your GitHub experience.
+Check out this 10/10 video by [Charm ✨](https://charm.sh) explaining how gh-dash can help you manage your GitHub experience.
 
 [![Manage open source like a boss (in the terminal)](./docs/src/assets/charm-vid-preview.jpg)](https://www.youtube.com/watch?v=5omFxcNjBQk&t "Manage open source like a boss (in the terminal)")
 
