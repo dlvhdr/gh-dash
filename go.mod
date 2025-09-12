@@ -11,6 +11,7 @@ require (
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/charmbracelet/log v0.4.2
+	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/cli/go-gh/v2 v2.12.1
 	github.com/cli/shurcooL-graphql v0.0.4
 	github.com/gen2brain/beeep v0.11.1
@@ -26,6 +27,7 @@ require (
 
 require (
 	git.sr.ht/~jackmordaunt/go-toast v1.1.2 // indirect
+	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250701194145-256c01de0aa5 // indirect
