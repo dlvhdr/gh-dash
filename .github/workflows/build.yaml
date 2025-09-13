@@ -1,24 +1,8 @@
 name: build
 
 on:
-  workflow_call:
-    inputs:
-      go_version:
-        required: false
-        type: string
-      go-version:
-        required: false
-        type: string
-        default: stable
-      go-version-file:
-        required: false
-        type: string
-      working-directory:
-        required: false
-        type: string
-    secrets:
-      gh_pat:
-        required: false
+  push:
+  pull_request:
 
 jobs:
   build:
