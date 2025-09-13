@@ -15,7 +15,7 @@ func (cfg Config) GetFullScreenDiffPagerEnv() []string {
 		diff = "delta --paging always"
 	}
 
-	var env = os.Environ()
+	env := os.Environ()
 	env = append(
 		env,
 		"LESS=CRX",

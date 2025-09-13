@@ -78,7 +78,6 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 	CustomBranchBindings = []key.Binding{}
 
 	for _, branchKey := range keys {
-
 		if branchKey.Builtin == "" {
 			// Handle custom commands
 			if branchKey.Command != "" {

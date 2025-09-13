@@ -41,7 +41,6 @@ func (m Model) View() string {
 	if m.status == nil {
 		s.WriteString("\nLoading...")
 	} else {
-
 		if len(m.status.Added) == 0 && len(m.status.Removed) == 0 && len(m.status.Modified) == 0 {
 			s.WriteString("\nNo changes")
 		}

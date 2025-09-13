@@ -184,10 +184,7 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	startCmd := ctx.StartTask(task)
 
 	return tea.Batch(startCmd, tea.ExecProcess(c, func(err error) tea.Msg {
-		isMerged := false
-		if err == nil && c.ProcessState.ExitCode() == 0 {
-			isMerged = true
-		}
+		isMerged := err == nil && c.ProcessState.ExitCode() == 0
 
 		return constants.TaskFinishedMsg{
 			SectionId:   section.Id,
@@ -224,10 +221,7 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName
 	startCmd := ctx.StartTask(task)
 
 	return tea.Batch(startCmd, tea.ExecProcess(c, func(err error) tea.Msg {
-		isCreated := false
-		if err == nil && c.ProcessState.ExitCode() == 0 {
-			isCreated = true
-		}
+		isCreated := err == nil && c.ProcessState.ExitCode() == 0
 
 		return constants.TaskFinishedMsg{
 			SectionId:   section.Id,

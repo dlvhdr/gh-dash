@@ -113,7 +113,7 @@ func execCmd(m Model, cmd tea.Cmd) {
 }
 
 func WriteGoldenFile(str string) {
-	f, err := os.OpenFile("/tmp/golden.txt", os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("/tmp/golden.txt", os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		panic(err)
 	}

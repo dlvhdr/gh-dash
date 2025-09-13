@@ -10,9 +10,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 )
 
-var (
-	defaultStyle = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
-)
+var defaultStyle = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
 
 func TestRenderLabels(t *testing.T) {
 	testCases := map[string]struct {
