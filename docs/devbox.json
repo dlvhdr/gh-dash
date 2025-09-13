@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
+  "env": {
+    "DEVBOX_COREPACK_ENABLED": "true"
+  },
+  "packages": {
+    "nodejs": "22.14.0"
+  },
+  "shell": {
+    "init_hook": ["echo \"Creating devbox shell for docs site...\""]
+  }
+}
+

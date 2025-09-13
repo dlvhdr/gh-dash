@@ -62,6 +62,11 @@ keybindings:
         tmux new-window -c {{.RepoPath}} '
         nvim -c ":silent Octo pr edit {{.PrNumber}}"
         '
+    - key: T
+      command: >
+        tmux new-window -c /Users/dlvhdr/code/personal/gh-enhance '
+        task local-gh -- -R {{.RepoName}} {{.PrNumber}}
+        '
     # - key: b
     #   name: code review
     #   command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} --json statusCheckRollup | command jq -rcj '.statusCheckRollup.[] | select(.context == "buildkite/mono") | .targetUrl' | xargs open
