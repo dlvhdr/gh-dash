@@ -19,15 +19,15 @@ type IssueData struct {
 	Author struct {
 		Login string
 	}
-	AuthorAssociation     string
-	UpdatedAt             time.Time
-	CreatedAt             time.Time
-	Url                   string
-	Repository            Repository
-	Assignees             Assignees      `graphql:"assignees(first: 3)"`
-	Comments              IssueComments  `graphql:"comments(first: 15)"`
-	Reactions             IssueReactions `graphql:"reactions(first: 1)"`
-	Labels                IssueLabels    `graphql:"labels(first: 3)"`
+	AuthorAssociation string
+	UpdatedAt         time.Time
+	CreatedAt         time.Time
+	Url               string
+	Repository        Repository
+	Assignees         Assignees      `graphql:"assignees(first: 3)"`
+	Comments          IssueComments  `graphql:"comments(first: 15)"`
+	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
+	Labels            IssueLabels    `graphql:"labels(first: 3)"`
 }
 
 type IssueComments struct {

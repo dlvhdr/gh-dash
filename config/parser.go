@@ -402,7 +402,7 @@ func (parser ConfigParser) createConfigFileIfMissing(
 		newConfigFile, err := os.OpenFile(
 			configFilePath,
 			os.O_RDWR|os.O_CREATE|os.O_EXCL,
-			0666,
+			0o666,
 		)
 		if err != nil {
 			return err

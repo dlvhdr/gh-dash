@@ -294,7 +294,6 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 func FetchPullRequest(prUrl string) (PullRequestData, error) {
 	var err error
 	client, err := gh.DefaultGraphQLClient()
-
 	if err != nil {
 		return PullRequestData{}, err
 	}

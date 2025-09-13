@@ -166,28 +166,30 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
 
 	for _, node := range pr.Data.Reviews.Nodes {
-		if node.State == "APPROVED" {
+		switch node.State {
+		case "APPROVED":
 			numApproving++
-		} else if node.State == "CHANGES_REQUESTED" {
+		case "CHANGES_REQUESTED":
 			numChangesRequested++
-		} else if node.State == "PENDING" {
+		case "PENDING":
 			numPending++
-		} else if node.State == "COMMENTED" {
+		case "COMMENTED":
 			numCommented++
 		}
 	}
 
-	if pr.Data.ReviewDecision == "APPROVED" {
+	switch pr.Data.ReviewDecision {
+	case "APPROVED":
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "Changes approved"
 		subtitle = fmt.Sprintf("%d approving reviews", numApproving)
 		status = statusSuccess
-	} else if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
+	case "CHANGES_REQUESTED":
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "Changes requested"
 		subtitle = fmt.Sprintf("%d requested changes", numChangesRequested)
 		status = statusFailure
-	} else if pr.Data.ReviewDecision == "REVIEW_REQUIRED" {
+	case "REVIEW_REQUIRED":
 		icon = pr.Ctx.Styles.Common.WaitingGlyph
 		title = "Review Required"
 
@@ -205,7 +207,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
 			status = statusWaiting
 		}
-	} else {
+	default:
 		icon = pr.Ctx.Styles.Common.PersonGlyph
 		title = "Reviews"
 		subtitle = "Non requested"
@@ -367,24 +369,26 @@ func (sidebar *Model) renderChecks() string {
 	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
 		var category CheckCategory
 		var check string
-		if node.Typename == "CheckRun" {
+		switch node.Typename {
+		case "CheckRun":
 			checkRun := node.CheckRun
 			var renderedStatus string
 			category, renderedStatus = sidebar.renderCheckRunConclusion(checkRun)
 			name := renderCheckRunName(checkRun)
 			check = lipgloss.JoinHorizontal(lipgloss.Top, renderedStatus, " ", name)
-		} else if node.Typename == "StatusContext" {
+		case "StatusContext":
 			statusContext := node.StatusContext
 			var status string
 			category, status = sidebar.renderStatusContextConclusion(statusContext)
 			check = lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext))
 		}
 
-		if category == CheckWaiting {
+		switch category {
+		case CheckWaiting:
 			waiting = append(waiting, check)
-		} else if category == CheckFailure {
+		case CheckFailure:
 			failures = append(failures, check)
-		} else {
+		default:
 			rest = append(rest, check)
 		}
 	}

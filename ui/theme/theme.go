@@ -103,7 +103,7 @@ func ParseTheme(cfg *config.Config) Theme {
 			cfg.Theme.Colors.Inline.Text.Secondary,
 			DefaultTheme.SecondaryText,
 		)
-		DefaultTheme.InvertedText= _shimHex(
+		DefaultTheme.InvertedText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Inverted,
 			DefaultTheme.InvertedText,
 		)

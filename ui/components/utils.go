@@ -46,8 +46,7 @@ func RenderIssueTitle(
 		prNumber = lipgloss.NewStyle().Foreground(prNumberFg).Render(prNumber)
 		// TODO: hack - see issue https://github.com/charmbracelet/lipgloss/issues/144
 		// Provide ability to prevent insertion of Reset sequence #144
-		prNumber = strings.Replace(prNumber, "\x1b[0m", "", -1)
-
+		prNumber = strings.ReplaceAll(prNumber, "\x1b[0m", "")
 	}
 
 	rTitle := GetIssueTextStyle(ctx).Render(title)

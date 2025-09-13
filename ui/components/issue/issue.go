@@ -14,8 +14,8 @@ import (
 )
 
 type Issue struct {
-	Ctx  *context.ProgramContext
-	Data data.IssueData
+	Ctx            *context.ProgramContext
+	Data           data.IssueData
 	ShowAuthorIcon bool
 }
 

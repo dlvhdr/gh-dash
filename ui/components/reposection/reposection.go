@@ -71,18 +71,16 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var err error
 
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 
 		if m.IsSearchFocused() {
-			switch {
-
-			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+			switch msg.Type {
+			case tea.KeyCtrlC, tea.KeyEsc:
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
 				return m, blinkCmd
 
-			case msg.Type == tea.KeyEnter:
+			case tea.KeyEnter:
 				m.Table.ResetCurrItem()
 				m.SetIsSearching(false)
 				m.SearchValue = m.SearchBar.Value()
@@ -94,23 +92,23 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			switch {
-
-			case msg.Type == tea.KeyCtrlC, msg.Type == tea.KeyEsc:
+			switch msg.Type {
+			case tea.KeyCtrlC, tea.KeyEsc:
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
 				return m, cmd
 
-			case msg.Type == tea.KeyEnter:
+			case tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				branch := m.getCurrBranch().Data.Name
 				sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
-				if action == "new" {
+				switch action {
+				case "new":
 					cmd = m.newBranch(input)
-				} else if action == "create_pr" {
+				case "create_pr":
 					cmd = tasks.CreatePR(m.Ctx, sid, branch, input)
-				} else {
+				default:
 					pr := findPRForRef(m.Prs, branch)
 					if input == "Y" || input == "y" {
 						switch action {
@@ -161,7 +159,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if err != nil {
 				m.Ctx.Error = err
 			}
-
 		}
 
 	case tasks.UpdateBranchMsg:
@@ -192,7 +189,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		if msg.id == m.refreshId {
 			cmds = append(cmds, m.onRefreshPrsMsg()...)
 		}
-
 	}
 
 	m.updateBranchesWithPrs()

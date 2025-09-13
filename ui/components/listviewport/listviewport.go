@@ -88,7 +88,7 @@ func (m *Model) NextItem() int {
 	if atBottomOfViewport {
 		m.topBoundId += 1
 		m.bottomBoundId += 1
-		m.viewport.LineDown(m.ListItemHeight)
+		m.viewport.ScrollDown(m.ListItemHeight)
 	}
 
 	newId := utils.Min(m.currId+1, m.NumCurrentItems-1)
@@ -102,7 +102,7 @@ func (m *Model) PrevItem() int {
 	if atTopOfViewport {
 		m.topBoundId -= 1
 		m.bottomBoundId -= 1
-		m.viewport.LineUp(m.ListItemHeight)
+		m.viewport.ScrollUp(m.ListItemHeight)
 	}
 
 	m.currId = utils.Max(m.currId-1, 0)

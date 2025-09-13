@@ -92,13 +92,14 @@ func (pr *PullRequest) GetStatusChecksRollup() string {
 	mostRecentCommit := commits[0].Commit
 	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
 		var conclusion string
-		if statusCheck.Typename == "CheckRun" {
+		switch statusCheck.Typename {
+		case "CheckRun":
 			conclusion = string(statusCheck.CheckRun.Conclusion)
 			status := string(statusCheck.CheckRun.Status)
 			if isStatusWaiting(status) {
 				accStatus = "PENDING"
 			}
-		} else if statusCheck.Typename == "StatusContext" {
+		case "StatusContext":
 			conclusion = string(statusCheck.StatusContext.State)
 			if isStatusWaiting(conclusion) {
 				accStatus = "PENDING"

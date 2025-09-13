@@ -49,13 +49,14 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		customKeys = append(customKeys, CustomUniversalBindings...)
 	}
 
-	if k.viewType == config.PRsView {
+	switch k.viewType {
+	case config.PRsView:
 		additionalKeys = PRFullHelp()
 		customKeys = append(customKeys, CustomPRBindings...)
-	} else if k.viewType == config.RepoView {
+	case config.RepoView:
 		additionalKeys = BranchFullHelp()
 		customKeys = append(customKeys, CustomBranchBindings...)
-	} else {
+	default:
 		additionalKeys = IssueFullHelp()
 		customKeys = append(customKeys, CustomIssueBindings...)
 	}

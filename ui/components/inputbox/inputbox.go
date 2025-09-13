@@ -28,7 +28,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
-        ta.CharLimit = 65536
+	ta.CharLimit = 65536
 	ta.FocusedStyle.Base = lipgloss.NewStyle()
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
 		Background(ctx.Theme.FaintBorder).

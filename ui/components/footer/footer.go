@@ -133,7 +133,6 @@ func (m *Model) renderViewButton(view config.ViewType) string {
 
 	if m.ctx.View == view {
 		return m.ctx.Styles.ViewSwitcher.ActiveView.Render(v)
-
 	}
 	return m.ctx.Styles.ViewSwitcher.InactiveView.Render(v)
 }

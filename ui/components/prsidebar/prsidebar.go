@@ -81,7 +81,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if m.isCommenting {
 			switch msg.Type {
-
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					cmd = m.comment(m.inputBox.Value())
@@ -114,7 +113,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isApproving {
 			switch msg.Type {
-
 			case tea.KeyCtrlD:
 				comment := ""
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
@@ -138,7 +136,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isAssigning {
 			switch msg.Type {
-
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
@@ -158,7 +155,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isUnassigning {
 			switch msg.Type {
-
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {

@@ -309,7 +309,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case m.ctx.View == config.RepoView:
 			switch {
-
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.repo.(*reposection.Model).OpenGithub())
 
@@ -347,11 +346,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.onViewedRowChanged()
-
 			}
 		case m.ctx.View == config.PRsView:
 			switch {
-
 			case key.Matches(msg, keys.PRKeys.PrevSidebarTab),
 				key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				var scmd tea.Cmd
@@ -509,7 +506,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.onViewedRowChanged()
 			}
-
 		}
 
 	case initMsg:
@@ -810,17 +806,18 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 	cmds = append(cmds, m.tabs.SetAllLoading()...)
 
-	if m.ctx.View == config.RepoView {
+	switch m.ctx.View {
+	case config.RepoView:
 		var cmd tea.Cmd
 		s, cmd := reposection.FetchAllBranches(m.ctx)
 		cmds = append(cmds, cmd)
 		m.repo = &s
 		return nil, tea.Batch(cmds...)
-	} else if m.ctx.View == config.PRsView {
+	case config.PRsView:
 		s, prcmds := prssection.FetchAllSections(m.ctx, m.prs)
 		cmds = append(cmds, prcmds)
 		return s, tea.Batch(cmds...)
-	} else {
+	default:
 		s, issuecmds := issuessection.FetchAllSections(m.ctx)
 		cmds = append(cmds, issuecmds)
 		return s, tea.Batch(cmds...)
@@ -828,21 +825,23 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 }
 
 func (m *Model) getCurrentViewSections() []section.Section {
-	if m.ctx.View == config.RepoView {
+	switch m.ctx.View {
+	case config.RepoView:
 		return []section.Section{m.repo}
-	} else if m.ctx.View == config.PRsView {
+	case config.PRsView:
 		return m.prs
-	} else {
+	default:
 		return m.issues
 	}
 }
 
 func (m *Model) getCurrentViewDefaultSection() int {
-	if m.ctx.View == config.RepoView {
+	switch m.ctx.View {
+	case config.RepoView:
 		return 0
-	} else if m.ctx.View == config.PRsView {
+	case config.PRsView:
 		return 1
-	} else {
+	default:
 		return 1
 	}
 }

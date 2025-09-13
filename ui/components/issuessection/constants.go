@@ -1,5 +1,3 @@
 package issuessection
 
-var (
-	issueNumCommentsCellWidth = 6
-)
+var issueNumCommentsCellWidth = 6
