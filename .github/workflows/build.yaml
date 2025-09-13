@@ -3,11 +3,13 @@ name: build
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: "on"
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -25,7 +27,7 @@ jobs:
         run: go test ./...
 
   dependabot:
-    needs: [build, govulncheck]
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
