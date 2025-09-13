@@ -18,6 +18,7 @@
   <a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
   <a href="https://discord.gg/SXNXp9NctV"><img src="https://img.shields.io/discord/1413193703476035755?label=discord" alt="Discord"/></a>
   <a href="https://github.com/sponsors/dlvhdr"><img src=https://img.shields.io/github/sponsors/dlvhdr?logo=githubsponsors&color=EA4AAA /></a>
+  <a href="https://www.jetify.com/devbox/docs/contributor-quickstart/" alt="Built with Devbox"><img src="https://www.jetify.com/img/devbox/shield_galaxy.svg" /></a>
 </p>
 
 <br />
@@ -28,18 +29,6 @@
 
 Installation instructions, configuration options etc. can be found at the docs
 site [https://gh-dash.dev](https://gh-dash.dev).
-
-## ⚡️ Usage
-
-Run
-
-```sh
-gh dash
-```
-
-Then press <kbd>?</kbd> for help.
-
-Run `gh dash --help` for more info.
 
 ## ❤️ Donating
 
