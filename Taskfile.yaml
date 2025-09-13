@@ -61,6 +61,11 @@ tasks:
       - go test -v ./...
     desc: Run tests
 
+  fmt:
+    desc: Run gofumpt
+    cmds:
+      - gofumpt -w $(git ls-files '*.go')
+
   check-nerd-font:
     cmds:
       - nerdfix check $(fd --extension go)

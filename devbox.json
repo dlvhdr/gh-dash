@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
+  "env": {
+    "GOPATH": "$HOME/go/",
+    "PATH": "$PATH:$HOME/go/bin"
+  },
+  "packages": {
+    "git": "latest",
+    "gh": "latest",
+    "go": "1.23",
+    "golangci-lint": "2.3.1",
+    "gofumpt": "0.8.0",
+    "go-task": "3.44.1",
+    "nerdfix": "0.4.2",
+    "fd": "10.2.0"
+  },
+  "shell": {
+    "init_hook": [
+      "export \"GOROOT=$(go env GOROOT)\"",
+      "echo \"Creating devbox shell...\""
+    ]
+  }
+}
+
