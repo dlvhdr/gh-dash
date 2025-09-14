@@ -28,16 +28,18 @@
 ## 📃 Docs
 
 Installation instructions, configuration options etc. can be found at the docs
-site [https://gh-dash.dev](https://gh-dash.dev).
+site.
+
+See the [Getting Started](https://gh-dash.dev/getting-started) guide.
 
 ## ❤️ Donating
 
 If you enjoy dash and want to help, consider supporting the project with a
-donation at [https://github.com/sponsors/dlvhdr](https://github.com/sponsors/dlvhdr).
+donation at [dlvhdr's sponsors page](https://github.com/sponsors/dlvhdr).
 
 ## 🙏 Contributing
 
-See the contributing guide at [https://www.gh-dash.dev/contributing](https://www.gh-dash.dev/contributing/).
+See the contribution guide at [https://www.gh-dash.dev/contributing](https://www.gh-dash.dev/contributing/).
 
 ## 🛞 Under the hood
 
