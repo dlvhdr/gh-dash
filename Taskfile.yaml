@@ -25,23 +25,6 @@ tasks:
     interactive: true
     desc: Tail the debug logs
 
-  mock:
-    cmds:
-      - task: start-mock-server
-      - defer: { task: stop-mock-server }
-      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
-      - cmd: DEBUG=true FF_MOCK_DATA=true go run . --debug
-    desc: Run with mocks
-
-  start-mock-server:
-    cmds:
-      - echo "starting mock server..."
-      - killgrave --config ./imposters/config.yml &> ./.killgrave.log &
-
-  stop-mock-server:
-    cmds:
-      - pkill killgrave
-
   lint:
     desc: Run base linters
     cmds:
