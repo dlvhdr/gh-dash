@@ -21,8 +21,8 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
-	"github.com/dlvhdr/gh-dash/v4/ui"
-	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
 var (
