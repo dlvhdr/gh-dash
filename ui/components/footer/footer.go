@@ -12,7 +12,7 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 
 	"github.com/dlvhdr/gh-dash/v4/config"
-	"github.com/dlvhdr/gh-dash/v4/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
 	"github.com/dlvhdr/gh-dash/v4/ui/context"
 	"github.com/dlvhdr/gh-dash/v4/ui/keys"
