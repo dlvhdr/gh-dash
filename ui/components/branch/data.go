@@ -3,7 +3,7 @@ package branch
 import (
 	"time"
 
-	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
 )
 
