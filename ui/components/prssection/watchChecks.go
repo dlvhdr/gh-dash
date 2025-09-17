@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gen2brain/beeep"
 
-	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	prComponent "github.com/dlvhdr/gh-dash/v4/ui/components/pr"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/ui/constants"
