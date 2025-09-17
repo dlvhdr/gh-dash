@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/dlvhdr/gh-dash/v4/data"
-	"github.com/dlvhdr/gh-dash/v4/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/git"
 )
 
 type BranchData struct {

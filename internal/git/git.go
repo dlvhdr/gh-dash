@@ -134,7 +134,10 @@ func GetRepo(dir string) (*Repo, error) {
 		return nil, err
 	}
 
-	return &Repo{Repository: *repo, Origin: origin[0], Remotes: remotes, HeadBranchName: headBranch, Branches: branches, Status: status}, nil
+	return &Repo{
+		Repository: *repo, Origin: origin[0], Remotes: remotes,
+		HeadBranchName: headBranch, Branches: branches, Status: status,
+	}, nil
 }
 
 func GetStatus(dir string) (gitm.NameStatus, error) {
