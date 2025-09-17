@@ -513,20 +513,27 @@ func initParser() ConfigParser {
 	return ConfigParser{}
 }
 
-func ParseConfig(path string, repoPath string) (Config, error) {
+type Location struct {
+	RepoPath string
+	// Config passed with explicit `--config` flag
+	ConfigFlag string
+}
+
+func ParseConfig(location Location) (Config, error) {
 	parser := initParser()
 
 	var config Config
 	var err error
 	var configFilePath string
 
-	if path == "" {
-		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing(repoPath)
+	// give priority to `--config` flag
+	if location.ConfigFlag == "" {
+		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing(location.RepoPath)
 		if err != nil {
 			return config, parsingError{err: err}
 		}
 	} else {
-		configFilePath = path
+		configFilePath = location.ConfigFlag
 	}
 
 	config, err = parser.readConfigFile(configFilePath)

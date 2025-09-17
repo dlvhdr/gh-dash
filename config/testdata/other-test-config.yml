@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://gh-dash.dev/schema.json
+prSections:
+  - title: Mine
+    filters: is:open author:@me repo:dlvhdr/gh-dash
+    layout:
+      author:
+        hidden: true
+      repoName:
+        hidden: true

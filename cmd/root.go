@@ -33,7 +33,7 @@ var (
 )
 
 var (
-	cfgFile string
+	cfgFlag string
 
 	rootCmd = &cobra.Command{
 		Use:     "gh dash",
@@ -50,7 +50,7 @@ func Execute() {
 	}
 }
 
-func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.File) {
+func createModel(repoPath string, cfgFlag string, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -75,7 +75,7 @@ func createModel(repoPath string, configPath string, debug bool) (ui.Model, *os.
 		log.SetLevel(log.FatalLevel)
 	}
 
-	return ui.NewModel(repoPath, configPath), loggerFile
+	return ui.NewModel(repoPath, cfgFlag), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {
@@ -98,7 +98,7 @@ func buildVersion(version, commit, date, builtBy string) string {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(
-		&cfgFile,
+		&cfgFlag,
 		"config",
 		"c",
 		"",
@@ -160,7 +160,7 @@ func init() {
 		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
 
-		model, logger := createModel(repo, cfgFile, debug)
+		model, logger := createModel(repo, cfgFlag, debug)
 		if logger != nil {
 			defer logger.Close()
 		}

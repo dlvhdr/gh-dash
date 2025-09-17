@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://dlvhdr.github.io/gh-dash/configuration/gh-dash/schema.json
+prSections:
+  - title: Mine
+    filters: is:open author:@me repo:dlvhdr/gh-dash updated:>={{ nowModify "-3w" }} sort:updated-desc
+    layout:
+      author:
+        hidden: true
+      repoName:
+        hidden: true
+  - title: Review
+    filters: repo:dlvhdr/gh-dash -author:@me is:open updated:>={{ nowModify "-2.5w" }}
+    layout:
+      repoName:
+        hidden: true
