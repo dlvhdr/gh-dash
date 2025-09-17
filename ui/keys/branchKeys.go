@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	log "github.com/charmbracelet/log"
 
-	"github.com/dlvhdr/gh-dash/v4/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
 
 type BranchKeyMap struct {
