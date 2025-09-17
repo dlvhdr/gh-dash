@@ -18,8 +18,8 @@ import (
 	"github.com/cli/go-gh/v2/pkg/browser"
 	zone "github.com/lrstanley/bubblezone"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
 	"github.com/dlvhdr/gh-dash/v4/ui/common"
 	"github.com/dlvhdr/gh-dash/v4/ui/components/branch"
