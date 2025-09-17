@@ -11,7 +11,7 @@ import (
 
 	gitm "github.com/aymanbagabas/git-module"
 
-	"github.com/dlvhdr/gh-dash/v4/utils"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 // Extends git.Repository
