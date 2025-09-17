@@ -56,7 +56,7 @@ type Model struct {
 	tasks         map[string]context.Task
 }
 
-func NewModel(repoPath string, cfgFlag string) Model {
+func NewModel(location config.Location) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:        keys.Keys,
@@ -71,8 +71,8 @@ func NewModel(repoPath string, cfgFlag string) Model {
 	}
 
 	m.ctx = &context.ProgramContext{
-		RepoPath:   repoPath,
-		ConfigFlag: cfgFlag,
+		RepoPath:   location.RepoPath,
+		ConfigFlag: location.ConfigFlag,
 		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
 			log.Debug("Starting task", "id", task.Id)

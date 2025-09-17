@@ -50,7 +50,7 @@ func Execute() {
 	}
 }
 
-func createModel(repoPath string, cfgFlag string, debug bool) (ui.Model, *os.File) {
+func createModel(location config.Location, debug bool) (ui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -63,8 +63,8 @@ func createModel(repoPath string, cfgFlag string, debug bool) (ui.Model, *os.Fil
 			log.SetReportCaller(true)
 			log.SetLevel(log.DebugLevel)
 			log.Debug("Logging to debug.log")
-			if repoPath != "" {
-				log.Debug("Running in repo", "repo", repoPath)
+			if location.RepoPath != "" {
+				log.Debug("Running in repo", "repo", location.RepoPath)
 			}
 		} else {
 			loggerFile, _ = tea.LogToFile("debug.log", "debug")
@@ -75,7 +75,7 @@ func createModel(repoPath string, cfgFlag string, debug bool) (ui.Model, *os.Fil
 		log.SetLevel(log.FatalLevel)
 	}
 
-	return ui.NewModel(repoPath, cfgFlag), loggerFile
+	return ui.NewModel(location), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {
@@ -160,7 +160,7 @@ func init() {
 		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
 
-		model, logger := createModel(repo, cfgFlag, debug)
+		model, logger := createModel(config.Location{RepoPath: repo, ConfigFlag: cfgFlag}, debug)
 		if logger != nil {
 			defer logger.Close()
 		}

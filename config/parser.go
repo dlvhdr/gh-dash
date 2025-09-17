@@ -515,7 +515,7 @@ func initParser() ConfigParser {
 
 type Location struct {
 	RepoPath string
-	// Config passed with explicit `--config` flag
+	// Config passed with explicit --config flag
 	ConfigFlag string
 }
 
