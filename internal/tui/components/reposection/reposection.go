@@ -22,7 +22,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
-	"github.com/dlvhdr/gh-dash/v4/utils"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 const SectionType = "repo"
