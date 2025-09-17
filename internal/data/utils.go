@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/v4/ui/theme"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 type RowData interface {

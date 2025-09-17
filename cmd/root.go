@@ -21,8 +21,8 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
-	"github.com/dlvhdr/gh-dash/v4/ui"
-	"github.com/dlvhdr/gh-dash/v4/ui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
 var (
@@ -50,7 +50,7 @@ func Execute() {
 	}
 }
 
-func createModel(location config.Location, debug bool) (ui.Model, *os.File) {
+func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -75,7 +75,7 @@ func createModel(location config.Location, debug bool) (ui.Model, *os.File) {
 		log.SetLevel(log.FatalLevel)
 	}
 
-	return ui.NewModel(location), loggerFile
+	return tui.NewModel(location), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {

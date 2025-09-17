@@ -13,7 +13,7 @@ import (
 	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
-	"github.com/dlvhdr/gh-dash/v4/ui/theme"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 type PullRequestData struct {
