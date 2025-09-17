@@ -56,7 +56,7 @@ type Model struct {
 	tasks         map[string]context.Task
 }
 
-func NewModel(repoPath string, configPath string) Model {
+func NewModel(location config.Location) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:        keys.Keys,
@@ -71,8 +71,8 @@ func NewModel(repoPath string, configPath string) Model {
 	}
 
 	m.ctx = &context.ProgramContext{
-		RepoPath:   repoPath,
-		ConfigPath: configPath,
+		RepoPath:   location.RepoPath,
+		ConfigFlag: location.ConfigFlag,
 		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
 			log.Debug("Starting task", "id", task.Id)
@@ -116,13 +116,13 @@ func (m *Model) initScreen() tea.Msg {
 			Fatal(
 				"failed parsing config file",
 				"location",
-				m.ctx.ConfigPath,
+				m.ctx.ConfigFlag,
 				"err",
 				err,
 			)
 	}
 
-	cfg, err := config.ParseConfig(m.ctx.ConfigPath, m.ctx.RepoPath)
+	cfg, err := config.ParseConfig(config.Location{RepoPath: m.ctx.RepoPath, ConfigFlag: m.ctx.ConfigFlag})
 	if err != nil {
 		showError(err)
 		return initMsg{Config: cfg}

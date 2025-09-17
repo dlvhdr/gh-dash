@@ -37,7 +37,7 @@ type ProgramContext struct {
 	MainContentWidth  int
 	MainContentHeight int
 	Config            *config.Config
-	ConfigPath        string
+	ConfigFlag        string
 	Version           string
 	View              config.ViewType
 	Error             error
