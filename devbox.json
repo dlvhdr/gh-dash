@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
   "env": {
-    "GOPATH": "$HOME/go/",
-    "PATH": "$PATH:$HOME/go/bin"
+    "GOPATH": "$PWD/.devbox/go",
+    "GOBIN": "$PWD/.devbox/go/bin"
   },
   "packages": {
     "git": "latest",
@@ -15,10 +15,6 @@
     "fd": "10.2.0"
   },
   "shell": {
-    "init_hook": [
-      "export \"GOROOT=$(go env GOROOT)\"",
-      "echo \"Creating devbox shell...\""
-    ]
+    "init_hook": ["echo \"Creating devbox shell...\""]
   }
 }
-
