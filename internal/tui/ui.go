@@ -87,8 +87,7 @@ func NewModel(location config.Location) Model {
 	m.taskSpinner.Style = lipgloss.NewStyle().
 		Background(m.ctx.Theme.SelectedBackground)
 
-	footer := footer.NewModel(m.ctx)
-	m.footer = footer
+	m.footer = footer.NewModel(m.ctx)
 	m.prSidebar = prsidebar.NewModel(m.ctx)
 	m.issueSidebar = issuesidebar.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
