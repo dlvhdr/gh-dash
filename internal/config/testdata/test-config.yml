@@ -39,11 +39,12 @@ defaults:
 
   preview:
     open: true
-    width: 84
-  prsLimit: 20
-  issuesLimit: 20
+    width: 60
+  prsLimit: 5
+  issuesLimit: 5
 repoPaths:
   dlvhdr/*: ~/code/personal/*
+confirmQuit: false
 
 keybindings:
   universal:

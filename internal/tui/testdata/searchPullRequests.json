@@ -1,0 +1,792 @@
+{
+  "data": {
+    "search": {
+      "nodes": [
+        {
+          "number": 635,
+          "title": "style: make assignment brief",
+          "body": "",
+          "author": {
+            "login": "LinPr"
+          },
+          "authorAssociation": "CONTRIBUTOR",
+          "updatedAt": "2025-09-18T17:42:42Z",
+          "createdAt": "2025-09-18T17:38:19Z",
+          "url": "https://github.com/dlvhdr/gh-dash/pull/635",
+          "state": "MERGED",
+          "mergeable": "UNKNOWN",
+          "reviewDecision": "APPROVED",
+          "additions": 1,
+          "deletions": 2,
+          "headRefName": "style",
+          "baseRefName": "main",
+          "headRepository": {
+            "name": "gh-dash"
+          },
+          "headRef": {
+            "name": "style"
+          },
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviews": {
+            "totalCount": 1,
+            "nodes": [
+              {
+                "author": {
+                  "login": "dlvhdr"
+                },
+                "body": "",
+                "state": "APPROVED",
+                "updatedAt": "2025-09-18T17:39:56Z"
+              }
+            ]
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "files": {
+            "totalCount": 1,
+            "nodes": [
+              {
+                "additions": 1,
+                "deletions": 2,
+                "path": "internal/tui/ui.go",
+                "changeType": "MODIFIED"
+              }
+            ]
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "build",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "LinPr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "lint",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "LinPr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "lint"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "dependabot",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "LinPr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "totalCount": 1
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "UNKNOWN"
+        },
+        {
+          "number": 632,
+          "title": "chore: remove unused demo tape",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "authorAssociation": "OWNER",
+          "updatedAt": "2025-09-17T19:30:20Z",
+          "createdAt": "2025-09-17T19:28:34Z",
+          "url": "https://github.com/dlvhdr/gh-dash/pull/632",
+          "state": "MERGED",
+          "mergeable": "UNKNOWN",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 0,
+          "deletions": 51,
+          "headRefName": "dlvhdr/cleanup-demo-tape",
+          "baseRefName": "main",
+          "headRepository": {
+            "name": "gh-dash"
+          },
+          "headRef": null,
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviews": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "files": {
+            "totalCount": 1,
+            "nodes": [
+              {
+                "additions": 0,
+                "deletions": 51,
+                "path": "demo.tape",
+                "changeType": "DELETED"
+              }
+            ]
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "build",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "lint",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "lint"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "dependabot",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "totalCount": 1
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "UNKNOWN"
+        },
+        {
+          "number": 631,
+          "title": "refactor: move utils to internal",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "authorAssociation": "OWNER",
+          "updatedAt": "2025-09-17T19:27:25Z",
+          "createdAt": "2025-09-17T19:26:12Z",
+          "url": "https://github.com/dlvhdr/gh-dash/pull/631",
+          "state": "MERGED",
+          "mergeable": "UNKNOWN",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 20,
+          "deletions": 20,
+          "headRefName": "dlvhdr/refactor-utils-to-pkg",
+          "baseRefName": "main",
+          "headRepository": {
+            "name": "gh-dash"
+          },
+          "headRef": null,
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviews": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "files": {
+            "totalCount": 22,
+            "nodes": [
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/config/parser.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/git/git.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/tui/components/branch/branch.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/tui/components/footer/footer.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/tui/components/issue/issue.go",
+                "changeType": "MODIFIED"
+              }
+            ]
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "build",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "lint",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "lint"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "dependabot",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "totalCount": 1
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "UNKNOWN"
+        },
+        {
+          "number": 630,
+          "title": "refactor: move ui to internal/tui",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "authorAssociation": "OWNER",
+          "updatedAt": "2025-09-17T19:24:42Z",
+          "createdAt": "2025-09-17T19:18:16Z",
+          "url": "https://github.com/dlvhdr/gh-dash/pull/630",
+          "state": "MERGED",
+          "mergeable": "UNKNOWN",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 158,
+          "deletions": 158,
+          "headRefName": "dlvhdr/refactor-tui",
+          "baseRefName": "main",
+          "headRepository": {
+            "name": "gh-dash"
+          },
+          "headRef": null,
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviews": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "files": {
+            "totalCount": 70,
+            "nodes": [
+              {
+                "additions": 4,
+                "deletions": 4,
+                "path": "cmd/root.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/data/issueapi.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/data/prapi.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 1,
+                "deletions": 1,
+                "path": "internal/data/utils.go",
+                "changeType": "MODIFIED"
+              },
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/tui/common/labels.go",
+                "changeType": "RENAMED"
+              }
+            ]
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "build",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "lint",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "lint"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "dependabot",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "totalCount": 3
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "UNKNOWN"
+        },
+        {
+          "number": 629,
+          "title": "refactor: move data to internal",
+          "body": "",
+          "author": {
+            "login": "dlvhdr"
+          },
+          "authorAssociation": "OWNER",
+          "updatedAt": "2025-09-17T19:12:44Z",
+          "createdAt": "2025-09-17T19:11:02Z",
+          "url": "https://github.com/dlvhdr/gh-dash/pull/629",
+          "state": "MERGED",
+          "mergeable": "UNKNOWN",
+          "reviewDecision": "REVIEW_REQUIRED",
+          "additions": 28,
+          "deletions": 28,
+          "headRefName": "dlvhdr/move-data-internal",
+          "baseRefName": "main",
+          "headRepository": {
+            "name": "gh-dash"
+          },
+          "headRef": null,
+          "repository": {
+            "name": "gh-dash",
+            "nameWithOwner": "dlvhdr/gh-dash",
+            "isArchived": false,
+            "branchProtectionRules": {
+              "nodes": [
+                {
+                  "requiredApprovingReviewCount": 1,
+                  "requiresApprovingReviews": true,
+                  "requiresCodeOwnerReviews": false,
+                  "requiresStatusChecks": true
+                }
+              ]
+            }
+          },
+          "assignees": {
+            "nodes": []
+          },
+          "comments": {
+            "nodes": [],
+            "totalCount": 0
+          },
+          "reviews": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "reviewThreads": {
+            "nodes": []
+          },
+          "reviewRequests": {
+            "totalCount": 0,
+            "nodes": []
+          },
+          "files": {
+            "totalCount": 34,
+            "nodes": [
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/data/assignee.go",
+                "changeType": "RENAMED"
+              },
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/data/issueapi.go",
+                "changeType": "RENAMED"
+              },
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/data/prapi.go",
+                "changeType": "RENAMED"
+              },
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/data/repository.go",
+                "changeType": "RENAMED"
+              },
+              {
+                "additions": 0,
+                "deletions": 0,
+                "path": "internal/data/user.go",
+                "changeType": "RENAMED"
+              }
+            ]
+          },
+          "isDraft": false,
+          "commits": {
+            "nodes": [
+              {
+                "commit": {
+                  "deployments": {
+                    "nodes": []
+                  },
+                  "statusCheckRollup": {
+                    "contexts": {
+                      "totalCount": 3,
+                      "nodes": [
+                        {
+                          "__typename": "CheckRun",
+                          "name": "build",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "lint",
+                          "status": "COMPLETED",
+                          "conclusion": "SUCCESS",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "lint"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "__typename": "CheckRun",
+                          "name": "dependabot",
+                          "status": "COMPLETED",
+                          "conclusion": "SKIPPED",
+                          "checkSuite": {
+                            "creator": {
+                              "login": "dlvhdr"
+                            },
+                            "workflowRun": {
+                              "workflow": {
+                                "name": "build"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "totalCount": 2
+          },
+          "labels": {
+            "nodes": []
+          },
+          "mergeStateStatus": "UNKNOWN"
+        }
+      ],
+      "issueCount": 352,
+      "pageInfo": {
+        "hasNextPage": true,
+        "startCursor": "Y3Vyc29yOjE=",
+        "endCursor": "Y3Vyc29yOjIw"
+      }
+    }
+  }
+}
