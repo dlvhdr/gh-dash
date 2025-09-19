@@ -235,6 +235,10 @@ type PullRequestsResponse struct {
 
 var client *gh.GraphQLClient
 
+func SetClient(c *gh.GraphQLClient) {
+	client = c
+}
+
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
 	if client == nil {
