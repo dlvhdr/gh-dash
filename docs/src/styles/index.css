@@ -79,13 +79,6 @@ footer {
   }
 
   @media (width <= 64rem) {
-    header {
-      padding-left: 8px;
-      padding-right: 8px;
-    }
-  }
-
-  @media (width <= 64rem) {
     starlight-theme-select {
       margin-right: 0px;
       & select {

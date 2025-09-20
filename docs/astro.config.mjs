@@ -67,7 +67,6 @@ export default defineConfig({
           label: "Configuration",
           items: [
             "configuration",
-            "configuration/examples",
             "configuration/schema",
             "configuration/defaults",
             "configuration/searching",
@@ -76,6 +75,7 @@ export default defineConfig({
             "configuration/repo-paths",
             "configuration/keybindings",
             "configuration/theme",
+            "configuration/examples",
             {
               label: "Layout",
               items: [

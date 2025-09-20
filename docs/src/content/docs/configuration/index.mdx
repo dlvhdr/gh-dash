@@ -15,14 +15,12 @@ import { Aside, LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 `dash` has extensive configuration options.
 
-- The config is usually created under `$HOME/.config/gh-dash/config.yml`, but this
-  changes between operating systems and `dash` has many ways to override that.
-- `dash` will also look for a `.gh-dash.yml` file if in a git repository to allow
-  for project specific configuration.
-- Use the [`--config`][01] flag or `$GH_DASH_CONFIG` to specify an alternate configuration.
+- Modify the default config which is usually under `$HOME/.config/gh-dash/config.yml`.
+- Use the [`--config`][01] flag to specify a different configuration file.
+- Create a `.gh-dash.yml` file in a repo for project specific configuration.
 
 <details>
-  <summary>How does `dash` determine which configuration file to use?</summary>
+  <summary>Give me more details!</summary>
   Using the following logic:
 1. If `$GH_DASH_CONFIG` is a non-empty string, `dash` will use this file for
    its configuration.
@@ -36,6 +34,17 @@ import { Aside, LinkCard, CardGrid } from "@astrojs/starlight/components";
 
 </details>
 
+---
+
+<br />
+
+<Aside type="tip">
+  Just want a few examples for inspiration? Check out the
+  [examples](./examples).
+</Aside>
+
+[01]: /getting-started/usage/#--config
+
 ## Options
 
 The configuration for `dash` is schematized. The pages in this section list the configuration
@@ -46,6 +55,21 @@ options, their defaults, and how you can use them.
 Documentation and schema for the configuration of your GitHub dashboard.
 
 <CardGrid>
+  <LinkCard
+    title="Schema"
+    href="./schema"
+    description="Configure your IDE to autocomplete when editing the config file"
+  />
+  <LinkCard
+    title="Defaults"
+    href="./defaults"
+    description="Documentation for the default setting options for your GitHub dashboard."
+  />
+  <LinkCard
+    title="Searching"
+    href="./searching"
+    description="How to search and filter issues and prs"
+  />
   <LinkCard
     title="PR Section"
     href="./pr-section"
@@ -60,16 +84,6 @@ Documentation and schema for the configuration of your GitHub dashboard.
     title="Keybindings"
     href="./keybindings"
     description="Documentation for defining commands for your GitHub dashboard."
-  />
-  <LinkCard
-    title="Searching"
-    href="./searching"
-    description="How to search and filter issues and prs"
-  />
-  <LinkCard
-    title="Defaults"
-    href="./defaults"
-    description="Documentation for the default setting options for your GitHub dashboard."
   />
   <LinkCard
     title="Layout"

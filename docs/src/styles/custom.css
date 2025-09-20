@@ -37,7 +37,7 @@ h3 {
 
 :root {
   --sl-font: var(--font-family);
-  --sl-nav-height: 4rem;
+  --sl-nav-height: 74px;
   --sl-nav-pad-x: 16px;
   --sl-color-bg-nav: var(--sl-color-bg);
   --sl-color-bg-sidebar: var(--sl-color-bg);
@@ -251,33 +251,39 @@ kbd:not(.sl-hidden) {
   }
 
   @media (width <= 64rem) {
+    site-search {
+      @apply hidden;
+    }
     starlight-theme-select {
-      margin-right: 8px;
+      margin-right: 42px;
       & select {
         width: 8px;
-      }
-
-      & svg.icon.caret {
-        display: none;
+        padding-inline: 24px;
       }
     }
   }
 
   @media (width > 64rem) {
-    starlight-theme-select select {
-      width: 20px;
+    starlight-menu-button {
+      display: none;
+    }
+    starlight-theme-select {
+      select {
+        margin-right: 0;
+        padding-inline: 24px;
+      }
     }
   }
 
   header.header {
-    @apply mx-2 my-2 w-[calc(100vw_-_((100vw_-_100%)_+_16px))] max-w-[100vw] rounded border border-[var(--sl-color-gray-5)] p-0 lg:mx-6 lg:w-[calc(100vw_-_((100vw_-_100%)_+_48px))];
+    @apply !m-0 w-full rounded !p-0;
     box-shadow: 0px -8px 0px var(--sl-color-bg);
   }
 
   starlight-menu-button button {
     top: 24px;
-    right: 12px;
-    background-color: var(--sl-color-gray-4);
+    right: 16px;
+    background-color: var(--sl-color-gray-5);
     color: var(--sl-color-gray-1);
   }
 
