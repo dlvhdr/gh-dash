@@ -1,36 +1,37 @@
 ---
 import Search from "@astrojs/starlight/components/Search.astro";
-import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+// import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
 import Logo from "./Logo.astro";
 import { Icon } from "@astrojs/starlight/components";
 import PillLink from './PillLink.astro';
-import MobileMenuToggle from "@astrojs/starlight/components/MobileMenuToggle.astro";
+import ThemeSelect from './ThemeSelect.astro';
 
 const isHomepage = Astro.locals.starlightRoute.id === "";
 ---
 
-<div class="flex flex-row items-center gap-3 lg:gap-3 max-w-[100vw] py-2 pr-1 pl-3 lg:px-6 ">
-  <div class="grow">
-    <a href="/" class="no-underline">
-      <Logo />
-    </a>
-  </div>
-  {isHomepage ? (
-    <PillLink href="/getting-started" class="hidden lg:block">
-        <Icon name="document" size="20px" /><span class="hidden lg:block"> Docs</span>
+<div class="px-2 lg:px-6 py-2 bg-[var(--sl-color-bg)]">
+  <div class="flex flex-row items-center gap-3 lg:gap-3 max-w-[100vw] py-2 pr-2 pl-4 lg:px-6 border border-[var(--sl-color-gray-5)] rounded">
+    <div class="grow">
+      <a href="/" class="no-underline">
+        <Logo />
+      </a>
+    </div>
+    {isHomepage ? (
+      <PillLink href="/getting-started">
+          <Icon name="seti:notebook" size="20px" /><span class="hidden lg:block"> Docs</span>
+      </PillLink>
+      ) : null
+    }
+    <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
+      <Icon name="github" size="20px" /><span class="hidden lg:block"> 8.7k</span>
+    </PillLink >
+    <PillLink href="/donating">
+      <Icon name="heart" size="20px" color="var(--color-red-500)" /><span class="hidden lg:block"> Donate</span>
     </PillLink>
-    ) : null
-  }
-  <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
-    <Icon name="github" size="20px" /><span class="hidden lg:block"> 8.7k</span>
-  </PillLink >
-  <PillLink href="/donating">
-    <Icon name="heart" size="20px" color="var(--color-red-500)" /><span class="hidden lg:block"> Donate</span>
-  </PillLink>
-  <PillLink href="https://discord.gg/SXNXp9NctV" target="_blank">
-    <Icon name="discord" size="20px"/>
-  </PillLink>
-  <Search />
-  <ThemeSelect />
-  {isHomepage ? null : (<MobileMenuToggle />)}
+    <PillLink href="https://discord.gg/SXNXp9NctV" target="_blank">
+      <Icon name="discord" size="20px"/>
+    </PillLink>
+    <Search />
+    <ThemeSelect />
+  </div>
 </div>
