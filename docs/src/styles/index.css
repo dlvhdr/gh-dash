@@ -69,7 +69,7 @@ footer {
   display: none;
 }
 
-@layer overrides {
+@layer my-overrides {
   html {
     --sl-content-width: 100%;
   }
