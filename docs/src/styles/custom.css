@@ -251,14 +251,22 @@ kbd:not(.sl-hidden) {
   }
 
   @media (width <= 64rem) {
-    site-search {
-      @apply hidden;
-    }
     starlight-theme-select {
       margin-right: 42px;
       & select {
         width: 8px;
         padding-inline: 24px;
+      }
+    }
+
+    .mobile-preferences starlight-theme-select {
+      margin-right: 0;
+      & select {
+        width: calc(var(--sl-select-width) + var(--sl-inline-padding) * 2);
+        padding-inline: calc(
+            var(--sl-label-icon-size) + var(--sl-inline-padding) + 0.25rem
+          )
+          calc(var(--sl-caret-size) + var(--sl-inline-padding) + 0.25rem);
       }
     }
   }

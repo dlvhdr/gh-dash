@@ -5,7 +5,7 @@ const {href, target, class: className} = Astro.props;
   class:list={["flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline", className]}
   href={href}
   target={target}>
-  <div class="hover:bg-[var(--sl-color-gray-5)] h-[38px] flex items-center gap-2 rounded-lg lg:border lg:border-[var(--sl-color-gray-5)] lg:bg-[var(--sl-color-black)] lg:px-2 lg:py-1 text-[var(--sl-color-accent-low)]">
+  <div class="hover:bg-[var(--sl-color-gray-5)] h-[38px] flex items-center gap-2 rounded-lg lg:border lg:border-[var(--sl-color-gray-5)] lg:bg-[var(--sl-color-black)] px-1 lg:px-2 lg:py-1 text-[var(--sl-color-accent-low)]">
     <slot />
   </div>
 </a>
