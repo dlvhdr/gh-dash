@@ -73,3 +73,9 @@ tasks:
       - task: docs-prepare
       - cd docs && pnpm build
     desc: Run docs production build
+
+  docs-preview:
+    cmds:
+      - task: docs-build
+      - cd docs && pnpm preview
+    desc: Preview docs production build

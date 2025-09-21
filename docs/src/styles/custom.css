@@ -1,4 +1,4 @@
-@layer base, starlight, theme, components, utilities, my-overrides;
+@layer base, starlight, theme, components, utilities, my-overrides, my-overrides-index;
 
 @import "@astrojs/starlight-tailwind";
 @import "tailwindcss/theme.css" layer(theme);
