@@ -55,9 +55,46 @@ checksum:
   name_template: "checksums.txt"
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
+
+release:
+  footer: |
+    ---
+
+    If you enjoy `dash`, consider [making a donation](https://www.gh-dash.dev/donating) ❤️
+
+    Have questions? Join our [Discord community](https://discord.gg/SXNXp9NctV)!
+
+    <a  class="underline: none;" href="https://gh-dash.dev">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="./docs/public/logo.png">
+        <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" width="600" src="./docs/public/logo-light.png">
+      </picture>
+    </a>
+
 changelog:
   sort: asc
+  use: github
   filters:
     exclude:
-      - "^docs:"
       - "^test:"
+      - "^chore"
+      - "merge conflict"
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+      - go mod tidy
+  groups:
+    - title: Dependency updates
+      regexp: "^.*\\(deps\\)*:+.*$"
+      order: 300
+    - title: "New Features"
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 100
+    - title: "Bug fixes"
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 200
+    - title: "Documentation updates"
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 400
+    - title: Other work
+      order: 9999
