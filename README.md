@@ -27,15 +27,16 @@
 
 ## 📃 Docs
 
-Installation instructions, configuration options etc. can be found at the docs
-site.
-
-See the [Getting Started](https://gh-dash.dev/getting-started) guide.
+`dash` has an extensive docs site at [gh-dash.dev/getting-started](https://gh-dash.dev/getting-started).
 
 ## ❤️ Donating
 
-If you enjoy dash and want to help, consider supporting the project with a
-donation at [dlvhdr's sponsors page](https://github.com/sponsors/dlvhdr).
+If you enjoy `dash` and want to help, consider supporting the project with a
+donation at the [sponsors page](https://github.com/sponsors/dlvhdr).
+
+## 👥 Discord
+
+Have questions? Join our [Discord community](https://discord.gg/SXNXp9NctV)!
 
 ## 🙏 Contributing
 
@@ -43,7 +44,7 @@ See the contribution guide at [https://www.gh-dash.dev/contributing](https://www
 
 ## 🛞 Under the hood
 
-gh-dash uses:
+`dash` uses:
 
 - [bubbletea](https://github.com/charmbracelet/bubbletea) for the TUI
 - [lipgloss](https://github.com/charmbracelet/lipgloss) for the styling
@@ -55,4 +56,4 @@ gh-dash uses:
 
 ## Author
 
-Dolev Hadar dolevc2@gmail.com
+Dolev Hadar [@dlvhdr](https://github.com/dlvhdr).
