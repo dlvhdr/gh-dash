@@ -66,8 +66,8 @@ release:
 
     <a  class="underline: none;" href="https://gh-dash.dev">
       <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="./docs/public/logo.png">
-        <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" width="600" src="./docs/public/logo-light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://gh-dash.dev/logo.png">
+        <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" width="600" src="https://gh-dash.dev/logo-light.png">
       </picture>
     </a>
 
