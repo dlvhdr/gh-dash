@@ -1,23 +1,49 @@
 ---
 import Search from "@astrojs/starlight/components/Search.astro";
-// import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
 import Logo from "./Logo.astro";
 import { Icon } from "@astrojs/starlight/components";
 import PillLink from './PillLink.astro';
 import ThemeSelect from './ThemeSelect.astro';
 
-const isHomepage = Astro.locals.starlightRoute.id === "";
+const isDashHomepage = Astro.locals.starlightRoute.id === "";
+const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
 ---
+
+<style>
+  .plugin {
+    background-image: var(--hdr-red-gradient);
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+    background-repeat: repeat;
+  }
+</style>
+
 
 <div class="px-2 lg:px-6 py-2 bg-[var(--sl-color-bg)]">
   <div class="flex flex-row items-center gap-3 lg:gap-3 max-w-[100vw] py-2 pr-2 pl-4 lg:px-6 border border-[var(--sl-color-gray-5)] rounded">
-    <div class="grow">
+    <div class="grow flex items-end">
       <a href="/" class="no-underline">
         <Logo />
       </a>
+{isEnhanceHomepage ? <p class="plugin hidden md:block ml-2 leading-[18px] h-min">Companion 🌟</p> : null}
     </div>
-    {isHomepage ? (
-      <PillLink href="/getting-started">
+    <form action="/insiders/">
+      <button class="relative hover:!no-underline text-base md:px-3 md:h-[38px] border border-orange-900 hover:bg-orange-900 hover:text-orange-200 text-orange-400 bg-orange-950 rounded">
+      <div class="hidden md:flex flex-col gap-0 items-start leading-1.5 md:pt-2">
+        <span class="text-[0.625rem] text-orange-600 relative -top-2 uppercase">Join Insiders</span>
+        <span class="hidden md:inline-block">Get Companion Apps 🌟</span>
+      </div>
+      <div class="md:hidden">
+        <span class="text-xs text-orange-600 uppercase">Join Insiders</span>
+      </div>
+      </button>
+    </form>
+    {isDashHomepage ? (
+      <PillLink href="/getting-started" class="hidden lg:block">
           <Icon name="seti:notebook" size="20px" /><span class="hidden lg:block"> Docs</span>
       </PillLink>
       ) : null
@@ -25,13 +51,15 @@ const isHomepage = Astro.locals.starlightRoute.id === "";
     <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
       <Icon name="github" size="20px" /><span class="hidden lg:block"> 8.7k</span>
     </PillLink >
-    <PillLink href="/donating">
+    <PillLink class="hidden lg:block" href="/donating">
       <Icon name="heart" size="20px" color="var(--color-red-500)" /><span class="hidden lg:block"> Donate</span>
     </PillLink>
-    <PillLink href="https://discord.gg/SXNXp9NctV" target="_blank">
+    <PillLink class="hidden lg:block" href="https://discord.gg/SXNXp9NctV" target="_blank">
       <Icon name="discord" size="20px"/>
     </PillLink>
     <Search />
-    <ThemeSelect />
+    <div class="hidden md:block">
+      <ThemeSelect />
+    </div>
   </div>
 </div>

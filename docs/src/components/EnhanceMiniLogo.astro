@@ -1,0 +1,28 @@
+---
+const { class: className, } = Astro.props;
+---
+
+<style>
+  [aria-label="ENHANCE ASCII Logo"] {
+    position: relative;
+    background-image: var(--hdr-green-gradient);
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+    background-repeat: repeat;
+    border: none;
+    padding: 0;
+  }
+</style>
+
+<div class="inline-flex flex-col">
+  <pre aria-label="ENHANCE ASCII Logo" class:list={['text-xl lg:text-2xl leading-none', className]}>
+▐▔▔▐▚ ▌▐ ▌▐▔▌▐▚ ▌▐▔▔▐▔▔
+▐▛▁▐ ▚▌▐▔▌▐▔▌▐ ▚▌▐▁▁▐▛▁</pre>
+  <p class="mt-4 ml-1 p-0 text-[var(--sl-color-white)] text-sm">
+    A Blazingly Fast Terminal UI for GitHub Actions
+  </p>
+</div>

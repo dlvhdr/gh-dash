@@ -62,6 +62,33 @@ h3 {
     oklch(80% 0.3 230)
   );
 
+  --hdr-green-gradient: linear-gradient(
+    to right in oklab,
+    oklch(0.8512 0.1937 154.97) 37% 17%,
+    oklch(0.7115 0.131 174.2)
+  );
+
+  --hdr-red-gradient: linear-gradient(
+    to right in oklab,
+    oklch(91% 0.45 37),
+    oklch(95% 0.4 95)
+  );
+
+  --radial-silver-gradient: radial-gradient(
+    farthest-corner circle at 65% 37% in oklch,
+    oklch(95% 0.02 214) 11%,
+    12%,
+    oklch(39% 0 68) 55%,
+    57%,
+    oklch(41% 0.04 58)
+  );
+
+  --hdr-yellow-gradient: linear-gradient(
+    to right in oklab,
+    oklch(95% 0.4 95),
+    oklch(79% 0.45 64)
+  );
+
   --sl-color-bg: #03030a;
   --sl-color-accent-low: var(--color-blue-200);
   --sl-color-accent: var(--color-blue-300);
@@ -271,25 +298,13 @@ kbd:not(.sl-hidden) {
     }
   }
 
-  @media (width > 64rem) {
-    starlight-menu-button {
-      display: none;
-    }
-    starlight-theme-select {
-      select {
-        margin-right: 0;
-        padding-inline: 24px;
-      }
-    }
-  }
-
   header.header {
     @apply !m-0 w-full rounded !p-0;
     box-shadow: 0px -8px 0px var(--sl-color-bg);
   }
 
   starlight-menu-button button {
-    top: 24px;
+    top: 21px;
     right: 16px;
     background-color: var(--sl-color-gray-5);
     color: var(--sl-color-gray-1);

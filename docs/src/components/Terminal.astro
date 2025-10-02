@@ -1,6 +1,6 @@
 ---
 import "../styles/terminal.css";
-const {className} = Astro.props;
+const {className, title = "gh dash"} = Astro.props;
 ---
 
 <div class={`terminal ${className}`}>
@@ -10,7 +10,7 @@ const {className} = Astro.props;
       <span class="circle yellow"></span>
       <span class="circle green"></span>
     </div>
-    <div class="terminal-title">gh dash -- 70x32</div>
+    <div class="terminal-title">{title} -- 70x32</div>
   </div>
   <div class="body">
     <slot />
