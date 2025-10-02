@@ -1,0 +1,30 @@
+---
+title: DASH Integration
+---
+
+In order to launch `ENHANCE` from `DASH` [add a custom keybind](../../../configuration/keybindings) to your
+`DASH` config:
+
+```yaml
+keybindings:
+  prs:
+    - key: T
+      command: gh enhance -R {{.RepoName}} {{.PrNumber}}
+```
+
+_Note: You can change the <kbd>T</kbd> keybind to whatever you want, I just remember it
+by the `Test` mnemonic._
+
+## Using `tmux`
+
+If you're working with `tmux`, you can also launch it in a new window:
+
+```yaml
+keybindings:
+  prs:
+    - key: T
+      command: >-
+        tmux new-window '
+          gh enhance -R {{.RepoName}} {{.PrNumber}}
+        '
+```

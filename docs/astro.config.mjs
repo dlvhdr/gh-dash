@@ -14,8 +14,8 @@ export default defineConfig({
   site: "https://gh-dash.dev",
   integrations: [
     astroBrokenLinksChecker({
-      logFilePath: "broken-links.log", // Optional: specify the log file path
-      checkExternalLinks: false, // Optional: check external links (currently, caching to disk is not supported, and it is slow )
+      logFilePath: "broken-links.log",
+      checkExternalLinks: false,
     }),
     starlight({
       title: "DASH",
@@ -42,7 +42,6 @@ export default defineConfig({
       components: {
         Header: "./src/components/Header.astro",
         PageTitle: "./src/components/Title.astro",
-        PageFrame: "./src/components/PageFrame.astro",
       },
       social: [
         {
@@ -54,17 +53,16 @@ export default defineConfig({
       sidebar: [
         {
           label: "Getting Started",
-          items: [
-            "getting-started",
-            "getting-started/usage",
-            {
-              label: "Keybindings",
-              autogenerate: { directory: "getting-started/keybindings" },
-            },
-          ],
+          items: ["getting-started", "getting-started/usage"],
+        },
+        {
+          label: "Keybindings",
+          collapsed: true,
+          autogenerate: { directory: "getting-started/keybindings" },
         },
         {
           label: "Configuration",
+          collapsed: true,
           items: [
             "configuration",
             "configuration/schema",
@@ -88,6 +86,23 @@ export default defineConfig({
         },
         { slug: "contributing" },
         { slug: "donating" },
+        {
+          label: "Insiders 🌟",
+          items: [
+            "insiders",
+            {
+              label: "ENHANCE",
+              collapsed: true,
+              items: [
+                "insiders/enhance/getting-started",
+                "insiders/enhance/usage",
+                "insiders/enhance/keybindings",
+                "insiders/enhance/dash-integration",
+                "insiders/enhance/theme",
+              ],
+            },
+          ],
+        },
       ],
     }),
   ],

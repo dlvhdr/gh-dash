@@ -6,6 +6,7 @@ import Terminal from "../components/Terminal.astro";
 import Footer from "../components/Footer.astro";
 import Box from "../components/Box.astro";
 import Showcase from "../components/Showcase.astro";
+import Discord from "../components/Discord.astro";
 import FadeImages from "../components/FadeImages.astro";
 import prSectionsImage from "../assets/pr-sections.png";
 import { Image } from "astro:assets";
@@ -163,8 +164,8 @@ colors:
       </Terminal>
     </Showcase>
   </div>
-  <div class="flex flex-col items-center mt-28">
-    <h2 class="mb-2 !text-4xl">
+  <div class="flex flex-col items-center mt-16">
+    <h2 class="mb-2">
       Why use DASH?
     </h2>
     <p class="mb-6 lg:w-[60ch] text-center">
@@ -174,5 +175,9 @@ colors:
       <Image src={charmVidPreviewSrc} alt="YouTube video - Manage open source like a boss (in the terminal)" class="w-[95vw] lg:w-[800px]" />
     </a>
   </div>
+  <div class="text-[var(--sl-color-gray-5)] mt-16">
+    ──◇──
+  </div>
+  <Discord class="mt-20" />
   <Footer class="mt-20" />
 </StarlightPage>

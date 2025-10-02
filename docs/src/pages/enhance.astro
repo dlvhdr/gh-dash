@@ -1,0 +1,103 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import "../styles/index.css";
+import Footer from "../components/Footer.astro";
+import Logo from "../components/Logo.astro";
+import Terminal from "../components/Terminal.astro";
+import Discord from "../components/Discord.astro";
+import Box from "../components/Box.astro";
+import Showcase from "../components/Showcase.astro";
+import { Image } from "astro:assets";
+import prSectionsImage from "../assets/pr-sections.png";
+import helpSrc from "../assets/help.png"
+import FadeImages from "../components/FadeImages.astro";
+import draculaSrc from "../assets/enhance-dracula.png"
+import gruvboxSrc from "../assets/enhance-gruvbox_dark.png"
+import nordSrc from "../assets/enhance-nord.png"
+---
+
+<StarlightPage frontmatter={{ title: "ENHANCE", template: "splash" }}>
+  <div class="flex flex-row pt-8 pb-8 z-1 items-center">
+    <h2 aria-label="The GitHub Actions Companion to DASH" class="font-normal mr-4 text-balance text-center m-auto md:w-[30ch] leading-10">A Blazingly Fast Terminal UI for GitHub Actions</h2>
+  </div>
+  <div id="main-buttons" class="flex flex-col md:flex-row items-center gap-4 pb-8">
+    <form action="/insiders/">
+      <button
+        class="bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
+      >Download Now</button
+      >
+    </form>
+    <form class="m-0" action="/insiders/enhance/getting-started" target="_blank">
+      <button
+        class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
+        >View Docs</button
+      >
+    </form>
+  </div>
+  <div id="hero" class="relative">
+    <Terminal title="gh enhance">
+      <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
+        <source src="/enhance-demo.webm" type="video/webm" />
+        <source src="/enhance-demo.mp4" type="video/mp4" />
+      </video>
+    </Terminal>
+    <div
+      class="hidden lg:block absolute lg:-right-32 lg:-bottom-2 h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)]"
+    >
+      <div>⌄</div>
+      <div class="relative -top-8 mt-0">⌄</div>
+    </div>
+  </div>
+
+  <div class="text-[var(--sl-color-gray-5)] mt-16 mb-16">
+    ──◇──
+  </div>
+
+  <div class="flex flex-col gap-8 w-[95vw] lg:w-80rem items-center lg:gap-16">
+    <Showcase>
+      <Box header="  Watch Action Runs">
+        <p>
+          Automatically watch runs that are in progress and get notified when they are done
+        </p>
+      </Box>
+      <Terminal className="w-[95vw] lg:w-[800px]" title="gh enhance">
+        <video autoplay loop muted playsinline >
+          <source src="/watch.webm" type="video/webm" />
+          <source src="/watch.mp4" type="video/mp4" />
+        </video>
+      </Terminal>
+    </Showcase>
+    <Showcase reversed={true}>
+      <Box header="  Rerun Failed Actions">
+        Rerunning flaky CI jobs has never been easier! Press <kbd>Ctrl</kbd>+<kbd>R</kbd> to rerun and watch it succeed (hopefully! 🤞)
+      </Box>
+      <Terminal className="w-[95vw] lg:w-[800px]" title="gh enhance">
+        <video autoplay loop muted playsinline >
+          <source src="/rerun.webm" type="video/webm" />
+          <source src="/rerun.mp4" type="video/mp4" />
+        </video>
+      </Terminal>
+    </Showcase>
+    <Showcase reversed={true}>
+      <Box header="And more!" src={prSectionsImage}>
+        <ul>
+          <li><div class="flex items-center mb-0">Easily integrates with <Logo className="ml-3 text-[6px]" /></div></li>
+          <li> Native Vim keybindings</li>
+          <li> Use custom themes</li>
+          <li> Easily filter runs, jobs and logs</li>
+          <li> More features coming soon!</li>
+        </ul>
+      </Box>
+      <Terminal className="lg:w-[800px]" title="gh enhance">
+        <FadeImages>
+          <Image src={gruvboxSrc} alt="Enhance running with the gruvbox theme"/>
+          <Image src={nordSrc} alt="Enhance running with the nord theme"/>
+          <Image src={draculaSrc} alt="Enhance running with the dracula theme"/>
+        </FadeImages>
+      </Terminal>
+    </Showcase>
+  </div>
+
+  <Discord class="mt-20" />
+  <Footer class="mt-20" isCommunity={false} />
+</StarlightPage>
