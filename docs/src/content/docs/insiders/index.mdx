@@ -2,20 +2,24 @@
 title: Join Insiders
 ---
 
+import SponsorshipGoal from "../../../components/SponsorshipGoal.astro";
 import EnhanceMiniLogo from "../../../components/EnhanceMiniLogo.astro";
 import { Icon } from "@astrojs/starlight/components";
 
-`DASH Insiders` is a program you can join by sponsoring me on GitHub and gets you access to
+`DASH Insiders` is a program you can join by sponsoring me on GitHub and gets you early access to
 exclusive companion apps.
 
 ## Included Apps
 
 Currently Insiders gives you access to:
 
-<div class="py-4 md:p-4">
+<div class="py-4 md:p-6">
   <a href="/enhance" class="no-underline">
-    <div class="inline-flex flex-row items-center gap-2 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)]">
-      <EnhanceMiniLogo />
+    <div class="flex w-full flex-row items-center gap-8 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)] md:w-max">
+      <div class="flex flex-col gap-4">
+        <EnhanceMiniLogo />
+        <SponsorshipGoal variant="mini" />
+      </div>
       <Icon
         name="right-arrow"
         size="24px"
@@ -66,10 +70,8 @@ By sponsoring me on one of the eligible tiers you:
 
 1. Get access to my private projects that you can download, use, view the code
    and open issues.
-2. Show support for my other fully open source projects
-
-Your support will help me work on more projects and you will automatically get
-access to them.
+1. Help reach goals towards open sourcing these projects
+1. Show support for my other fully open source projects
 
 ## Why Sponsorware
 
@@ -84,5 +86,7 @@ If you want more details you can [read this](https://github.com/sponsorware/docs
 
 ## Terms
 
+- Each app will have a goal towards open sourcing it. Future major releases may
+  require additional sponsorship goals.
 - Please don't distribute the source code of Insiders. You may freely use it for public, private or commercial projects, privately fork or mirror it, but please don't make the source code public, as it would counteract the sponsorware strategy.
 - If you cancel your subscription, you're automatically removed as a collaborator and will miss out on all future updates of Insiders. However, you may use the latest version that's available to you as long as you like. Just remember that [GitHub deletes private forks](https://docs.github.com/en/github/setting-up-and-managing-your-github-user-account/removing-a-collaborator-from-a-personal-repository).

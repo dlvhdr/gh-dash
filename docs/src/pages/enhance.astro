@@ -9,7 +9,7 @@ import Box from "../components/Box.astro";
 import Showcase from "../components/Showcase.astro";
 import { Image } from "astro:assets";
 import prSectionsImage from "../assets/pr-sections.png";
-import helpSrc from "../assets/help.png"
+import SponsorshipGoal from "../components/SponsorshipGoal.astro";
 import FadeImages from "../components/FadeImages.astro";
 import draculaSrc from "../assets/enhance-dracula.png"
 import gruvboxSrc from "../assets/enhance-gruvbox_dark.png"
@@ -34,7 +34,8 @@ import nordSrc from "../assets/enhance-nord.png"
       >
     </form>
   </div>
-  <div id="hero" class="relative">
+  <SponsorshipGoal server:defer />
+  <div id="hero" class="relative mt-8 md:mt-10">
     <Terminal title="gh enhance">
       <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
         <source src="/enhance-demo.webm" type="video/webm" />
