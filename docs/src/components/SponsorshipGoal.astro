@@ -1,0 +1,35 @@
+---
+import { getSponsorshipGoal } from '../data/sponsorshipGoal';
+import { Icon } from "@astrojs/starlight/components";
+
+const {variant} = Astro.props;
+
+const response = await getSponsorshipGoal()
+const current = response.data.user.monthlyEstimatedSponsorsIncomeInCents / 100
+const GOAL = 100 // USD 
+---
+
+<div class={`text-center mt-0 max-w-full md:max-w-[80ch]`}>
+  <label for="sponsorship-goal" class="mt-0 mb-0 text-pretty text-sm text-[var(--sl-color-gray-3)]">
+    {variant !== "mini" ?
+      <div class="hidden md:block">
+        <Icon name="information" size="16px" class="inline relative -bottom-[2.5px] mr-2" />Get early access through the
+        <a class="no-underline text-[var(--sl-color-gray-2)]" href="/insiders">Insiders Program</a>.<br />
+      </div> : null
+    }
+  </label>
+  <div class="relative mt-1">
+    <progress id="sponsorship-goal" value={current} max={GOAL} class="h-4 w-full appearance-none [&::-webkit-progress-bar]:rounded [&::-webkit-progress-value]:rounded [&::-webkit-progress-bar]:bg-[var(--sl-color-gray-5)] [&::-webkit-progress-value]:bg-pink-600 [&::-moz-progress-bar]:bg-pink-300">
+      {Intl.NumberFormat("en-US", {style: "currency", currency: "USD"}).format(current)} / {Intl.NumberFormat("en-US", {style: "currency", currency: "USD"}).format(GOAL)}
+    </progress>
+    <p class="text-xs absolute -top-[0.6rem] text-[var(--sl-color-gray-2)] left-0 right-0">{(current / GOAL) * 100}% towards ${GOAL} per month goal</p>
+  </div>
+  <p class={`mt-0 md:mt-1 mb-0 text-xs md:text-sm text-[var(--sl-color-gray-3)] leading-5 text-pretty ${variant === "mini" ? 'text-left' : ""}`}>
+    Hitting the goal will open source the app <span class="text-pink-600 text-xl">󱃱</span>
+    {variant !== "mini" ? (<span class="m-0 hidden md:block">
+      Contributions <i>really</i> help me sustainably work on my projects!
+    </span>) : null}
+  </p>
+</div>
+
+
