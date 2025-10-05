@@ -19,9 +19,19 @@ prSections:
         hidden: true
 issuesSections:
   - title: Open
-    filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
-  - title: Creator
-    filters: author:@me repo:dlvhdr/gh-dash is:open
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions
+  - title: Bugs
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:bug
+  - title: Features
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:feat
+  - title: High
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:high-pri
+  - title: Mid
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:mid-pri
+  - title: Low
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:mid-pri
+  - title: Unlabeled
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions -label:bug -label:feat
   - title: All
     filters: repo:dlvhdr/gh-dash sort:reactions
 

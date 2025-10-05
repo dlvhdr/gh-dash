@@ -126,14 +126,19 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 						currIssue.State = "OPEN"
 					}
 				}
+				if msg.Labels != nil {
+					currIssue.Labels.Nodes = msg.Labels.Nodes
+				}
 				if msg.NewComment != nil {
 					currIssue.Comments.Nodes = append(currIssue.Comments.Nodes, *msg.NewComment)
 				}
 				if msg.AddedAssignees != nil {
-					currIssue.Assignees.Nodes = addAssignees(currIssue.Assignees.Nodes, msg.AddedAssignees.Nodes)
+					currIssue.Assignees.Nodes = addAssignees(
+						currIssue.Assignees.Nodes, msg.AddedAssignees.Nodes)
 				}
 				if msg.RemovedAssignees != nil {
-					currIssue.Assignees.Nodes = removeAssignees(currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+					currIssue.Assignees.Nodes = removeAssignees(
+						currIssue.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 				}
 				m.Issues[i] = currIssue
 				m.SetIsLoading(false)
@@ -382,6 +387,7 @@ type SectionIssuesFetchedMsg struct {
 
 type UpdateIssueMsg struct {
 	IssueNumber      int
+	Labels           *data.IssueLabels
 	NewComment       *data.IssueComment
 	IsClosed         *bool
 	AddedAssignees   *data.Assignees

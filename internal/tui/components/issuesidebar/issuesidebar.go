@@ -31,6 +31,7 @@ type Model struct {
 
 	ShowConfirmCancel bool
 	isCommenting      bool
+	isLabeling        bool
 	isAssigning       bool
 	isUnassigning     bool
 
@@ -45,6 +46,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 		issue: nil,
 
 		isCommenting:  false,
+		isLabeling:    false,
 		isAssigning:   false,
 		isUnassigning: false,
 
@@ -88,6 +90,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.SetPrompt(commentPrompt)
 				m.ShowConfirmCancel = false
+			}
+
+			m.inputBox, taCmd = m.inputBox.Update(msg)
+			cmds = append(cmds, cmd, taCmd)
+		} else if m.isLabeling {
+			switch msg.Type {
+			case tea.KeyCtrlD:
+				labels := strings.Fields(m.inputBox.Value())
+				if len(labels) > 0 {
+					cmd = m.label(labels)
+				}
+				m.inputBox.Blur()
+				m.isLabeling = false
+				return m, cmd
+
+			case tea.KeyEsc, tea.KeyCtrlC:
+				m.inputBox.Blur()
+				m.isLabeling = false
+				return m, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -159,7 +180,7 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning {
+	if m.isCommenting || m.isAssigning || m.isUnassigning || m.isLabeling {
 		s.WriteString(m.inputBox.View())
 	}
 
@@ -249,7 +270,7 @@ func (m *Model) SetRow(data *data.IssueData) {
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isUnassigning
+	return m.isCommenting || m.isAssigning || m.isUnassigning || m.isLabeling
 }
 
 func (m *Model) GetIsCommenting() bool {
@@ -304,6 +325,29 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 	}
 
 	if isAssigning {
+		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	}
+	return nil
+}
+
+func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+
+	if !m.isLabeling && isLabeling {
+		m.inputBox.Reset()
+	}
+	m.isLabeling = isLabeling
+	m.inputBox.SetPrompt("Add/remove labels (whitespace-separated)...")
+
+	labels := make([]string, 0)
+	for _, label := range m.issue.Data.Labels.Nodes {
+		labels = append(labels, label.Name)
+	}
+	m.inputBox.SetValue(strings.Join(labels, " "))
+
+	if isLabeling {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil

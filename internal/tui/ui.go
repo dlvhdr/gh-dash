@@ -453,6 +453,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
 
+			case key.Matches(msg, keys.IssueKeys.Label):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsLabeling(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
 			case key.Matches(msg, keys.IssueKeys.Assign):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsAssigning(true)

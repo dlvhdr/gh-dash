@@ -10,6 +10,7 @@ import (
 )
 
 type IssueKeyMap struct {
+	Label                key.Binding
 	Assign               key.Binding
 	Unassign             key.Binding
 	Comment              key.Binding
@@ -20,9 +21,9 @@ type IssueKeyMap struct {
 }
 
 var IssueKeys = IssueKeyMap{
-	Assign: key.NewBinding(
-		key.WithKeys("a"),
-		key.WithHelp("a", "assign"),
+	Label: key.NewBinding(
+		key.WithKeys("L"),
+		key.WithHelp("L", "label"),
 	),
 	Unassign: key.NewBinding(
 		key.WithKeys("A"),
@@ -52,6 +53,7 @@ var IssueKeys = IssueKeyMap{
 
 func IssueFullHelp() []key.Binding {
 	return []key.Binding{
+		IssueKeys.Label,
 		IssueKeys.Assign,
 		IssueKeys.Unassign,
 		IssueKeys.Comment,
@@ -89,6 +91,8 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 		var key *key.Binding
 
 		switch issueKey.Builtin {
+		case "label":
+			key = &IssueKeys.Label
 		case "assign":
 			key = &IssueKeys.Assign
 		case "unassign":
