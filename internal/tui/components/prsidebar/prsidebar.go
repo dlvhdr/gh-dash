@@ -259,7 +259,8 @@ func (m *Model) renderFullNameAndNumber() string {
 }
 
 func (m *Model) renderTitle() string {
-	return lipgloss.NewStyle().Height(3).Width(m.width).Background(m.ctx.Theme.SelectedBackground).PaddingLeft(1).Render(
+	return lipgloss.NewStyle().Height(3).Width(m.width).Background(
+		m.ctx.Theme.SelectedBackground).PaddingLeft(1).Render(
 		lipgloss.PlaceVertical(3, lipgloss.Center, m.ctx.Styles.Common.MainTextStyle.
 			Background(m.ctx.Theme.SelectedBackground).
 			Render(m.pr.Data.Title),
@@ -322,10 +323,13 @@ func (m *Model) renderAuthor() string {
 	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.CreatedAt))
 	return lipgloss.JoinHorizontal(lipgloss.Top,
 		" by ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(
+			lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
-			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.AuthorAssociation, m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.AuthorAssociation,
+				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
 }
