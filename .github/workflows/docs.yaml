@@ -3,11 +3,11 @@ name: Build Docs Docker image
 on:
   pull_request:
     paths:
-      - 'docs/**'
+      - "docs/**"
   push:
     branches: ["main"]
     paths:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   build-and-push-dockerfile-image:
@@ -27,6 +27,8 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: "{{defaultContext}}:docs"
+          secrets: |
+            gh_token=${{ secrets.GH_TOKEN }}
           file: ./Dockerfile
           push: ${{ github.event_name == 'push' }}
           # Make sure to replace with your own namespace and repository
