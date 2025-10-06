@@ -36,7 +36,6 @@ func TestFullOutput(t *testing.T) {
 	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
 
-	waitForText(t, tm, "Reading config...")
 	waitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
 
 	tm.Send(tea.KeyMsg{

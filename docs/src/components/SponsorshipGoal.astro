@@ -5,8 +5,8 @@ import { Icon } from "@astrojs/starlight/components";
 const {variant} = Astro.props;
 
 const response = await getSponsorshipGoal()
-const current = response.data.user.monthlyEstimatedSponsorsIncomeInCents / 100
-const GOAL = 100 // USD 
+const current = response.data.user.monthlyEstimatedSponsorsIncomeInCents / 100;
+const GOAL = 150 // USD 
 ---
 
 <div class={`text-center mt-0 max-w-full md:max-w-[80ch]`}>
