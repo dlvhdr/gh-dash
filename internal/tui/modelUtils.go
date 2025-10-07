@@ -49,17 +49,11 @@ func (m *Model) getSectionAt(id int) section.Section {
 }
 
 func (m *Model) getPrevSectionId() int {
-	sectionsConfigs := m.ctx.GetViewSectionsConfig()
-	m.currSectionId = (m.currSectionId - 1) % len(sectionsConfigs)
-	if m.currSectionId < 0 {
-		m.currSectionId += len(sectionsConfigs)
-	}
-
-	return m.currSectionId
+	return max(0, (m.currSectionId - 1))
 }
 
 func (m *Model) getNextSectionId() int {
-	return (m.currSectionId + 1) % len(m.ctx.GetViewSectionsConfig())
+	return min((m.currSectionId + 1), len(m.ctx.GetViewSectionsConfig())-1)
 }
 
 type IssueCommandTemplateInput struct {
