@@ -55,10 +55,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	c := m.carousel.View()
+	logo := m.viewLogo()
 	return m.ctx.Styles.Tabs.TabsRow.
 		Width(m.ctx.ScreenWidth).
 		MaxWidth(m.ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Bottom, m.carousel.View(), m.viewLogo()))
+		Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
+			lipgloss.NewStyle().Width(m.ctx.ScreenWidth-lipgloss.Width(logo)).Render(c), logo))
 }
 
 func (m *Model) SetCurrSectionId(id int) {

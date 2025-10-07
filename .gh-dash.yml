@@ -14,18 +14,6 @@ prSections:
         hidden: true
   - title: All
     filters: repo:dlvhdr/gh-dash
-  - title: Very long long long title
-    filters: repo:dlvhdr/gh-dash
-  - title: Very long long long title 2
-    filters: repo:dlvhdr/gh-dash
-  - title: Whoops
-    filters: repo:dlvhdr/gh-dash
-  - title: Very long long long title 3
-    filters: repo:dlvhdr/gh-dash
-  - title: Very long long long title 4
-    filters: repo:dlvhdr/gh-dash
-  - title: Some title
-    filters: repo:dlvhdr/gh-dash
 issuesSections:
   - title: Very long long long title
     filters: repo:dlvhdr/gh-dash
