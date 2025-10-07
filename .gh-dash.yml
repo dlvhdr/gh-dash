@@ -80,18 +80,15 @@ keybindings:
     - key: C
       name: code review
       command: >
-        tmux new-window -c {{.RepoPath}} '
+        tmux new-window -c {{.RepoPath}} -n "octo" '
         nvim -c ":silent Octo pr edit {{.PrNumber}}"
         '
     - key: T
       command: >-
-        tmux new-window '
+        tmux new-window -n "enhance" '
           gh enhance -R {{.RepoName}} {{.PrNumber}}
         '
 
-    # - key: b
-    #   name: code review
-    #   command: cd {{.RepoPath}} && gh pr view {{.PrNumber}} --json statusCheckRollup | command jq -rcj '.statusCheckRollup.[] | select(.context == "buildkite/mono") | .targetUrl' | xargs open
     - key: a
       name: lazygit add
       command: >
