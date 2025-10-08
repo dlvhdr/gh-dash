@@ -53,7 +53,11 @@ export default defineConfig({
       sidebar: [
         {
           label: "Getting Started",
-          items: ["getting-started", "getting-started/usage"],
+          items: [
+            "getting-started",
+            "getting-started/usage",
+            "getting-started/updating",
+          ],
         },
         {
           label: "Keybindings",
