@@ -10,14 +10,16 @@ import Discord from "../components/Discord.astro";
 import FadeImages from "../components/FadeImages.astro";
 import prSectionsImage from "../assets/pr-sections.png";
 import { Image } from "astro:assets";
-import helpSrc from "../assets/help.png"
-import tokyonightSrc from "../assets/tokyo.png"
-import catppuccinSrc from "../assets/catpuccin.png"
-import gruvSrc from "../assets/gruv.png"
-import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
+import helpSrc from "../assets/help.png";
+import tokyonightSrc from "../assets/tokyo.png";
+import catppuccinSrc from "../assets/catpuccin.png";
+import gruvSrc from "../assets/gruv.png";
+import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg";
 ---
 
-<StarlightPage frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}>
+<StarlightPage
+  frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}
+>
   <div class="flex flex-row items-center gap-1">
     <form action="https://github.com/dlvhdr/gh-dash/releases">
       <button
@@ -26,16 +28,18 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
       >
     </form>
     <button
-      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]">
+      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+    >
       Build: passing
     </button>
-
   </div>
   <div id="hero" class="mb-24">
     <div
-      class="flex w-full flex-col lg:flex-row items-center justify-center gap-4 lg:gap-12 pt-2 lg:pt-8 pb-4"
+      class="flex w-full flex-col items-center justify-center gap-4 pt-2 pb-4 lg:flex-row lg:gap-12 lg:pt-8"
     >
-      <h2 class="text-center !text-xl lg:!text-2xl font-normal text-pretty lg:w-[30ch]">
+      <h2
+        class="text-center !text-xl font-normal text-pretty lg:w-[30ch] lg:!text-2xl"
+      >
         A rich terminal UI for GitHub that doesn't break your flow
       </h2>
       <div id="main-buttons" class="flex flex-col items-center gap-4">
@@ -45,7 +49,11 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
             >Get started →</button
           >
         </form>
-        <form class="m-0" action="https://github.com/dlvhdr/gh-dash" target="_blank">
+        <form
+          class="m-0"
+          action="https://github.com/dlvhdr/gh-dash"
+          target="_blank"
+        >
           <button
             class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
             >View on GitHub </button
@@ -61,7 +69,7 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
         </video>
       </Terminal>
       <div
-        class="hidden lg:block absolute lg:-right-32 lg:-bottom-2 h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)]"
+        class="absolute hidden h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)] lg:-right-32 lg:-bottom-2 lg:block"
       >
         <div>⌄</div>
         <div class="relative -top-8 mt-0">⌄</div>
@@ -69,11 +77,9 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg"
     </div>
   </div>
 
-  <div class="text-[var(--sl-color-gray-5)] mt-0 mb-16">
-    ──◇──
-  </div>
+  <div class="mt-0 mb-16 text-[var(--sl-color-gray-5)]">──◇──</div>
 
-  <div class="flex flex-col gap-8 w-[95vw] lg:w-80rem items-center lg:gap-16">
+  <div class="lg:w-80rem flex w-[95vw] flex-col items-center gap-8 lg:gap-16">
     <Showcase>
       <Box header="︎ Define Custom GitHub Filters">
         <Code
@@ -93,7 +99,7 @@ issuesSections:
         />
       </Box>
       <Terminal className="w-[95vw] lg:w-[800px]">
-        <video autoplay loop muted playsinline >
+        <video autoplay loop muted playsinline>
           <source src="/sections.webm" type="video/webm" />
           <source src="/sections.mp4" type="video/mp4" />
         </video>
@@ -109,10 +115,23 @@ issuesSections:
           <li>and more...</li>
         </ul>
       </Box>
-      <div class="overflow-hidden relative w-[95vw] h-[200px] lg:h-[300px] lg:w-[800px] border border-[var(--sl-color-gray-5)] box-border m-0 bg-[#010101]">
-        <div class="animate-bannermove absolute left-0 top-16 whitespace-nowrap flex gap-0">
-          <Image class="my-0 scale-160" src={helpSrc} alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."/>
-          <Image class="my-0 scale-160" src={helpSrc} aria-hidden={true} alt="duplicate image for marquee effect"/>
+      <div
+        class="relative m-0 box-border h-[200px] w-[95vw] overflow-hidden border border-[var(--sl-color-gray-5)] bg-[#010101] lg:h-[300px] lg:w-[800px]"
+      >
+        <div
+          class="animate-bannermove absolute top-16 left-0 flex gap-0 whitespace-nowrap"
+        >
+          <Image
+            class="my-0 scale-160"
+            src={helpSrc}
+            alt="screenshot of dash with the help menu open, you can see all the keybindings for PRs and what they do."
+          />
+          <Image
+            class="my-0 scale-160"
+            src={helpSrc}
+            aria-hidden={true}
+            alt="duplicate image for marquee effect"
+          />
         </div>
       </div>
     </Showcase>
@@ -157,27 +176,34 @@ colors:
       </Box>
       <Terminal className="lg:w-[800px]">
         <FadeImages>
-          <Image src={catppuccinSrc} alt="Dash running with the catppuccin theme"/>
-          <Image src={gruvSrc} alt="Dash running with the gruvbox theme"/>
-          <Image src={tokyonightSrc} alt="Dash running with the tokyo-night theme"/>
+          <Image
+            src={catppuccinSrc}
+            alt="Dash running with the catppuccin theme"
+          />
+          <Image src={gruvSrc} alt="Dash running with the gruvbox theme" />
+          <Image
+            src={tokyonightSrc}
+            alt="Dash running with the tokyo-night theme"
+          />
         </FadeImages>
       </Terminal>
     </Showcase>
   </div>
-  <div class="flex flex-col items-center mt-16">
-    <h2 class="mb-2">
-      Why use DASH?
-    </h2>
-    <p class="mb-6 lg:w-[60ch] text-center">
-      Check out this 10/10 video by <a href="https://charm.sh">Charm ✨</a> explaining how DASH can help you manage your GitHub experience
+  <div class="mt-16 flex flex-col items-center">
+    <h2 class="mb-2">Why use DASH?</h2>
+    <p class="mb-6 text-center lg:w-[60ch]">
+      Check out this 10/10 video by <a href="https://charm.sh">Charm ✨</a> explaining
+      how DASH can help you manage your GitHub experience
     </p>
     <a href="https://www.youtube.com/watch?v=5omFxcNjBQk&t" target="_blank">
-      <Image src={charmVidPreviewSrc} alt="YouTube video - Manage open source like a boss (in the terminal)" class="w-[95vw] lg:w-[800px]" />
+      <Image
+        src={charmVidPreviewSrc}
+        alt="YouTube video - Manage open source like a boss (in the terminal)"
+        class="w-[95vw] lg:w-[800px]"
+      />
     </a>
   </div>
-  <div class="text-[var(--sl-color-gray-5)] mt-16">
-    ──◇──
-  </div>
+  <div class="mt-16 text-[var(--sl-color-gray-5)]">──◇──</div>
   <Discord class="mt-20" />
   <Footer class="mt-20" />
 </StarlightPage>

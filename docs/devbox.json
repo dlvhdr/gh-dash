@@ -10,4 +10,3 @@
     "init_hook": ["echo \"Creating devbox shell for docs site...\""]
   }
 }
-

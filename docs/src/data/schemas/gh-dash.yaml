@@ -108,7 +108,7 @@ properties:
       details: |
         You can use the `repoPaths` setting to map repository names (as keys) to local paths
         (as values). This map coonfigures where to locate repositories when checking out PRs.
-        
+
         The mappings can be exact matches, like the full name or path of a repository, or wildcard
         matches using the `owner` and a partial path.
 
@@ -128,7 +128,7 @@ properties:
             dashboard will use this entry to resolve the path for any repo in the `dlvhdr`
             namespace, like [`dlvhdr/jb`] or [`dlvhdr/harbor`]. Note that the value for this key
             also uses a wildcard. If the key specifies a wildcard, the value must specify one too.
-            
+
             If a repository in the `dlvhdr` namespace has been cloned into the `~/code/repos`
             folder, the dashboard will be able to checkout PRs for that repository locally.
 
@@ -234,10 +234,10 @@ properties:
         description: Specifies the pager to use when diffing.
         type: string
         anyOf:
-         - type: string
-         - enum:
-            - less
-            - delta
+          - type: string
+          - enum:
+              - less
+              - delta
         default: less
   showAuthorIcons:
     title: Show Author Role Icons
