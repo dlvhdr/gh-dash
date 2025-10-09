@@ -2,11 +2,12 @@
 import Search from "@astrojs/starlight/components/Search.astro";
 import Logo from "./Logo.astro";
 import { Icon } from "@astrojs/starlight/components";
-import PillLink from './PillLink.astro';
-import ThemeSelect from './ThemeSelect.astro';
+import PillLink from "./PillLink.astro";
+import ThemeSelect from "./ThemeSelect.astro";
+import StargazersCount from "./StargazersCount.astro";
 
 const isDashHomepage = Astro.locals.starlightRoute.id === "";
-const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
+const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
 ---
 
 <style>
@@ -22,40 +23,66 @@ const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
   }
 </style>
 
-
-<div class="px-2 lg:px-6 py-2 bg-[var(--sl-color-bg)]">
-  <div class="flex flex-row items-center gap-3 lg:gap-3 max-w-[100vw] py-2 pr-2 pl-4 lg:px-6 border border-[var(--sl-color-gray-5)] rounded">
-    <div class="grow flex items-end">
+<div class="bg-[var(--sl-color-bg)] px-2 py-2 lg:px-6">
+  <div
+    class="flex max-w-[100vw] flex-row items-center gap-3 rounded border border-[var(--sl-color-gray-5)] py-2 pr-2 pl-4 lg:gap-3 lg:px-6"
+  >
+    <div class="flex grow items-end">
       <a href="/" class="no-underline">
         <Logo />
       </a>
-{isEnhanceHomepage ? <p class="plugin hidden md:block ml-2 leading-[18px] h-min">Companion 🌟</p> : null}
+      {
+        isEnhanceHomepage ? (
+          <p class="plugin ml-2 hidden h-min leading-[18px] md:block">
+            Companion 🌟
+          </p>
+        ) : null
+      }
     </div>
     <form action="/insiders/">
-      <button class="relative hover:!no-underline text-base md:px-3 md:h-[38px] border border-orange-900 hover:bg-orange-900 hover:text-orange-200 text-orange-400 bg-orange-950 rounded">
-      <div class="hidden md:flex flex-col gap-0 items-start leading-1.5 md:pt-2">
-        <span class="text-[0.625rem] text-orange-600 relative -top-2 uppercase">Join Insiders</span>
-        <span class="hidden md:inline-block">Get Companion Apps 🌟</span>
-      </div>
-      <div class="md:hidden">
-        <span class="text-xs text-orange-600 uppercase">Join Insiders</span>
-      </div>
+      <button
+        class="dark:bg-orange-250 relative rounded border border-orange-200 bg-orange-100 text-base text-orange-600 hover:bg-orange-200 hover:text-orange-700 hover:!no-underline md:h-[38px] md:px-3 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-400 dark:hover:bg-orange-900 dark:hover:text-orange-200"
+      >
+        <div
+          class="hidden flex-col items-start gap-0 leading-1.5 md:flex md:pt-2"
+        >
+          <span
+            class="relative -top-2 text-[0.625rem] text-orange-600 uppercase dark:text-orange-400"
+            >Join Insiders</span
+          >
+          <span class="hidden md:inline-block">Get Companion Apps 🌟</span>
+        </div>
+        <div class="md:hidden">
+          <span class="text-xs text-orange-400 uppercase dark:text-orange-600"
+            >Join Insiders</span
+          >
+        </div>
       </button>
     </form>
-    {isDashHomepage ? (
-      <PillLink href="/getting-started" class="hidden lg:block">
-          <Icon name="seti:notebook" size="20px" /><span class="hidden lg:block"> Docs</span>
-      </PillLink>
+    {
+      isDashHomepage ? (
+        <PillLink href="/getting-started" class="hidden lg:block">
+          <>
+            <Icon name="seti:notebook" size="20px" />
+            <span class="hidden lg:block"> Docs</span>
+          </>
+        </PillLink>
       ) : null
     }
-    <PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
-      <Icon name="github" size="20px" /><span class="hidden lg:block"> 8.7k</span>
-    </PillLink >
+    <StargazersCount server:defer />
     <PillLink class="hidden lg:block" href="/donating">
-      <Icon name="heart" size="20px" color="var(--color-red-500)" /><span class="hidden lg:block"> Donate</span>
+      <Icon name="heart" size="20px" color="var(--color-red-500)" /><span
+        class="hidden lg:block"
+      >
+        Donate</span
+      >
     </PillLink>
-    <PillLink class="hidden lg:block" href="https://discord.gg/SXNXp9NctV" target="_blank">
-      <Icon name="discord" size="20px"/>
+    <PillLink
+      class="hidden lg:block"
+      href="https://discord.gg/SXNXp9NctV"
+      target="_blank"
+    >
+      <Icon name="discord" size="20px" />
     </PillLink>
     <Search />
     <div class="hidden md:block">

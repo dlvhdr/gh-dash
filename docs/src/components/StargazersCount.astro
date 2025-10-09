@@ -1,0 +1,20 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import PillLink from "./PillLink.astro";
+import { getStars } from "../data/stars";
+
+const response = await getStars();
+---
+
+<PillLink href="https://github.com/dlvhdr/gh-dash" target="_blank">
+  <Icon name="github" size="20px" /><span class="hidden lg:block"
+    >{
+      Intl.NumberFormat("en-US", {
+        notation: "compact",
+        maximumSignificantDigits: 2,
+      })
+        .format(response.stargazers_count)
+        .toLocaleLowerCase()
+    }</span
+  >
+</PillLink>

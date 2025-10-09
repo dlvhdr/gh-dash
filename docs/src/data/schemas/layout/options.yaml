@@ -18,11 +18,11 @@ properties:
       weight: 1
       details: |
         Specify whether the column should grow to fill the available space.
-        
+
         Set this value to `true` and the column's width expands to fill any leftover space in the
         terminal after accounting for other columns and the preview pane. Set this value to `false`
         to use the value of [sref:`width`] instead.
-        
+
         We recommend only setting this for one column in a given section layout.
 
         [sref:`width`]: layout.options.width

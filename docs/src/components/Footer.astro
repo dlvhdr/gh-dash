@@ -5,20 +5,39 @@ import DecorationBottom from "./DecorationBottom.astro";
 const { class: className, isCommunity = true } = Astro.props;
 ---
 
-<div class:list={["text-center items-center !text-sm flex flex-col p-8", className]}>
+<div
+  class:list={[
+    "flex flex-col items-center p-8 text-center !text-sm",
+    className,
+  ]}
+>
   <DecorationTop />
   <p class="mb-2">
-    Created and maintained by <a href="https://github.com/dlvhdr">@dlvhdr</a>{isCommunity ? (<> and the <a href="https://github.com/dlvhdr/gh-dash/graphs/contributors">community</a></>) : null}
+    Created and maintained by <a href="https://github.com/dlvhdr">@dlvhdr</a>{
+      isCommunity ? (
+        <>
+          {" "}
+          and the{" "}
+          <a href="https://github.com/dlvhdr/gh-dash/graphs/contributors">
+            community
+          </a>
+        </>
+      ) : null
+    }
   </p>
   <div class="flex gap-3">
     <a
       class={"flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline rounded-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-1 text-xs"}
-    href="https://charm.sh" target="_blank">
+      href="https://charm.sh"
+      target="_blank"
+    >
       Built with: <span class="underline">Charm</span>
     </a>
     <a
       class={"flex items-center gap-2 text-[var(--sl-color-accent-low)] no-underline hover:underline rounded-lg border border-[var(--sl-color-gray-5)] bg-[var(--sl-color-black)] px-2 py-1 text-xs"}
-    href="https://github.com/tokyo-night/tokyo-night-vscode-theme" target="_blank">
+      href="https://github.com/tokyo-night/tokyo-night-vscode-theme"
+      target="_blank"
+    >
       Theme: <span class="underline">Tokyo Night</span>
     </a>
   </div>

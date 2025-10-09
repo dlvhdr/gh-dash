@@ -9,7 +9,15 @@ export const getSponsorshipGoal = async () => {
     headers: {
       Authorization: `bearer ${GH_TOKEN}`,
     },
-  }).then((r) => r.json());
+  });
 
-  return response;
+  if (response.status != 200) {
+    return { data: { user: { monthlyEstimatedSponsorsIncomeInCents: 4000 } } };
+  }
+
+  const data: {
+    data: { user: { monthlyEstimatedSponsorsIncomeInCents: number } };
+  } = await response.json();
+
+  return data;
 };

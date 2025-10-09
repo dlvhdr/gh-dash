@@ -4,7 +4,7 @@ import Logo from "./Logo.astro";
 import EnhanceLogo from "./EnhanceLogo.astro";
 
 const isDashHomepage = Astro.locals.starlightRoute.id === "";
-const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
+const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
 ---
 
 <style>
@@ -21,7 +21,7 @@ const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
       translate: 0 0;
     }
   }
- 
+
   #title-logo {
     animation: dash-in 400ms ease-out;
     h1 {
@@ -47,27 +47,30 @@ const isEnhanceHomepage =  Astro.locals.starlightRoute.id === "enhance";
   isDashHomepage ? (
     <div
       id="title-logo"
-      class="relative flex items-center justify-center gap-[1ch] lg:gap-[3ch] pt-8 lg:pt-16 text-white flex-col lg:flex-row lg:items-baseline-last"
+      class="relative flex flex-col items-center justify-center gap-[1ch] pt-8 text-white lg:flex-row lg:items-baseline-last lg:gap-[3ch] lg:pt-16"
     >
-  <div class="relative -left-8 md:left-0 flex flex-row items-center gap-8">
-<pre class="!bg-transparent text-[var(--sl-color-gray-4)] p-0">  ·-
+      <div class="relative -left-8 flex flex-row items-center gap-8 md:left-0">
+        {/* prettier-ignore */}
+        <pre class="!bg-transparent text-[var(--sl-color-gray-4)] p-0">  ·-
 ·---
   --
 </pre>
-    <Logo className="inline text-3xl lg:text-4xl" />
-  </div>
-      <h1 id="_top" aria-label="DASH Through Your GitHub" class="w-full lg:w-auto text-2xl lg:text-4xl text-center translate-x-8 -indent-4 lg:indent-0 lg:text-left lg:translate-x-0 leading-normal">
-        Through <br />Your GitHub
+        <Logo className="inline text-3xl lg:text-4xl" />
+      </div>
+      <h1
+        id="_top"
+        aria-label="DASH Through Your GitHub"
+        class="w-full translate-x-8 text-center -indent-4 text-2xl leading-normal lg:w-auto lg:translate-x-0 lg:text-left lg:indent-0 lg:text-4xl"
+      >
+        Through <br />
+        Your GitHub
       </h1>
     </div>
-  ) : isEnhanceHomepage ?  
-    (
-      <div
-        class="relative flex items-center justify-center gap-[2ch] lg:gap-[3ch] pt-16 lg:pt-26">
-        <EnhanceLogo />
-      </div>
-    )
-  : (
+  ) : isEnhanceHomepage ? (
+    <div class="relative flex items-center justify-center gap-[2ch] pt-16 lg:gap-[3ch] lg:pt-26">
+      <EnhanceLogo />
+    </div>
+  ) : (
     <Default>
       <slot />
     </Default>

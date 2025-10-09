@@ -1,5 +1,5 @@
 ---
-const { class: className, } = Astro.props;
+const { class: className } = Astro.props;
 ---
 
 <style>
@@ -19,10 +19,15 @@ const { class: className, } = Astro.props;
 </style>
 
 <div class="inline-flex flex-col">
-  <pre aria-label="ENHANCE ASCII Logo" class:list={['text-xl lg:text-2xl leading-none', className]}>
+  <pre
+    aria-label="ENHANCE ASCII Logo"
+    class:list={[
+      "text-xl leading-none lg:text-2xl",
+      className,
+    ]}>
 ▐▔▔▐▚ ▌▐ ▌▐▔▌▐▚ ▌▐▔▔▐▔▔
 ▐▛▁▐ ▚▌▐▔▌▐▔▌▐ ▚▌▐▁▁▐▛▁</pre>
-  <p class="mt-4 ml-1 p-0 text-[var(--sl-color-white)] text-sm">
+  <p class="mt-4 ml-1 p-0 text-sm text-[var(--sl-color-white)]">
     A Blazingly Fast Terminal UI for GitHub Actions
   </p>
 </div>

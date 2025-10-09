@@ -40,7 +40,7 @@ schematize:
 
       [sref:`hidden`]:    layout.options.hidden
       ```
-      
+
       [sref:`updatedAt`]: layout.issue.updatedAt
       [sref:`state`]:     layout.issue.state
       [sref:`repo`]:      layout.issue.repo

@@ -42,7 +42,7 @@ schematize:
 
       [sref:`hidden`]: layout.options.hidden
       ```
-      
+
       [sref:`updatedAt`]:    layout.pr.updatedAt
       [sref:`state`]:        layout.pr.state
       [sref:`repo`]:         layout.pr.repo
@@ -95,7 +95,7 @@ properties:
       skip_schema_render: true
       details: |
         This column displays the PR's state as one of the  following icons:
-        
+
         - When a PR is open and ready for review, the icon is ![styled:``](. "ready-review") and
           the color is `#42a0fa`.
         - When a PR is in draft mode, the icon is ![styled:``](. "faint-text") and the color is
