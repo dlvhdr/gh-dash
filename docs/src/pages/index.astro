@@ -15,6 +15,7 @@ import tokyonightSrc from "../assets/tokyo.png";
 import catppuccinSrc from "../assets/catpuccin.png";
 import gruvSrc from "../assets/gruv.png";
 import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg";
+import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
 ---
 
 <StarlightPage
@@ -22,10 +23,7 @@ import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg";
 >
   <div class="flex flex-row items-center gap-1">
     <form action="https://github.com/dlvhdr/gh-dash/releases">
-      <button
-        class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
-        >v4.16.2</button
-      >
+      <ReleaseVersionButton server:defer />
     </form>
     <button
       class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"

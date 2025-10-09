@@ -50,10 +50,11 @@ const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
       class="relative flex flex-col items-center justify-center gap-[1ch] pt-8 text-white lg:flex-row lg:items-baseline-last lg:gap-[3ch] lg:pt-16"
     >
       <div class="relative -left-8 flex flex-row items-center gap-8 md:left-0">
-        <pre class="!bg-transparent p-0 text-[var(--sl-color-gray-4)]">
-          {" "}
-          ·- ·--- --
-        </pre>
+        {/* prettier-ignore */}
+        <pre class="!bg-transparent text-[var(--sl-color-gray-4)] p-0">  ·-
+·---
+  --
+</pre>
         <Logo className="inline text-3xl lg:text-4xl" />
       </div>
       <h1

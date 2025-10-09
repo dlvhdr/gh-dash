@@ -111,6 +111,18 @@ h3 {
     oklch(65% 0.3 230) 100%
   );
 
+  --hdr-green-gradient: linear-gradient(
+    to right in oklab,
+    oklch(35% 0.5 145),
+    oklch(64% 0.5 178)
+  );
+
+  --hdr-red-gradient: linear-gradient(
+    to right in oklab,
+    oklch(24% 0.45 37),
+    oklch(63% 0.4 95)
+  );
+
   --sl-color-bg: #f5f6f8;
   --sl-color-accent-low: var(--color-blue-600);
   --sl-color-accent: var(--color-blue-500);

@@ -29,7 +29,6 @@ const GOAL = 150; // USD
           >
             Insiders Program
           </a>
-          .<br />
         </div>
       ) : null
     }
@@ -39,7 +38,7 @@ const GOAL = 150; // USD
       id="sponsorship-goal"
       value={current}
       max={GOAL}
-      class="h-4 w-full appearance-none [&::-moz-progress-bar]:bg-pink-300 [&::-webkit-progress-bar]:rounded [&::-webkit-progress-bar]:bg-[var(--sl-color-gray-5)] [&::-webkit-progress-value]:rounded [&::-webkit-progress-value]:bg-pink-600"
+      class="h-4 w-full appearance-none [&::-moz-progress-bar]:bg-pink-200 dark:[&::-moz-progress-bar]:bg-pink-300 [&::-webkit-progress-bar]:rounded [&::-webkit-progress-bar]:bg-[var(--sl-color-gray-5)] [&::-webkit-progress-value]:rounded [&::-webkit-progress-value]:bg-pink-400 dark:[&::-webkit-progress-value]:bg-pink-600"
     >
       {
         Intl.NumberFormat("en-US", {
@@ -54,7 +53,7 @@ const GOAL = 150; // USD
       }
     </progress>
     <p
-      class="absolute -top-[0.6rem] right-0 left-0 text-xs text-[var(--sl-color-gray-2)]"
+      class="absolute -top-[0.6rem] right-0 left-0 text-xs text-[var(--sl-color-gray-2)] mix-blend-hard-light dark:mix-blend-color-dodge"
     >
       {
         Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
@@ -64,17 +63,10 @@ const GOAL = 150; // USD
     </p>
   </div>
   <p
-    class={`mt-0 md:mt-1 mb-0 text-xs md:text-sm text-[var(--sl-color-gray-3)] leading-5 text-pretty ${variant === "mini" ? "text-left" : ""}`}
+    class={`mt-0 md:mt-0 mb-0 text-xs md:text-sm text-[var(--sl-color-gray-3)] text-pretty ${variant === "mini" ? "text-left" : ""}`}
   >
     Hitting the goal will open source the app <span
-      class="text-xl text-pink-600">󱃱</span
+      class="text-xl text-pink-400 dark:text-pink-600">󱃱</span
     >
-    {
-      variant !== "mini" ? (
-        <span class="m-0 hidden md:block">
-          Contributions <i>really</i> help me sustainably work on my projects!
-        </span>
-      ) : null
-    }
   </p>
 </div>

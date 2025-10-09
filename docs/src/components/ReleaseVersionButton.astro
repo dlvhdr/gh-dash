@@ -1,0 +1,12 @@
+---
+import { getLatestVersion } from "../data/latestVersion";
+
+const response = await getLatestVersion();
+---
+
+<form action="https://github.com/dlvhdr/gh-dash/releases">
+  <button
+    class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+    >{response?.tag_name}</button
+  >
+</form>
