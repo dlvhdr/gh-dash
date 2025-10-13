@@ -6,8 +6,11 @@ import (
 	"os"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/teatest"
+	"github.com/muesli/termenv"
 )
 
 func bytesContains(t *testing.T, bts []byte, str string) bool {
@@ -16,6 +19,7 @@ func bytesContains(t *testing.T, bts []byte, str string) bool {
 }
 
 func WaitForText(t *testing.T, tm *teatest.TestModel, text string, options ...teatest.WaitForOption) {
+	t.Helper()
 	teatest.WaitFor(t,
 		tm.Output(),
 		func(bts []byte) bool {
@@ -37,4 +41,18 @@ func WaitForText(t *testing.T, tm *teatest.TestModel, text string, options ...te
 		},
 		options...,
 	)
+}
+
+func Run(m tea.Model) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	newConfigFile, _ := os.OpenFile("debug.log",
+		os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
+	log.SetOutput(newConfigFile)
+	log.SetLevel(log.DebugLevel)
+	p := tea.NewProgram(
+		m,
+	)
+	if _, err := p.Run(); err != nil {
+		log.Fatal("Failed starting the TUI", err)
+	}
 }

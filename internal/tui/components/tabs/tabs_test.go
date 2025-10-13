@@ -33,7 +33,7 @@ func TestTabs(t *testing.T) {
 		m := newTestModel(t, cfg)
 		tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 30))
 
-		testutils.WaitForText(t, tm, "|Mine   ⣻ |Review   ⣻ |All   ⣻ ")
+		testutils.WaitForText(t, tm, "  |  Mine   ⣻   |  Review   ⣻   |  All   ⣻")
 		tm.Quit()
 
 		fm := tm.FinalModel(t)
@@ -51,9 +51,9 @@ func TestTabs(t *testing.T) {
 		m := newTestModel(t, cfg)
 		tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 30))
 
-		testutils.WaitForText(t, tm, "|Mine   ⣻ |Review   ⣻ |All   ⣻ ")
+		testutils.WaitForText(t, tm, "  |  Mine   ⣻   |  Review   ⣻   |  All   ⣻")
 		tm.Send(dataFetchedMsg{})
-		testutils.WaitForText(t, tm, "|Mine (10)|Review (10)|All (10)")
+		testutils.WaitForText(t, tm, "  |  Mine (10)  |  Review (10)  |  All (10)")
 		tm.Quit()
 
 		fm := tm.FinalModel(t)
@@ -71,12 +71,12 @@ func TestTabs(t *testing.T) {
 		m := newTestModel(t, cfg)
 		tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 30))
 
-		testutils.WaitForText(t, tm, "|Mine   ⣻ |Review   ⣻ |All   ⣻ ")
+		testutils.WaitForText(t, tm, "  |  Mine   ⣻   |  Review   ⣻   |  All   ⣻")
 		tm.Send(dataFetchedMsg{})
-		testutils.WaitForText(t, tm, "|Mine (10)|Review (10)|All (10)")
+		testutils.WaitForText(t, tm, "  |  Mine (10)  |  Review (10)  |  All (10)")
 
 		tm.Send(changeTabsMsg{})
-		testutils.WaitForText(t, tm, "|Mine New   ⣻ |Review New   ⣻ |All New   ⣻ ")
+		testutils.WaitForText(t, tm, "  |  Mine New   ⣻   |  Review New   ⣻   |  All New   ⣻")
 
 		tm.Quit()
 
@@ -99,7 +99,7 @@ func TestTabs(t *testing.T) {
 				{Title: "1. Very long title"},
 				{Title: "2. Title"},
 				{Title: "3. Title"},
-				{Title: "4. Title wat wat"},
+				{Title: "4. Very long title"},
 				{Title: "5. Title"},
 				{Title: "6. Title"},
 				{Title: "7. Very long title"},
@@ -107,31 +107,22 @@ func TestTabs(t *testing.T) {
 			Theme: baseCfg.Theme,
 		})
 
-		lipgloss.SetColorProfile(termenv.TrueColor)
-		newConfigFile, _ := os.OpenFile("debug.log",
-			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
-		log.SetOutput(newConfigFile)
-		log.SetLevel(log.DebugLevel)
-		p := tea.NewProgram(
-			m,
-		)
-		if _, err := p.Run(); err != nil {
-			log.Fatal("Failed starting the TUI", err)
+		tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 30))
+
+		testutils.WaitForText(t, tm, "  |  1. Very long title   ⣻   |  2. Title   ⣻   |  3. Title   ⣻   |  … →")
+		tm.Send(dataFetchedMsg{})
+		testutils.WaitForText(t, tm, "  |  1. Very long title (10)  |  2. Title (10)  |  3. Title (10)  |  … →")
+		for i := 0; i < len(m.ctx.Config.PRSections); i++ {
+			tm.Send(tea.KeyMsg{
+				Type:  tea.KeyRunes,
+				Runes: []rune("l"),
+			})
 		}
-		// tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(80, 30))
-		//
-		// testutils.WaitForText(t, tm, "|Title 1   ⣻ |Title 2   ⣻ |Title 3   ⣻ |Title 4   ⣻ |Title 5  >")
-		// tm.Send(dataFetchedMsg{})
-		// testutils.WaitForText(t, tm, "|Title 1 (10)|Title 2 (10)|Title 3 (10)|Title 4 (10)|Title 5  >")
-		// tm.Send(tea.KeyMsg{
-		// 	Type:  tea.KeyRunes,
-		// 	Runes: []rune("l"),
-		// })
-		// testutils.WaitForText(t, tm, "Title 2 (10)|Title 3 (10)|Title 4 (10)|Title 5  >")
-		// tm.Quit()
-		//
-		// fm := tm.FinalModel(t)
-		// teatest.RequireEqualOutput(t, []byte(fm.View()))
+		testutils.WaitForText(t, tm, "← … (10)  |  5. Title (10)  |  6. Title (10)  |  7. Very long title (10)")
+		tm.Quit()
+
+		fm := tm.FinalModel(t)
+		teatest.RequireEqualOutput(t, []byte(fm.View()))
 	})
 }
 
@@ -197,8 +188,7 @@ func (m testModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sections = append(sections, &search)
 		for _, cfg := range m.ctx.Config.PRSections {
 			s := testdata.TestSection{Config: config.SectionConfig{Title: cfg.Title}}
-			// change back to true
-			s.SetIsLoading(false)
+			s.SetIsLoading(true)
 			sections = append(sections, &s)
 		}
 		m.tabs.SetSections(sections)
