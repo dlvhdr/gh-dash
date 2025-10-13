@@ -120,7 +120,8 @@ func setMockClient(t *testing.T) {
 			}
 			mustWrite(t, w, string(d))
 		default:
-			t.Errorf("unexpected request with body %s", req.Body)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
