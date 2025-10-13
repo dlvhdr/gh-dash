@@ -22,16 +22,17 @@ var (
 )
 
 type CommonStyles struct {
-	MainTextStyle lipgloss.Style
-	FooterStyle   lipgloss.Style
-	ErrorStyle    lipgloss.Style
-	DraftGlyph    string
-	PersonGlyph   string
-	WaitingGlyph  string
-	FailureGlyph  string
-	SuccessGlyph  string
-	MergedGlyph   string
-	CommentGlyph  string
+	MainTextStyle  lipgloss.Style
+	FaintTextStyle lipgloss.Style
+	FooterStyle    lipgloss.Style
+	ErrorStyle     lipgloss.Style
+	DraftGlyph     string
+	PersonGlyph    string
+	WaitingGlyph   string
+	FailureGlyph   string
+	SuccessGlyph   string
+	MergedGlyph    string
+	CommentGlyph   string
 }
 
 func BuildStyles(theme theme.Theme) CommonStyles {
@@ -40,6 +41,8 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 	s.MainTextStyle = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Bold(true)
+	s.FaintTextStyle = lipgloss.NewStyle().
+		Foreground(theme.FaintText)
 	s.FooterStyle = lipgloss.NewStyle().
 		Background(theme.SelectedBackground).
 		Height(FooterHeight)

@@ -136,6 +136,7 @@ type Section interface {
 	Table
 	Search
 	PromptConfirmation
+	GetConfig() config.SectionConfig
 	UpdateProgramContext(ctx *context.ProgramContext)
 	MakeSectionCmd(cmd tea.Cmd) tea.Cmd
 	GetPagerContent() string
@@ -191,6 +192,10 @@ func (m *BaseModel) GetDimensions() constants.Dimensions {
 		Width:  m.Ctx.MainContentWidth - m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
 		Height: m.Ctx.MainContentHeight - common.SearchHeight,
 	}
+}
+
+func (m *BaseModel) GetConfig() config.SectionConfig {
+	return m.Config
 }
 
 func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {

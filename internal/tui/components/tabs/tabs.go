@@ -2,117 +2,140 @@ package tabs
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
-type SectionState struct {
-	Count     int
-	IsLoading bool
-	spinner   spinner.Model
+type SectionTab struct {
+	section section.Section
+	spinner spinner.Model
 }
 
 type Model struct {
-	sectionsConfigs []config.SectionConfig
-	sectionCounts   []SectionState
-	CurrSectionId   int
+	sections    []section.Section
+	sectionTabs []SectionTab
+	carousel    carousel.Model
+	ctx         *context.ProgramContext
+	version     string
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
-	return Model{
-		CurrSectionId: 1,
+	c := carousel.New(carousel.WithHeight(1), carousel.WithOverflowIndicators("←", "→"), carousel.WithSeparators())
+	m := Model{
+		carousel: c,
 	}
+	m.UpdateProgramContext(ctx)
+
+	return m
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
-		for i, s := range m.sectionCounts {
-			if s.IsLoading {
+		for i, tab := range m.sectionTabs {
+			if tab.section.GetIsLoading() {
 				var cmd tea.Cmd
-				m.sectionCounts[i].spinner, cmd = s.spinner.Update(msg)
+				m.sectionTabs[i].spinner, cmd = tab.spinner.Update(msg)
 				cmds = append(cmds, cmd)
 			}
 		}
 	}
 
+	m.UpdateTabTitles()
+
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View(ctx *context.ProgramContext) string {
-	sectionTitles := make([]string, 0, len(m.sectionsConfigs))
-	for i, section := range m.sectionsConfigs {
-		title := section.Title
-		// handle search section
-		if i > 0 {
-			if m.sectionCounts[i].IsLoading {
-				title = fmt.Sprintf("%s %s", title, m.sectionCounts[i].spinner.View())
-			} else {
-				title = fmt.Sprintf("%s (%s)", title, utils.ShortNumber(m.sectionCounts[i].Count))
-			}
-		}
-		sectionTitles = append(sectionTitles, title)
-	}
+func (m Model) View() string {
+	c := m.carousel.View()
+	logo := m.viewLogo()
+	return m.ctx.Styles.Tabs.TabsRow.
+		Width(m.ctx.ScreenWidth).
+		MaxWidth(m.ctx.ScreenWidth).
+		Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
+			lipgloss.NewStyle().Width(m.ctx.ScreenWidth-lipgloss.Width(logo)).Render(c), logo))
+}
 
-	var tabs []string
-	for i, sectionTitle := range sectionTitles {
-		if m.CurrSectionId == i {
-			tabs = append(tabs, ctx.Styles.Tabs.ActiveTab.Render(sectionTitle))
-		} else {
-			tabs = append(tabs, ctx.Styles.Tabs.Tab.Render(sectionTitle))
-		}
-	}
-
-	version := lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText).Render(ctx.Version)
-
-	renderedTabs := lipgloss.NewStyle().
-		Width(ctx.ScreenWidth - lipgloss.Width(version)).
-		MaxWidth(ctx.ScreenWidth - lipgloss.Width(version)).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top, strings.Join(tabs, ctx.Styles.Tabs.TabSeparator.Render("|"))))
-
-	return ctx.Styles.Tabs.TabsRow.
-		Width(ctx.ScreenWidth).
-		MaxWidth(ctx.ScreenWidth).
-		Render(lipgloss.JoinHorizontal(lipgloss.Center, renderedTabs, version))
+func (m *Model) CurrSectionId() int {
+	return m.carousel.Cursor()
 }
 
 func (m *Model) SetCurrSectionId(id int) {
-	m.CurrSectionId = id
+	m.carousel.SetCursor(id)
 }
 
-func (m *Model) UpdateSectionsConfigs(ctx *context.ProgramContext) {
-	m.sectionsConfigs = ctx.GetViewSectionsConfig()
-	m.sectionCounts = make([]SectionState, len(m.sectionsConfigs))
-	for i := range m.sectionsConfigs {
-		m.sectionCounts[i] = SectionState{
-			Count:     0,
-			IsLoading: false,
-			spinner:   spinner.New(spinner.WithSpinner(spinner.Dot), spinner.WithStyle(lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).PaddingLeft(2))),
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.carousel.SetStyles(carousel.Styles{
+		Item:              ctx.Styles.Tabs.Tab,
+		Selected:          ctx.Styles.Tabs.ActiveTab,
+		OverflowIndicator: ctx.Styles.Tabs.OverflowIndicator,
+		Separator:         ctx.Styles.Tabs.TabSeparator,
+	})
+
+	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.viewLogo()))
+}
+
+func (m *Model) SetSections(sections []section.Section) {
+	sectionTabs := make([]SectionTab, 0)
+	for _, s := range sections {
+		tab := SectionTab{section: s, spinner: spinner.New(
+			spinner.WithSpinner(spinner.Dot), spinner.WithStyle(
+				lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).PaddingLeft(2)))}
+		sectionTabs = append(sectionTabs, tab)
+	}
+	m.sectionTabs = sectionTabs
+	m.UpdateTabTitles()
+}
+
+func (m *Model) UpdateTabTitles() {
+	titles := make([]string, 0)
+	for i, tab := range m.sectionTabs {
+		cfg := tab.section.GetConfig()
+		title := cfg.Title
+		// handle search section
+		if i == 0 {
+			// noop
+		} else if tab.section.GetIsLoading() {
+			title = fmt.Sprintf("%s %s", title, m.sectionTabs[i].spinner.View())
+		} else if m.ctx.Config.Theme.Ui.SectionsShowCount {
+			title = fmt.Sprintf("%s (%s)", title,
+				utils.ShortNumber(tab.section.GetTotalCount()))
 		}
+
+		titles = append(titles, title)
 	}
+
+	oldCursor := m.carousel.Cursor()
+	m.carousel.SetItems(titles)
+	m.carousel.SetCursor(oldCursor)
 }
 
-func (m *Model) UpdateSectionCounts(sections []section.Section) {
-	for i, s := range sections {
-		m.sectionCounts[i].Count = s.GetTotalCount()
-		m.sectionCounts[i].IsLoading = s.GetIsLoading()
-	}
+func (m *Model) viewLogo() string {
+	return lipgloss.NewStyle().Padding(0, 1, 0, 2).Height(2).Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
+		lipgloss.NewStyle().Foreground(lipgloss.Color("4")).Render(constants.Logo),
+		" ",
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Render(m.ctx.Version)),
+	)
 }
 
 func (m *Model) SetAllLoading() []tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
-	for i := range m.sectionCounts {
-		m.sectionCounts[i].IsLoading = true
-		cmds = append(cmds, m.sectionCounts[i].spinner.Tick)
+	for i := range m.sectionTabs {
+		cmds = append(cmds, m.sectionTabs[i].spinner.Tick)
 	}
 
 	return cmds

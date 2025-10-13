@@ -2,7 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
   "env": {
     "GOPATH": "$PWD/.devbox/go",
-    "GOBIN": "$PWD/.devbox/go/bin"
+    "GOBIN": "$PWD/.devbox/go/bin",
+    "PATH": "$PATH:$PWD/.devbox/go/bin"
   },
   "packages": {
     "git": "latest",
@@ -15,6 +16,9 @@
     "fd": "10.2.0"
   },
   "shell": {
-    "init_hook": ["echo \"Creating devbox shell...\""]
+    "init_hook": [
+      "echo \"Creating devbox shell...\"",
+      "[[ $(command -v prism) != \"$GOBIN/prism\" ]] && go install go.dalton.dog/prism@latest"
+    ]
   }
 }

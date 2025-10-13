@@ -51,7 +51,7 @@ func NewModel(
 	return m
 }
 
-func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -62,13 +62,13 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case tea.KeyCtrlC, tea.KeyEsc:
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
-				return &m, blinkCmd
+				return m, blinkCmd
 
 			case tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
 				m.SetIsSearching(false)
 				m.ResetRows()
-				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
+				return m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
 
 			break
@@ -79,7 +79,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case tea.KeyCtrlC, tea.KeyEsc:
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
-				return &m, cmd
+				return m, cmd
 
 			case tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
@@ -96,7 +96,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.PromptConfirmationBox.Reset()
 				blinkCmd := m.SetIsPromptConfirmationShown(false)
 
-				return &m, tea.Batch(cmd, blinkCmd)
+				return m, tea.Batch(cmd, blinkCmd)
 			}
 			break
 		}
@@ -112,7 +112,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.SearchBar.SetValue(searchValue)
 				m.SetIsSearching(false)
 				m.ResetRows()
-				return &m, tea.Batch(m.FetchNextPageSectionRows()...)
+				return m, tea.Batch(m.FetchNextPageSectionRows()...)
 			}
 		}
 
@@ -172,7 +172,7 @@ func (m Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	table, tableCmd := m.Table.Update(msg)
 	m.Table = table
 
-	return &m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
+	return m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
 }
 
 func GetSectionColumns(

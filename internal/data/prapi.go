@@ -268,7 +268,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	if pageInfo != nil {
 		endCursor = &pageInfo.EndCursor
 	}
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"query":     graphql.String(makePullRequestsQuery(query)),
 		"limit":     graphql.Int(limit),
 		"endCursor": (*graphql.String)(endCursor),

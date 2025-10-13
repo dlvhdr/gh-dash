@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,9 +18,45 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/testutils"
 )
 
 func TestFullOutput(t *testing.T) {
+	setupTest(t)
+	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
+
+	testutils.WaitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
+
+	tm.Send(tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune("q"),
+	})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
+}
+
+func TestIssues(t *testing.T) {
+	setupTest(t)
+	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
+
+	// wait for first tab of PRs
+	testutils.WaitForText(t, tm, "Mine")
+
+	tm.Send(tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune("s"),
+	})
+	testutils.WaitForText(t, tm, "[Feature Request] Support notifications", teatest.WithDuration(6*time.Second))
+	tm.Send(tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune("q"),
+	})
+	tm.WaitFinished(t, teatest.WithFinalTimeout(5*time.Second))
+}
+
+func setupTest(t *testing.T) {
 	if _, debug := os.LookupEnv("DEBUG"); debug {
 		f, _ := os.CreateTemp("", "gh-dash-debug.log")
 		fmt.Printf("[DEBU] writing debug logs to %s\n", f.Name())
@@ -31,18 +66,9 @@ func TestFullOutput(t *testing.T) {
 	}
 	setMockClient(t)
 
+	markdown.InitializeMarkdownStyle(true)
 	zone.NewGlobal()
 	zone.SetEnabled(false)
-	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
-	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
-
-	waitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
-
-	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune("q"),
-	})
-	tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
 }
 
 // localRoundTripper is an http.RoundTripper that executes HTTP transactions
@@ -78,10 +104,17 @@ func setMockClient(t *testing.T) {
 	t.Helper()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/graphql", func(w http.ResponseWriter, req *http.Request) {
+		log.Debug("got request", "request", req.URL, "body", req.Body)
 		body := mustRead(t, req.Body)
 		switch {
 		case strings.Contains(body, "query SearchPullRequests"):
 			d, err := os.ReadFile("./testdata/searchPullRequests.json")
+			if err != nil {
+				t.Errorf("failed reading mock data file %v", err)
+			}
+			mustWrite(t, w, string(d))
+		case strings.Contains(body, "query SearchIssues"):
+			d, err := os.ReadFile("./testdata/searchIssues.json")
 			if err != nil {
 				t.Errorf("failed reading mock data file %v", err)
 			}
@@ -101,33 +134,4 @@ func setMockClient(t *testing.T) {
 		t.Errorf("failed creating gh client %v", err)
 	}
 	data.SetClient(client)
-}
-
-func bytesContains(t *testing.T, bts []byte, str string) bool {
-	t.Helper()
-	return bytes.Contains(bts, []byte(str))
-}
-
-func waitForText(t *testing.T, tm *teatest.TestModel, text string, options ...teatest.WaitForOption) {
-	teatest.WaitFor(t,
-		tm.Output(),
-		func(bts []byte) bool {
-			contains := bytesContains(t, bts, text)
-			if _, debug := os.LookupEnv("DEBUG"); debug {
-				if contains {
-					f, _ := os.CreateTemp("", "gh-dash-debug")
-					defer f.Close()
-					fmt.Fprintf(f, "%s", string(bts))
-					log.Debug("✅ wrote to file while looking for text", "file", f.Name(), "text", text)
-				} else {
-					f, _ := os.CreateTemp("", "not-found-gh-dash-debug")
-					defer f.Close()
-					fmt.Fprintf(f, "%s", string(bts))
-					log.Debug("❌ text not found", "file", f.Name(), "text", text)
-				}
-			}
-			return contains
-		},
-		options...,
-	)
 }

@@ -41,7 +41,7 @@ tasks:
 
   test:
     cmds:
-      - go test -v ./...
+      - prism test -v ./...
     desc: Run tests
 
   fmt:
