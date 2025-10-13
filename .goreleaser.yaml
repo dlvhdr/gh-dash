@@ -91,7 +91,7 @@ announce:
 
   discord:
     enabled: true
-    color: "7AA2F8"
+    color: "8037112"
     icon_url: "https://www.gh-dash.dev/favicon.png"
     # message_template: (Default) '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'.
 
