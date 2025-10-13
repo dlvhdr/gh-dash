@@ -530,7 +530,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
 		m.tabs.SetCurrSectionId(1)
-		cmds = append(cmds, fetchSectionsCmds, fetchUser, m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
+		cmds = append(cmds, fetchSectionsCmds, m.tabs.Init(), fetchUser,
+			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
