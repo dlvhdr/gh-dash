@@ -57,6 +57,16 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 release:
+  header: |
+    # {{ .Version }}
+
+    <!-- what's new in this version? -->
+
+    To update run:
+    ```bash
+    gh extension upgrade dash
+    ```
+
   footer: |
     ---
 
