@@ -83,6 +83,18 @@ release:
       </picture>
     </a>
 
+announce:
+  bluesky:
+    enabled: true
+    username: "dlvhdr.me"
+    # message_template: (Default) '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'.
+
+  discord:
+    enabled: true
+    color: "7AA2F8"
+    icon_url: "https://www.gh-dash.dev/favicon.png"
+    # message_template: (Default) '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'.
+
 changelog:
   sort: asc
   use: github
