@@ -861,9 +861,10 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		return
 	}
 
+	missingSearchSection := len(newSections) == 0 || (len(newSections) > 0 && newSections[0].GetId() != 0)
 	s := make([]section.Section, 0)
 	if m.ctx.View == config.PRsView {
-		if len(m.prs) == 0 || (len(m.prs) > 0 && m.prs[0].GetId() != 0) {
+		if missingSearchSection {
 			search := prssection.NewModel(
 				0,
 				m.ctx,
@@ -879,7 +880,7 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		m.prs = append(s, newSections...)
 		newSections = m.prs
 	} else {
-		if len(m.issues) == 0 || (len(m.issues) > 0 && m.issues[0].GetId() != 0) {
+		if missingSearchSection {
 			search := issuessection.NewModel(
 				0,
 				m.ctx,
