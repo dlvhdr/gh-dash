@@ -15,8 +15,6 @@ prSections:
   - title: All
     filters: repo:dlvhdr/gh-dash
 issuesSections:
-  - title: Very long long long title
-    filters: repo:dlvhdr/gh-dash
   - title: Open
     filters: repo:dlvhdr/gh-dash is:open sort:reactions
   - title: Bugs

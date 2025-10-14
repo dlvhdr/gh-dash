@@ -4,6 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	slog "log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/fang"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	zone "github.com/lrstanley/bubblezone"
@@ -22,6 +24,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
+	dctx "github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
@@ -35,17 +39,37 @@ var (
 var (
 	cfgFlag string
 
+	logo = lipgloss.NewStyle().Foreground(dctx.LogoColor).MarginBottom(1).SetString(constants.Logo)
+
 	rootCmd = &cobra.Command{
-		Use:     "gh dash",
-		Short:   "A gh extension that shows a configurable dashboard of pull requests and issues.",
+		Use: "gh dash",
+		Long: lipgloss.JoinVertical(lipgloss.Left, logo.Render(),
+			"A rich terminal UI for GitHub that doesn't break your flow.",
+			"Visit https://gh-dash.dev for the docs."),
+		Short:   "A rich terminal UI for GitHub that doesn't break your flow.",
 		Version: "",
-		Args:    cobra.MaximumNArgs(1),
+		Example: `
+# Running without arguments will either:
+#   - Use the global configuration file
+#   - Use a local .gh-dash.yml file if in a git repo
+gh dash
+
+# Run with a specific configuration file
+gh dash --config /path/to/configuration/file.yml
+
+# Run with debug logging to debug.log
+gh dash --debug
+
+# Print version
+gh dash -v
+	`,
+		Args: cobra.MaximumNArgs(1),
 	}
 )
 
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(rootCmd.Version),
+		fang.WithoutCompletions(), fang.WithoutManpage()); err != nil {
 		os.Exit(1)
 	}
 }
@@ -93,6 +117,7 @@ func buildVersion(version, commit, date, builtBy string) string {
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
 		result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
 	}
+
 	return result
 }
 
