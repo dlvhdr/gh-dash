@@ -154,7 +154,7 @@ func (m *Model) viewLogo() string {
 	}
 
 	return lipgloss.NewStyle().Padding(0, 1, 0, 2).Height(2).Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
-		lipgloss.NewStyle().Foreground(lipgloss.Color("4")).Render(constants.Logo),
+		lipgloss.NewStyle().Foreground(context.LogoColor).Render(constants.Logo),
 		" ",
 		version,
 	))
