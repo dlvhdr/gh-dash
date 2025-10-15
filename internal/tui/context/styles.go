@@ -158,6 +158,7 @@ func InitStyles(theme theme.Theme) Styles {
 	s.PrSection.PrRepoCellWidth = 15
 	s.PrSection.PrAuthorCellWidth = 15
 
+	s.Sidebar.PagerHeight = 1
 	s.Sidebar.BorderWidth = 1
 	s.Sidebar.ContentPadding = 2
 	s.Sidebar.Root = lipgloss.NewStyle().
@@ -193,10 +194,7 @@ func InitStyles(theme theme.Theme) Styles {
 		Foreground(theme.PrimaryText)
 	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.
 		Width(common.SingleRuneWidth)
-	s.Table.HeaderStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(theme.FaintBorder).
-		BorderBottom(true)
+	s.Table.HeaderStyle = lipgloss.NewStyle()
 	s.Table.RowStyle = lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(theme.FaintBorder)
@@ -214,8 +212,6 @@ func InitStyles(theme theme.Theme) Styles {
 		Foreground(theme.SecondaryBorder)
 	s.Tabs.TabsRow = lipgloss.NewStyle().
 		Height(common.TabsContentHeight).
-		PaddingTop(1).
-		PaddingBottom(0).
 		BorderBottom(true).
 		BorderStyle(lipgloss.ThickBorder()).
 		BorderBottomForeground(theme.PrimaryBorder)

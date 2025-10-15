@@ -56,7 +56,6 @@ func (m Model) View() string {
 	height := m.ctx.MainContentHeight
 	style := m.ctx.Styles.Sidebar.Root.
 		Height(height).
-		MaxHeight(height).
 		Width(m.ctx.Config.Defaults.Preview.Width).
 		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
 

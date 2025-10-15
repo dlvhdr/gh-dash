@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -67,9 +68,10 @@ func (m Model) View() string {
 	logo := m.viewLogo()
 	return m.ctx.Styles.Tabs.TabsRow.
 		Width(m.ctx.ScreenWidth).
-		MaxWidth(m.ctx.ScreenWidth).
+		Height(common.HeaderHeight).
 		Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
-			lipgloss.NewStyle().Width(m.ctx.ScreenWidth-lipgloss.Width(logo)).Render(c), logo))
+			lipgloss.NewStyle().Width(
+				m.ctx.ScreenWidth-lipgloss.Width(logo)).Render(c), logo))
 }
 
 type latestVersionMsg struct {
@@ -147,7 +149,7 @@ func (m *Model) viewLogo() string {
 	if m.latestVersion != "" && m.ctx.Version != "dev" && m.ctx.Version != m.latestVersion {
 		version = lipgloss.JoinVertical(lipgloss.Left,
 			version,
-			lipgloss.NewStyle().Foreground(m.ctx.Styles.Colors.SuccessText).Render(" New version available!"),
+			lipgloss.NewStyle().Foreground(m.ctx.Styles.Colors.SuccessText).Render(" Update available!"),
 		)
 	} else {
 		version = lipgloss.PlaceVertical(2, lipgloss.Bottom, version)

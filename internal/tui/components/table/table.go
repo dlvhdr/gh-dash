@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/listviewport"
@@ -106,6 +108,7 @@ func (m *Model) SetIsLoading(isLoading bool) {
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.dimensions = dimensions
+	log.Debug("table.SetDimensions", "dimensions", dimensions)
 	m.rowsViewport.SetDimensions(constants.Dimensions{
 		Width:  m.dimensions.Width,
 		Height: m.dimensions.Height,
@@ -244,19 +247,17 @@ func (m *Model) renderHeaderColumns() []string {
 
 func (m *Model) renderHeader() string {
 	headerColumns := m.renderHeaderColumns()
-	header := lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...)
+	header := ansi.Truncate(lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...), m.dimensions.Width, constants.Ellipsis)
 	return m.ctx.Styles.Table.HeaderStyle.
 		Width(m.dimensions.Width).
-		MaxWidth(m.dimensions.Width).
 		Height(common.TableHeaderHeight).
-		MaxHeight(common.TableHeaderHeight).
 		Render(header)
 }
 
 func (m *Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
 		Height(m.dimensions.Height).
-		MaxWidth(m.dimensions.Width)
+		Width(m.dimensions.Width)
 
 	if m.isLoading {
 		return lipgloss.Place(

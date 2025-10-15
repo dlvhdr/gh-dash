@@ -5,6 +5,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 )
 
 // Model defines a state for the carousel widget.
@@ -266,14 +268,14 @@ func (m *Model) UpdateSize() {
 		itemsContent = ansi.TruncateLeft(itemsContent, truncate, "")
 		if truncate > 0 {
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Center,
-				m.styles.Item.Inline(true).Render("…"), itemsContent)
+				m.styles.Item.Inline(true).Render(constants.Ellipsis), itemsContent)
 		}
 	} else {
 		w := lipgloss.Width(itemsContent)
 		if w > l {
 			itemsContent = ansi.Truncate(itemsContent, l, "")
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Center, itemsContent,
-				m.styles.Item.Inline(true).Render("…"))
+				m.styles.Item.Inline(true).Render(constants.Ellipsis))
 		}
 	}
 
@@ -366,11 +368,11 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 		item = ansi.TruncateLeft(r, truncate, "")
 		if truncate > 0 {
 			item = lipgloss.JoinHorizontal(lipgloss.Center,
-				m.styles.Item.Inline(true).Render("…"), item)
+				m.styles.Item.Inline(true).Render(constants.Ellipsis), item)
 		}
 	} else {
 		r := m.styles.Item.Render(m.items[itemID])
-		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render("…"))
+		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render(constants.Ellipsis))
 	}
 
 	if m.showSeparators && itemID != len(m.items)-1 {

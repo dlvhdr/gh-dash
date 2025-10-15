@@ -8,3 +8,4 @@ gh-dash
 .killgrave.log
 docs/broken-links.log
 .devbox
+__debug*
