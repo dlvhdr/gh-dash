@@ -597,6 +597,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if zone.Get("donate").InBounds(msg) {
+			log.Debug("Donate clicked", "msg", msg)
 			openCmd := func() tea.Msg {
 				b := browser.New("", os.Stdout, os.Stdin)
 				err := b.Browse("https://github.com/sponsors/dlvhdr")
@@ -724,6 +725,7 @@ func (m *Model) onViewedRowChanged() tea.Cmd {
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
+	log.Debug("window size changed", "width", msg.Width, "height", msg.Height)
 	m.footer.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
@@ -1017,7 +1019,7 @@ func (m *Model) renderRunningTask() string {
 
 	return lipgloss.NewStyle().
 		Padding(0, 1).
-		MaxHeight(1).
+		Height(1).
 		Background(m.ctx.Theme.SelectedBackground).
 		Render(strings.TrimSpace(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus)))
 }

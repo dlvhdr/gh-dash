@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -59,7 +60,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
 		Width(ctx.MainContentWidth - 4).
-		MaxHeight(3).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.PrimaryBorder).
 		Render(m.textInput.View())
@@ -82,15 +82,21 @@ func (m *Model) SetValue(val string) {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	oldWidth := m.textInput.Width
 	m.textInput.Width = m.getInputWidth(ctx)
+	if m.textInput.Width != oldWidth {
+		log.Debug("search width changed, blurring", "mainContentWidth",
+			m.ctx.MainContentWidth, "oldWidth", oldWidth, "newWidth", m.textInput.Width)
+		m.textInput.CursorEnd()
+	}
 }
 
 func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
-	textWidth := 0
-	if m.textInput.Value() == "" {
-		textWidth = lipgloss.Width(m.textInput.Placeholder)
-	}
-	return ctx.MainContentWidth - lipgloss.Width(m.textInput.Prompt) - textWidth - 6
+	// leave space for at least 2 characters - one character of the input and 1 for the cursor
+	// - deduce 4 - 2 for the padding, 2 for the borders
+	// - deduce 1 for the cursor
+	// - deduce 1 for the spacing between the prompt and text
+	return max(2, ctx.MainContentWidth-lipgloss.Width(m.textInput.Prompt)-4-1-1) // borders + cursor
 }
 
 func (m Model) Value() string {

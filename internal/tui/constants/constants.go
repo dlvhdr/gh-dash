@@ -26,6 +26,8 @@ type Dimensions struct {
 }
 
 const (
+	Ellipsis = "…"
+
 	PersonIcon  = ""
 	WaitingIcon = ""
 	FailureIcon = "󰅙"
