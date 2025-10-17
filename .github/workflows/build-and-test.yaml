@@ -1,16 +1,16 @@
-name: build
+name: build and test
 
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: build
+  build-and-test:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -18,9 +18,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v6
         with:
-          go-version: ""
           go-version-file: ./go.mod
-          cache: true
       - name: Download Go modules
         run: go mod download
       - name: Build
@@ -29,7 +27,7 @@ jobs:
         run: go test ./...
 
   dependabot:
-    needs: [build]
+    needs: [build-and-test]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

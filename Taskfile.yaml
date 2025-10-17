@@ -39,6 +39,16 @@ tasks:
     env:
       GOEXPERIMENT: null
 
+  test:one:
+    cmds:
+      - gotip
+    desc: Run a test
+
+  test:rerun:
+    cmds:
+      - gotip --rerun
+    desc: Rerun the last test
+
   test:
     cmds:
       - prism test -v ./...

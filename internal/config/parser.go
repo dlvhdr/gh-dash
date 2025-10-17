@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -10,23 +11,60 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/go-playground/validator/v10"
-	"gopkg.in/yaml.v2"
+	"github.com/knadh/koanf/maps"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
+	yamlmarshaller "gopkg.in/yaml.v3"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
+
+var conf = koanf.Conf{
+	Delim:       ".",
+	StrictMerge: true,
+}
 
 const DashDir = "gh-dash"
 
 const ConfigYmlFileName = "config.yml"
 
+// TODO: use this
 const ConfigYamlFileName = "config.yaml"
 
 const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
 
 var validate *validator.Validate
 
+/* Stringer implementation for ViewType */
 type ViewType string
+
+func (vt ViewType) String() string {
+	return string(vt)
+}
+
+func (vt ViewType) MarshalJSON() ([]byte, error) {
+	return []byte(vt.String()), nil
+}
+
+func (a *ViewType) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	switch strings.ToLower(s) {
+	case "prs":
+		*a = PRsView
+	case "issues":
+		*a = IssuesView
+	case "repo":
+		*a = RepoView
+	}
+
+	return nil
+}
 
 const (
 	PRsView    ViewType = "prs"
@@ -37,8 +75,8 @@ const (
 type SectionConfig struct {
 	Title   string
 	Filters string
-	Limit   *int `yaml:"limit,omitempty"`
-	Type    *ViewType
+	Limit   *int      `yaml:"limit,omitempty"`
+	Type    *ViewType `yaml:"type,omitempty"`
 }
 
 type PrsSectionConfig struct {
@@ -46,7 +84,7 @@ type PrsSectionConfig struct {
 	Filters string
 	Limit   *int            `yaml:"limit,omitempty"`
 	Layout  PrsLayoutConfig `yaml:"layout,omitempty"`
-	Type    *ViewType
+	Type    *ViewType       `yaml:"type,omitempty"`
 }
 
 type IssuesSectionConfig struct {
@@ -59,6 +97,35 @@ type IssuesSectionConfig struct {
 type PreviewConfig struct {
 	Open  bool
 	Width int
+}
+
+type NullableBool struct {
+	Value *bool
+}
+
+func (nb NullableBool) MarshalJSON() ([]byte, error) {
+	log.Error("marshalling", "nb", nb)
+	if nb.Value != nil {
+		return json.Marshal(nb.Value)
+	}
+
+	return json.Marshal(false)
+}
+
+func (nullBool *NullableBool) UnmarshalJSON(b []byte) error {
+	var unmarshalledJson bool
+	nb := NullableBool{}
+	if nullBool == nil {
+		return nil
+	}
+
+	err := json.Unmarshal(b, &unmarshalledJson)
+	if err != nil {
+		return err
+	}
+	nb.Value = &unmarshalledJson
+	*nullBool = nb
+	return nil
 }
 
 type ColumnConfig struct {
@@ -117,8 +184,8 @@ type RepoConfig struct {
 
 type Keybinding struct {
 	Key     string `yaml:"key"`
-	Command string `yaml:"command"`
-	Builtin string `yaml:"builtin"`
+	Command string `yaml:"command,omitempty"`
+	Builtin string `yaml:"builtin,omitempty"`
 	Name    string `yaml:"name,omitempty"`
 }
 
@@ -139,10 +206,10 @@ func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 }
 
 type Keybindings struct {
-	Universal []Keybinding `yaml:"universal"`
-	Issues    []Keybinding `yaml:"issues"`
-	Prs       []Keybinding `yaml:"prs"`
-	Branches  []Keybinding `yaml:"branches"`
+	Universal []Keybinding `yaml:"universal,omitempty"`
+	Issues    []Keybinding `yaml:"issues,omitempty"`
+	Prs       []Keybinding `yaml:"prs,omitempty"`
+	Branches  []Keybinding `yaml:"branches,omitempty"`
 }
 
 type Pager struct {
@@ -223,14 +290,14 @@ type ThemeConfig struct {
 type Config struct {
 	PRSections             []PrsSectionConfig    `yaml:"prSections"`
 	IssuesSections         []IssuesSectionConfig `yaml:"issuesSections"`
-	Repo                   RepoConfig            `yaml:"repo"`
+	Repo                   RepoConfig            `yaml:"repo,omitempty"`
 	Defaults               Defaults              `yaml:"defaults"`
 	Keybindings            Keybindings           `yaml:"keybindings"`
 	RepoPaths              map[string]string     `yaml:"repoPaths"`
 	Theme                  *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
 	Pager                  Pager                 `yaml:"pager"`
 	ConfirmQuit            bool                  `yaml:"confirmQuit"`
-	ShowAuthorIcons        bool                  `yaml:"showAuthorIcons"`
+	ShowAuthorIcons        bool                  `yaml:"showAuthorIcons,omitempty"`
 	SmartFilteringAtLaunch bool                  `yaml:"smartFilteringAtLaunch" default:"true"`
 }
 
@@ -240,7 +307,9 @@ type configError struct {
 	err       error
 }
 
-type ConfigParser struct{}
+type ConfigParser struct {
+	k *koanf.Koanf
+}
 
 func (parser ConfigParser) getDefaultConfig() Config {
 	return Config{
@@ -359,14 +428,22 @@ func (parser ConfigParser) getDefaultConfig() Config {
 	}
 }
 
-func (parser ConfigParser) getDefaultConfigYamlContents() string {
+func (parser ConfigParser) getDefaultConfigYamlContents() (string, error) {
 	defaultConfig := parser.getDefaultConfig()
-	yaml, _ := yaml.Marshal(defaultConfig)
+	log.Debug("loading default config yaml contents")
 
-	return string(yaml)
+	b, err := yamlmarshaller.Marshal(defaultConfig)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (e configError) Error() string {
+	content, err := e.parser.getDefaultConfigYamlContents()
+	if err != nil {
+		return fmt.Sprintf("encountered error while trying to generate default config yaml contents: %v", err)
+	}
 	return fmt.Sprintf(
 		`Couldn't find a config.yml or a config.yaml configuration file.
 Create one under: %s
@@ -379,7 +456,7 @@ press q to exit.
 
 Original error: %v`,
 		path.Join(e.configDir, DashDir, ConfigYmlFileName),
-		string(e.parser.getDefaultConfigYamlContents()),
+		content,
 		e.err,
 	)
 }
@@ -387,7 +464,11 @@ Original error: %v`,
 func (parser ConfigParser) writeDefaultConfigContents(
 	newConfigFile *os.File,
 ) error {
-	_, err := newConfigFile.WriteString(parser.getDefaultConfigYamlContents())
+	content, err := parser.getDefaultConfigYamlContents()
+	if err != nil {
+		return err
+	}
+	_, err = newConfigFile.WriteString(content)
 	if err != nil {
 		return err
 	}
@@ -399,6 +480,18 @@ func (parser ConfigParser) createConfigFileIfMissing(
 	configFilePath string,
 ) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		log.Info("default config doesn't exist - writing", "path", configFilePath, "err", err)
+		p := path.Dir(configFilePath)
+		for p != "/" {
+			if _, err = os.Stat(p); !os.IsNotExist(err) {
+				log.Debug("path exists", "path", p)
+				p = path.Dir(p)
+				continue
+			}
+
+			break
+		}
+
 		newConfigFile, err := os.OpenFile(
 			configFilePath,
 			os.O_RDWR|os.O_CREATE|os.O_EXCL,
@@ -415,45 +508,21 @@ func (parser ConfigParser) createConfigFileIfMissing(
 	return nil
 }
 
-func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath string) (string, error) {
-	var configFilePath string
-	ghDashConfig := os.Getenv("GH_DASH_CONFIG")
-
-	// First try GH_DASH_CONFIG
-	if ghDashConfig != "" {
-		configFilePath = ghDashConfig
-		// Then try to see if we're currently in a git repo
-	} else if repoPath != "" {
-		basename := repoPath + "/." + DashDir
-		repoConfigYml := basename + ".yml"
-		repoConfigYaml := basename + ".yaml"
-		if _, err := os.Stat(repoConfigYml); err == nil {
-			configFilePath = repoConfigYml
-		} else if _, err := os.Stat(repoConfigYaml); err == nil {
-			configFilePath = repoConfigYaml
+func (parser ConfigParser) getGlobalConfigPathOrCreateIfMissing() (string, error) {
+	configDir := os.Getenv("XDG_CONFIG_HOME")
+	if configDir == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
 		}
-		if configFilePath != "" {
-			return configFilePath, nil
-		}
+		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
 	}
 
-	// Then fallback to global config
-	if configFilePath == "" {
-		configDir := os.Getenv("XDG_CONFIG_HOME")
-		if configDir == "" {
-			homeDir, err := os.UserHomeDir()
-			if err != nil {
-				return "", err
-			}
-			configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
-		}
-
-		dashConfigDir := filepath.Join(configDir, DashDir)
-		configFilePath = filepath.Join(dashConfigDir, ConfigYmlFileName)
-	}
+	configFilePath := filepath.Join(configDir, DashDir, ConfigYmlFileName)
+	log.Debug("using global config path", "path", configFilePath)
 
 	// Ensure directory exists before attempting to create file
-	configDir := filepath.Dir(configFilePath)
+	configDir = filepath.Dir(configFilePath)
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(configDir, os.ModePerm); err != nil {
 			return "", configError{
@@ -471,32 +540,129 @@ func (parser ConfigParser) getDefaultConfigFileOrCreateIfMissing(repoPath string
 	return configFilePath, nil
 }
 
+func (parser ConfigParser) getProvidedConfigPath(location Location) string {
+	var userProvidedCfgPath string
+	// First try the provided --config flag
+	if location.ConfigFlag != "" {
+		userProvidedCfgPath = location.ConfigFlag
+	} else if cfg := os.Getenv("GH_DASH_CONFIG"); cfg != "" {
+		// then try the GH_DASH_CONFIG env var
+		userProvidedCfgPath = cfg
+	} else if location.RepoPath != "" {
+		// Then try to see if we're currently in a git repo
+		basename := location.RepoPath + "/." + DashDir
+		repoConfigYml := basename + ".yml"
+		repoConfigYaml := basename + ".yaml"
+		if _, err := os.Stat(repoConfigYml); err == nil {
+			userProvidedCfgPath = repoConfigYml
+		} else if _, err := os.Stat(repoConfigYaml); err == nil {
+			userProvidedCfgPath = repoConfigYaml
+		}
+	}
+
+	return userProvidedCfgPath
+}
+
+func (parser ConfigParser) loadGlobalConfig(globalCfgPath string) error {
+	return parser.k.Load(file.Provider(globalCfgPath), yaml.Parser())
+}
+
+func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath string) (Config, error) {
+	if err := parser.loadGlobalConfig(globalCfgPath); err != nil {
+		return Config{}, parsingError{err: err, path: globalCfgPath}
+	}
+	log.Debug("Loaded global config", "path", globalCfgPath)
+	if err := parser.k.Load(file.Provider(userProvidedCfgPath), yaml.Parser(), koanf.WithMergeFunc(func(
+		overrides, dest map[string]any,
+	) error {
+		overridesCopy := maps.Copy(overrides)
+
+		universalKeybinds := mergeKeybindings(overrides, dest, "universal")
+		prsKeybinds := mergeKeybindings(overrides, dest, "prs")
+		issuesKeybinds := mergeKeybindings(overrides, dest, "issues")
+
+		maps.Merge(overrides, dest)
+		dest["keybindings"].(map[string]any)["universal"] = universalKeybinds
+		dest["keybindings"].(map[string]any)["prs"] = prsKeybinds
+		dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
+		dest["prSections"] = overridesCopy["prSections"]
+		dest["issuesSections"] = overridesCopy["issuesSections"]
+
+		return nil
+	})); err != nil {
+		return Config{}, parsingError{err: err, path: userProvidedCfgPath}
+	}
+	log.Debug("Loaded user provided config", "path", userProvidedCfgPath)
+
+	return parser.unmarshalConfigWithDefaults()
+}
+
+// Make a union of keybinds, merging src into dest
+// Keybinds from src will override ones in dest.
+func mergeKeybindings(src, dest map[string]any, typ string) []map[string]string {
+	if _, ok := src["keybindings"].(map[string]any); !ok {
+		src["keybindings"] = make(map[string]any)
+	}
+	if _, ok := src["keybindings"].(map[string]any)[typ]; !ok {
+		src["keybindings"].(map[string]any)[typ] = make([]any, 0)
+	}
+
+	if _, ok := dest["keybindings"].(map[string]any); !ok {
+		dest["keybindings"] = make(map[string]any)
+	}
+	if _, ok := dest["keybindings"].(map[string]any)[typ]; !ok {
+		dest["keybindings"].(map[string]any)[typ] = make([]any, 0)
+	}
+
+	keybindsMap := make(map[string]map[string]string, 0)
+	for _, keybind := range src["keybindings"].(map[string]any)[typ].([]any) {
+		keybind, ok := keybind.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		casted := make(map[string]string, 0)
+		for key, val := range keybind {
+			if val, ok := val.(string); ok {
+				casted[key] = val
+			}
+		}
+		keybindsMap[keybind["key"].(string)] = casted
+	}
+	for _, keybind := range dest["keybindings"].(map[string]any)[typ].([]any) {
+		keybind, ok := keybind.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		key, ok := keybind["key"].(string)
+		if !ok {
+			continue
+		}
+		if _, ok := keybindsMap[key]; !ok {
+			casted := make(map[string]string, 0)
+			for key, val := range keybind {
+				if val, ok := val.(string); ok {
+					casted[key] = val
+				}
+			}
+			keybindsMap[key] = casted
+		}
+	}
+	merged := make([]map[string]string, 0)
+	for _, keybind := range keybindsMap {
+		merged = append(merged, keybind)
+	}
+	return merged
+}
+
 type parsingError struct {
-	err error
+	path string
+	err  error
 }
 
 func (e parsingError) Error() string {
-	return fmt.Sprintf("failed parsing config.yml: %v", e.err)
-}
-
-func (parser ConfigParser) readConfigFile(path string) (Config, error) {
-	config := parser.getDefaultConfig()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return config, configError{parser: parser, configDir: path, err: err}
-	}
-
-	err = yaml.Unmarshal([]byte(data), &config)
-	if err != nil {
-		return config, err
-	}
-	repoFF := IsFeatureEnabled(FF_REPO_VIEW)
-	if config.Defaults.View == RepoView && !repoFF {
-		config.Defaults.View = PRsView
-	}
-
-	err = validate.Struct(config)
-	return config, err
+	return fmt.Sprintf("failed parsing config at path %s: %v", e.path, e.err)
 }
 
 func initParser() ConfigParser {
@@ -510,36 +676,57 @@ func initParser() ConfigParser {
 		return name
 	})
 
-	return ConfigParser{}
+	return ConfigParser{
+		k: koanf.NewWithConf(conf),
+	}
 }
 
 type Location struct {
-	RepoPath string
-	// Config passed with explicit --config flag
-	ConfigFlag string
+	RepoPath   string // path if inside a git repo
+	ConfigFlag string // Config passed with explicit --config flag
 }
 
 func ParseConfig(location Location) (Config, error) {
+	log.Debug("config.ParseConfig", "location", location)
 	parser := initParser()
 
 	var config Config
 	var err error
-	var configFilePath string
 
-	// give priority to `--config` flag
-	if location.ConfigFlag == "" {
-		configFilePath, err = parser.getDefaultConfigFileOrCreateIfMissing(location.RepoPath)
-		if err != nil {
-			return config, parsingError{err: err}
-		}
-	} else {
-		configFilePath = location.ConfigFlag
-	}
-
-	config, err = parser.readConfigFile(configFilePath)
+	globalCfgPath, err := parser.getGlobalConfigPathOrCreateIfMissing()
 	if err != nil {
-		return config, parsingError{err: err}
+		return config, parsingError{path: globalCfgPath, err: err}
 	}
 
-	return config, nil
+	if location.ConfigFlag != "" || location.RepoPath != "" {
+		userProvidedCfgPath := parser.getProvidedConfigPath(location)
+		mergedCfg, err := parser.mergeConfigs(globalCfgPath, userProvidedCfgPath)
+		if err != nil {
+			return Config{}, err
+		}
+		return mergedCfg, nil
+	}
+
+	if err = parser.loadGlobalConfig(globalCfgPath); err != nil {
+		log.Error("failed loading global config", "err", err)
+		return Config{}, parsingError{path: globalCfgPath, err: err}
+	}
+
+	return parser.unmarshalConfigWithDefaults()
+}
+
+func (parser ConfigParser) unmarshalConfigWithDefaults() (Config, error) {
+	cfg := parser.getDefaultConfig()
+	err := parser.k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "yaml"})
+	if err != nil {
+		return Config{}, err
+	}
+
+	repoFF := IsFeatureEnabled(FF_REPO_VIEW)
+	if cfg.Defaults.View == RepoView && !repoFF {
+		cfg.Defaults.View = PRsView
+	}
+
+	err = validate.Struct(cfg)
+	return cfg, err
 }
