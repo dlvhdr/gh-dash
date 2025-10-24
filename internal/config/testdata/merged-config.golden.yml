@@ -106,7 +106,7 @@ theme:
       showSeparator: true
   colors:
     text:
-      primary: "#E2E1ED"
+      primary: "#FF0000"
       secondary: "#666CA6"
       inverted: "#242347"
       faint: "#B0B3BF"

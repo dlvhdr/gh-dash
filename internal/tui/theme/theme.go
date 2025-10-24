@@ -1,6 +1,8 @@
 package theme
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 
@@ -168,7 +170,8 @@ func ParseTheme(cfg *config.Config) Theme {
 		)
 	}
 
-	log.Debug("Parsing theme", "config", cfg.Theme, "theme", DefaultTheme)
+	log.Debug("Parsing theme", "config", fmt.Sprintf("%+v", cfg.Theme), "colors",
+		fmt.Sprintf("%+v", cfg.Theme.Colors), "defaultTheme", DefaultTheme)
 
 	return *DefaultTheme
 }

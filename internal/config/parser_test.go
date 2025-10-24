@@ -34,7 +34,7 @@ import (
 const repoPath = "testdata"
 
 func init() {
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.ErrorLevel)
 }
 
 var keybindSorter = cmp.Transformer("Sort", func(in []Keybinding) []Keybinding {
@@ -83,6 +83,7 @@ func TestParser(t *testing.T) {
 
 		testutils.AssertNoError(t, err)
 		require.Len(t, parsed.PRSections, 3)
+		require.Equal(t, "#E2E1ED", parsed.Theme.Colors.Inline.Text.Primary.String())
 	})
 
 	t.Run("Should then try GH_DASH_CONFIG env var", func(t *testing.T) {

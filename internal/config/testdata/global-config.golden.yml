@@ -120,7 +120,7 @@ theme:
       owner: ""
       unknownrole: ""
     text:
-      primary: "#E2E1ED"
+      primary: "#FFFFFF"
       secondary: "#666CA6"
       inverted: "#242347"
       faint: "#B0B3BF"

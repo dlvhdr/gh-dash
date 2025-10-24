@@ -218,6 +218,14 @@ type Pager struct {
 
 type HexColor string
 
+func (hc HexColor) String() string {
+	return string(hc)
+}
+
+func (hc HexColor) IsZero() bool {
+	return hc.String() == ""
+}
+
 type ColorThemeIcon struct {
 	NewContributor HexColor `yaml:"newcontributor"   validate:"omitempty,hexcolor"`
 	Contributor    HexColor `yaml:"contributor"      validate:"omitempty,hexcolor"`
@@ -228,7 +236,7 @@ type ColorThemeIcon struct {
 }
 
 type ColorThemeText struct {
-	Primary   HexColor `yaml:"primary"   validate:"omitempty,hexcolor"`
+	Primary   HexColor `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,hexcolor"`
 	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
 	Inverted  HexColor `yaml:"inverted"  validate:"omitempty,hexcolor"`
 	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
@@ -248,14 +256,14 @@ type ColorThemeBackground struct {
 }
 
 type ColorTheme struct {
-	Icon       ColorThemeIcon       `yaml:"icon"       validate:"required"`
-	Text       ColorThemeText       `yaml:"text"       validate:"required"`
-	Background ColorThemeBackground `yaml:"background" validate:"required"`
-	Border     ColorThemeBorder     `yaml:"border"     validate:"required"`
+	Icon       ColorThemeIcon       `yaml:"icon,omitempty"       validate:"required,omitempty"`
+	Text       ColorThemeText       `yaml:"text,omitempty"       validate:"required,omitempty"`
+	Background ColorThemeBackground `yaml:"background,omitempty" validate:"required,omitempty"`
+	Border     ColorThemeBorder     `yaml:"border,omitempty"     validate:"required,omitempty"`
 }
 
 type ColorThemeConfig struct {
-	Inline ColorTheme `yaml:",inline"`
+	Inline ColorTheme `yaml:",inline,squash"`
 }
 
 type IconTheme struct {
@@ -481,16 +489,6 @@ func (parser ConfigParser) createConfigFileIfMissing(
 ) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		log.Info("default config doesn't exist - writing", "path", configFilePath, "err", err)
-		p := path.Dir(configFilePath)
-		for p != "/" {
-			if _, err = os.Stat(p); !os.IsNotExist(err) {
-				log.Debug("path exists", "path", p)
-				p = path.Dir(p)
-				continue
-			}
-
-			break
-		}
 
 		newConfigFile, err := os.OpenFile(
 			configFilePath,

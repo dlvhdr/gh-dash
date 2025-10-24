@@ -17,6 +17,11 @@ tasks:
     interactive: true
     desc: Run in debug mode. Run `task logs` to watch the logs.
 
+  dlv:
+    cmds:
+      - dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 .
+    desc: Debug with dlv
+
   logs:
     cmds:
       - rm -f ./debug.log
