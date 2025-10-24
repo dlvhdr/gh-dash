@@ -1,0 +1,58 @@
+---
+title: Reusing Settings
+---
+
+`DASH` supports defining global settings that will always be applied, and lets you override them with a per-repo or one-time basis.
+
+This lets you set your [theme](./theme), [keybindings](./keybindings) and any other setting by defining them once.
+
+## The Global Config
+
+The global config is usually under `$HOME/.config/gh-dash/config.yml` - but that follows the XDG spec. See [How to Configure](/configuration) for more details.
+
+The global config is loaded first, with the option to override anything it defines.
+Here you'd usually want to define stuff like your theme, keybindings etc.
+
+## Per-Repo / One-Time Overrides
+
+`DASH` supports passing ad-hoc or per-repo config files by:
+
+- Creating a `.gh-dash.yml` file in a git repo's root directory.
+- Passing a path to a `.yml` file you supplied with the `--config` flag or the `GH_DASH_CONFIG` environment variable.
+
+Any settings defined here will override your global config settings.
+
+## Example
+
+Your global config under `~/.config/gh-dash/config.yml` could look like this:
+
+```yaml
+pager:
+  diff: diffnav
+theme:
+  colors:
+    text:
+      primary: "#E2E1ED"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      # ...
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: cd {{.RepoPath}} && lazygit
+```
+
+Then in a git repo you could create a `.gh-dash.yml` file defining just the
+sections:
+
+```yaml
+prSections:
+  - title: Bugs
+    filters: is:open author:@me [BUG]
+  - title: Our Packages
+    filters: is:open review-requested:@me repo:work-org/our-pkg
+```
+
+Starting `DASH` from the git repo, the final config used will have the `pager`, `theme` and `keybindings`
+from your global config and the `prSections` from your repo's config.

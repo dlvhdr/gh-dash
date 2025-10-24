@@ -1,0 +1,76 @@
+confirmQuit: false
+defaults:
+    issuesLimit: 20
+    layout:
+        issues:
+            assignees:
+                hidden: true
+                width: 20
+            createdAt:
+                width: 5
+            creator:
+                width: 10
+            creatorIcon:
+                hidden: false
+            repo:
+                width: 15
+            updatedAt:
+                width: 5
+        prs:
+            assignees:
+                hidden: true
+                width: 20
+            author:
+                width: 15
+            authorIcon:
+                hidden: false
+            base:
+                hidden: true
+                width: 15
+            createdAt:
+                width: 5
+            lines:
+                width: 15
+            repo:
+                width: 20
+            updatedAt:
+                width: 5
+    prApproveComment: LGTM
+    preview:
+        Open: true
+        Width: 50
+    prsLimit: 20
+    refetchIntervalMinutes: 30
+    view: prs
+issuesSections:
+    - Filters: is:open author:@me
+      Title: My Issues
+    - Filters: is:open assignee:@me
+      Title: Assigned
+    - Filters: is:open involves:@me -author:@me
+      Title: Involved
+keybindings:
+    issues: []
+    prs: []
+    universal: []
+pager:
+    diff: ""
+prSections:
+    - Filters: is:open author:@me
+      Title: My Pull Requests
+    - Filters: is:open review-requested:@me
+      Title: Needs My Review
+    - Filters: is:open involves:@me -author:@me
+      Title: Involved
+repo:
+    branchesRefetchIntervalSeconds: 30
+    prsRefetchIntervalSeconds: 60
+repoPaths: {}
+showAuthorIcons: true
+smartFilteringAtLaunch: true
+theme:
+    ui:
+        sectionsShowCount: true
+        table:
+            compact: false
+            showSeparator: true

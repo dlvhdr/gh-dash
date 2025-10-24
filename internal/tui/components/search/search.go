@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -85,8 +84,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	oldWidth := m.textInput.Width
 	m.textInput.Width = m.getInputWidth(ctx)
 	if m.textInput.Width != oldWidth {
-		log.Debug("search width changed, blurring", "mainContentWidth",
-			m.ctx.MainContentWidth, "oldWidth", oldWidth, "newWidth", m.textInput.Width)
 		m.textInput.CursorEnd()
 	}
 }

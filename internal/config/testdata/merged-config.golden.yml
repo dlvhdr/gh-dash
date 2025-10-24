@@ -1,0 +1,125 @@
+prSections:
+  - title: Mine
+    filters: is:open author:@me repo:dlvhdr/gh-dash
+    layout:
+      repo:
+        hidden: true
+      author:
+        hidden: true
+issuesSections:
+  - title: Open
+    filters: author:@me -author:@me sort:reactions
+repo:
+  branchesRefetchIntervalSeconds: 30
+  prsRefetchIntervalSeconds: 60
+defaults:
+  prApproveComment: LGTM
+  preview:
+    open: true
+    width: 80
+  prsLimit: 100
+  issuesLimit: 100
+  view: prs
+  layout:
+    prs:
+      updatedAt:
+        width: 5
+      createdAt:
+        width: 5
+      repo:
+        width: 20
+        hidden: true
+      author:
+        width: 15
+      authorIcon:
+        hidden: false
+      assignees:
+        width: 20
+        hidden: true
+      base:
+        width: 15
+        hidden: true
+      lines:
+        width: 15
+    issues:
+      updatedAt:
+        width: 5
+      createdAt:
+        width: 5
+      repo:
+        width: 15
+      creator:
+        width: 10
+      creatorIcon:
+        hidden: false
+      assignees:
+        width: 20
+        hidden: true
+  refetchIntervalMinutes: 10
+keybindings:
+  universal:
+    - key: "n"
+      command: gh pr create
+    - key: g
+      command: |
+        cd {{.RepoPath}} && lazygit
+      name: lazygit
+    - key: O
+      command: open {{.RepoPath}}
+      name: show in finder
+    - key: G
+      command: >-
+        gh dummy command
+  prs:
+    - key: O
+      builtin: comment
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+    - key: C
+      command: |
+        tmux new-window -c {{.RepoPath}} ' nvim -c ":silent Octo pr edit {{.PrNumber}}" '
+      name: code review
+    - key: T
+      command: |
+        tmux new-window -c /Users/dlvhdr/code/personal/gh-enhance ' task local-gh -- -R {{.RepoName}} {{.PrNumber}} '
+    - key: a
+      command: |
+        cd {{.RepoPath}} && git add -A && lazygit
+      name: lazygit add
+    - key: v
+      command: |
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+      name: approve
+    - key: N
+      command: echo "new command"
+  issues:
+    - key: a
+      command: >-
+        gh issue open --repo {{.RepoName}} {{.PrNumber}}
+repoPaths:
+  dlvhdr/*: ~/code/personal/*
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      compact: false
+      showSeparator: true
+  colors:
+    text:
+      primary: "#FF0000"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#B0B3BF"
+      warning: "#E0AF68"
+      success: "#3DF294"
+    background:
+      selected: "#1B1B33"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"
+pager:
+  diff: diffnav
+confirmQuit: true
+showAuthorIcons: true
+smartFilteringAtLaunch: true

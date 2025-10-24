@@ -77,6 +77,7 @@ export default defineConfig({
             "configuration/repo-paths",
             "configuration/keybindings",
             "configuration/theme",
+            "configuration/reusing",
             "configuration/examples",
             {
               label: "Layout",

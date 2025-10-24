@@ -56,3 +56,10 @@ func Run(m tea.Model) {
 		log.Fatal("Failed starting the TUI", err)
 	}
 }
+
+func AssertNoError(t testing.TB, got error) {
+	t.Helper()
+	if got != nil {
+		t.Fatal(got)
+	}
+}

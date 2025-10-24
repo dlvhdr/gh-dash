@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://gh-dash.dev/schema.json
+prSections:
+  - title: Mine
+    filters: is:open author:@me repo:dlvhdr/gh-dash updated:>={{ nowModify "-3w" }} sort:updated-desc
+  - title: Review
+    filters: repo:dlvhdr/gh-dash -author:@me is:open updated:>={{ nowModify "-2.5w" }}
+  - title: All
+    filters: repo:dlvhdr/gh-dash
+issuesSections:
+  - title: Open
+    filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
+  - title: Creator
+    filters: author:@me repo:dlvhdr/gh-dash is:open
+  - title: All
+    filters: repo:dlvhdr/gh-dash sort:reactions
+
+pager:
+  diff: diffnav
+defaults:
+  view: prs
+  refetchIntervalMinutes: 5
+  layout:
+    prs:
+      repoName:
+        hidden: false
+      base:
+        hidden: false
+
+  preview:
+    open: true
+    width: 60
+  prsLimit: 5
+  issuesLimit: 5
+repoPaths:
+  dlvhdr/*: ~/code/personal/*
+confirmQuit: false
+
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+  prs:
+    - key: O
+      builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+    - key: C
+      name: code review
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"
+        '
+    - key: T
+      command: >
+        tmux new-window -c /Users/dlvhdr/code/personal/gh-enhance '
+        task local-gh -- -R {{.RepoName}} {{.PrNumber}}
+        '
+    - key: a
+      name: lazygit add
+      command: >
+        cd {{.RepoPath}} && git add -A && lazygit
+    - key: v
+      name: approve
+      command: >
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+  issues:
+    - key: a
+      command: >-
+        gh issue open --repo {{.RepoName}} {{.PrNumber}}
+
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      compact: false
+  colors:
+    text:
+      primary: "#FFFFFF"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#B0B3BF"
+      warning: "#E0AF68"
+      success: "#3DF294"
+    background:
+      selected: "#1B1B33"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"

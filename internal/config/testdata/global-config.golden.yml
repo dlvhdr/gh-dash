@@ -1,0 +1,140 @@
+prSections:
+  - title: Mine
+    filters:
+      is:open author:@me repo:dlvhdr/gh-dash updated:>={{ nowModify "-3w" }}
+      sort:updated-desc
+    type: null
+  - title: Review
+    filters:
+      repo:dlvhdr/gh-dash -author:@me is:open updated:>={{ nowModify "-2.5w"
+      }}
+    type: null
+  - title: All
+    filters: repo:dlvhdr/gh-dash
+    type: null
+issuesSections:
+  - title: Open
+    filters: author:@me repo:dlvhdr/gh-dash is:open -author:@me sort:reactions
+  - title: Creator
+    filters: author:@me repo:dlvhdr/gh-dash is:open
+  - title: All
+    filters: repo:dlvhdr/gh-dash sort:reactions
+repo:
+  branchesRefetchIntervalSeconds: 30
+  prsRefetchIntervalSeconds: 60
+defaults:
+  preview:
+    open: true
+    width: 60
+  prsLimit: 5
+  prApproveComment: LGTM
+  issuesLimit: 5
+  view: prs
+  layout:
+    prs:
+      updatedAt:
+        width: 5
+      createdAt:
+        width: 5
+      repo:
+        width: 20
+      author:
+        width: 15
+      authorIcon:
+        hidden: false
+      assignees:
+        width: 20
+        hidden: true
+      base:
+        width: 15
+        hidden: false
+      lines:
+        width: 15
+    issues:
+      updatedAt:
+        width: 5
+      createdAt:
+        width: 5
+      repo:
+        width: 15
+      creator:
+        width: 10
+      creatorIcon:
+        hidden: false
+      assignees:
+        width: 20
+        hidden: true
+  refetchIntervalMinutes: 5
+keybindings:
+  universal:
+    - key: g
+      command: |
+        cd {{.RepoPath}} && lazygit
+      builtin: ""
+      name: lazygit
+  prs:
+    - key: O
+      command: ""
+      builtin: checkout
+    - key: m
+      command: gh pr merge --admin --repo {{.RepoName}} {{.PrNumber}}
+      builtin: ""
+    - key: C
+      command: |
+        tmux new-window -c {{.RepoPath}} ' nvim -c ":silent Octo pr edit {{.PrNumber}}" '
+      builtin: ""
+      name: code review
+    - key: T
+      command: |
+        tmux new-window -c /Users/dlvhdr/code/personal/gh-enhance ' task local-gh -- -R {{.RepoName}} {{.PrNumber}} '
+      builtin: ""
+    - key: a
+      command: |
+        cd {{.RepoPath}} && git add -A && lazygit
+      builtin: ""
+      name: lazygit add
+    - key: v
+      command: |
+        gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
+      builtin: ""
+      name: approve
+  issues:
+    - key: a
+      command: >-
+        gh issue open --repo {{.RepoName}} {{.PrNumber}}
+  branches: []
+repoPaths:
+  dlvhdr/*: ~/code/personal/*
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      showSeparator: true
+      compact: false
+  colors:
+    icon:
+      newcontributor: ""
+      contributor: ""
+      collaborator: ""
+      member: ""
+      owner: ""
+      unknownrole: ""
+    text:
+      primary: "#FFFFFF"
+      secondary: "#666CA6"
+      inverted: "#242347"
+      faint: "#B0B3BF"
+      warning: "#E0AF68"
+      success: "#3DF294"
+      error: ""
+    background:
+      selected: "#1B1B33"
+    border:
+      primary: "#383B5B"
+      secondary: "#39386B"
+      faint: "#2B2B40"
+pager:
+  diff: diffnav
+confirmQuit: false
+showAuthorIcons: true
+smartFilteringAtLaunch: true

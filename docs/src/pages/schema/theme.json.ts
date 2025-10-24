@@ -7,7 +7,7 @@ export function GET() {
       title: "Theme Options",
       description: "Theme settings for gh-dash",
       type: "object",
-      required: ["colors"],
+      required: [],
       properties: {
         ui: {
           title: "UI Settings",
@@ -90,21 +90,14 @@ export function GET() {
           description:
             "Defines text, background, and border colors for the dashboard.",
           type: "object",
-          required: ["text", "background", "border"],
+          required: [],
           properties: {
             text: {
               title: "Text Colors",
               description:
                 "Defines the foreground (text) colors for the dashboard.",
               type: "object",
-              required: [
-                "primary",
-                "secondary",
-                "inverted",
-                "faint",
-                "warning",
-                "success",
-              ],
+              required: [],
               properties: {
                 primary: {
                   title: "Primary Text Color",
@@ -160,7 +153,7 @@ export function GET() {
               title: "Background Colors",
               description: "Defines the background colors for the dashboard.",
               type: "object",
-              required: ["selected"],
+              required: [],
               properties: {
                 selected: {
                   title: "Selected Background Color",
@@ -176,7 +169,7 @@ export function GET() {
               title: "Border Colors",
               description: "Defines the border colors for the dashboard.",
               type: "object",
-              required: ["primary", "secondary", "faint"],
+              required: [],
               properties: {
                 primary: {
                   title: "Primary Border Color",

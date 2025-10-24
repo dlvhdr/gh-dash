@@ -18,7 +18,8 @@
   "shell": {
     "init_hook": [
       "echo \"Creating devbox shell...\"",
-      "[[ $(command -v prism) != \"$GOBIN/prism\" ]] && go install go.dalton.dog/prism@latest"
+      "[[ $(command -v prism) != \"$GOBIN/prism\" ]] && go install go.dalton.dog/prism@latest",
+      "[[ $(command -v gotip) != \"$GOBIN/gotip\" ]] && go install github.com/lusingander/gotip/cmd/gotip@latest"
     ]
   }
 }
