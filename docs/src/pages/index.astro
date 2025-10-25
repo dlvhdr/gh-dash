@@ -16,6 +16,7 @@ import catppuccinSrc from "../assets/catpuccin.png";
 import gruvSrc from "../assets/gruv.png";
 import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg";
 import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
+import EnhanceCard from "../components/EnhanceCard.astro";
 ---
 
 <StarlightPage
@@ -85,7 +86,22 @@ import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
     </div>
   </div>
 
-  <div class="mt-0 mb-16 text-[var(--sl-color-gray-5)]">──◇──</div>
+  <div class="mt-0 mb-4 text-[var(--sl-color-gray-5)]">──◇──</div>
+
+  <h2 class="mb-4 text-center !text-3xl">
+    Support the Project and Get Companion Apps
+  </h2>
+  <p class="text-center text-pretty lg:w-[80ch]">
+    I'm always working on new terminal UIs to make my life easier.<br />By
+    joining <a href="/insiders">Insiders</a> you can support this and any of my other
+    projects.<br />
+    Currently joining insiders gives you access to:
+  </p>
+  <EnhanceCard />
+
+  <div class="mt-16 mb-8 text-[var(--sl-color-gray-5)]">──◇──</div>
+
+  <h2 class="mb-16 !text-3xl">Features</h2>
 
   <div class="lg:w-80rem flex w-[95vw] flex-col items-center gap-8 lg:gap-16">
     <Showcase>
