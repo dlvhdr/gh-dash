@@ -8,8 +8,8 @@
 }
 
 @font-face {
-  font-family: "CommitMono NFM";
+  font-family: "CommitMono";
   font-weight: normal;
   font-style: normal;
-  src: url("./CommitMonoNerdFontMono-Regular.otf") format("opentype");
+  src: url("./CommitMono-400-Regular.otf") format("opentype");
 }

@@ -1,5 +1,7 @@
 ---
-const { header } = Astro.props;
+import { Icon } from "@astrojs/starlight/components";
+
+const { header, icon } = Astro.props;
 ---
 
 <div class="relative flex w-full max-w-full flex-row gap-6 lg:w-auto">
@@ -9,7 +11,12 @@ const { header } = Astro.props;
     <div
       class="is-dark:bg-[var(--sl-color-gray-5)] absolute -top-4 right-2 left-2 z-10 max-w-full rounded-2xl bg-[var(--sl-color-gray-6)] px-2 lg:right-auto lg:px-3"
     >
-      <h3 class="!text-base text-[var(--sl-color-accent)]">{header}</h3>
+      <h3
+        class="flex items-center gap-2 !text-base text-[var(--sl-color-accent)]"
+      >
+        <Icon class="inline" name={icon} size="20px" />
+        {header}
+      </h3>
     </div>
     <slot />
   </div>
