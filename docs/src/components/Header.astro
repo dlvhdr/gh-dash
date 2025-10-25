@@ -11,19 +11,6 @@ const isDashHomepage = Astro.locals.starlightRoute.id === "";
 const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
 ---
 
-<style>
-  .plugin {
-    background-image: var(--hdr-red-gradient);
-    background-size: 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    -moz-background-clip: text;
-    -moz-text-fill-color: transparent;
-    background-repeat: repeat;
-  }
-</style>
-
 <div class="bg-[var(--sl-color-bg)] px-2 py-2 lg:px-6">
   <div
     class="flex max-w-[100vw] flex-row items-center gap-3 rounded border border-[var(--sl-color-gray-5)] py-2 pr-2 pl-4 lg:gap-3 lg:px-6"
@@ -34,8 +21,8 @@ const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
       </a>
       {
         isEnhanceHomepage ? (
-          <p class="plugin ml-2 hidden h-min leading-[18px] md:block">
-            Companion 🌟
+          <p class="ml-2 hidden h-min text-sm leading-[18px] text-orange-400 uppercase md:block dark:text-orange-600">
+            Companion
           </p>
         ) : null
       }

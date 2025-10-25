@@ -1,0 +1,23 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import SponsorshipGoal from "./SponsorshipGoal.astro";
+import EnhanceMiniLogo from "./EnhanceMiniLogo.astro";
+---
+
+<div class="py-4 md:p-6">
+  <a href="/enhance" class="no-underline">
+    <div
+      class="flex w-full flex-row items-center gap-8 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)] md:w-max"
+    >
+      <div class="flex flex-col gap-4">
+        <EnhanceMiniLogo />
+        <SponsorshipGoal variant="mini" />
+      </div>
+      <Icon
+        name="right-arrow"
+        size="24px"
+        class="mt-0 hidden animate-pulse justify-self-end rounded-full bg-[var(--sl-color-gray-4)] md:block"
+      />
+    </div>
+  </a>
+</div>
