@@ -1,7 +1,7 @@
 ---
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 import "../styles/index.css";
-import { Code } from "@astrojs/starlight/components";
+import { Code, Icon } from "@astrojs/starlight/components";
 import Terminal from "../components/Terminal.astro";
 import Footer from "../components/Footer.astro";
 import Box from "../components/Box.astro";
@@ -23,7 +23,13 @@ import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
 >
   <div class="flex flex-row items-center gap-1">
     <form action="https://github.com/dlvhdr/gh-dash/releases">
-      <ReleaseVersionButton server:defer />
+      <ReleaseVersionButton server:defer>
+        <button
+          slot="fallback"
+          class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+          >Version</button
+        >
+      </ReleaseVersionButton>
     </form>
     <button
       class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
@@ -43,8 +49,12 @@ import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
       <div id="main-buttons" class="flex flex-col items-center gap-4">
         <form action="/getting-started/">
           <button
-            class="bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
-            >Get started →</button
+            class="flex items-center justify-center gap-1 bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
+            >Get started <Icon
+              class="inline"
+              name="right-arrow"
+              size="20px"
+            /></button
           >
         </form>
         <form
@@ -53,9 +63,9 @@ import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
           target="_blank"
         >
           <button
-            class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
-            >View on GitHub </button
-          >
+            class="flex items-center justify-center gap-1 bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
+            >View on GitHub <Icon class="inline" name="external" size="20px" />
+          </button>
         </form>
       </div>
     </div>
@@ -79,7 +89,7 @@ import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
 
   <div class="lg:w-80rem flex w-[95vw] flex-col items-center gap-8 lg:gap-16">
     <Showcase>
-      <Box header="︎ Define Custom GitHub Filters">
+      <Box icon="setting" header="Define Custom GitHub Filters">
         <Code
           class="overflow-auto"
           lang="yaml"
@@ -104,7 +114,7 @@ issuesSections:
       </Terminal>
     </Showcase>
     <Showcase reversed={true}>
-      <Box header=" Native Vim Keybindings" src={prSectionsImage}>
+      <Box icon="vim" header="Native Vim Keybindings" src={prSectionsImage}>
         <ul>
           <li><kbd>h/j/k/l</kbd> to move between rows/sections</li>
           <li><kbd>ctrl+d/u</kbd> to move in sidebar</li>
@@ -134,7 +144,7 @@ issuesSections:
       </div>
     </Showcase>
     <Showcase>
-      <Box header=" Set Custom Commands" src={prSectionsImage}>
+      <Box icon="laptop" header="Set Custom Commands" src={prSectionsImage}>
         <Code
           lang="yaml"
           code={`- key: g
@@ -157,7 +167,7 @@ issuesSections:
       </Terminal>
     </Showcase>
     <Showcase reversed={true}>
-      <Box header=" Use Custom Themes" src={prSectionsImage}>
+      <Box icon="sun" header="Use Custom Themes" src={prSectionsImage}>
         <Code
           lang="yaml"
           code={`ui:

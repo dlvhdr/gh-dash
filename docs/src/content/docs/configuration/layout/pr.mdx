@@ -77,7 +77,7 @@ lines:
 This column displays how recently the PR was updated. The entry shows the time elapsed
 since the last update, like `1h` or `3d`.
 
-The heading for this column is <NerdFontIcon icon=""/>
+The heading for this column is <NerdFontIcon icon="nf-oct-clock"/>
 
 ## PR State Column
 
@@ -87,15 +87,15 @@ The heading for this column is <NerdFontIcon icon=""/>
 
 This column displays the PR's state as one of the following icons:
 
-- When a PR is open and ready for review, the icon is <NerdFontIcon icon=""/> and
+- When a PR is open and ready for review, the icon is <NerdFontIcon icon="nf-oct-git_pull_request"/> and
   the color is `#42a0fa`.
-- When a PR is in draft mode, the icon is <NerdFontIcon icon=""/> and the color is
+- When a PR is in draft mode, the icon is <NerdFontIcon icon="nf-oct-git_pull_request_draft"/> and the color is
   set to the value of [`theme.colors.text.faint`].
-- When a PR is merged, the icon is <NerdFontIcon icon=""/> and the color is `#a371f7`.
-- When a PR is closed without merging, the icon is <NerdFontIcon icon=""/> and the
+- When a PR is merged, the icon is <NerdFontIcon icon="nf-oct-feed_merged"/> and the color is `#a371f7`.
+- When a PR is closed without merging, the icon is <NerdFontIcon icon="nf-oct-trash"/> and the
   color is `#c38080`.
 
-This heading for this column is <NerdFontIcon icon=""/>
+This heading for this column is <NerdFontIcon icon="nf-dev-git_merge"/>
 
 [`theme.colors.text.faint`]: /configuration/theme#faint-text-color
 
@@ -109,7 +109,7 @@ This column displays the name of the repository the PR is filed in. The entry sh
 name of the repository without the owner, like `gh-dash` for the
 `https://github.com/dlvhdr/gh-dash` repository.
 
-The heading for this column is <NerdFontIcon icon=""/>
+The heading for this column is <NerdFontIcon icon="nf-oct-repo"/>
 
 [`width`]: /configuration/layout/options/#column-width
 
@@ -176,14 +176,14 @@ The heading for this column is `Base`.
 
 This column displays the review status of a PR as an icon:
 
-- When the PR hasn't been reviewed, the icon is <NerdFontIcon icon="" /> and the
+- When the PR hasn't been reviewed, the icon is <NerdFontIcon icon="nf-fa-clock" /> and the
   color is the value of [`theme.colors.text.faint`].
-- When the PR is approved, the icon is <NerdFontIcon icon="󰄬" /> and the color is
+- When the PR is approved, the icon is <NerdFontIcon icon="nf-cod-check" /> and the color is
   the value of [`theme.colors.text.primary`].
-- When the PR has requested changes, the icon is <NerdFontIcon icon="󰌑" /> and the
+- When the PR has requested changes, the icon is <NerdFontIcon icon="nf-md-keyboard_return" /> and the
   color is the value of [`theme.colors.text.warning`].
 
-The heading for this column is <NerdFontIcon icon="󰯢"/>.
+The heading for this column is <NerdFontIcon icon="nf-md-account_check_outline"/>.
 
 [`theme.colors.text.faint`]: /configuration/theme#faint-text-color
 [`theme.colors.text.primary`]: /configuration/theme#primary-text-color
@@ -197,14 +197,14 @@ The heading for this column is <NerdFontIcon icon="󰯢"/>.
 
 This column displays the CI status of a PR as an icon:
 
-- When the checks haven't finished running, the icon is <NerdFontIcon icon=""/> and
+- When the checks haven't finished running, the icon is <NerdFontIcon icon="nf-fa-clock"/> and
   the color is the value of [`theme.colors.text.faint`].
-- When the checks have all passed, the icon is <NerdFontIcon icon=""/> and the
+- When the checks have all passed, the icon is <NerdFontIcon icon="nf-md-check_circle"/> and the
   color is the value of [`theme.colors.text.success`].
-- When at least one check failed, the icon is <NerdFontIcon icon="󰅙"/> and the
+- When at least one check failed, the icon is <NerdFontIcon icon="nf-md-close_circle"/> and the
   color is the value of [`theme.colors.text.warning`].
 
-The heading for this column is <NerdFontIcon icon=""/>
+The heading for this column is <NerdFontIcon icon="nf-oct-checklist"/>
 
 [`theme.colors.text.faint`]: /configuration/theme#faint-text-color
 [`theme.colors.text.primary`]: /configuration/theme#primary-text-color
@@ -220,4 +220,4 @@ This column displays the line changes for a PR. The column represents the change
 `<added> / -<removed>`. For example, `66 / -46` indicates 66 lines added and 46
 lines removed.
 
-The heading for this column is <NerdFontIcon icon=""/>.
+The heading for this column is <NerdFontIcon icon="nf-oct-diff"/>.

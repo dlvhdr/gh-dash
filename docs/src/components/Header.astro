@@ -5,6 +5,7 @@ import { Icon } from "@astrojs/starlight/components";
 import PillLink from "./PillLink.astro";
 import ThemeSelect from "./ThemeSelect.astro";
 import StargazersCount from "./StargazersCount.astro";
+import StargazersFallback from "./StargazersFallback.astro";
 
 const isDashHomepage = Astro.locals.starlightRoute.id === "";
 const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
@@ -63,13 +64,15 @@ const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
       isDashHomepage ? (
         <PillLink href="/getting-started" class="hidden lg:block">
           <>
-            <Icon name="seti:notebook" size="20px" />
+            <Icon name="document" size="20px" />
             <span class="hidden lg:block"> Docs</span>
           </>
         </PillLink>
       ) : null
     }
-    <StargazersCount server:defer />
+    <StargazersCount server:defer>
+      <StargazersFallback slot="fallback" />
+    </StargazersCount>
     <PillLink class="hidden lg:block" href="/donating">
       <Icon name="heart" size="20px" color="var(--color-red-500)" /><span
         class="hidden lg:block"

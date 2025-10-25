@@ -140,7 +140,7 @@ h3 {
 
 @layer base {
   :root {
-    --font-family: "CommitMono NFM";
+    --font-family: "CommitMono";
     --font-size: 16px;
   }
 
@@ -163,7 +163,7 @@ h3 {
   --foreground2: var(--sl-color-gray-2);
 
   ul > li {
-    font-family: "CommitMono NFM";
+    font-family: "CommitMono";
     --sl-sidebar-item-padding-inline: 0;
     color: var(--foreground2);
     text-decoration: none;
@@ -185,13 +185,9 @@ h3 {
     }
 
     &::before {
-      content: " ├ ";
+      content: "  |";
       padding-right: 5px;
       color: var(--sl-color-gray-5);
-    }
-
-    &:last-of-type::before {
-      content: " └ ";
     }
 
     &.active {
@@ -217,9 +213,7 @@ h3 {
       --sl-text-base: 1.2em;
       .group-label::before {
         color: var(--foreground2);
-        font-size: 0.5ch;
-        padding-right: 1ch;
-        content: "\eab6\ ";
+        content: "→";
       }
 
       & svg {
@@ -232,14 +226,11 @@ h3 {
       }
     }
 
-    details[open] {
-      summary {
-        .group-label::before {
-          font-size: 1em;
-          padding-right: 0ch;
-          content: "\eab4\ ";
-          color: var(--foreground2);
-        }
+    details[open] > summary {
+      .group-label::before {
+        font-size: 1em;
+        content: "↓";
+        color: var(--foreground2);
       }
     }
   }
@@ -252,12 +243,12 @@ h3 {
 }
 
 code {
-  font-family: "CommitMono NFM";
+  font-family: "CommitMono";
   color: var(--sl-color-accent);
 }
 
 pre {
-  font-family: "CommitMono NFM";
+  font-family: "CommitMono";
   background: var(--background0);
 
   code span {
