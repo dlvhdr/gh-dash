@@ -63,11 +63,12 @@ const GOAL = 150; // USD
     </p>
   </div>
   <p
-    class={`flex justify-center items-center gap-2 mt-0 md:mt-0 mb-0 text-xs md:text-sm text-[var(--sl-color-gray-3)`}
+    class={`flex justify-center items-center gap-2 mt-0 md:mt-0 mb-0 text-xs md:text-sm text-[var(--sl-color-gray-3) text-pretty`}
   >
-    Hitting the goal will open source the app<span
-      class="text-xl text-pink-400 dark:text-pink-600"
-      ><Icon class="inline" name="heart" size="16px" /></span
+    <span
+      class="relative -top-0.5 left-4.5 align-text-top text-xl text-pink-400 md:top-1.5 md:left-0 md:align-middle dark:text-pink-600"
     >
+      <Icon class="inline align-top" name="heart" size="16px" />
+    </span> Hitting the goal will open source the app
   </p>
 </div>
