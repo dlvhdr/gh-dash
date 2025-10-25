@@ -5,8 +5,9 @@ const { class: className } = Astro.props;
 ---
 
 <div class:list={["text-center text-pretty lg:w-lg", className]}>
-  <h2 class="flex items-center justify-center gap-3">
-    Join Our Discord Community <Icon class="inline" name="discord" />
+  <h2>
+    <Icon class="relative -top-0.5 inline align-middle" name="discord" /> Join Our
+    Discord Community
   </h2>
   <p>
     If you want to keep up with the TUIs I'm developing or just want to nerd out
