@@ -14,6 +14,7 @@ import FadeImages from "../components/FadeImages.astro";
 import draculaSrc from "../assets/enhance-dracula.png";
 import gruvboxSrc from "../assets/enhance-gruvbox_dark.png";
 import nordSrc from "../assets/enhance-nord.png";
+import { Icon } from "@astrojs/starlight/components";
 ---
 
 <StarlightPage frontmatter={{ title: "ENHANCE", template: "splash" }}>
@@ -61,7 +62,7 @@ import nordSrc from "../assets/enhance-nord.png";
 
   <div class="lg:w-80rem flex w-[95vw] flex-col items-center gap-8 lg:gap-16">
     <Showcase>
-      <Box header="  Watch Action Runs">
+      <Box icon="approve-check-circle" header="Watch Action Runs">
         <p>
           Automatically watch runs that are in progress and get notified when
           they are done
@@ -75,7 +76,7 @@ import nordSrc from "../assets/enhance-nord.png";
       </Terminal>
     </Showcase>
     <Showcase reversed={true}>
-      <Box header="  Rerun Failed Actions">
+      <Box icon="right-arrow" header="Rerun Failed Actions">
         Rerunning flaky CI jobs has never been easier! Press <kbd>Ctrl</kbd
         >+<kbd>R</kbd> to rerun and watch it succeed (hopefully! 🤞)
       </Box>
@@ -87,17 +88,17 @@ import nordSrc from "../assets/enhance-nord.png";
       </Terminal>
     </Showcase>
     <Showcase reversed={true}>
-      <Box header="And more!" src={prSectionsImage}>
+      <Box icon="list-format" header="And more!" src={prSectionsImage}>
         <ul>
           <li>
             <div class="mb-0 flex items-center">
               Easily integrates with <Logo className="ml-3 text-[6px]" />
             </div>
           </li>
-          <li> Native Vim keybindings</li>
-          <li> Use custom themes</li>
-          <li> Easily filter runs, jobs and logs</li>
-          <li> More features coming soon!</li>
+          <li>Native Vim keybindings</li>
+          <li>Use custom themes</li>
+          <li>Easily filter runs, jobs and logs</li>
+          <li>More features coming soon!</li>
         </ul>
       </Box>
       <Terminal className="lg:w-[800px]" title="gh enhance">
