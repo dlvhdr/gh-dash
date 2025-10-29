@@ -29,6 +29,8 @@ var conf = koanf.Conf{
 
 const DashDir = "gh-dash"
 
+const RepoConfigFileName = ".gh-dash.yml"
+
 const ConfigYmlFileName = "config.yml"
 
 // TODO: use this
@@ -660,7 +662,7 @@ type parsingError struct {
 }
 
 func (e parsingError) Error() string {
-	return fmt.Sprintf("failed parsing config at path %s: %v", e.path, e.err)
+	return fmt.Sprintf("failed parsing config at path %s with error %v", e.path, e.err)
 }
 
 func initParser() ConfigParser {
@@ -696,8 +698,8 @@ func ParseConfig(location Location) (Config, error) {
 		return config, parsingError{path: globalCfgPath, err: err}
 	}
 
-	if location.ConfigFlag != "" || location.RepoPath != "" {
-		userProvidedCfgPath := parser.getProvidedConfigPath(location)
+	userProvidedCfgPath := parser.getProvidedConfigPath(location)
+	if userProvidedCfgPath != "" {
 		mergedCfg, err := parser.mergeConfigs(globalCfgPath, userProvidedCfgPath)
 		if err != nil {
 			return Config{}, err
