@@ -61,9 +61,6 @@ func TestParser(t *testing.T) {
 			os.Unsetenv("XDG_CONFIG_HOME")
 		}()
 
-		clearConfigEnv := setupConfigEnvVar(t)
-		defer clearConfigEnv()
-
 		parsed, err := ParseConfig(Location{})
 		testutils.AssertNoError(t, err)
 		require.Len(t, parsed.PRSections, 3)
