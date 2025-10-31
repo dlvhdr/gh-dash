@@ -122,8 +122,8 @@ func (m *Model) LastItem() int {
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
-	m.viewport.Height = dimensions.Height
-	m.viewport.Width = dimensions.Width
+	m.viewport.Height = max(0, dimensions.Height)
+	m.viewport.Width = max(0, dimensions.Width)
 }
 
 func (m *Model) View() string {
