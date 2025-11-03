@@ -190,6 +190,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		if m.footer.ShowConfirmQuit && (msg.String() == "y" || msg.String() == "enter") {
+			return m, tea.Quit
+		} else if m.footer.ShowConfirmQuit {
+			m.footer.SetShowConfirmQuit(false)
+			return m, nil
+		}
+
 		switch {
 		case m.isUserDefinedKeybinding(msg):
 			cmd = m.executeKeybinding(msg.String())
@@ -268,6 +275,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ctx.MainContentHeight = m.ctx.MainContentHeight +
 					common.ExpandedHelpHeight - common.FooterHeight
 			}
+			m.footer.ShowAll = !m.footer.ShowAll
 
 		case key.Matches(msg, m.keys.CopyNumber):
 			var cmd tea.Cmd
@@ -300,11 +308,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 
 		case key.Matches(msg, m.keys.Quit):
-			if m.ctx.Config.ConfirmQuit {
-				m.footer, cmd = m.footer.Update(msg)
-				return m, cmd
+			if !m.ctx.Config.ConfirmQuit {
+				return m, tea.Quit
 			}
-			cmd = tea.Quit
+
+			m.footer.SetShowConfirmQuit(true)
 
 		case m.ctx.View == config.RepoView:
 			switch {
@@ -613,7 +621,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.onWindowSizeChanged(msg)
 
 	case updateFooterMsg:
-		m.footer, cmd = m.footer.Update(msg)
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
 
 	case constants.ErrMsg:
@@ -638,7 +645,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncSidebar()
 	}
 
-	m.footer, footerCmd = m.footer.Update(msg)
 	if currSection != nil {
 		if currSection.IsPromptConfirmationFocused() {
 			m.footer.SetLeftSection(currSection.GetPromptConfirmation())

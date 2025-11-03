@@ -110,12 +110,12 @@ This setting defines how many issues the dashboard should fetch for each section
 [refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
 [refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 
-## Preview Pane (`preview`)
+### Preview Pane (`preview`)
 
 These settings define how the preview pane displays in the dashboard. You can specify
 whether the preview pane is open by default and how many columns wide it should be when
 
-### Open on Load (`open`)
+#### Open on Load (`open`)
 
 | Type    | Default |
 | :------ | :-----: |
@@ -129,7 +129,7 @@ By default, the dashboard displays the preview pane.
 
 [toggle preview pane]: /getting-started/keybindings/preview/#p---toggle-preview-pane
 
-### Preview Pane Width (`width`)
+#### Preview Pane Width (`width`)
 
 | Type    | Minimum | Default |
 | :------ | :-----: | :-----: |
@@ -139,7 +139,7 @@ Specifies how many columns wide the preview pane should be when displayed.
 
 By default, the preview pane is 50 columns wide.
 
-## Refetch Interval in Minutes (`refetchIntervalMinutes`)
+### Refetch Interval in Minutes (`refetchIntervalMinutes`)
 
 | Type    | Minimum | Default |
 | :------ | :-----: | :-----: |
@@ -163,7 +163,7 @@ dashboard fetches results for the updated query immediately.
 [refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
 [refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 
-## Date format (`dateFormat`)
+### Date format (`dateFormat`)
 
 | Type   |  Default   |
 | :----- | :--------: |
@@ -178,7 +178,7 @@ You may need to adjust the layout column width depending on your format.
 
 [go time format]: https://pkg.go.dev/time#pkg-constants
 
-## Default View (`view`)
+### Default View (`view`)
 
 | Type   |     Options     | Default |
 | :----- | :-------------: | :-----: |
@@ -189,7 +189,7 @@ first loads.
 
 By default, the dashboard displays the PRs view.
 
-## PR Approval (`prApproveComment`)
+### PR Approval (`prApproveComment`)
 
 | Type   | Default |
 | :----- | :-----: |
@@ -199,5 +199,19 @@ This setting defines the default comment used as a starting point when [approvin
 This can be set as an empty string to not prefill a comment.
 
 By default, the comment is "LGTM".
+
+[approving a PR]: /getting-started/keybindings/selected-pr/#v---approve-pr
+
+## Confirm Quit (`confirmQuit`)
+
+| Type    | Default |
+| :------ | :-----: |
+| Boolean |  false  |
+
+This setting specifies whether the user needs to confirm when quitting `gh-dash`
+When this is on, `gh-dash` shows a prompt that requires the user to press <kbd>y</kbd>/<kbd>Enter</kbd> to actually quit.
+Pressing any other key dismisses the message.
+
+By default, dash doesn't need a confirmation.
 
 [approving a PR]: /getting-started/keybindings/selected-pr/#v---approve-pr
