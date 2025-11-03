@@ -156,6 +156,13 @@ export function GET() {
             "Set this to `false` to disable [Smart Filtering](/getting-started/smartfiltering) at `gh-dash` launch.\n",
           type: "boolean",
         },
+        confirmQuit: {
+          title: "Confirm Quit",
+          description:
+            "Specifies whether the user needs to confirm when quitting `gh-dash`",
+          type: "boolean",
+          default: "false",
+        },
       },
     }),
   );

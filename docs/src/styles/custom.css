@@ -34,6 +34,15 @@ h2 {
 h3 {
   font-size: var(--text-xl);
 }
+h4 {
+  font-size: var(--text-lg);
+}
+h5 {
+  font-size: var(--text-md);
+}
+h6 {
+  font-size: var(--text-sm);
+}
 
 :root {
   --sl-font: var(--font-family);

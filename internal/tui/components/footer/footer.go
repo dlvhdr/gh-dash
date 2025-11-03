@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	bbHelp "github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 
@@ -42,31 +40,11 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, keys.Keys.Quit):
-			if m.ShowConfirmQuit {
-				return m, tea.Quit
-			} else {
-				m.ShowConfirmQuit = true
-			}
-		case m.ShowConfirmQuit && !key.Matches(msg, keys.Keys.Quit):
-			m.ShowConfirmQuit = false
-		case key.Matches(msg, keys.Keys.Help):
-			m.ShowAll = !m.ShowAll
-		}
-	}
-
-	return m, nil
-}
-
 func (m Model) View() string {
 	var footer string
 
 	if m.ShowConfirmQuit {
-		footer = lipgloss.NewStyle().Render("Really quit? (Press q/esc again to quit)")
+		footer = lipgloss.NewStyle().Render("Really quit? (Press y/enter to confirm, any other key to cancel)")
 	} else {
 		helpIndicator := lipgloss.NewStyle().
 			Background(m.ctx.Theme.FaintText).
@@ -104,7 +82,8 @@ func (m Model) View() string {
 					)))
 
 		footer = m.ctx.Styles.Common.FooterStyle.
-			Render(lipgloss.JoinHorizontal(lipgloss.Top, viewSwitcher, leftSection, spacing, rightSection, donationIndicator, helpIndicator))
+			Render(lipgloss.JoinHorizontal(lipgloss.Top, viewSwitcher, leftSection, spacing,
+				rightSection, donationIndicator, helpIndicator))
 	}
 
 	if m.ShowAll {
@@ -114,6 +93,10 @@ func (m Model) View() string {
 	}
 
 	return footer
+}
+
+func (m *Model) SetShowConfirmQuit(val bool) {
+	m.ShowConfirmQuit = val
 }
 
 func (m *Model) SetWidth(width int) {
@@ -157,7 +140,8 @@ func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.PRsView)),
 		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
 		m.renderViewButton(config.IssuesView),
-		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(ctx.Styles.ViewSwitcher.ViewsSeparator.GetBackground()).Render(" "),
+		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(
+			ctx.Styles.ViewSwitcher.ViewsSeparator.GetBackground()).Render(" "),
 		repo,
 		ctx.Styles.Common.FooterStyle.Foreground(m.ctx.Theme.FaintText).Render(" • "),
 		user,
