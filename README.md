@@ -25,13 +25,24 @@
 
 <img src="./docs/src/assets/overview.gif" />
 
+## 🌟 Features
+
+> [!NOTE]
+> If you like quickly navigating with your keyboard, seeing the PRs and issues you need and you <strong>love the terminal</strong> - <code>DASH</code> is for you! 🫵🏽
+
+- User-defined, per-repo, PRs & issues sections
+- Overridable vim-style keyboard hotkeys
+- Custom actions to perform your specific workflow needs
+- Everything you can do on GitHub - diff, comment, checkout, push, update etc.
+- Control every setting with a YAML config file
+
 ## 📃 Docs
 
-`dash` has an extensive docs site at [gh-dash.dev/getting-started](https://gh-dash.dev/getting-started).
+`DASH` has an extensive docs site at [gh-dash.dev/getting-started](https://gh-dash.dev/getting-started).
 
 ## ❤️ Donating
 
-If you enjoy `dash` and want to help, consider supporting the project with a
+If you enjoy `DASH` and want to help, consider supporting the project with a
 donation at the [sponsors page](https://github.com/sponsors/dlvhdr).
 
 ## 👥 Discord
@@ -44,7 +55,7 @@ See the contribution guide at [https://www.gh-dash.dev/contributing](https://www
 
 ## 🛞 Under the hood
 
-`dash` uses:
+`DASH` uses:
 
 - [bubbletea](https://github.com/charmbracelet/bubbletea) for the TUI
 - [lipgloss](https://github.com/charmbracelet/lipgloss) for the styling
