@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
+	checks "github.com/dlvhdr/x/gh-checks"
 	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -87,6 +88,7 @@ type Commits struct {
 				}
 			} `graphql:"deployments(last: 10)"`
 			StatusCheckRollup struct {
+				State    checks.CommitState
 				Contexts struct {
 					TotalCount graphql.Int
 					Nodes      []struct {

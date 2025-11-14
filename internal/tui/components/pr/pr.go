@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -78,41 +79,13 @@ func (pr *PullRequest) renderState() string {
 	}
 }
 
-func (pr *PullRequest) GetStatusChecksRollup() string {
-	if pr.Data.Mergeable == "CONFLICTING" {
-		return "FAILURE"
-	}
-
-	accStatus := "SUCCESS"
+func (pr *PullRequest) GetStatusChecksRollup() checks.CommitState {
 	commits := pr.Data.Commits.Nodes
 	if len(commits) == 0 {
-		return "PENDING"
+		return checks.CommitStateUnknown
 	}
 
-	mostRecentCommit := commits[0].Commit
-	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
-		var conclusion string
-		switch statusCheck.Typename {
-		case "CheckRun":
-			conclusion = string(statusCheck.CheckRun.Conclusion)
-			status := string(statusCheck.CheckRun.Status)
-			if isStatusWaiting(status) {
-				accStatus = "PENDING"
-			}
-		case "StatusContext":
-			conclusion = string(statusCheck.StatusContext.State)
-			if isStatusWaiting(conclusion) {
-				accStatus = "PENDING"
-			}
-		}
-
-		if isConclusionAFailure(conclusion) {
-			accStatus = "FAILURE"
-			break
-		}
-	}
-
-	return accStatus
+	return commits[0].Commit.StatusCheckRollup.State
 }
 
 func (pr *PullRequest) renderCiStatus() string {
@@ -122,27 +95,27 @@ func (pr *PullRequest) renderCiStatus() string {
 
 	accStatus := pr.GetStatusChecksRollup()
 	ciCellStyle := pr.getTextStyle()
-	if accStatus == "SUCCESS" {
+
+	switch accStatus {
+	case checks.CommitStateSuccess:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
 		return ciCellStyle.Render(constants.SuccessIcon)
-	}
-
-	if accStatus == "PENDING" {
+	case checks.CommitStateExpected, checks.CommitStatePending:
 		return ciCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
+	case checks.CommitStateError, checks.CommitStateFailure:
+		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.ErrorText)
+		return ciCellStyle.Render(constants.FailureIcon)
+	default:
+		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.FaintText)
+		return ciCellStyle.Render(constants.EmptyIcon)
 	}
-
-	ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.ErrorText)
-	return ciCellStyle.Render(constants.FailureIcon)
 }
 
 func (pr *PullRequest) RenderLines(isSelected bool) string {
 	if pr.Data == nil {
 		return "-"
 	}
-	deletions := 0
-	if pr.Data.Deletions > 0 {
-		deletions = pr.Data.Deletions
-	}
+	deletions := max(pr.Data.Deletions, 0)
 
 	var additionsFg, deletionsFg lipgloss.AdaptiveColor
 	additionsFg = pr.Ctx.Theme.SuccessText
@@ -197,8 +170,10 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	author := baseStyle.Render(fmt.Sprintf("@%s", pr.Data.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon)))
-	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner, fmt.Sprintf(" #%d by %s", pr.Data.Number, author))
+	author := baseStyle.Render(fmt.Sprintf("@%s",
+		pr.Data.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon)))
+	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Repository.NameWithOwner,
+		fmt.Sprintf(" #%d by %s", pr.Data.Number, author))
 	branchHidden := pr.Ctx.Config.Defaults.Layout.Prs.Base.Hidden
 	if branchHidden == nil || !*branchHidden {
 		branch := baseStyle.Render(pr.Data.HeadRefName)
