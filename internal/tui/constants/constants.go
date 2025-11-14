@@ -30,6 +30,7 @@ const (
 
 	PersonIcon  = ""
 	WaitingIcon = ""
+	EmptyIcon   = ""
 	FailureIcon = "󰅙"
 	SuccessIcon = ""
 
