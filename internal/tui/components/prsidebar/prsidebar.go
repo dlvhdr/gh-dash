@@ -26,7 +26,7 @@ var (
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 	commentPrompt    = "Leave a comment..."
 	approvalPrompt   = "Approve with comment..."
-	foldBodyLen      = 600
+	foldBodyHeight   = 8
 )
 
 type Model struct {
@@ -362,8 +362,9 @@ func (m *Model) renderSummary() string {
 		return ""
 	}
 
-	if !m.summaryViewMore && len(rendered) > foldBodyLen {
-		rendered = rendered[0:foldBodyLen]
+	bodyHeight := lipgloss.Height(rendered)
+	if !m.summaryViewMore && bodyHeight > foldBodyHeight {
+		rendered = lipgloss.NewStyle().MaxHeight(foldBodyHeight).Render(rendered)
 		rendered = lipgloss.JoinVertical(lipgloss.Left,
 			rendered,
 			"",
