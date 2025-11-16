@@ -8,8 +8,21 @@
 }
 
 @font-face {
-  font-family: "CommitMono";
+  font-family: "My fallback font";
+  /* Courier New closely matches CommitMono */
+  src: local("Courier New");
+
+  /* formula = 900 / 10 = 90% */
+  ascent-override: 90%;
+
+  /* formula = 200 / 10 = 20% */
+  descent-override: 20%;
+}
+
+@font-face {
+  font-family: "CommitMono", "My fallback font", monospace;
   font-weight: normal;
   font-style: normal;
   src: url("./CommitMono-400-Regular.otf") format("opentype");
+  font-display: swap;
 }
