@@ -149,7 +149,7 @@ h6 {
 
 @layer base {
   :root {
-    --font-family: "CommitMono";
+    --font-family: CommitMono, MyCustomFont, monospace;
     --font-size: 16px;
   }
 
