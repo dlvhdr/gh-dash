@@ -149,7 +149,7 @@ h6 {
 
 @layer base {
   :root {
-    --font-family: CommitMono, MyCustomFont, monospace;
+    --font-family: "CommitMono", "MyFallbackFont", monospace;
     --font-size: 16px;
   }
 
@@ -172,7 +172,7 @@ h6 {
   --foreground2: var(--sl-color-gray-2);
 
   ul > li {
-    font-family: "CommitMono";
+    font-family: var(--font-family);
     --sl-sidebar-item-padding-inline: 0;
     color: var(--foreground2);
     text-decoration: none;
@@ -252,12 +252,12 @@ h6 {
 }
 
 code {
-  font-family: "CommitMono";
+  font-family: var(--font-family);
   color: var(--sl-color-accent);
 }
 
 pre {
-  font-family: "CommitMono";
+  font-family: var(--font-family);
   background: var(--background0);
 
   code span {
