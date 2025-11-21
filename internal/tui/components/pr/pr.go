@@ -85,7 +85,7 @@ func (pr *PullRequest) GetStatusChecksRollup() checks.CommitState {
 		return checks.CommitStateUnknown
 	}
 
-	return commits[0].Commit.StatusCheckRollup.State
+	return checks.CommitState(commits[0].Commit.StatusCheckRollup.State)
 }
 
 func (pr *PullRequest) renderCiStatus() string {

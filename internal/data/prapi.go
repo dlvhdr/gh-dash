@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
-	checks "github.com/dlvhdr/x/gh-checks"
 	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -87,16 +86,17 @@ type Commits struct {
 					Description graphql.String
 				}
 			} `graphql:"deployments(last: 10)"`
+			CommitUrl         graphql.String
 			StatusCheckRollup struct {
-				State    checks.CommitState
-				Contexts struct {
-					TotalCount graphql.Int
-					Nodes      []struct {
-						Typename      graphql.String `graphql:"__typename"`
-						CheckRun      CheckRun       `graphql:"... on CheckRun"`
-						StatusContext StatusContext  `graphql:"... on StatusContext"`
-					}
-				} `graphql:"contexts(last: 20)"`
+				State graphql.String
+				// Contexts struct {
+				// 	TotalCount graphql.Int
+				// 	Nodes      []struct {
+				// 		Typename      graphql.String `graphql:"__typename"`
+				// 		CheckRun      CheckRun       `graphql:"... on CheckRun"`
+				// 		StatusContext StatusContext  `graphql:"... on StatusContext"`
+				// 	}
+				// } `graphql:"contexts(last: 20)"`
 			}
 		}
 	}
@@ -277,6 +277,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	}
 	log.Debug("Fetching PRs", "query", query, "limit", limit, "endCursor", endCursor)
 	err = client.Query("SearchPullRequests", &queryResult, variables)
+	log.Debug("[🪲 dlv]", "queryResult", queryResult)
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}
