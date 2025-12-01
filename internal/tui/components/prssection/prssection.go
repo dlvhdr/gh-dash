@@ -9,7 +9,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -349,7 +349,7 @@ func (m Model) BuildRows() []table.Row {
 	currItem := m.Table.GetCurrItem()
 	for i, currPr := range m.Prs {
 		i := i
-		prModel := pr.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns, ShowAuthorIcon: m.ShowAuthorIcon}
+		prModel := prrow.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns, ShowAuthorIcon: m.ShowAuthorIcon}
 		rows = append(
 			rows,
 			prModel.ToTableRow(currItem == i),

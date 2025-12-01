@@ -10,7 +10,7 @@ import (
 	"github.com/gen2brain/beeep"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	prComponent "github.com/dlvhdr/gh-dash/v4/internal/tui/components/pr"
+	prComponent "github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"

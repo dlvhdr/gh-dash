@@ -12,7 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issue"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
@@ -25,7 +25,7 @@ var (
 
 type Model struct {
 	ctx       *context.ProgramContext
-	issue     *issue.Issue
+	issue     *issuerow.Issue
 	sectionId int
 	width     int
 
@@ -265,7 +265,7 @@ func (m *Model) SetRow(data *data.IssueData) {
 	if data == nil {
 		m.issue = nil
 	} else {
-		m.issue = &issue.Issue{Ctx: m.ctx, Data: *data}
+		m.issue = &issuerow.Issue{Ctx: m.ctx, Data: *data}
 	}
 }
 

@@ -1,4 +1,4 @@
-package issue
+package issuerow
 
 import (
 	"fmt"

@@ -15,7 +15,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -33,7 +33,7 @@ var (
 type Model struct {
 	ctx       *context.ProgramContext
 	sectionId int
-	pr        *pr.PullRequest
+	pr        *prrow.PullRequest
 	width     int
 	carousel  carousel.Model
 
@@ -395,7 +395,7 @@ func (m *Model) SetRow(d *data.PullRequestData) {
 	if d == nil {
 		m.pr = nil
 	} else {
-		m.pr = &pr.PullRequest{Ctx: m.ctx, Data: d}
+		m.pr = &prrow.PullRequest{Ctx: m.ctx, Data: d}
 	}
 }
 
