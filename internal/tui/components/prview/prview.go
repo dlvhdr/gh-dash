@@ -560,7 +560,8 @@ func (m *Model) prAssignees() []string {
 }
 
 func (m *Model) GoToFirstTab() {
-	m.carousel.SetCursor(0)
+	// TODO: change this back to 0!!!
+	m.carousel.SetCursor(1)
 }
 
 func (m *Model) SetSummaryViewMore() {
@@ -573,7 +574,7 @@ func (m *Model) SetSummaryViewLess() {
 
 func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
 	if m.pr.Data.Url == data.Url {
-		log.Debug("prview.SetEnrichedPR", "url", data.Url)
+		log.Warn("prview.SetEnrichedPR", "url", data.Url)
 		m.pr.EnrichedData = data
 	}
 }

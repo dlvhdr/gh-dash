@@ -55,14 +55,14 @@ func (m *Model) watchChecks() tea.Cmd {
 		go func() {
 			err := c.Wait()
 			if err != nil {
-				log.Debug("Error waiting for watch command to finish", "err", err,
+				log.Error("Error waiting for watch command to finish", "err", err,
 					"stderr", errb.String(), "stdout", outb.String())
 			}
 
 			// TODO: check for installation of terminal-notifier or alternative as logo isn't supported
 			// updatedPr, err := data.FetchPullRequest(url)
 			if err != nil {
-				log.Debug("Error fetching updated PR details", "url", url, "err", err)
+				log.Error("Error fetching updated PR details", "url", url, "err", err)
 			}
 
 			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &data.PullRequestData{}}
@@ -80,7 +80,7 @@ func (m *Model) watchChecks() tea.Cmd {
 				"",
 			)
 			if err != nil {
-				log.Debug("Error showing system notification", "err", err)
+				log.Error("Error showing system notification", "err", err)
 			}
 		}()
 

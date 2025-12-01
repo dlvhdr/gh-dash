@@ -59,7 +59,7 @@ func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
 
 	startCmd := ctx.StartTask(start)
 	return tea.Batch(startCmd, func() tea.Msg {
-		log.Debug("Running task", "cmd", "gh "+strings.Join(task.Args, " "))
+		log.Info("Running task", "cmd", "gh "+strings.Join(task.Args, " "))
 		c := exec.Command("gh", task.Args...)
 
 		err := c.Run()

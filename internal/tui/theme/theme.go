@@ -1,10 +1,7 @@
 package theme
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -169,9 +166,6 @@ func ParseTheme(cfg *config.Config) Theme {
 			DefaultTheme.UnknownRoleIcon,
 		)
 	}
-
-	log.Debug("Parsing theme", "config", fmt.Sprintf("%+v", cfg.Theme), "colors",
-		fmt.Sprintf("%+v", cfg.Theme.Colors), "defaultTheme", DefaultTheme)
 
 	return *DefaultTheme
 }

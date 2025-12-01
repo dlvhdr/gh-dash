@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
@@ -365,7 +364,7 @@ func (sidebar *Model) renderChecks() string {
 
 	commits := sidebar.pr.EnrichedData.Commits.Nodes
 	if len(commits) == 0 {
-		return ""
+		return "Loading..."
 	}
 
 	failures := make([]string, 0)
@@ -436,7 +435,6 @@ func (m *Model) getChecksStats() checksStats {
 	var res checksStats
 	commits := m.pr.EnrichedData.Commits.Nodes
 	if len(commits) == 0 {
-		log.Debug("getChecksStats", "commits", commits)
 		return res
 	}
 

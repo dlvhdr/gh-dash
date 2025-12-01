@@ -75,7 +75,7 @@ func NewModel(location config.Location) Model {
 		ConfigFlag: location.ConfigFlag,
 		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
-			log.Debug("Starting task", "id", task.Id)
+			log.Info("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
 			m.tasks[task.Id] = task
 			rTask := m.renderRunningTask()
@@ -169,7 +169,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		log.Debug("Key pressed", "key", msg.String())
+		log.Info("Key pressed", "key", msg.String())
 		m.ctx.Error = nil
 
 		if currSection != nil && (currSection.IsSearchFocused() ||
@@ -556,7 +556,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case constants.TaskFinishedMsg:
 		task, ok := m.tasks[msg.TaskId]
 		if ok {
-			log.Debug("Task finished", "id", task.Id)
+			log.Info("Task finished", "id", task.Id)
 			if msg.Err != nil {
 				log.Error("Task finished with error", "id", task.Id, "err", msg.Err)
 				task.State = context.TaskError
@@ -580,7 +580,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case prview.EnrichedPrMsg:
-		log.Debug("on prview.EnrichedPrMsg", "data", msg.Data)
+		log.Warn("on prview.EnrichedPrMsg", "data", msg.Data)
 		if msg.Err == nil {
 			m.prView.SetEnrichedPR(msg.Data)
 			syncCmd := m.syncSidebar()
@@ -617,7 +617,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if zone.Get("donate").InBounds(msg) {
-			log.Debug("Donate clicked", "msg", msg)
+			log.Info("Donate clicked", "msg", msg)
 			openCmd := func() tea.Msg {
 				b := browser.New("", os.Stdout, os.Stdin)
 				err := b.Browse("https://github.com/sponsors/dlvhdr")
@@ -743,7 +743,7 @@ func (m *Model) onViewedRowChanged() tea.Cmd {
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
-	log.Debug("window size changed", "width", msg.Width, "height", msg.Height)
+	log.Info("window size changed", "width", msg.Width, "height", msg.Height)
 	m.footer.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height

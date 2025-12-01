@@ -71,7 +71,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 			continue
 		}
 
-		log.Debug("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
+		log.Info("executing keybind", "key", keybinding.Key, "command", keybinding.Command)
 		return m.runCustomUniversalCommand(keybinding.Command)
 	}
 

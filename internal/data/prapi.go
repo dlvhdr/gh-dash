@@ -270,7 +270,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	var err error
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
-			log.Debug("using mock data", "server", "https://localhost:3000")
+			log.Info("using mock data", "server", "https://localhost:3000")
 			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
 		} else {
@@ -302,11 +302,10 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	}
 	log.Debug("Fetching PRs", "query", query, "limit", limit, "endCursor", endCursor)
 	err = client.Query("SearchPullRequests", &queryResult, variables)
-	log.Debug("[🪲 dlv]", "queryResult", queryResult)
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}
-	log.Debug("Successfully fetched PRs", "count", queryResult.Search.IssueCount)
+	log.Info("Successfully fetched PRs", "count", queryResult.Search.IssueCount)
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
@@ -347,7 +346,7 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	if err != nil {
 		return EnrichedPullRequestData{}, err
 	}
-	log.Debug("Successfully fetched PR", "url", prUrl)
+	log.Info("Successfully fetched PR", "url", prUrl)
 
 	return queryResult.Resource.PullRequest, nil
 }

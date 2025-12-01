@@ -86,9 +86,9 @@ func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 			log.SetTimeFormat(time.Kitchen)
 			log.SetReportCaller(true)
 			log.SetLevel(log.DebugLevel)
-			log.Debug("Logging to debug.log")
+			log.Info("Logging to debug.log")
 			if location.RepoPath != "" {
-				log.Debug("Running in repo", "repo", location.RepoPath)
+				log.Info("Running in repo", "repo", location.RepoPath)
 			}
 		} else {
 			loggerFile, _ = tea.LogToFile("debug.log", "debug")
