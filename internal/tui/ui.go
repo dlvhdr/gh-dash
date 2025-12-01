@@ -25,10 +25,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/branch"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/branchsidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuesidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prsidebar"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issueview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/reposection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
@@ -42,8 +42,8 @@ import (
 type Model struct {
 	keys          *keys.KeyMap
 	sidebar       sidebar.Model
-	prSidebar     prsidebar.Model
-	issueSidebar  issuesidebar.Model
+	prView        prview.Model
+	issueSidebar  issueview.Model
 	branchSidebar branchsidebar.Model
 	currSectionId int
 	footer        footer.Model
@@ -88,8 +88,8 @@ func NewModel(location config.Location) Model {
 		Background(m.ctx.Theme.SelectedBackground)
 
 	m.footer = footer.NewModel(m.ctx)
-	m.prSidebar = prsidebar.NewModel(m.ctx)
-	m.issueSidebar = issuesidebar.NewModel(m.ctx)
+	m.prView = prview.NewModel(m.ctx)
+	m.issueSidebar = issueview.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.tabs = tabs.NewModel(m.ctx)
 
@@ -159,7 +159,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd             tea.Cmd
 		tabsCmd         tea.Cmd
 		sidebarCmd      tea.Cmd
-		prSidebarCmd    tea.Cmd
+		prViewCmd       tea.Cmd
 		issueSidebarCmd tea.Cmd
 		footerCmd       tea.Cmd
 		cmds            []tea.Cmd
@@ -178,8 +178,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
-		if m.prSidebar.IsTextInputBoxFocused() {
-			m.prSidebar, cmd = m.prSidebar.Update(msg)
+		if m.prView.IsTextInputBoxFocused() {
+			m.prView, cmd = m.prView.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
@@ -360,9 +360,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				var scmds []tea.Cmd
 				var scmd tea.Cmd
-				m.prSidebar, scmd = m.prSidebar.Update(msg)
+				m.prView, scmd = m.prView.Update(msg)
 				scmds = append(scmds, scmd)
-				cmd = m.prSidebar.EnrichCurrRow()
+				cmd = m.prView.EnrichCurrRow()
 				scmds = append(scmds, cmd)
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
@@ -371,36 +371,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			case key.Matches(msg, keys.PRKeys.Approve):
-				m.prSidebar.GoToFirstTab()
+				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
-				cmd = m.prSidebar.SetIsApproving(true)
+				cmd = m.prView.SetIsApproving(true)
 				m.syncMainContentWidth()
 				m.syncSidebar()
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Assign):
-				m.prSidebar.GoToFirstTab()
+				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
-				cmd = m.prSidebar.SetIsAssigning(true)
+				cmd = m.prView.SetIsAssigning(true)
 				m.syncMainContentWidth()
 				m.syncSidebar()
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Unassign):
-				m.prSidebar.GoToFirstTab()
+				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
-				cmd = m.prSidebar.SetIsUnassigning(true)
+				cmd = m.prView.SetIsUnassigning(true)
 				m.syncMainContentWidth()
 				m.syncSidebar()
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Comment):
-				m.prSidebar.GoToFirstTab()
+				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
-				cmd = m.prSidebar.SetIsCommenting(true)
+				cmd = m.prView.SetIsCommenting(true)
 				m.syncMainContentWidth()
 				m.syncSidebar()
 				m.sidebar.ScrollToBottom()
@@ -457,7 +457,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.onViewedRowChanged()
 
 			case key.Matches(msg, keys.PRKeys.SummaryViewMore):
-				m.prSidebar.SetSummaryViewMore()
+				m.prView.SetSummaryViewMore()
 				m.syncSidebar()
 				return m, nil
 			}
@@ -579,10 +579,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, syncCmd)
 		}
 
-	case prsidebar.EnrichedPrMsg:
-		log.Debug("on prsidebar.EnrichedPrMsg", "data", msg.Data)
+	case prview.EnrichedPrMsg:
+		log.Debug("on prview.EnrichedPrMsg", "data", msg.Data)
 		if msg.Err == nil {
-			m.prSidebar.SetEnrichedPR(msg.Data)
+			m.prView.SetEnrichedPR(msg.Data)
 			syncCmd := m.syncSidebar()
 			cmds = append(cmds, syncCmd)
 		}
@@ -647,8 +647,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 
-	if m.prSidebar.IsTextInputBoxFocused() {
-		m.prSidebar, prSidebarCmd = m.prSidebar.Update(msg)
+	if m.prView.IsTextInputBoxFocused() {
+		m.prView, prViewCmd = m.prView.Update(msg)
 		m.syncSidebar()
 	}
 
@@ -678,7 +678,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sidebarCmd,
 		footerCmd,
 		sectionCmd,
-		prSidebarCmd,
+		prViewCmd,
 		issueSidebarCmd,
 	)
 
@@ -735,8 +735,8 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
-	m.prSidebar.SetSummaryViewLess()
-	m.prSidebar.GoToFirstTab()
+	m.prView.SetSummaryViewLess()
+	m.prView.GoToFirstTab()
 	cmd := m.syncSidebar()
 	m.sidebar.ScrollToTop()
 	return cmd
@@ -762,7 +762,7 @@ func (m *Model) syncProgramContext() {
 	m.tabs.UpdateProgramContext(m.ctx)
 	m.footer.UpdateProgramContext(m.ctx)
 	m.sidebar.UpdateProgramContext(m.ctx)
-	m.prSidebar.UpdateProgramContext(m.ctx)
+	m.prView.UpdateProgramContext(m.ctx)
 	m.issueSidebar.UpdateProgramContext(m.ctx)
 	m.branchSidebar.UpdateProgramContext(m.ctx)
 }
@@ -819,10 +819,10 @@ func (m *Model) syncSidebar() tea.Cmd {
 		cmd = m.branchSidebar.SetRow(&row)
 		m.sidebar.SetContent(m.branchSidebar.View())
 	case *data.PullRequestData:
-		m.prSidebar.SetSectionId(m.currSectionId)
-		m.prSidebar.SetRow(row)
-		m.prSidebar.SetWidth(width)
-		m.sidebar.SetContent(m.prSidebar.View())
+		m.prView.SetSectionId(m.currSectionId)
+		m.prView.SetRow(row)
+		m.prView.SetWidth(width)
+		m.sidebar.SetContent(m.prView.View())
 	case *data.IssueData:
 		m.issueSidebar.SetSectionId(m.currSectionId)
 		m.issueSidebar.SetRow(row)

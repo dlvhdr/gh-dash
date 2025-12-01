@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -294,7 +294,7 @@ func (m *Model) renderStatusPill() string {
 		bgColor = m.ctx.Styles.Colors.MergedPR.Dark
 	}
 
-	return m.ctx.Styles.PrSidebar.PillStyle.
+	return m.ctx.Styles.PrView.PillStyle.
 		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(m.pr.RenderState())
@@ -303,7 +303,7 @@ func (m *Model) renderStatusPill() string {
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
 	labels := m.pr.Data.Labels.Nodes
-	style := m.ctx.Styles.PrSidebar.PillStyle
+	style := m.ctx.Styles.PrView.PillStyle
 	if len(labels) == 0 {
 		return ""
 	}
@@ -573,7 +573,7 @@ func (m *Model) SetSummaryViewLess() {
 
 func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
 	if m.pr.Data.Url == data.Url {
-		log.Debug("prsidebar.SetEnrichedPR", "url", data.Url)
+		log.Debug("prview.SetEnrichedPR", "url", data.Url)
 		m.pr.EnrichedData = data
 	}
 }

@@ -1,24 +1,25 @@
-package issuesidebar
+package issueview
 
 import (
 	"fmt"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func (m *Model) unassign(usernames []string) tea.Cmd {
+func (m *Model) assign(usernames []string) tea.Cmd {
 	issue := m.issue.Data
 	issueNumber := issue.GetNumber()
-	taskId := fmt.Sprintf("issue_unassign_%d", issueNumber)
+	taskId := fmt.Sprintf("issue_assign_%d", issueNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Unassigning %s from issue #%d", usernames, issueNumber),
-		FinishedText: fmt.Sprintf("%s unassigned from issue #%d", usernames, issueNumber),
+		StartText:    fmt.Sprintf("Assigning issue #%d to %s", issueNumber, usernames),
+		FinishedText: fmt.Sprintf("Issue #%d has been assigned to %s", issueNumber, usernames),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -31,7 +32,7 @@ func (m *Model) unassign(usernames []string) tea.Cmd {
 		issue.GetRepoNameWithOwner(),
 	}
 	for _, assignee := range usernames {
-		commandArgs = append(commandArgs, "--remove-assignee")
+		commandArgs = append(commandArgs, "--add-assignee")
 		commandArgs = append(commandArgs, assignee)
 	}
 
@@ -50,8 +51,8 @@ func (m *Model) unassign(usernames []string) tea.Cmd {
 			TaskId:      taskId,
 			Err:         err,
 			Msg: issuessection.UpdateIssueMsg{
-				IssueNumber:      issueNumber,
-				RemovedAssignees: &returnedAssignees,
+				IssueNumber:    issueNumber,
+				AddedAssignees: &returnedAssignees,
 			},
 		}
 	})

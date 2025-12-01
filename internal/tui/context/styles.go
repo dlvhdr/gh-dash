@@ -20,7 +20,7 @@ type Styles struct {
 
 	Common common.CommonStyles
 
-	PrSidebar struct {
+	PrView struct {
 		PillStyle lipgloss.Style
 	}
 	Help struct {
@@ -113,7 +113,7 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.Common = common.BuildStyles(theme)
 
-	s.PrSidebar.PillStyle = s.Common.MainTextStyle.
+	s.PrView.PillStyle = s.Common.MainTextStyle.
 		Border(lipgloss.Border{Left: "", Right: ""}, false, true, false, true).
 		Foreground(theme.InvertedText)
 

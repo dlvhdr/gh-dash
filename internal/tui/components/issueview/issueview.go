@@ -1,4 +1,4 @@
-package issuesidebar
+package issueview
 
 import (
 	"fmt"
@@ -210,7 +210,7 @@ func (m *Model) renderStatusPill() string {
 		content = " Closed"
 	}
 
-	return m.ctx.Styles.PrSidebar.PillStyle.
+	return m.ctx.Styles.PrView.PillStyle.
 		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
@@ -243,7 +243,7 @@ func (m *Model) renderBody() string {
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
 	labels := m.issue.Data.Labels.Nodes
-	style := m.ctx.Styles.PrSidebar.PillStyle
+	style := m.ctx.Styles.PrView.PillStyle
 
 	return common.RenderLabels(width, labels, style)
 }

@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -6,35 +6,34 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func (m *Model) unassign(usernames []string) tea.Cmd {
+func (m *Model) approve(comment string) tea.Cmd {
 	pr := m.pr.Data
 	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_unassign_%d", prNumber)
+	taskId := fmt.Sprintf("pr_approve_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Unassigning %s from pr #%d", usernames, prNumber),
-		FinishedText: fmt.Sprintf("%s unassigned from pr #%d", usernames, prNumber),
+		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
+		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
 	commandArgs := []string{
 		"pr",
-		"edit",
-		fmt.Sprint(prNumber),
+		"review",
 		"-R",
 		pr.GetRepoNameWithOwner(),
+		fmt.Sprint(prNumber),
+		"--approve",
 	}
-	for _, assignee := range usernames {
-		commandArgs = append(commandArgs, "--remove-assignee")
-		commandArgs = append(commandArgs, assignee)
+	if comment != "" {
+		commandArgs = append(commandArgs, "--body", comment)
 	}
 
 	startCmd := m.ctx.StartTask(task)
@@ -42,18 +41,13 @@ func (m *Model) unassign(usernames []string) tea.Cmd {
 		c := exec.Command("gh", commandArgs...)
 
 		err := c.Run()
-		returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
-		for _, assignee := range usernames {
-			returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
-		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
 			SectionType: prssection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
 			Msg: tasks.UpdatePRMsg{
-				PrNumber:         prNumber,
-				RemovedAssignees: &returnedAssignees,
+				PrNumber: prNumber,
 			},
 		}
 	})

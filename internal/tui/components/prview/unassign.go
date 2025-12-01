@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -13,14 +13,14 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func (m *Model) assign(usernames []string) tea.Cmd {
+func (m *Model) unassign(usernames []string) tea.Cmd {
 	pr := m.pr.Data
 	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_assign_%d", prNumber)
+	taskId := fmt.Sprintf("pr_unassign_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Assigning pr #%d to %s", prNumber, usernames),
-		FinishedText: fmt.Sprintf("pr #%d has been assigned to %s", prNumber, usernames),
+		StartText:    fmt.Sprintf("Unassigning %s from pr #%d", usernames, prNumber),
+		FinishedText: fmt.Sprintf("%s unassigned from pr #%d", usernames, prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -33,7 +33,7 @@ func (m *Model) assign(usernames []string) tea.Cmd {
 		pr.GetRepoNameWithOwner(),
 	}
 	for _, assignee := range usernames {
-		commandArgs = append(commandArgs, "--add-assignee")
+		commandArgs = append(commandArgs, "--remove-assignee")
 		commandArgs = append(commandArgs, assignee)
 	}
 
@@ -52,8 +52,8 @@ func (m *Model) assign(usernames []string) tea.Cmd {
 			TaskId:      taskId,
 			Err:         err,
 			Msg: tasks.UpdatePRMsg{
-				PrNumber:       prNumber,
-				AddedAssignees: &returnedAssignees,
+				PrNumber:         prNumber,
+				RemovedAssignees: &returnedAssignees,
 			},
 		}
 	})

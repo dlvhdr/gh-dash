@@ -1,4 +1,4 @@
-package issuesidebar
+package issueview
 
 import (
 	"fmt"

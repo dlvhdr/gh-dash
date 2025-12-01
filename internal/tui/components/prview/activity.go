@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
