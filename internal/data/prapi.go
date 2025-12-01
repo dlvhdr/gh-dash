@@ -16,6 +16,13 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
+type EnrichedPullRequestData struct {
+	Url        string
+	Number     int
+	Repository Repository
+	Commits    CommitsWithStatusChecks `graphql:"commits(last: 1)"`
+}
+
 type PullRequestData struct {
 	Number int
 	Title  string
@@ -77,6 +84,32 @@ type StatusContext struct {
 	}
 }
 
+type CommitsWithStatusChecks struct {
+	Nodes []struct {
+		Commit struct {
+			Deployments struct {
+				Nodes []struct {
+					Task        graphql.String
+					Description graphql.String
+				}
+			} `graphql:"deployments(last: 10)"`
+			CommitUrl         graphql.String
+			StatusCheckRollup struct {
+				State    graphql.String
+				Contexts struct {
+					TotalCount graphql.Int
+					Nodes      []struct {
+						Typename      graphql.String `graphql:"__typename"`
+						CheckRun      CheckRun       `graphql:"... on CheckRun"`
+						StatusContext StatusContext  `graphql:"... on StatusContext"`
+					}
+				} `graphql:"contexts(last: 20)"`
+			}
+		}
+	}
+	TotalCount int
+}
+
 type Commits struct {
 	Nodes []struct {
 		Commit struct {
@@ -89,14 +122,6 @@ type Commits struct {
 			CommitUrl         graphql.String
 			StatusCheckRollup struct {
 				State graphql.String
-				// Contexts struct {
-				// 	TotalCount graphql.Int
-				// 	Nodes      []struct {
-				// 		Typename      graphql.String `graphql:"__typename"`
-				// 		CheckRun      CheckRun       `graphql:"... on CheckRun"`
-				// 		StatusContext StatusContext  `graphql:"... on StatusContext"`
-				// 	}
-				// } `graphql:"contexts(last: 20)"`
 			}
 		}
 	}
@@ -298,29 +323,29 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	}, nil
 }
 
-func FetchPullRequest(prUrl string) (PullRequestData, error) {
+func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
-	client, err := gh.DefaultGraphQLClient()
+	client, err := gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
 	if err != nil {
-		return PullRequestData{}, err
+		return EnrichedPullRequestData{}, err
 	}
 
 	var queryResult struct {
 		Resource struct {
-			PullRequest PullRequestData `graphql:"... on PullRequest"`
+			PullRequest EnrichedPullRequestData `graphql:"... on PullRequest"`
 		} `graphql:"resource(url: $url)"`
 	}
 	parsedUrl, err := url.Parse(prUrl)
 	if err != nil {
-		return PullRequestData{}, err
+		return EnrichedPullRequestData{}, err
 	}
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching PR", "url", prUrl)
 	err = client.Query("FetchPullRequest", &queryResult, variables)
 	if err != nil {
-		return PullRequestData{}, err
+		return EnrichedPullRequestData{}, err
 	}
 	log.Debug("Successfully fetched PR", "url", prUrl)
 

@@ -55,16 +55,17 @@ func (m *Model) watchChecks() tea.Cmd {
 		go func() {
 			err := c.Wait()
 			if err != nil {
-				log.Debug("Error waiting for watch command to finish", "err", err, "stderr", errb.String(), "stdout", outb.String())
+				log.Debug("Error waiting for watch command to finish", "err", err,
+					"stderr", errb.String(), "stdout", outb.String())
 			}
 
 			// TODO: check for installation of terminal-notifier or alternative as logo isn't supported
-			updatedPr, err := data.FetchPullRequest(url)
+			// updatedPr, err := data.FetchPullRequest(url)
 			if err != nil {
 				log.Debug("Error fetching updated PR details", "url", url, "err", err)
 			}
 
-			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &updatedPr}
+			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &data.PullRequestData{}}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":

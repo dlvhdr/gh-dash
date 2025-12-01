@@ -19,6 +19,7 @@ import (
 type PullRequest struct {
 	Ctx            *context.ProgramContext
 	Data           *data.PullRequestData
+	EnrichedData   data.EnrichedPullRequestData
 	Branch         git.Branch
 	Columns        []table.Column
 	ShowAuthorIcon bool

@@ -358,10 +358,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, keys.PRKeys.PrevSidebarTab),
 				key.Matches(msg, keys.PRKeys.NextSidebarTab):
+				var scmds []tea.Cmd
 				var scmd tea.Cmd
 				m.prSidebar, scmd = m.prSidebar.Update(msg)
+				scmds = append(scmds, scmd)
+				cmd = m.prSidebar.EnrichCurrRow()
+				scmds = append(scmds, cmd)
 				m.syncSidebar()
-				return m, scmd
+				return m, tea.Batch(scmds...)
 
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
@@ -571,6 +575,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			scmd := m.updateSection(msg.SectionId, msg.SectionType, msg.Msg)
 			cmds = append(cmds, scmd)
 
+			syncCmd := m.syncSidebar()
+			cmds = append(cmds, syncCmd)
+		}
+
+	case prsidebar.EnrichedPrMsg:
+		log.Debug("on prsidebar.EnrichedPrMsg", "data", msg.Data)
+		if msg.Err == nil {
+			m.prSidebar.SetEnrichedPR(msg.Data)
 			syncCmd := m.syncSidebar()
 			cmds = append(cmds, syncCmd)
 		}

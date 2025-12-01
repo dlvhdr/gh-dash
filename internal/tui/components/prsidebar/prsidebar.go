@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -398,6 +399,22 @@ func (m *Model) SetRow(d *data.PullRequestData) {
 	}
 }
 
+type EnrichedPrMsg struct {
+	Data data.EnrichedPullRequestData
+	Err  error
+}
+
+func (m *Model) EnrichCurrRow() tea.Cmd {
+	url := m.pr.Data.Url
+	return func() tea.Msg {
+		d, err := data.FetchPullRequest(url)
+		return EnrichedPrMsg{
+			Data: d,
+			Err:  err,
+		}
+	}
+}
+
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.carousel.SetWidth(width)
@@ -552,4 +569,11 @@ func (m *Model) SetSummaryViewMore() {
 
 func (m *Model) SetSummaryViewLess() {
 	m.summaryViewMore = false
+}
+
+func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
+	if m.pr.Data.Url == data.Url {
+		log.Debug("prsidebar.SetEnrichedPR", "url", data.Url)
+		m.pr.EnrichedData = data
+	}
 }

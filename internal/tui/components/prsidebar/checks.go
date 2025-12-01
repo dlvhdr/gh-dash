@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
@@ -200,8 +201,10 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 		} else if numApproving < numReviewOwners {
 			subtitle = "Code owner review required"
 			status = statusFailure
-		} else if len(branchRules) > 0 && numApproving < branchRules[0].RequiredApprovingReviewCount {
-			subtitle = fmt.Sprintf("Need %d more approval", branchRules[0].RequiredApprovingReviewCount-numApproving)
+		} else if len(branchRules) > 0 && numApproving <
+			branchRules[0].RequiredApprovingReviewCount {
+			subtitle = fmt.Sprintf("Need %d more approval",
+				branchRules[0].RequiredApprovingReviewCount-numApproving)
 			status = statusWaiting
 		} else if numCommented > 0 {
 			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
@@ -262,19 +265,23 @@ func (m *Model) viewChecksBar() string {
 	sections := make([]string, 0)
 	if stats.failed > 0 {
 		failWidth := int(math.Floor((float64(stats.failed) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(
+			m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
 	}
 	if stats.inProgress > 0 {
 		ipWidth := int(math.Floor((float64(stats.inProgress) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(
+			m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
 	}
 	if stats.skipped > 0 {
 		skipWidth := int(math.Floor((float64(stats.skipped) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(
+			m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
 	}
 	if stats.succeeded > 0 {
 		succWidth := int(math.Floor((float64(stats.succeeded) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(succWidth).Foreground(m.ctx.Theme.SuccessText).Height(1).Render(strings.Repeat("▃", succWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(succWidth).Foreground(
+			m.ctx.Theme.SuccessText).Height(1).Render(strings.Repeat("▃", succWidth)))
 	}
 
 	return strings.Join(sections, " ")
@@ -356,7 +363,7 @@ func renderStatusContextName(statusContext data.StatusContext) string {
 func (sidebar *Model) renderChecks() string {
 	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" All Checks")
 
-	commits := sidebar.pr.Data.Commits.Nodes
+	commits := sidebar.pr.EnrichedData.Commits.Nodes
 	if len(commits) == 0 {
 		return ""
 	}
@@ -413,7 +420,8 @@ func (sidebar *Model) renderChecks() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(lipgloss.JoinVertical(lipgloss.Left, parts...)),
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(
+			lipgloss.JoinVertical(lipgloss.Left, parts...)),
 	)
 }
 
@@ -426,8 +434,9 @@ type checksStats struct {
 
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
-	commits := m.pr.Data.Commits.Nodes
+	commits := m.pr.EnrichedData.Commits.Nodes
 	if len(commits) == 0 {
+		log.Debug("getChecksStats", "commits", commits)
 		return res
 	}
 

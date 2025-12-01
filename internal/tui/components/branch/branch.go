@@ -74,40 +74,12 @@ func (b *Branch) renderState() string {
 }
 
 func (b *Branch) GetStatusChecksRollup() string {
-	if b.PR.Mergeable == "CONFLICTING" {
-		return "FAILURE"
-	}
-
-	accStatus := "SUCCESS"
 	commits := b.PR.Commits.Nodes
 	if len(commits) == 0 {
-		return "PENDING"
+		return "UNKNOWN"
 	}
 
-	mostRecentCommit := commits[0].Commit
-	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
-		var conclusion string
-		switch statusCheck.Typename {
-		case "CheckRun":
-			conclusion = string(statusCheck.CheckRun.Conclusion)
-			status := string(statusCheck.CheckRun.Status)
-			if isStatusWaiting(status) {
-				accStatus = "PENDING"
-			}
-		case "StatusContext":
-			conclusion = string(statusCheck.StatusContext.State)
-			if isStatusWaiting(conclusion) {
-				accStatus = "PENDING"
-			}
-		}
-
-		if isConclusionAFailure(conclusion) {
-			accStatus = "FAILURE"
-			break
-		}
-	}
-
-	return accStatus
+	return string(commits[0].Commit.StatusCheckRollup.State)
 }
 
 func (b *Branch) renderCiStatus() string {
@@ -323,10 +295,12 @@ func (b *Branch) renderCommitsAheadBehind(isSelected bool) string {
 	commitsAhead := ""
 	commitsBehind := ""
 	if b.Data.CommitsAhead > 0 {
-		commitsAhead = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(fmt.Sprintf(" ↑%d", b.Data.CommitsAhead))
+		commitsAhead = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(
+			fmt.Sprintf(" ↑%d", b.Data.CommitsAhead))
 	}
 	if b.Data.CommitsBehind > 0 {
-		commitsBehind = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(fmt.Sprintf(" ↓%d", b.Data.CommitsBehind))
+		commitsBehind = baseStyle.Foreground(b.Ctx.Theme.WarningText).Render(
+			fmt.Sprintf(" ↓%d", b.Data.CommitsBehind))
 	}
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, commitsAhead, commitsBehind)
