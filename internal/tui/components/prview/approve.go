@@ -13,7 +13,7 @@ import (
 )
 
 func (m *Model) approve(comment string) tea.Cmd {
-	pr := m.pr.Data
+	pr := m.pr.Data.Primary
 	prNumber := pr.GetNumber()
 	taskId := fmt.Sprintf("pr_approve_%d", prNumber)
 	task := context.Task{

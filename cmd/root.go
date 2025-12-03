@@ -74,6 +74,19 @@ func Execute() {
 	}
 }
 
+func setDebugLogLevel() {
+	switch os.Getenv("LOG_LEVEL") {
+	case "debug", "":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	}
+}
+
 func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 	var loggerFile *os.File
 
@@ -85,7 +98,7 @@ func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 			log.SetOutput(newConfigFile)
 			log.SetTimeFormat(time.Kitchen)
 			log.SetReportCaller(true)
-			log.SetLevel(log.DebugLevel)
+			setDebugLogLevel()
 			log.Info("Logging to debug.log")
 			if location.RepoPath != "" {
 				log.Info("Running in repo", "repo", location.RepoPath)

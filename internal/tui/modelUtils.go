@@ -163,8 +163,6 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *data.PullRequ
 	return m.runCustomCommand(commandTemplate,
 		&map[string]any{
 			"RepoName":    prData.GetRepoNameWithOwner(),
-			"PrNumber":    prData.Number,
-			"HeadRefName": prData.HeadRefName,
 			"BaseRefName": prData.BaseRefName,
 		})
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issueview"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/reposection"
@@ -206,7 +207,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			prevSection := m.getSectionAt(m.getPrevSectionId())
 			if prevSection != nil {
 				m.setCurrSectionId(prevSection.GetId())
-				m.onViewedRowChanged()
+				cmd = m.onViewedRowChanged()
 			}
 
 		case key.Matches(msg, m.keys.NextSection):
@@ -214,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			nextSection := m.getSectionAt(nextSectionId)
 			if nextSection != nil {
 				m.setCurrSectionId(nextSection.GetId())
-				m.onViewedRowChanged()
+				cmd = m.onViewedRowChanged()
 			}
 
 		case key.Matches(msg, m.keys.Down):
@@ -227,7 +228,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Up):
 			currSection.PrevRow()
-			m.onViewedRowChanged()
+			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.FirstLine):
 			currSection.FirstItem()
@@ -352,7 +353,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.setCurrentViewSections(currSections)
-				m.onViewedRowChanged()
+				cmds = append(cmds, m.onViewedRowChanged())
 			}
 		case m.ctx.View == config.PRsView:
 			switch {
@@ -362,8 +363,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var scmd tea.Cmd
 				m.prView, scmd = m.prView.Update(msg)
 				scmds = append(scmds, scmd)
-				cmd = m.prView.EnrichCurrRow()
-				scmds = append(scmds, cmd)
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
 
@@ -454,7 +453,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.setCurrentViewSections(currSections)
-				m.onViewedRowChanged()
+				cmds = append(cmds, m.onViewedRowChanged())
 
 			case key.Matches(msg, keys.PRKeys.SummaryViewMore):
 				m.prView.SetSummaryViewMore()
@@ -525,7 +524,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmd = fetchSectionsCmds
 				}
 				m.setCurrentViewSections(currSections)
-				m.onViewedRowChanged()
+				cmds = append(cmds, m.onViewedRowChanged())
 			}
 		}
 
@@ -580,11 +579,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case prview.EnrichedPrMsg:
-		log.Warn("on prview.EnrichedPrMsg", "data", msg.Data)
+		log.Warn("on prview.EnrichedPrMsg", "url", msg.Data.Url)
 		if msg.Err == nil {
 			m.prView.SetEnrichedPR(msg.Data)
+			m.prs[1].(*prssection.Model).EnrichPR(msg.Data)
 			syncCmd := m.syncSidebar()
 			cmds = append(cmds, syncCmd)
+		} else {
+			log.Error("failed enriching pr", "err", msg.Err)
 		}
 
 	case spinner.TickMsg:
@@ -604,7 +606,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.updateRelevantSection(msg)
 
 		if msg.Id == m.currSectionId {
-			m.onViewedRowChanged()
+			cmds = append(cmds, m.onViewedRowChanged())
 		}
 
 	case execProcessFinishedMsg, tea.FocusMsg:
@@ -735,9 +737,11 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
+	log.Warn("⌨️ onViewedRowChanged")
 	m.prView.SetSummaryViewLess()
 	m.prView.GoToFirstTab()
-	cmd := m.syncSidebar()
+	m.syncSidebar()
+	cmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
 	return cmd
 }
@@ -818,8 +822,9 @@ func (m *Model) syncSidebar() tea.Cmd {
 	case branch.BranchData:
 		cmd = m.branchSidebar.SetRow(&row)
 		m.sidebar.SetContent(m.branchSidebar.View())
-	case *data.PullRequestData:
+	case *prrow.Data:
 		m.prView.SetSectionId(m.currSectionId)
+		log.Warn("setting row", "row.IsEnriched", row.IsEnriched)
 		m.prView.SetRow(row)
 		m.prView.SetWidth(width)
 		m.sidebar.SetContent(m.prView.View())

@@ -22,11 +22,11 @@ const (
 func (m *Model) renderChecksOverview() string {
 	w := m.getIndentedContentWidth()
 
-	if m.pr.Data.State == "MERGED" {
+	if m.pr.Data.Primary.State == "MERGED" {
 		return m.viewMergedStatus()
 	}
 
-	if m.pr.Data.State == "CLOSED" {
+	if m.pr.Data.Primary.State == "CLOSED" {
 		return m.viewClosedStatus()
 	}
 
@@ -103,28 +103,29 @@ func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
 	var icon, title, subtitle string
 	var status checkSectionStatus
 	numReviewOwners := m.numRequestedReviewOwners()
-	if m.pr.Data.MergeStateStatus == "CLEAN" || m.pr.Data.MergeStateStatus == "UNSTABLE" {
+	if m.pr.Data.Primary.MergeStateStatus == "CLEAN" ||
+		m.pr.Data.Primary.MergeStateStatus == "UNSTABLE" {
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "No conflicts with base branch"
 		subtitle = "Changes can be cleanly merged"
 		status = statusSuccess
-	} else if m.pr.Data.IsDraft {
+	} else if m.pr.Data.Primary.IsDraft {
 		icon = m.ctx.Styles.Common.DraftGlyph
 		title = "This pull request is still a work in progress"
 		subtitle = "Draft pull requests cannot be merged"
 		status = statusWaiting
-	} else if m.pr.Data.MergeStateStatus == "BLOCKED" {
+	} else if m.pr.Data.Primary.MergeStateStatus == "BLOCKED" {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "Merging is blocked"
 		if numReviewOwners > 0 {
 			subtitle = "Waiting on code owner review"
 		}
 		status = statusFailure
-	} else if m.pr.Data.Mergeable == "CONFLICTING" {
+	} else if m.pr.Data.Primary.Mergeable == "CONFLICTING" {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "This branch has conflicts that must be resolved"
 		status = statusFailure
-		if m.pr.Data.MergeStateStatus == "CLEAN" {
+		if m.pr.Data.Primary.MergeStateStatus == "CLEAN" {
 			subtitle = "Changes can be cleanly merged"
 		}
 	}
@@ -165,7 +166,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
 
-	for _, node := range pr.Data.Reviews.Nodes {
+	for _, node := range pr.Data.Primary.Reviews.Nodes {
 		switch node.State {
 		case "APPROVED":
 			numApproving++
@@ -178,7 +179,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 		}
 	}
 
-	switch pr.Data.ReviewDecision {
+	switch pr.Data.Primary.ReviewDecision {
 	case "APPROVED":
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "Changes approved"
@@ -193,7 +194,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 		icon = pr.Ctx.Styles.Common.WaitingGlyph
 		title = "Review Required"
 
-		branchRules := m.pr.Data.Repository.BranchProtectionRules.Nodes
+		branchRules := m.pr.Data.Primary.Repository.BranchProtectionRules.Nodes
 		if len(branchRules) > 0 && branchRules[0].RequiresCodeOwnerReviews && numApproving < 1 {
 			subtitle = "Code owner review required"
 			status = statusFailure
@@ -362,9 +363,9 @@ func renderStatusContextName(statusContext data.StatusContext) string {
 func (sidebar *Model) renderChecks() string {
 	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" All Checks")
 
-	commits := sidebar.pr.EnrichedData.Commits.Nodes
+	commits := sidebar.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
-		return "Loading..."
+		return "Loading..." + sidebar.pr.Data.Enriched.Url
 	}
 
 	failures := make([]string, 0)
@@ -433,7 +434,7 @@ type checksStats struct {
 
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
-	commits := m.pr.EnrichedData.Commits.Nodes
+	commits := m.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
 		return res
 	}
@@ -461,7 +462,7 @@ func (m *Model) getChecksStats() checksStats {
 func (m *Model) numRequestedReviewOwners() int {
 	numOwners := 0
 
-	for _, node := range m.pr.Data.ReviewRequests.Nodes {
+	for _, node := range m.pr.Data.Primary.ReviewRequests.Nodes {
 		if node.AsCodeOwner {
 			numOwners++
 		}

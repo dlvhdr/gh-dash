@@ -23,7 +23,7 @@ const SectionType = "pr"
 
 type Model struct {
 	section.BaseModel
-	Prs []data.PullRequestData
+	Prs []prrow.Data
 }
 
 func NewModel(
@@ -47,7 +47,7 @@ func NewModel(
 			CreatedAt:   createdAt,
 		},
 	)
-	m.Prs = []data.PullRequestData{}
+	m.Prs = []prrow.Data{}
 
 	return m
 }
@@ -141,36 +141,40 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case tasks.UpdatePRMsg:
 		for i, currPr := range m.Prs {
-			if currPr.Number == msg.PrNumber {
-				if msg.IsClosed != nil {
-					if *msg.IsClosed {
-						currPr.State = "CLOSED"
-					} else {
-						currPr.State = "OPEN"
-					}
-				}
-				if msg.NewComment != nil {
-					currPr.Comments.Nodes = append(currPr.Comments.Nodes, *msg.NewComment)
-				}
-				if msg.AddedAssignees != nil {
-					currPr.Assignees.Nodes = addAssignees(currPr.Assignees.Nodes, msg.AddedAssignees.Nodes)
-				}
-				if msg.RemovedAssignees != nil {
-					currPr.Assignees.Nodes = removeAssignees(
-						currPr.Assignees.Nodes, msg.RemovedAssignees.Nodes)
-				}
-				if msg.ReadyForReview != nil && *msg.ReadyForReview {
-					currPr.IsDraft = false
-				}
-				if msg.IsMerged != nil && *msg.IsMerged {
-					currPr.State = "MERGED"
-					currPr.Mergeable = ""
-				}
-				m.Prs[i] = currPr
-				m.SetIsLoading(false)
-				m.Table.SetRows(m.BuildRows())
-				break
+			if currPr.Primary.Number != msg.PrNumber {
+				continue
 			}
+
+			if msg.IsClosed != nil {
+				if *msg.IsClosed {
+					currPr.Primary.State = "CLOSED"
+				} else {
+					currPr.Primary.State = "OPEN"
+				}
+			}
+			if msg.NewComment != nil {
+				currPr.Primary.Comments.Nodes = append(
+					currPr.Primary.Comments.Nodes, *msg.NewComment)
+			}
+			if msg.AddedAssignees != nil {
+				currPr.Primary.Assignees.Nodes = addAssignees(
+					currPr.Primary.Assignees.Nodes, msg.AddedAssignees.Nodes)
+			}
+			if msg.RemovedAssignees != nil {
+				currPr.Primary.Assignees.Nodes = removeAssignees(
+					currPr.Primary.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+			}
+			if msg.ReadyForReview != nil && *msg.ReadyForReview {
+				currPr.Primary.IsDraft = false
+			}
+			if msg.IsMerged != nil && *msg.IsMerged {
+				currPr.Primary.State = "MERGED"
+				currPr.Primary.Mergeable = ""
+			}
+			m.Prs[i] = currPr
+			m.SetIsLoading(false)
+			m.Table.SetRows(m.BuildRows())
+			break
 		}
 
 	case SectionPullRequestsFetchedMsg:
@@ -200,6 +204,17 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	m.Table = table
 
 	return m, tea.Batch(cmd, searchCmd, promptCmd, tableCmd)
+}
+
+func (m *Model) EnrichPR(data data.EnrichedPullRequestData) {
+	for i, currPr := range m.Prs {
+		if currPr.Primary.Number != data.Number {
+			continue
+		}
+
+		m.Prs[i].IsEnriched = true
+		m.Prs[i].Enriched = data
+	}
 }
 
 func GetSectionColumns(
@@ -349,7 +364,11 @@ func (m Model) BuildRows() []table.Row {
 	currItem := m.Table.GetCurrItem()
 	for i, currPr := range m.Prs {
 		i := i
-		prModel := prrow.PullRequest{Ctx: m.Ctx, Data: &currPr, Columns: m.Table.Columns, ShowAuthorIcon: m.ShowAuthorIcon}
+		prModel := prrow.PullRequest{
+			Ctx:     m.Ctx,
+			Data:    &currPr,
+			Columns: m.Table.Columns, ShowAuthorIcon: m.ShowAuthorIcon,
+		}
 		rows = append(
 			rows,
 			prModel.ToTableRow(currItem == i),
@@ -368,7 +387,7 @@ func (m *Model) NumRows() int {
 }
 
 type SectionPullRequestsFetchedMsg struct {
-	Prs        []data.PullRequestData
+	Prs        []prrow.Data
 	TotalCount int
 	PageInfo   data.PageInfo
 	TaskId     string
@@ -429,12 +448,16 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			}
 		}
 
+		prs := make([]prrow.Data, 0)
+		for _, pr := range res.Prs {
+			prs = append(prs, prrow.Data{Primary: &pr})
+		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
 			SectionType: m.Type,
 			TaskId:      taskId,
 			Msg: SectionPullRequestsFetchedMsg{
-				Prs:        res.Prs,
+				Prs:        prs,
 				TotalCount: res.TotalCount,
 				PageInfo:   res.PageInfo,
 				TaskId:     taskId,

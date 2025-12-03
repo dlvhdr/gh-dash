@@ -15,7 +15,7 @@ import (
 )
 
 func (m *Model) comment(body string) tea.Cmd {
-	pr := m.pr.Data
+	pr := m.pr.Data.Primary
 	prNumber := pr.GetNumber()
 	taskId := fmt.Sprintf("pr_comment_%d", prNumber)
 	task := context.Task{

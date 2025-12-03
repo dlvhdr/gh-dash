@@ -9,8 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gen2brain/beeep"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	prComponent "github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -65,7 +64,7 @@ func (m *Model) watchChecks() tea.Cmd {
 				log.Error("Error fetching updated PR details", "url", url, "err", err)
 			}
 
-			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &data.PullRequestData{}}
+			renderedPr := prrow.PullRequest{Ctx: m.Ctx, Data: &prrow.Data{}}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":

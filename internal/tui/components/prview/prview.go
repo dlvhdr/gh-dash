@@ -256,7 +256,7 @@ func (m *Model) renderFullNameAndNumber() string {
 		Width(m.width).
 		Background(m.ctx.Theme.SelectedBackground).
 		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("%s · #%d", m.pr.Data.GetRepoNameWithOwner(), m.pr.Data.GetNumber()))
+		Render(fmt.Sprintf("%s · #%d", m.pr.Data.Primary.GetRepoNameWithOwner(), m.pr.Data.Primary.GetNumber()))
 }
 
 func (m *Model) renderTitle() string {
@@ -264,7 +264,7 @@ func (m *Model) renderTitle() string {
 		m.ctx.Theme.SelectedBackground).PaddingLeft(1).Render(
 		lipgloss.PlaceVertical(3, lipgloss.Center, m.ctx.Styles.Common.MainTextStyle.
 			Background(m.ctx.Theme.SelectedBackground).
-			Render(m.pr.Data.Title),
+			Render(m.pr.Data.Primary.Title),
 		),
 	)
 }
@@ -276,14 +276,14 @@ func (m *Model) renderBranches() string {
 		" ",
 		lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SecondaryText).
-			Render(m.pr.Data.BaseRefName+"  "+m.pr.Data.HeadRefName))
+			Render(m.pr.Data.Primary.BaseRefName+"  "+m.pr.Data.Primary.HeadRefName))
 }
 
 func (m *Model) renderStatusPill() string {
 	bgColor := ""
-	switch m.pr.Data.State {
+	switch m.pr.Data.Primary.State {
 	case "OPEN":
-		if m.pr.Data.IsDraft {
+		if m.pr.Data.Primary.IsDraft {
 			bgColor = m.ctx.Theme.FaintText.Dark
 		} else {
 			bgColor = m.ctx.Styles.Colors.OpenPR.Dark
@@ -302,7 +302,7 @@ func (m *Model) renderStatusPill() string {
 
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
-	labels := m.pr.Data.Labels.Nodes
+	labels := m.pr.Data.Primary.Labels.Nodes
 	style := m.ctx.Styles.PrView.PillStyle
 	if len(labels) == 0 {
 		return ""
@@ -317,19 +317,19 @@ func (m *Model) renderLabels() string {
 }
 
 func (m *Model) renderAuthor() string {
-	authorAssociation := m.pr.Data.AuthorAssociation
+	authorAssociation := m.pr.Data.Primary.AuthorAssociation
 	if authorAssociation == "" {
 		authorAssociation = "unknown role"
 	}
-	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.CreatedAt))
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.Primary.CreatedAt))
 	return lipgloss.JoinHorizontal(lipgloss.Top,
 		" by ",
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(
-			lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Author.Login)),
+			lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Primary.Author.Login)),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
 			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
-			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.AuthorAssociation,
+			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.Primary.AuthorAssociation,
 				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
@@ -338,7 +338,7 @@ func (m *Model) renderAuthor() string {
 func (m *Model) renderSummary() string {
 	width := m.getIndentedContentWidth()
 	// Strip HTML comments from body and cleanup body.
-	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Body, "")
+	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Primary.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
 	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Summary")
@@ -391,7 +391,7 @@ func (m *Model) SetSectionId(id int) {
 	m.sectionId = id
 }
 
-func (m *Model) SetRow(d *data.PullRequestData) {
+func (m *Model) SetRow(d *prrow.Data) {
 	if d == nil {
 		m.pr = nil
 	} else {
@@ -405,7 +405,12 @@ type EnrichedPrMsg struct {
 }
 
 func (m *Model) EnrichCurrRow() tea.Cmd {
-	url := m.pr.Data.Url
+	if m.pr.Data.IsEnriched {
+		log.Warn("CACHE HIT!")
+		return nil
+	}
+	url := m.pr.Data.Primary.Url
+	log.Warn("CACHE MISS :(", "IsEnriched", m.pr.Data.IsEnriched)
 	return func() tea.Msg {
 		d, err := data.FetchPullRequest(url)
 		return EnrichedPrMsg{
@@ -521,7 +526,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 }
 
 func (m *Model) userAssignedToPr(login string) bool {
-	for _, a := range m.pr.Data.Assignees.Nodes {
+	for _, a := range m.pr.Data.Primary.Assignees.Nodes {
 		if login == a.Login {
 			return true
 		}
@@ -553,7 +558,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 
 func (m *Model) prAssignees() []string {
 	var assignees []string
-	for _, n := range m.pr.Data.Assignees.Nodes {
+	for _, n := range m.pr.Data.Primary.Assignees.Nodes {
 		assignees = append(assignees, n.Login)
 	}
 	return assignees
@@ -573,8 +578,12 @@ func (m *Model) SetSummaryViewLess() {
 }
 
 func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
-	if m.pr.Data.Url == data.Url {
+	if m.pr.Data.Primary.Url == data.Url {
 		log.Warn("prview.SetEnrichedPR", "url", data.Url)
-		m.pr.EnrichedData = data
+		m.pr.Data.Enriched = data
+		m.pr.Data.IsEnriched = true
+	} else {
+		log.Warn("setting enriched pr failed as the sidebar already displays a different one",
+			"sidebarUrl", m.pr.Data.Primary.Url, "givenUrl", data.Url)
 	}
 }
