@@ -408,12 +408,10 @@ type EnrichedPrMsg struct {
 }
 
 func (m *Model) EnrichCurrRow() tea.Cmd {
-	if m.pr.Data.IsEnriched {
-		log.Warn("CACHE HIT!")
+	if m == nil || m.pr == nil || m.pr.Data.IsEnriched {
 		return nil
 	}
 	url := m.pr.Data.Primary.Url
-	log.Warn("CACHE MISS :(", "IsEnriched", m.pr.Data.IsEnriched)
 	return func() tea.Msg {
 		d, err := data.FetchPullRequest(url)
 		return EnrichedPrMsg{
@@ -570,8 +568,7 @@ func (m *Model) prAssignees() []string {
 }
 
 func (m *Model) GoToFirstTab() {
-	// TODO: change this back to 0!!!
-	m.carousel.SetCursor(1)
+	m.carousel.SetCursor(0)
 }
 
 func (m *Model) SetSummaryViewMore() {

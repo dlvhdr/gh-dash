@@ -582,7 +582,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.Warn("on prview.EnrichedPrMsg", "url", msg.Data.Url)
 		if msg.Err == nil {
 			m.prView.SetEnrichedPR(msg.Data)
-			m.prs[1].(*prssection.Model).EnrichPR(msg.Data)
+			m.prs[msg.Id].(*prssection.Model).EnrichPR(msg.Data)
 			syncCmd := m.syncSidebar()
 			cmds = append(cmds, syncCmd)
 		} else {
@@ -783,6 +783,13 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 	case issuessection.SectionType:
 		updatedSection, cmd = m.issues[id].Update(msg)
 		m.issues[id] = updatedSection
+	}
+
+	currSection := m.getCurrSection()
+	if currSection != nil && id == currSection.GetId() {
+		if _, ok := msg.(prssection.SectionPullRequestsFetchedMsg); ok {
+			cmd = m.onViewedRowChanged()
+		}
 	}
 
 	return cmd

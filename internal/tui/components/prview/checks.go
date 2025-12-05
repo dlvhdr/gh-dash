@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	checks "github.com/dlvhdr/x/gh-checks"
+	ghchecks "github.com/dlvhdr/x/gh-checks"
 )
 
 type checkSectionStatus int
@@ -259,7 +261,7 @@ func (m *Model) viewChecksBar() string {
 	if stats.succeeded > 0 {
 		numSections++
 	}
-	// subtract num of spacers
+	// subtract number of spacers
 	w -= numSections - 1
 
 	sections := make([]string, 0)
@@ -319,11 +321,11 @@ const (
 )
 
 func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory, string) {
-	if data.IsStatusWaiting(string(checkRun.Status)) {
+	if ghchecks.IsStatusWaiting(string(checkRun.Status)) {
 		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
-	if data.IsConclusionAFailure(string(checkRun.Conclusion)) {
+	if ghchecks.IsConclusionAFailure(string(checkRun.Conclusion)) {
 		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
@@ -332,11 +334,11 @@ func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory,
 
 func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) (CheckCategory, string) {
 	conclusionStr := string(statusContext.State)
-	if data.IsStatusWaiting(conclusionStr) {
+	if ghchecks.IsStatusWaiting(conclusionStr) {
 		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
-	if data.IsConclusionAFailure(conclusionStr) {
+	if ghchecks.IsConclusionAFailure(conclusionStr) {
 		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
@@ -365,7 +367,11 @@ func (sidebar *Model) renderChecks() string {
 
 	commits := sidebar.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
-		return "Loading..." + sidebar.pr.Data.Enriched.Url
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			title,
+			"Loading..."+sidebar.pr.Data.Enriched.Url,
+		)
 	}
 
 	failures := make([]string, 0)
@@ -434,25 +440,22 @@ type checksStats struct {
 
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
-	commits := m.pr.Data.Enriched.Commits.Nodes
+	commits := m.pr.Data.Primary.Commits.Nodes
 	if len(commits) == 0 {
 		return res
 	}
 
 	lastCommit := commits[0]
-	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
-		if node.Typename == "CheckRun" {
-			checkRun := node.CheckRun
-			conclusion := string(checkRun.Conclusion)
-			if data.IsStatusWaiting(string(checkRun.Status)) {
-				res.inProgress++
-			} else if data.IsConclusionAFailure(conclusion) {
-				res.failed++
-			} else if data.IsConclusionASkip(conclusion) {
-				res.skipped++
-			} else if data.IsConclusionASuccess(conclusion) {
-				res.succeeded++
-			}
+	for _, count := range lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState {
+		state := string(count.State)
+		if checks.IsStatusWaiting(state) {
+			res.inProgress += int(count.Count)
+		} else if checks.IsConclusionAFailure(state) {
+			res.failed += int(count.Count)
+		} else if checks.IsConclusionASkip(state) {
+			res.skipped += int(count.Count)
+		} else if checks.IsConclusionASuccess(state) {
+			res.succeeded += int(count.Count)
 		}
 	}
 

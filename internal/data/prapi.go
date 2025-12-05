@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
+	checks "github.com/dlvhdr/x/gh-checks"
 	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -63,7 +64,7 @@ type PullRequestData struct {
 type CheckRun struct {
 	Name       graphql.String
 	Status     graphql.String
-	Conclusion graphql.String
+	Conclusion checks.CheckRunState
 	CheckSuite struct {
 		Creator struct {
 			Login graphql.String
@@ -121,7 +122,14 @@ type Commits struct {
 			} `graphql:"deployments(last: 10)"`
 			CommitUrl         graphql.String
 			StatusCheckRollup struct {
-				State graphql.String
+				State    graphql.String
+				Contexts struct {
+					CheckRunCount         graphql.Int
+					CheckRunCountsByState []struct {
+						Count graphql.Int
+						State checks.CheckRunState
+					}
+				} `graphql:"contexts(first: 1)"`
 			}
 		}
 	}

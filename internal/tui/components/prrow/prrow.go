@@ -327,15 +327,3 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderCreatedAt(),
 	}
 }
-
-func isConclusionAFailure(conclusion string) bool {
-	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" ||
-		conclusion == "STARTUP_FAILURE"
-}
-
-func isStatusWaiting(status string) bool {
-	return status == "PENDING" ||
-		status == "QUEUED" ||
-		status == "IN_PROGRESS" ||
-		status == "WAITING"
-}

@@ -13,7 +13,7 @@ require (
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20250916153604-9a2e892ed98e
 	github.com/cli/go-gh/v2 v2.12.1
 	github.com/cli/shurcooL-graphql v0.0.4
-	github.com/dlvhdr/x/gh-checks v0.0.0-20251114174027-320f1169b8e8
+	github.com/dlvhdr/x/gh-checks v0.2.0
 	github.com/gen2brain/beeep v0.11.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-sprout/sprout v1.0.1
