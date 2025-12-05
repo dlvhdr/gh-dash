@@ -2,6 +2,7 @@ package prssection
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -363,7 +364,6 @@ func (m Model) BuildRows() []table.Row {
 	var rows []table.Row
 	currItem := m.Table.GetCurrItem()
 	for i, currPr := range m.Prs {
-		i := i
 		prModel := prrow.PullRequest{
 			Ctx:     m.Ctx,
 			Data:    &currPr,
@@ -535,12 +535,7 @@ func removeAssignees(
 }
 
 func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
-	for _, a := range assignees {
-		if assignee == a {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(assignees, assignee)
 }
 
 func (m Model) GetItemSingularForm() string {

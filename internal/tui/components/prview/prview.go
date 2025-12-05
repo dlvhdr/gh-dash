@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -400,6 +401,8 @@ func (m *Model) SetRow(d *prrow.Data) {
 }
 
 type EnrichedPrMsg struct {
+	Id   int
+	Type string
 	Data data.EnrichedPullRequestData
 	Err  error
 }
@@ -414,6 +417,8 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 	return func() tea.Msg {
 		d, err := data.FetchPullRequest(url)
 		return EnrichedPrMsg{
+			Id:   m.sectionId,
+			Type: prssection.SectionType,
 			Data: d,
 			Err:  err,
 		}
