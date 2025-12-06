@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ func (m *Model) renderActivity() string {
 	var activities []RenderedActivity
 	var comments []comment
 
-	for _, review := range m.pr.Data.ReviewThreads.Nodes {
+	for _, review := range m.pr.Data.Primary.ReviewThreads.Nodes {
 		path := review.Path
 		line := review.Line
 		for _, c := range review.Comments.Nodes {
@@ -39,7 +39,7 @@ func (m *Model) renderActivity() string {
 		}
 	}
 
-	for _, c := range m.pr.Data.Comments.Nodes {
+	for _, c := range m.pr.Data.Primary.Comments.Nodes {
 		comments = append(comments, comment{
 			Author:    c.Author.Login,
 			Body:      c.Body,
@@ -58,7 +58,7 @@ func (m *Model) renderActivity() string {
 		})
 	}
 
-	for _, review := range m.pr.Data.Reviews.Nodes {
+	for _, review := range m.pr.Data.Primary.Reviews.Nodes {
 		renderedReview, err := m.renderReview(review, markdownRenderer)
 		if err != nil {
 			continue
@@ -152,7 +152,8 @@ func (m *Model) renderReviewHeader(review data.Review) string {
 		" ",
 		m.ctx.Styles.Common.MainTextStyle.Render(review.Author.Login),
 		" ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("reviewed "+utils.TimeElapsed(review.UpdatedAt)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+			"reviewed "+utils.TimeElapsed(review.UpdatedAt)),
 	)
 }
 

@@ -13,7 +13,7 @@ require (
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20250916153604-9a2e892ed98e
 	github.com/cli/go-gh/v2 v2.12.1
 	github.com/cli/shurcooL-graphql v0.0.4
-	github.com/dlvhdr/x/gh-checks v0.0.0-20251114174027-320f1169b8e8
+	github.com/dlvhdr/x/gh-checks v0.3.0
 	github.com/gen2brain/beeep v0.11.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-sprout/sprout v1.0.1
@@ -23,6 +23,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/v2 v2.3.0
 	github.com/lrstanley/bubblezone v1.0.0
+	github.com/maypok86/otter/v2 v2.2.1
 	github.com/muesli/termenv v0.16.0
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
 	github.com/spf13/cobra v1.9.1
@@ -104,7 +105,7 @@ require (
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1

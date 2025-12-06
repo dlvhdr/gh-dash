@@ -1,4 +1,4 @@
-package issuesidebar
+package prview
 
 import (
 	"fmt"
@@ -8,19 +8,20 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 func (m *Model) comment(body string) tea.Cmd {
-	issue := m.issue.Data
-	issueNumber := issue.GetNumber()
-	taskId := fmt.Sprintf("issue_comment_%d", issueNumber)
+	pr := m.pr.Data.Primary
+	prNumber := pr.GetNumber()
+	taskId := fmt.Sprintf("pr_comment_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Commenting on issue #%d", issueNumber),
-		FinishedText: fmt.Sprintf("Commented on issue #%d", issueNumber),
+		StartText:    fmt.Sprintf("Commenting on PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("Commented on PR #%d", prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -28,11 +29,11 @@ func (m *Model) comment(body string) tea.Cmd {
 	return tea.Batch(startCmd, func() tea.Msg {
 		c := exec.Command(
 			"gh",
-			"issue",
+			"pr",
 			"comment",
-			fmt.Sprint(issueNumber),
+			fmt.Sprint(prNumber),
 			"-R",
-			issue.GetRepoNameWithOwner(),
+			pr.GetRepoNameWithOwner(),
 			"-b",
 			body,
 		)
@@ -40,12 +41,12 @@ func (m *Model) comment(body string) tea.Cmd {
 		err := c.Run()
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
-			SectionType: issuessection.SectionType,
+			SectionType: prssection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: issuessection.UpdateIssueMsg{
-				IssueNumber: issueNumber,
-				NewComment: &data.IssueComment{
+			Msg: tasks.UpdatePRMsg{
+				PrNumber: prNumber,
+				NewComment: &data.Comment{
 					Author:    struct{ Login string }{Login: m.ctx.User},
 					Body:      body,
 					UpdatedAt: time.Now(),

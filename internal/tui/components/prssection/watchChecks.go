@@ -9,8 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gen2brain/beeep"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	prComponent "github.com/dlvhdr/gh-dash/v4/internal/tui/components/pr"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -55,16 +54,17 @@ func (m *Model) watchChecks() tea.Cmd {
 		go func() {
 			err := c.Wait()
 			if err != nil {
-				log.Debug("Error waiting for watch command to finish", "err", err, "stderr", errb.String(), "stdout", outb.String())
+				log.Error("Error waiting for watch command to finish", "err", err,
+					"stderr", errb.String(), "stdout", outb.String())
 			}
 
 			// TODO: check for installation of terminal-notifier or alternative as logo isn't supported
-			updatedPr, err := data.FetchPullRequest(url)
+			// updatedPr, err := data.FetchPullRequest(url)
 			if err != nil {
-				log.Debug("Error fetching updated PR details", "url", url, "err", err)
+				log.Error("Error fetching updated PR details", "url", url, "err", err)
 			}
 
-			renderedPr := prComponent.PullRequest{Ctx: m.Ctx, Data: &updatedPr}
+			renderedPr := prrow.PullRequest{Ctx: m.Ctx, Data: &prrow.Data{}}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":
@@ -79,7 +79,7 @@ func (m *Model) watchChecks() tea.Cmd {
 				"",
 			)
 			if err != nil {
-				log.Debug("Error showing system notification", "err", err)
+				log.Error("Error showing system notification", "err", err)
 			}
 		}()
 

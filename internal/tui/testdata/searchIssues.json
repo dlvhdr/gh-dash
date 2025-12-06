@@ -350,7 +350,7 @@
                 "author": {
                   "login": "adilansari"
                 },
-                "body": "@dlvhdr would a change to `input.SetWidth(xx)` do the trick?\r\n\r\nhttps://github.com/dlvhdr/gh-dash/blob/58a38ca68788efdf1637ecaeeed2500318d8e8fb/ui/components/prsidebar/prsidebar.go#L34",
+                "body": "@dlvhdr would a change to `input.SetWidth(xx)` do the trick?\r\n\r\nhttps://github.com/dlvhdr/gh-dash/blob/58a38ca68788efdf1637ecaeeed2500318d8e8fb/ui/components/prview/prview.go#L34",
                 "updatedAt": "2023-05-05T17:28:20Z"
               },
               {

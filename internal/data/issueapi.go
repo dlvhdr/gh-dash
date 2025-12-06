@@ -125,7 +125,7 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 	if err != nil {
 		return IssuesResponse{}, err
 	}
-	log.Debug("Successfully fetched issues", "query", query, "count", queryResult.Search.IssueCount)
+	log.Info("Successfully fetched issues", "query", query, "count", queryResult.Search.IssueCount)
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {

@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -6,34 +6,35 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func (m *Model) approve(comment string) tea.Cmd {
-	pr := m.pr.Data
+func (m *Model) assign(usernames []string) tea.Cmd {
+	pr := m.pr.Data.Primary
 	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_approve_%d", prNumber)
+	taskId := fmt.Sprintf("pr_assign_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
-		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
+		StartText:    fmt.Sprintf("Assigning pr #%d to %s", prNumber, usernames),
+		FinishedText: fmt.Sprintf("pr #%d has been assigned to %s", prNumber, usernames),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
 	commandArgs := []string{
 		"pr",
-		"review",
+		"edit",
+		fmt.Sprint(prNumber),
 		"-R",
 		pr.GetRepoNameWithOwner(),
-		fmt.Sprint(prNumber),
-		"--approve",
 	}
-	if comment != "" {
-		commandArgs = append(commandArgs, "--body", comment)
+	for _, assignee := range usernames {
+		commandArgs = append(commandArgs, "--add-assignee")
+		commandArgs = append(commandArgs, assignee)
 	}
 
 	startCmd := m.ctx.StartTask(task)
@@ -41,13 +42,18 @@ func (m *Model) approve(comment string) tea.Cmd {
 		c := exec.Command("gh", commandArgs...)
 
 		err := c.Run()
+		returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
+		for _, assignee := range usernames {
+			returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
 			SectionType: prssection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
 			Msg: tasks.UpdatePRMsg{
-				PrNumber: prNumber,
+				PrNumber:       prNumber,
+				AddedAssignees: &returnedAssignees,
 			},
 		}
 	})

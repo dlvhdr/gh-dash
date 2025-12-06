@@ -1,42 +1,44 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
 	"os/exec"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func (m *Model) comment(body string) tea.Cmd {
-	pr := m.pr.Data
+func (m *Model) approve(comment string) tea.Cmd {
+	pr := m.pr.Data.Primary
 	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_comment_%d", prNumber)
+	taskId := fmt.Sprintf("pr_approve_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Commenting on PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("Commented on PR #%d", prNumber),
+		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
+		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
+
+	commandArgs := []string{
+		"pr",
+		"review",
+		"-R",
+		pr.GetRepoNameWithOwner(),
+		fmt.Sprint(prNumber),
+		"--approve",
+	}
+	if comment != "" {
+		commandArgs = append(commandArgs, "--body", comment)
+	}
+
 	startCmd := m.ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"pr",
-			"comment",
-			fmt.Sprint(prNumber),
-			"-R",
-			pr.GetRepoNameWithOwner(),
-			"-b",
-			body,
-		)
+		c := exec.Command("gh", commandArgs...)
 
 		err := c.Run()
 		return constants.TaskFinishedMsg{
@@ -46,11 +48,6 @@ func (m *Model) comment(body string) tea.Cmd {
 			Err:         err,
 			Msg: tasks.UpdatePRMsg{
 				PrNumber: prNumber,
-				NewComment: &data.Comment{
-					Author:    struct{ Login string }{Login: m.ctx.User},
-					Body:      body,
-					UpdatedAt: time.Now(),
-				},
 			},
 		}
 	})

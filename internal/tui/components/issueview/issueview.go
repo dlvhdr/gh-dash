@@ -1,4 +1,4 @@
-package issuesidebar
+package issueview
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issue"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
@@ -25,7 +25,7 @@ var (
 
 type Model struct {
 	ctx       *context.ProgramContext
-	issue     *issue.Issue
+	issue     *issuerow.Issue
 	sectionId int
 	width     int
 
@@ -210,7 +210,7 @@ func (m *Model) renderStatusPill() string {
 		content = " Closed"
 	}
 
-	return m.ctx.Styles.PrSidebar.PillStyle.
+	return m.ctx.Styles.PrView.PillStyle.
 		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
@@ -243,7 +243,7 @@ func (m *Model) renderBody() string {
 func (m *Model) renderLabels() string {
 	width := m.getIndentedContentWidth()
 	labels := m.issue.Data.Labels.Nodes
-	style := m.ctx.Styles.PrSidebar.PillStyle
+	style := m.ctx.Styles.PrView.PillStyle
 
 	return common.RenderLabels(width, labels, style)
 }
@@ -265,7 +265,7 @@ func (m *Model) SetRow(data *data.IssueData) {
 	if data == nil {
 		m.issue = nil
 	} else {
-		m.issue = &issue.Issue{Ctx: m.ctx, Data: *data}
+		m.issue = &issuerow.Issue{Ctx: m.ctx, Data: *data}
 	}
 }
 

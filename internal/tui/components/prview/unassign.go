@@ -1,34 +1,36 @@
-package issuesidebar
+package prview
 
 import (
 	"fmt"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 func (m *Model) unassign(usernames []string) tea.Cmd {
-	issue := m.issue.Data
-	issueNumber := issue.GetNumber()
-	taskId := fmt.Sprintf("issue_unassign_%d", issueNumber)
+	pr := m.pr.Data.Primary
+	prNumber := pr.GetNumber()
+	taskId := fmt.Sprintf("pr_unassign_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Unassigning %s from issue #%d", usernames, issueNumber),
-		FinishedText: fmt.Sprintf("%s unassigned from issue #%d", usernames, issueNumber),
+		StartText:    fmt.Sprintf("Unassigning %s from pr #%d", usernames, prNumber),
+		FinishedText: fmt.Sprintf("%s unassigned from pr #%d", usernames, prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
 	commandArgs := []string{
-		"issue",
+		"pr",
 		"edit",
-		fmt.Sprint(issueNumber),
+		fmt.Sprint(prNumber),
 		"-R",
-		issue.GetRepoNameWithOwner(),
+		pr.GetRepoNameWithOwner(),
 	}
 	for _, assignee := range usernames {
 		commandArgs = append(commandArgs, "--remove-assignee")
@@ -46,11 +48,11 @@ func (m *Model) unassign(usernames []string) tea.Cmd {
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
-			SectionType: issuessection.SectionType,
+			SectionType: prssection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: issuessection.UpdateIssueMsg{
-				IssueNumber:      issueNumber,
+			Msg: tasks.UpdatePRMsg{
+				PrNumber:         prNumber,
 				RemovedAssignees: &returnedAssignees,
 			},
 		}

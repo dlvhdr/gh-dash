@@ -73,7 +73,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(ctx *con
 	if err != nil {
 		return searchValue
 	}
-	for _, token := range strings.Fields(searchValue) {
+	for token := range strings.FieldsSeq(searchValue) {
 		if strings.HasPrefix(token, "repo:") {
 			return searchValue
 		}
@@ -200,7 +200,7 @@ func (m *BaseModel) GetConfig() config.SectionConfig {
 
 func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 	filters := m.Config.Filters
-	for _, token := range strings.Fields(filters) {
+	for token := range strings.FieldsSeq(filters) {
 		if strings.HasPrefix(token, "repo:") {
 			return true
 		}
@@ -220,7 +220,7 @@ func (m *BaseModel) GetSearchValue() string {
 	}
 	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
-	for _, token := range strings.Fields(searchValue) {
+	for token := range strings.FieldsSeq(searchValue) {
 		if !strings.HasPrefix(token, currentCloneFilter) {
 			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
 		}

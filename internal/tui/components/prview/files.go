@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -25,20 +25,20 @@ func (m *Model) renderChangesOverview() string {
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Width(m.getIndentedContentWidth())
 
-	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.UpdatedAt))
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.Primary.UpdatedAt))
 	return box.Render(
 		lipgloss.JoinVertical(lipgloss.Left,
 			changes.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d files changed", m.pr.Data.Files.TotalCount),
+					fmt.Sprintf("%d files changed", m.pr.Data.Primary.Files.TotalCount),
 					" ",
 					m.pr.RenderLines(false)),
 			),
 			commits.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d commits", m.pr.Data.Commits.TotalCount),
+					fmt.Sprintf("%d commits", m.pr.Data.Primary.Commits.TotalCount),
 					" ",
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("%s ago", time)),
 				),
@@ -49,7 +49,7 @@ func (m *Model) renderChangesOverview() string {
 
 func (m *Model) renderChangedFiles() string {
 	files := make([]string, 0)
-	for _, file := range m.pr.Data.Files.Nodes {
+	for _, file := range m.pr.Data.Primary.Files.Nodes {
 		files = append(files, m.renderFile(file))
 	}
 

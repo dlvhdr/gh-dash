@@ -17,6 +17,13 @@ tasks:
     interactive: true
     desc: Run in debug mode. Run `task logs` to watch the logs.
 
+  debug:warn:
+    cmds:
+      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
+      - LOG_LEVEL=warn DEBUG=true go run . --debug {{.CLI_ARGS}}
+    interactive: true
+    desc: Run in debug mode, only log warning. Run `task logs` to watch the logs.
+
   dlv:
     cmds:
       - dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 .

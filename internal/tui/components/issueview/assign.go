@@ -1,4 +1,4 @@
-package prsidebar
+package issueview
 
 import (
 	"fmt"
@@ -7,30 +7,29 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 func (m *Model) assign(usernames []string) tea.Cmd {
-	pr := m.pr.Data
-	prNumber := pr.GetNumber()
-	taskId := fmt.Sprintf("pr_assign_%d", prNumber)
+	issue := m.issue.Data
+	issueNumber := issue.GetNumber()
+	taskId := fmt.Sprintf("issue_assign_%d", issueNumber)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Assigning pr #%d to %s", prNumber, usernames),
-		FinishedText: fmt.Sprintf("pr #%d has been assigned to %s", prNumber, usernames),
+		StartText:    fmt.Sprintf("Assigning issue #%d to %s", issueNumber, usernames),
+		FinishedText: fmt.Sprintf("Issue #%d has been assigned to %s", issueNumber, usernames),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
 	commandArgs := []string{
-		"pr",
+		"issue",
 		"edit",
-		fmt.Sprint(prNumber),
+		fmt.Sprint(issueNumber),
 		"-R",
-		pr.GetRepoNameWithOwner(),
+		issue.GetRepoNameWithOwner(),
 	}
 	for _, assignee := range usernames {
 		commandArgs = append(commandArgs, "--add-assignee")
@@ -48,11 +47,11 @@ func (m *Model) assign(usernames []string) tea.Cmd {
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
-			SectionType: prssection.SectionType,
+			SectionType: issuessection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: tasks.UpdatePRMsg{
-				PrNumber:       prNumber,
+			Msg: issuessection.UpdateIssueMsg{
+				IssueNumber:    issueNumber,
 				AddedAssignees: &returnedAssignees,
 			},
 		}

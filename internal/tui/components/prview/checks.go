@@ -1,4 +1,4 @@
-package prsidebar
+package prview
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	ghchecks "github.com/dlvhdr/x/gh-checks"
 )
 
 type checkSectionStatus int
@@ -22,11 +23,11 @@ const (
 func (m *Model) renderChecksOverview() string {
 	w := m.getIndentedContentWidth()
 
-	if m.pr.Data.State == "MERGED" {
+	if m.pr.Data.Primary.State == "MERGED" {
 		return m.viewMergedStatus()
 	}
 
-	if m.pr.Data.State == "CLOSED" {
+	if m.pr.Data.Primary.State == "CLOSED" {
 		return m.viewClosedStatus()
 	}
 
@@ -88,6 +89,9 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	if stats.skipped > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d skipped", stats.skipped))
 	}
+	if stats.neutral > 0 {
+		statStrs = append(statStrs, fmt.Sprintf("%d neutral", stats.neutral))
+	}
 	if stats.succeeded > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d successful", stats.succeeded))
 	}
@@ -103,28 +107,29 @@ func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
 	var icon, title, subtitle string
 	var status checkSectionStatus
 	numReviewOwners := m.numRequestedReviewOwners()
-	if m.pr.Data.MergeStateStatus == "CLEAN" || m.pr.Data.MergeStateStatus == "UNSTABLE" {
+	if m.pr.Data.Primary.MergeStateStatus == "CLEAN" ||
+		m.pr.Data.Primary.MergeStateStatus == "UNSTABLE" {
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "No conflicts with base branch"
 		subtitle = "Changes can be cleanly merged"
 		status = statusSuccess
-	} else if m.pr.Data.IsDraft {
+	} else if m.pr.Data.Primary.IsDraft {
 		icon = m.ctx.Styles.Common.DraftGlyph
 		title = "This pull request is still a work in progress"
 		subtitle = "Draft pull requests cannot be merged"
 		status = statusWaiting
-	} else if m.pr.Data.MergeStateStatus == "BLOCKED" {
+	} else if m.pr.Data.Primary.MergeStateStatus == "BLOCKED" {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "Merging is blocked"
 		if numReviewOwners > 0 {
 			subtitle = "Waiting on code owner review"
 		}
 		status = statusFailure
-	} else if m.pr.Data.Mergeable == "CONFLICTING" {
+	} else if m.pr.Data.Primary.Mergeable == "CONFLICTING" {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "This branch has conflicts that must be resolved"
 		status = statusFailure
-		if m.pr.Data.MergeStateStatus == "CLEAN" {
+		if m.pr.Data.Primary.MergeStateStatus == "CLEAN" {
 			subtitle = "Changes can be cleanly merged"
 		}
 	}
@@ -165,7 +170,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
 
-	for _, node := range pr.Data.Reviews.Nodes {
+	for _, node := range pr.Data.Primary.Reviews.Nodes {
 		switch node.State {
 		case "APPROVED":
 			numApproving++
@@ -178,7 +183,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 		}
 	}
 
-	switch pr.Data.ReviewDecision {
+	switch pr.Data.Primary.ReviewDecision {
 	case "APPROVED":
 		icon = m.ctx.Styles.Common.SuccessGlyph
 		title = "Changes approved"
@@ -193,15 +198,17 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 		icon = pr.Ctx.Styles.Common.WaitingGlyph
 		title = "Review Required"
 
-		branchRules := m.pr.Data.Repository.BranchProtectionRules.Nodes
+		branchRules := m.pr.Data.Primary.Repository.BranchProtectionRules.Nodes
 		if len(branchRules) > 0 && branchRules[0].RequiresCodeOwnerReviews && numApproving < 1 {
 			subtitle = "Code owner review required"
 			status = statusFailure
 		} else if numApproving < numReviewOwners {
 			subtitle = "Code owner review required"
 			status = statusFailure
-		} else if len(branchRules) > 0 && numApproving < branchRules[0].RequiredApprovingReviewCount {
-			subtitle = fmt.Sprintf("Need %d more approval", branchRules[0].RequiredApprovingReviewCount-numApproving)
+		} else if len(branchRules) > 0 && numApproving <
+			branchRules[0].RequiredApprovingReviewCount {
+			subtitle = fmt.Sprintf("Need %d more approval",
+				branchRules[0].RequiredApprovingReviewCount-numApproving)
 			status = statusWaiting
 		} else if numCommented > 0 {
 			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
@@ -242,7 +249,7 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 func (m *Model) viewChecksBar() string {
 	w := m.getIndentedContentWidth() - 4
 	stats := m.getChecksStats()
-	total := float64(stats.failed + stats.skipped + stats.succeeded + stats.inProgress)
+	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress)
 	numSections := 0
 	if stats.failed > 0 {
 		numSections++
@@ -250,31 +257,35 @@ func (m *Model) viewChecksBar() string {
 	if stats.inProgress > 0 {
 		numSections++
 	}
-	if stats.skipped > 0 {
+	if stats.skipped > 0 || stats.neutral > 0 {
 		numSections++
 	}
 	if stats.succeeded > 0 {
 		numSections++
 	}
-	// subtract num of spacers
+	// subtract number of spacers
 	w -= numSections - 1
 
 	sections := make([]string, 0)
 	if stats.failed > 0 {
 		failWidth := int(math.Floor((float64(stats.failed) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(
+			m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
 	}
 	if stats.inProgress > 0 {
 		ipWidth := int(math.Floor((float64(stats.inProgress) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(
+			m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
 	}
-	if stats.skipped > 0 {
-		skipWidth := int(math.Floor((float64(stats.skipped) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
+	if stats.skipped > 0 || stats.neutral > 0 {
+		skipWidth := int(math.Floor((float64(stats.skipped+stats.neutral) / total) * float64(w)))
+		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(
+			m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
 	}
 	if stats.succeeded > 0 {
 		succWidth := int(math.Floor((float64(stats.succeeded) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(succWidth).Foreground(m.ctx.Theme.SuccessText).Height(1).Render(strings.Repeat("▃", succWidth)))
+		sections = append(sections, lipgloss.NewStyle().Width(succWidth).Foreground(
+			m.ctx.Theme.SuccessText).Height(1).Render(strings.Repeat("▃", succWidth)))
 	}
 
 	return strings.Join(sections, " ")
@@ -312,11 +323,11 @@ const (
 )
 
 func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory, string) {
-	if data.IsStatusWaiting(string(checkRun.Status)) {
+	if ghchecks.IsStatusWaiting(string(checkRun.Status)) {
 		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
-	if data.IsConclusionAFailure(string(checkRun.Conclusion)) {
+	if ghchecks.IsConclusionAFailure(string(checkRun.Conclusion)) {
 		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
@@ -325,11 +336,11 @@ func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory,
 
 func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) (CheckCategory, string) {
 	conclusionStr := string(statusContext.State)
-	if data.IsStatusWaiting(conclusionStr) {
+	if ghchecks.IsStatusWaiting(conclusionStr) {
 		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
 	}
 
-	if data.IsConclusionAFailure(conclusionStr) {
+	if ghchecks.IsConclusionAFailure(conclusionStr) {
 		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
 	}
 
@@ -356,9 +367,13 @@ func renderStatusContextName(statusContext data.StatusContext) string {
 func (sidebar *Model) renderChecks() string {
 	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" All Checks")
 
-	commits := sidebar.pr.Data.Commits.Nodes
+	commits := sidebar.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
-		return ""
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			title,
+			"Loading..."+sidebar.pr.Data.Enriched.Url,
+		)
 	}
 
 	failures := make([]string, 0)
@@ -413,12 +428,14 @@ func (sidebar *Model) renderChecks() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(lipgloss.JoinVertical(lipgloss.Left, parts...)),
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(
+			lipgloss.JoinVertical(lipgloss.Left, parts...)),
 	)
 }
 
 type checksStats struct {
 	succeeded  int
+	neutral    int
 	failed     int
 	skipped    int
 	inProgress int
@@ -426,25 +443,28 @@ type checksStats struct {
 
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
-	commits := m.pr.Data.Commits.Nodes
+	commits := m.pr.Data.Primary.Commits.Nodes
 	if len(commits) == 0 {
 		return res
 	}
 
 	lastCommit := commits[0]
-	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
-		if node.Typename == "CheckRun" {
-			checkRun := node.CheckRun
-			conclusion := string(checkRun.Conclusion)
-			if data.IsStatusWaiting(string(checkRun.Status)) {
-				res.inProgress++
-			} else if data.IsConclusionAFailure(conclusion) {
-				res.failed++
-			} else if data.IsConclusionASkip(conclusion) {
-				res.skipped++
-			} else if data.IsConclusionASuccess(conclusion) {
-				res.succeeded++
-			}
+	allChecks := make([]data.ContextCountByState, 0)
+	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState...)
+	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.StatusContextCountsByState...)
+
+	for _, count := range allChecks {
+		state := string(count.State)
+		if ghchecks.IsStatusWaiting(state) {
+			res.inProgress += int(count.Count)
+		} else if ghchecks.IsConclusionAFailure(state) {
+			res.failed += int(count.Count)
+		} else if ghchecks.IsConclusionASkip(state) {
+			res.skipped += int(count.Count)
+		} else if ghchecks.IsConclusionNeutral(state) {
+			res.neutral += int(count.Count)
+		} else if ghchecks.IsConclusionASuccess(state) {
+			res.succeeded += int(count.Count)
 		}
 	}
 
@@ -454,7 +474,7 @@ func (m *Model) getChecksStats() checksStats {
 func (m *Model) numRequestedReviewOwners() int {
 	numOwners := 0
 
-	for _, node := range m.pr.Data.ReviewRequests.Nodes {
+	for _, node := range m.pr.Data.Primary.ReviewRequests.Nodes {
 		if node.AsCodeOwner {
 			numOwners++
 		}
