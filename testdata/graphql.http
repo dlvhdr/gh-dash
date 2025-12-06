@@ -8,25 +8,12 @@ Authorization: Bearer {{GH_TOKEN}}
 query PullRequestChecks($url: URI!){
   resource(url: $url) {
     ... on PullRequest {
-      url
-        title
-        mergeStateStatus
-        mergeable
-        checksUrl
-        checksResourcePath
-        statusCheckRollup {
-          commit {
-            oid
-          }
-          state
-          contexts(first: 1) {
-            checkRunCount
-              checkRunCountsByState {
-                count
-                state
-              }
-          }
-        }
+      reviewThreads(last: 50, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      totalCount
+      nodes {
+      runNumber
+      }
+      }
     }
   }
 }

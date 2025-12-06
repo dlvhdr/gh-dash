@@ -154,8 +154,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				}
 			}
 			if msg.NewComment != nil {
-				currPr.Primary.Comments.Nodes = append(
-					currPr.Primary.Comments.Nodes, *msg.NewComment)
+				currPr.Enriched.Comments.Nodes = append(
+					currPr.Enriched.Comments.Nodes, *msg.NewComment)
 			}
 			if msg.AddedAssignees != nil {
 				currPr.Primary.Assignees.Nodes = addAssignees(
