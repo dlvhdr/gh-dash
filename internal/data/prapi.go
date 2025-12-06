@@ -18,10 +18,12 @@ import (
 )
 
 type EnrichedPullRequestData struct {
-	Url        string
-	Number     int
-	Repository Repository
-	Commits    CommitsWithStatusChecks `graphql:"commits(last: 1)"`
+	Url           string
+	Number        int
+	Repository    Repository
+	Commits       CommitsWithStatusChecks `graphql:"commits(last: 1)"`
+	Comments      CommentsWithBody        `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	ReviewThreads ReviewThreads           `graphql:"reviewThreads(last: 50)"`
 }
 
 type PullRequestData struct {
@@ -50,9 +52,8 @@ type PullRequestData struct {
 	}
 	Repository       Repository
 	Assignees        Assignees      `graphql:"assignees(first: 3)"`
-	Comments         Comments       `graphql:"comments(last: 5, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	Comments         Comments       `graphql:"comments"`
 	Reviews          Reviews        `graphql:"reviews(last: 3)"`
-	ReviewThreads    ReviewThreads  `graphql:"reviewThreads(last: 3)"`
 	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 5)"`
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
@@ -111,6 +112,11 @@ type CommitsWithStatusChecks struct {
 	TotalCount int
 }
 
+type CommentsWithBody struct {
+	TotalCount graphql.Int
+	Nodes      []Comment
+}
+
 type ContextCountByState = struct {
 	Count graphql.Int
 	State checks.CheckRunState
@@ -164,7 +170,6 @@ type ReviewComments struct {
 }
 
 type Comments struct {
-	Nodes      []Comment
 	TotalCount int
 }
 
@@ -190,7 +195,7 @@ type ReviewThreads struct {
 		StartLine    int
 		Line         int
 		Path         string
-		Comments     ReviewComments `graphql:"comments(first: 10)"`
+		Comments     ReviewComments `graphql:"comments(first: 20)"`
 	}
 }
 

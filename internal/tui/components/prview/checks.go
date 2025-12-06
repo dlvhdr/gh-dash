@@ -372,7 +372,7 @@ func (sidebar *Model) renderChecks() string {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
-			"Loading..."+sidebar.pr.Data.Enriched.Url,
+			"Loading...",
 		)
 	}
 

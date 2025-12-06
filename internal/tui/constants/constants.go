@@ -34,14 +34,15 @@ const (
 	FailureIcon = "󰅙"
 	SuccessIcon = ""
 
-	CommentIcon = ""
-	DraftIcon   = ""
-	BehindIcon  = "󰇮"
-	BlockedIcon = ""
-	MergedIcon  = ""
-	OpenIcon    = ""
-	ClosedIcon  = ""
-	DonateIcon  = "󱃱"
+	CommentIcon  = ""
+	CommentsIcon = ""
+	DraftIcon    = ""
+	BehindIcon   = "󰇮"
+	BlockedIcon  = ""
+	MergedIcon   = ""
+	OpenIcon     = ""
+	ClosedIcon   = ""
+	DonateIcon   = "󱃱"
 
 	// New contributors: users who created a PR for the repo for the first time
 	NewContributorIcon = "󰎔" // \udb80\udf94 nf-md-new_box
