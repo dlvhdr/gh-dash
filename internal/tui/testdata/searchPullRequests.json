@@ -88,59 +88,7 @@
                     "nodes": []
                   },
                   "statusCheckRollup": {
-                    "contexts": {
-                      "totalCount": 3,
-                      "nodes": [
-                        {
-                          "__typename": "CheckRun",
-                          "name": "build",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "LinPr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "lint",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "LinPr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "lint"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "dependabot",
-                          "status": "COMPLETED",
-                          "conclusion": "SKIPPED",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "LinPr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
+                    "contexts": {}
                   }
                 }
               }
@@ -227,59 +175,7 @@
                     "nodes": []
                   },
                   "statusCheckRollup": {
-                    "contexts": {
-                      "totalCount": 3,
-                      "nodes": [
-                        {
-                          "__typename": "CheckRun",
-                          "name": "build",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "lint",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "lint"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "dependabot",
-                          "status": "COMPLETED",
-                          "conclusion": "SKIPPED",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
+                    "contexts": {}
                   }
                 }
               }
@@ -390,59 +286,7 @@
                     "nodes": []
                   },
                   "statusCheckRollup": {
-                    "contexts": {
-                      "totalCount": 3,
-                      "nodes": [
-                        {
-                          "__typename": "CheckRun",
-                          "name": "build",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "lint",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "lint"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "dependabot",
-                          "status": "COMPLETED",
-                          "conclusion": "SKIPPED",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
+                    "contexts": {}
                   }
                 }
               }
@@ -553,59 +397,7 @@
                     "nodes": []
                   },
                   "statusCheckRollup": {
-                    "contexts": {
-                      "totalCount": 3,
-                      "nodes": [
-                        {
-                          "__typename": "CheckRun",
-                          "name": "build",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "lint",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "lint"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "dependabot",
-                          "status": "COMPLETED",
-                          "conclusion": "SKIPPED",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
+                    "contexts": {}
                   }
                 }
               }
@@ -716,59 +508,7 @@
                     "nodes": []
                   },
                   "statusCheckRollup": {
-                    "contexts": {
-                      "totalCount": 3,
-                      "nodes": [
-                        {
-                          "__typename": "CheckRun",
-                          "name": "build",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "lint",
-                          "status": "COMPLETED",
-                          "conclusion": "SUCCESS",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "lint"
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "__typename": "CheckRun",
-                          "name": "dependabot",
-                          "status": "COMPLETED",
-                          "conclusion": "SKIPPED",
-                          "checkSuite": {
-                            "creator": {
-                              "login": "dlvhdr"
-                            },
-                            "workflowRun": {
-                              "workflow": {
-                                "name": "build"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
+                    "contexts": {}
                   }
                 }
               }
