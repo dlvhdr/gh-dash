@@ -235,7 +235,7 @@ func GetSectionColumns(
 			Hidden: assigneesLayout.Hidden,
 		},
 		{
-			Title:  "",
+			Title:  constants.CommentsIcon,
 			Width:  &issueNumCommentsCellWidth,
 			Hidden: commentsLayout.Hidden,
 		},

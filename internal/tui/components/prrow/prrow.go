@@ -27,6 +27,19 @@ func (pr *PullRequest) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(pr.Ctx)
 }
 
+func (pr *PullRequest) renderNumComments() string {
+	if pr.Data.Primary == nil {
+		return "-"
+	}
+
+	numCommentsStyle := pr.Ctx.Styles.Common.FaintTextStyle
+	return numCommentsStyle.Render(
+		fmt.Sprintf(
+			"%d",
+			pr.Data.Primary.Comments.TotalCount+pr.Data.Primary.ReviewThreads.TotalCount,
+		))
+}
+
 func (pr *PullRequest) renderReviewStatus() string {
 	if pr.Data.Primary == nil {
 		return "-"
@@ -305,6 +318,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderExtendedTitle(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
+			pr.renderNumComments(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
 			pr.RenderLines(isSelected),
