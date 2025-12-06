@@ -241,6 +241,10 @@ func GetSectionColumns(
 		sLayout.Assignees,
 	)
 	baseLayout := config.MergeColumnConfigs(dLayout.Base, sLayout.Base)
+	numCommentsLayout := config.MergeColumnConfigs(
+		dLayout.NumComments,
+		sLayout.NumComments,
+	)
 	reviewStatusLayout := config.MergeColumnConfigs(
 		dLayout.ReviewStatus,
 		sLayout.ReviewStatus,
@@ -270,6 +274,11 @@ func GetSectionColumns(
 				Title:  "Base",
 				Width:  baseLayout.Width,
 				Hidden: baseLayout.Hidden,
+			},
+			{
+				Title:  constants.CommentsIcon,
+				Width:  utils.IntPtr(4),
+				Hidden: numCommentsLayout.Hidden,
 			},
 			{
 				Title:  "󰯢",
@@ -330,6 +339,11 @@ func GetSectionColumns(
 			Title:  "Base",
 			Width:  baseLayout.Width,
 			Hidden: baseLayout.Hidden,
+		},
+		{
+			Title:  constants.CommentsIcon,
+			Width:  utils.IntPtr(4),
+			Hidden: numCommentsLayout.Hidden,
 		},
 		{
 			Title:  "󰯢",

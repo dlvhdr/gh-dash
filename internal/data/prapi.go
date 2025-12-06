@@ -21,9 +21,9 @@ type EnrichedPullRequestData struct {
 	Url           string
 	Number        int
 	Repository    Repository
-	Commits       CommitsWithStatusChecks `graphql:"commits(last: 1)"`
-	Comments      CommentsWithBody        `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	ReviewThreads ReviewThreads           `graphql:"reviewThreads(last: 50)"`
+	Commits       CommitsWithStatusChecks   `graphql:"commits(last: 1)"`
+	Comments      CommentsWithBody          `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	ReviewThreads ReviewThreadsWithComments `graphql:"reviewThreads(last: 50)"`
 }
 
 type PullRequestData struct {
@@ -53,6 +53,7 @@ type PullRequestData struct {
 	Repository       Repository
 	Assignees        Assignees      `graphql:"assignees(first: 3)"`
 	Comments         Comments       `graphql:"comments"`
+	ReviewThreads    ReviewThreads  `graphql:"reviewThreads"`
 	Reviews          Reviews        `graphql:"reviews(last: 3)"`
 	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 5)"`
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
@@ -173,6 +174,10 @@ type Comments struct {
 	TotalCount int
 }
 
+type ReviewThreads struct {
+	TotalCount int
+}
+
 type Review struct {
 	Author struct {
 		Login string
@@ -187,7 +192,7 @@ type Reviews struct {
 	Nodes      []Review
 }
 
-type ReviewThreads struct {
+type ReviewThreadsWithComments struct {
 	Nodes []struct {
 		Id           string
 		IsOutdated   bool

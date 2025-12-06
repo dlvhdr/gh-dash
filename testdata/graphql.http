@@ -8,11 +8,8 @@ Authorization: Bearer {{GH_TOKEN}}
 query PullRequestChecks($url: URI!){
   resource(url: $url) {
     ... on PullRequest {
-      reviewThreads(last: 50, orderBy: { field: UPDATED_AT, direction: DESC }) {
-      totalCount
-      nodes {
-      runNumber
-      }
+      reviewThreads {
+        totalCount
       }
     }
   }

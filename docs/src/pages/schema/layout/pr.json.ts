@@ -133,6 +133,17 @@ export function GET() {
             hidden: true,
           },
         },
+        numComments: {
+          title: "Number of Comments Column",
+          description:
+            "Defines options for the number of comments column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+        },
         reviewStatus: {
           title: "PR Review Status Column",
           description:
