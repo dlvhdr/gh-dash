@@ -9,3 +9,4 @@ gh-prs
 docs/broken-links.log
 .devbox
 __debug*
+testdata/gh-schema.graphql
