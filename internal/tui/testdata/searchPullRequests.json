@@ -45,7 +45,6 @@
             "nodes": []
           },
           "comments": {
-            "nodes": [],
             "totalCount": 0
           },
           "reviews": {
@@ -62,7 +61,7 @@
             ]
           },
           "reviewThreads": {
-            "nodes": []
+            "totalCount": 0
           },
           "reviewRequests": {
             "totalCount": 0,
@@ -141,7 +140,6 @@
             "nodes": []
           },
           "comments": {
-            "nodes": [],
             "totalCount": 0
           },
           "reviews": {
@@ -149,7 +147,7 @@
             "nodes": []
           },
           "reviewThreads": {
-            "nodes": []
+            "totalCount": 0
           },
           "reviewRequests": {
             "totalCount": 0,
@@ -228,7 +226,6 @@
             "nodes": []
           },
           "comments": {
-            "nodes": [],
             "totalCount": 0
           },
           "reviews": {
@@ -236,7 +233,7 @@
             "nodes": []
           },
           "reviewThreads": {
-            "nodes": []
+            "totalCount": 0
           },
           "reviewRequests": {
             "totalCount": 0,
@@ -339,7 +336,6 @@
             "nodes": []
           },
           "comments": {
-            "nodes": [],
             "totalCount": 0
           },
           "reviews": {
@@ -347,7 +343,7 @@
             "nodes": []
           },
           "reviewThreads": {
-            "nodes": []
+            "totalCount": 0
           },
           "reviewRequests": {
             "totalCount": 0,
@@ -450,7 +446,6 @@
             "nodes": []
           },
           "comments": {
-            "nodes": [],
             "totalCount": 0
           },
           "reviews": {
@@ -458,7 +453,7 @@
             "nodes": []
           },
           "reviewThreads": {
-            "nodes": []
+            "totalCount": 0
           },
           "reviewRequests": {
             "totalCount": 0,
