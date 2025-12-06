@@ -104,11 +104,16 @@ type CommitsWithStatusChecks struct {
 						CheckRun      CheckRun       `graphql:"... on CheckRun"`
 						StatusContext StatusContext  `graphql:"... on StatusContext"`
 					}
-				} `graphql:"contexts(last: 20)"`
+				} `graphql:"contexts(last: 100)"`
 			}
 		}
 	}
 	TotalCount int
+}
+
+type ContextCountByState = struct {
+	Count graphql.Int
+	State checks.CheckRunState
 }
 
 type Commits struct {
@@ -124,11 +129,10 @@ type Commits struct {
 			StatusCheckRollup struct {
 				State    graphql.String
 				Contexts struct {
-					CheckRunCount         graphql.Int
-					CheckRunCountsByState []struct {
-						Count graphql.Int
-						State checks.CheckRunState
-					}
+					CheckRunCount              graphql.Int
+					CheckRunCountsByState      []ContextCountByState
+					StatusContextCount         graphql.Int
+					StatusContextCountsByState []ContextCountByState
 				} `graphql:"contexts(first: 1)"`
 			}
 		}

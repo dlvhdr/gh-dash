@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -179,7 +178,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		log.Warn("⏰⏰⏰ SectionPullRequestsFetchedMsg")
 		m.Prs = msg.Prs
 
 	case RefreshBranchesMsg:

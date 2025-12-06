@@ -75,6 +75,8 @@ github.com/dlvhdr/x/gh-checks v0.0.0-20251114174027-320f1169b8e8 h1:FwJR/7CzEgtl
 github.com/dlvhdr/x/gh-checks v0.0.0-20251114174027-320f1169b8e8/go.mod h1:rKC7AjoEOg95nM9iATbJf2FYb4KPLeg6nileMqFg3G8=
 github.com/dlvhdr/x/gh-checks v0.2.0 h1:rq2tZckeqBbpqlzGfhF6558Tau7FOx57Y7fd9W6lKgk=
 github.com/dlvhdr/x/gh-checks v0.2.0/go.mod h1:rKC7AjoEOg95nM9iATbJf2FYb4KPLeg6nileMqFg3G8=
+github.com/dlvhdr/x/gh-checks v0.3.0 h1:E6tPgs5Ox5cTAxU6BmY1DsjLTG6VRcRVwYXXPJhCPJA=
+github.com/dlvhdr/x/gh-checks v0.3.0/go.mod h1:rKC7AjoEOg95nM9iATbJf2FYb4KPLeg6nileMqFg3G8=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f h1:Y/CXytFA4m6baUTXGLOoWe4PQhGxaX0KpnayAqC48p4=
 github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f/go.mod h1:vw97MGsxSvLiUE2X8qFplwetxpGLQrlU1Q9AUEIzCaM=
 github.com/esiqveland/notify v0.13.3 h1:QCMw6o1n+6rl+oLUfg8P1IIDSFsDEb2WlXvVvIJbI/o=

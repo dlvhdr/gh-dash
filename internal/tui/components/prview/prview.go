@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -581,11 +580,7 @@ func (m *Model) SetSummaryViewLess() {
 
 func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
 	if m.pr.Data.Primary.Url == data.Url {
-		log.Warn("prview.SetEnrichedPR", "url", data.Url)
 		m.pr.Data.Enriched = data
 		m.pr.Data.IsEnriched = true
-	} else {
-		log.Warn("setting enriched pr failed as the sidebar already displays a different one",
-			"sidebarUrl", m.pr.Data.Primary.Url, "givenUrl", data.Url)
 	}
 }

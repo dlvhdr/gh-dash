@@ -90,6 +90,9 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	if stats.skipped > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d skipped", stats.skipped))
 	}
+	if stats.neutral > 0 {
+		statStrs = append(statStrs, fmt.Sprintf("%d neutral", stats.neutral))
+	}
 	if stats.succeeded > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d successful", stats.succeeded))
 	}
@@ -247,7 +250,7 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 func (m *Model) viewChecksBar() string {
 	w := m.getIndentedContentWidth() - 4
 	stats := m.getChecksStats()
-	total := float64(stats.failed + stats.skipped + stats.succeeded + stats.inProgress)
+	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress)
 	numSections := 0
 	if stats.failed > 0 {
 		numSections++
@@ -255,7 +258,7 @@ func (m *Model) viewChecksBar() string {
 	if stats.inProgress > 0 {
 		numSections++
 	}
-	if stats.skipped > 0 {
+	if stats.skipped > 0 || stats.neutral > 0 {
 		numSections++
 	}
 	if stats.succeeded > 0 {
@@ -275,8 +278,8 @@ func (m *Model) viewChecksBar() string {
 		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(
 			m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
 	}
-	if stats.skipped > 0 {
-		skipWidth := int(math.Floor((float64(stats.skipped) / total) * float64(w)))
+	if stats.skipped > 0 || stats.neutral > 0 {
+		skipWidth := int(math.Floor((float64(stats.skipped+stats.neutral) / total) * float64(w)))
 		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(
 			m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
 	}
@@ -433,6 +436,7 @@ func (sidebar *Model) renderChecks() string {
 
 type checksStats struct {
 	succeeded  int
+	neutral    int
 	failed     int
 	skipped    int
 	inProgress int
@@ -446,7 +450,11 @@ func (m *Model) getChecksStats() checksStats {
 	}
 
 	lastCommit := commits[0]
-	for _, count := range lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState {
+	allChecks := make([]data.ContextCountByState, 0)
+	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState...)
+	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.StatusContextCountsByState...)
+
+	for _, count := range allChecks {
 		state := string(count.State)
 		if checks.IsStatusWaiting(state) {
 			res.inProgress += int(count.Count)
@@ -454,6 +462,8 @@ func (m *Model) getChecksStats() checksStats {
 			res.failed += int(count.Count)
 		} else if checks.IsConclusionASkip(state) {
 			res.skipped += int(count.Count)
+		} else if checks.IsConclusionNeutral(state) {
+			res.neutral += int(count.Count)
 		} else if checks.IsConclusionASuccess(state) {
 			res.succeeded += int(count.Count)
 		}

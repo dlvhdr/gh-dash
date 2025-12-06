@@ -579,7 +579,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case prview.EnrichedPrMsg:
-		log.Warn("on prview.EnrichedPrMsg", "url", msg.Data.Url)
 		if msg.Err == nil {
 			m.prView.SetEnrichedPR(msg.Data)
 			m.prs[msg.Id].(*prssection.Model).EnrichPR(msg.Data)
@@ -737,7 +736,6 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
-	log.Warn("⌨️ onViewedRowChanged")
 	m.prView.SetSummaryViewLess()
 	m.prView.GoToFirstTab()
 	m.syncSidebar()
@@ -831,7 +829,6 @@ func (m *Model) syncSidebar() tea.Cmd {
 		m.sidebar.SetContent(m.branchSidebar.View())
 	case *prrow.Data:
 		m.prView.SetSectionId(m.currSectionId)
-		log.Warn("setting row", "row.IsEnriched", row.IsEnriched)
 		m.prView.SetRow(row)
 		m.prView.SetWidth(width)
 		m.sidebar.SetContent(m.prView.View())
