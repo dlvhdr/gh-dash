@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	checks "github.com/dlvhdr/x/gh-checks"
 	ghchecks "github.com/dlvhdr/x/gh-checks"
 )
 
@@ -456,15 +455,15 @@ func (m *Model) getChecksStats() checksStats {
 
 	for _, count := range allChecks {
 		state := string(count.State)
-		if checks.IsStatusWaiting(state) {
+		if ghchecks.IsStatusWaiting(state) {
 			res.inProgress += int(count.Count)
-		} else if checks.IsConclusionAFailure(state) {
+		} else if ghchecks.IsConclusionAFailure(state) {
 			res.failed += int(count.Count)
-		} else if checks.IsConclusionASkip(state) {
+		} else if ghchecks.IsConclusionASkip(state) {
 			res.skipped += int(count.Count)
-		} else if checks.IsConclusionNeutral(state) {
+		} else if ghchecks.IsConclusionNeutral(state) {
 			res.neutral += int(count.Count)
-		} else if checks.IsConclusionASuccess(state) {
+		} else if ghchecks.IsConclusionASuccess(state) {
 			res.succeeded += int(count.Count)
 		}
 	}
