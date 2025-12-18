@@ -34,7 +34,7 @@ _This will create a shell where all required tools are installed._
   - [direnv](https://www.jetify.com/devbox/docs/ide_configuration/direnv/) is a tool that allows setting unique environment variables per directory in your file system.
     - Install `direnv` with: `brew install direnv`
     - Add the following line at the end of the `~/.bashrc` file: `eval "$(direnv hook bash)"`
-        - See [direnv's installation instructions](https://direnv.net/docs/hook.html) for other shells.
+      - See [direnv's installation instructions](https://direnv.net/docs/hook.html) for other shells.
     - Enable `direnv` by running `direnv allow`
 - _(Optional)_ Install the VSCode Extension
   - Follow [this guide](https://www.jetify.com/devbox/docs/ide_configuration/vscode/) to set up VSCode to automatically run `devbox shell`.
@@ -45,7 +45,7 @@ _This will create a shell where all required tools are installed._
 
 ## Getting started
 
-To navigate our codebase with confidence, familiar yourself with:
+To navigate our codebase with confidence, familiarize yourself with:
 
 - [Bubbletea](https://github.com/charmbracelet/bubbletea) - the TUI framework we're using
 - [The Elm architecture](https://guide.elm-lang.org/architecture/)
@@ -53,7 +53,7 @@ To navigate our codebase with confidence, familiar yourself with:
 
 ### Code structure
 
-- `ui/` - this is the code that's responsible on rendering the different parts of the TUI
+- `ui/` - this is the code that's responsible for rendering the different parts of the TUI
 - `data/` - the code that fetches data from GitHub's GraphQL API
 - `config/` - code to parse the user's `config.yml` file
 - `utils/` - various utilities
