@@ -334,6 +334,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderAuthor(),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
+		pr.renderNumComments(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
 		pr.RenderLines(isSelected),
