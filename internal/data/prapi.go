@@ -134,7 +134,8 @@ type Commits struct {
 			} `graphql:"deployments(last: 10)"`
 			CommitUrl         graphql.String
 			StatusCheckRollup struct {
-				State    graphql.String
+				State graphql.String
+				// TODO: remove Contexts -> this f*cks up the state ^
 				Contexts struct {
 					CheckRunCount              graphql.Int
 					CheckRunCountsByState      []ContextCountByState
