@@ -86,9 +86,7 @@
                   "deployments": {
                     "nodes": []
                   },
-                  "statusCheckRollup": {
-                    "contexts": {}
-                  }
+                  "statusCheckRollup": {}
                 }
               }
             ],
@@ -172,9 +170,7 @@
                   "deployments": {
                     "nodes": []
                   },
-                  "statusCheckRollup": {
-                    "contexts": {}
-                  }
+                  "statusCheckRollup": {}
                 }
               }
             ],
@@ -282,9 +278,7 @@
                   "deployments": {
                     "nodes": []
                   },
-                  "statusCheckRollup": {
-                    "contexts": {}
-                  }
+                  "statusCheckRollup": {}
                 }
               }
             ],
@@ -392,9 +386,7 @@
                   "deployments": {
                     "nodes": []
                   },
-                  "statusCheckRollup": {
-                    "contexts": {}
-                  }
+                  "statusCheckRollup": {}
                 }
               }
             ],
@@ -502,9 +494,7 @@
                   "deployments": {
                     "nodes": []
                   },
-                  "statusCheckRollup": {
-                    "contexts": {}
-                  }
+                  "statusCheckRollup": {}
                 }
               }
             ],
