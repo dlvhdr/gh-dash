@@ -59,6 +59,11 @@ func (m *Model) renderChecksOverview() string {
 
 func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	checks := ""
+
+	if !m.pr.Data.IsEnriched {
+		return m.viewCheckCategory(m.ctx.Styles.Common.WaitingGlyph, "Loading...", "", false), statusWaiting
+	}
+
 	stats := m.getChecksStats()
 	var icon, title string
 	var status checkSectionStatus
@@ -443,7 +448,7 @@ type checksStats struct {
 
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
-	commits := m.pr.Data.Primary.Commits.Nodes
+	commits := m.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
 		return res
 	}
