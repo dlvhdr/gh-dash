@@ -411,6 +411,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
+	labels = append(labels, "")
 	m.inputBox.SetValue(strings.Join(labels, ", "))
 
 	// Reset autocomplete
