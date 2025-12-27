@@ -348,7 +348,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
-	m.inputBox.SetValue(strings.Join(labels, " "))
+	m.inputBox.SetValue(strings.Join(labels, ", "))
 
 	if isLabeling {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
