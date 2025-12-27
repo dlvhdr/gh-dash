@@ -11,6 +11,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -22,6 +23,10 @@ var (
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 	commentPrompt    = "Leave a comment..."
 )
+
+type RepoLabelsFetchedMsg struct {
+	Labels []data.Label
+}
 
 type Model struct {
 	ctx       *context.ProgramContext
@@ -35,12 +40,16 @@ type Model struct {
 	isAssigning       bool
 	isUnassigning     bool
 
-	inputBox inputbox.Model
+	inputBox   inputbox.Model
+	ac         autocomplete.Model
+	repoLabels []data.Label
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
 	inputBox.SetHeight(common.InputBoxHeight)
+
+	ac := autocomplete.NewModel(ctx)
 
 	return Model{
 		issue: nil,
@@ -50,7 +59,9 @@ func NewModel(ctx *context.ProgramContext) Model {
 		isAssigning:   false,
 		isUnassigning: false,
 
-		inputBox: inputBox,
+		inputBox:   inputBox,
+		ac:         ac,
+		repoLabels: nil,
 	}
 }
 
@@ -62,6 +73,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
+	case RepoLabelsFetchedMsg:
+		m.repoLabels = msg.Labels
+		labelNames := data.GetLabelNames(msg.Labels)
+		m.ac.SetSuggestions(labelNames)
+		return m, nil
+
 	case tea.KeyMsg:
 		if m.isCommenting {
 			switch msg.Type {
@@ -97,25 +114,64 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else if m.isLabeling {
 			switch msg.Type {
 			case tea.KeyCtrlD:
-				labels := strings.Split(m.inputBox.Value(), ",")
-				for i := range labels {
-					labels[i] = strings.TrimSpace(labels[i])
-				}
+				labels := m.inputBox.GetAllLabels()
 				if len(labels) > 0 {
 					cmd = m.label(labels)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
+				m.ac.Hide()
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isLabeling = false
+				m.ac.Hide()
+				return m, nil
+
+			case tea.KeyUp, tea.KeyCtrlP:
+				m.ac.Prev()
+				return m, nil
+
+			case tea.KeyDown, tea.KeyCtrlN:
+				m.ac.Next()
+				return m, nil
+
+			case tea.KeyTab, tea.KeyEnter:
+				selected := m.ac.GetSelected()
+				if selected != "" {
+					currentInput := m.inputBox.Value()
+					currentLabel := m.inputBox.GetCurrentLabel()
+					if currentLabel != "" {
+						lastComma := strings.LastIndex(currentInput, ",")
+						if lastComma == -1 {
+							// No comma, replace entire string
+							m.inputBox.SetValue(selected + ", ")
+						} else {
+							// Replace only the text after the last comma
+							previousLabels := currentInput[:lastComma+1]
+							m.inputBox.SetValue(previousLabels + " " + selected + ", ")
+						}
+					} else {
+						// No current label, append suggestion
+						newValue := m.inputBox.Value()
+						if newValue != "" && !strings.HasSuffix(newValue, ", ") {
+							newValue += ", "
+						}
+						m.inputBox.SetValue(newValue + selected + ", ")
+					}
+				}
+				m.ac.Hide()
 				return m, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
+
+			currentInput := m.inputBox.Value()
+			existingLabels := m.inputBox.GetAllLabels()
+			m.ac.Filter(currentInput, existingLabels)
+
 		} else if m.isAssigning {
 			switch msg.Type {
 			case tea.KeyCtrlD:
@@ -183,8 +239,14 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning || m.isLabeling {
+	if m.isCommenting || m.isAssigning || m.isUnassigning {
 		s.WriteString(m.inputBox.View())
+	} else if m.isLabeling {
+		s.WriteString(m.inputBox.View())
+		if m.ac.IsVisible() {
+			s.WriteString("\n")
+			s.WriteString(m.ac.View())
+		}
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
@@ -258,6 +320,7 @@ func (m *Model) getIndentedContentWidth() int {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.inputBox.SetWidth(width)
+	m.ac.SetWidth(width - 10)
 }
 
 func (m *Model) SetSectionId(id int) {
@@ -350,10 +413,36 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	m.inputBox.SetValue(strings.Join(labels, ", "))
 
+	// Reset autocomplete
+	m.ac.Hide()
+	m.ac.SetSuggestions(nil)
+
+	// Trigger label fetching for autocomplete
 	if isLabeling {
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		if labels, ok := data.GetCachedRepoLabels(repoName); ok {
+			// Use cached labels
+			m.repoLabels = labels
+			m.ac.SetSuggestions(data.GetLabelNames(labels))
+		} else {
+			// Fetch labels asynchronously
+			return m.fetchLabels()
+		}
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
+}
+
+// fetchLabels returns a command to fetch repository labels
+func (m *Model) fetchLabels() tea.Cmd {
+	return func() tea.Msg {
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		labels, err := data.FetchRepoLabels(repoName)
+		if err != nil {
+			return nil
+		}
+		return RepoLabelsFetchedMsg{Labels: labels}
+	}
 }
 
 func (m *Model) userAssignedToIssue(login string) bool {
