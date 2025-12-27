@@ -1,0 +1,65 @@
+package data
+
+import (
+	"encoding/json"
+	"os/exec"
+	"strings"
+	"sync"
+)
+
+func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
+	labelCacheMu.RLock()
+	defer labelCacheMu.RUnlock()
+	labels, ok := repoLabelCache[repoNameWithOwner]
+	return labels, ok
+}
+
+var (
+	repoLabelCache = make(map[string][]Label)
+	labelCacheMu   sync.RWMutex
+)
+
+func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
+	// Check cache first
+	if labels, ok := GetCachedRepoLabels(repoNameWithOwner); ok {
+		return labels, nil
+	}
+
+	cmd := exec.Command("gh", "label", "list", "-R", repoNameWithOwner, "--json", "name,color", "--limit", "100")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	var labels []Label
+	if err := json.Unmarshal(output, &labels); err != nil {
+		return nil, err
+	}
+
+	filteredLabels := make([]Label, 0, len(labels))
+	for _, label := range labels {
+		if strings.TrimSpace(label.Name) != "" {
+			filteredLabels = append(filteredLabels, label)
+		}
+	}
+
+	labelCacheMu.Lock()
+	repoLabelCache[repoNameWithOwner] = filteredLabels
+	labelCacheMu.Unlock()
+
+	return filteredLabels, nil
+}
+
+func ClearLabelCache() {
+	labelCacheMu.Lock()
+	defer labelCacheMu.Unlock()
+	repoLabelCache = make(map[string][]Label)
+}
+
+func GetLabelNames(labels []Label) []string {
+	names := make([]string, len(labels))
+	for i, label := range labels {
+		names[i] = label.Name
+	}
+	return names
+}
