@@ -2,6 +2,7 @@ package inputbox
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -9,14 +10,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 type Model struct {
-	ctx       *context.ProgramContext
-	textArea  textarea.Model
-	inputHelp help.Model
-	prompt    string
+	ctx          *context.ProgramContext
+	textArea     textarea.Model
+	inputHelp    help.Model
+	prompt       string
+	autocomplete *autocomplete.Model
 }
 
 var inputKeys = []key.Binding{
@@ -50,8 +53,51 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
+func (m *Model) SetAutocomplete(ac *autocomplete.Model) {
+	m.autocomplete = ac
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if m.autocomplete != nil && m.autocomplete.IsVisible() {
+			switch msg.Type {
+			case tea.KeyUp, tea.KeyCtrlP:
+				m.autocomplete.Prev()
+				return m, nil
+			case tea.KeyDown, tea.KeyCtrlN:
+				m.autocomplete.Next()
+				return m, nil
+			case tea.KeyEnter, tea.KeyTab:
+				selected := m.autocomplete.GetSelected()
+				if selected != "" {
+					currentInput := m.textArea.Value()
+					currentLabel := extractCurrentLabel(currentInput)
+					newLabel := selected
+
+					if currentLabel != "" {
+						newInput := strings.ReplaceAll(
+							currentInput,
+							currentLabel,
+							newLabel,
+						)
+						m.textArea.SetValue(newInput)
+					}
+
+					newValue := m.textArea.Value()
+					if !strings.HasSuffix(newValue, ", ") {
+						m.textArea.SetValue(newValue + ", ")
+					}
+					m.textArea.SetCursor(len(m.textArea.Value()))
+				}
+				m.autocomplete.Hide()
+				return m, nil
+			}
+		}
+	}
+
 	m.textArea, cmd = m.textArea.Update(msg)
 	return m, cmd
 }
@@ -72,6 +118,15 @@ func (m Model) View() string {
 					Render(m.inputHelp.ShortHelpView(inputKeys)),
 			),
 		)
+}
+
+func (m Model) ViewWithAutocomplete() string {
+	baseView := m.View()
+	autocompleteView := ""
+	if m.autocomplete != nil {
+		autocompleteView = m.autocomplete.View()
+	}
+	return baseView + "\n" + autocompleteView
 }
 
 func (m *Model) Value() string {
@@ -109,4 +164,32 @@ func (m *Model) Reset() {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
+}
+
+func extractCurrentLabel(input string) string {
+	lastComma := strings.LastIndex(input, ",")
+	if lastComma == -1 {
+		return input
+	}
+	return strings.TrimSpace(input[lastComma+1:])
+}
+
+func (m *Model) GetCurrentLabel() string {
+	return extractCurrentLabel(m.textArea.Value())
+}
+
+func (m *Model) GetAllLabels() []string {
+	value := m.textArea.Value()
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	labels := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			labels = append(labels, trimmed)
+		}
+	}
+	return labels
 }
