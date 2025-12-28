@@ -97,7 +97,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else if m.isLabeling {
 			switch msg.Type {
 			case tea.KeyCtrlD:
-				labels := strings.Fields(m.inputBox.Value())
+				labels := strings.Split(m.inputBox.Value(), ",")
+				for i := range labels {
+					labels[i] = strings.TrimSpace(labels[i])
+				}
 				if len(labels) > 0 {
 					cmd = m.label(labels)
 				}
@@ -339,13 +342,13 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isLabeling = isLabeling
-	m.inputBox.SetPrompt("Add/remove labels (whitespace-separated)...")
+	m.inputBox.SetPrompt("Add/remove labels (comma-separated)...")
 
 	labels := make([]string, 0)
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
-	m.inputBox.SetValue(strings.Join(labels, " "))
+	m.inputBox.SetValue(strings.Join(labels, ", "))
 
 	if isLabeling {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
