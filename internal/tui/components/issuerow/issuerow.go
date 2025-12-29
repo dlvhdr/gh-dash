@@ -86,10 +86,12 @@ func (issue *Issue) renderAssignees() string {
 
 func (issue *Issue) renderStatus() string {
 	if issue.Data.State == "OPEN" {
-		return lipgloss.NewStyle().Foreground(issue.Ctx.Styles.Colors.OpenIssue).Render("")
-	} else {
-		return issue.getTextStyle().Render("")
+		return components.RenderWithoutReset(
+			lipgloss.NewStyle().Foreground(issue.Ctx.Styles.Colors.OpenIssue),
+			"",
+		)
 	}
+	return components.RenderWithoutReset(issue.getTextStyle(), "")
 }
 
 func (issue *Issue) renderNumComments() string {

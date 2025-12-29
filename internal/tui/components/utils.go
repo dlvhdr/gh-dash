@@ -55,3 +55,8 @@ func RenderIssueTitle(
 	res := fmt.Sprintf("%s%s", prNumber, rTitle)
 	return res
 }
+
+func RenderWithoutReset(style lipgloss.Style, value string) string {
+	rendered := style.Render(value)
+	return strings.ReplaceAll(rendered, "\x1b[0m", "")
+}

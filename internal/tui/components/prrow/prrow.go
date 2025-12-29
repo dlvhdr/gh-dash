@@ -32,8 +32,9 @@ func (pr *PullRequest) renderNumComments() string {
 		return "-"
 	}
 
-	numCommentsStyle := pr.Ctx.Styles.Common.FaintTextStyle
-	return numCommentsStyle.Render(
+	numCommentsStyle := lipgloss.NewStyle().Foreground(pr.Ctx.Theme.FaintText)
+	return components.RenderWithoutReset(
+		numCommentsStyle,
 		fmt.Sprintf(
 			"%d",
 			pr.Data.Primary.Comments.TotalCount+pr.Data.Primary.ReviewThreads.TotalCount,
@@ -49,45 +50,43 @@ func (pr *PullRequest) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.SuccessText,
 		)
-		return reviewCellStyle.Render("󰄬")
+		return components.RenderWithoutReset(reviewCellStyle, "󰄬")
 	}
 
 	if pr.Data.Primary.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("")
+		return components.RenderWithoutReset(reviewCellStyle, "")
 	}
 
 	if pr.Data.Primary.Reviews.TotalCount > 0 {
-		return reviewCellStyle.Render(pr.Ctx.Styles.Common.CommentGlyph)
+		return components.RenderWithoutReset(reviewCellStyle, constants.CommentIcon)
 	}
 
-	return reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
+	return components.RenderWithoutReset(reviewCellStyle.Foreground(pr.Ctx.Theme.WarningText), constants.WaitingIcon)
 }
 
 func (pr *PullRequest) renderState() string {
-	mergeCellStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
+	mergeCellStyle := lipgloss.NewStyle()
 
 	if pr.Data.Primary == nil {
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText), "󰜛")
 	}
 
 	switch pr.Data.Primary.State {
 	case "OPEN":
 		if pr.Data.Primary.IsDraft {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
+			return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText), constants.DraftIcon)
 		} else {
-			return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR).Render(constants.OpenIcon)
+			return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR), constants.OpenIcon)
 		}
 	case "CLOSED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).
-			Render(constants.ClosedIcon)
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR), constants.ClosedIcon)
 	case "MERGED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).
-			Render(constants.MergedIcon)
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR), constants.MergedIcon)
 	default:
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("-")
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText), "-")
 	}
 }
 
@@ -111,15 +110,15 @@ func (pr *PullRequest) renderCiStatus() string {
 	switch accStatus {
 	case checks.CommitStateSuccess:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
-		return ciCellStyle.Render(constants.SuccessIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.SuccessIcon)
 	case checks.CommitStateExpected, checks.CommitStatePending:
-		return ciCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
+		return components.RenderWithoutReset(ciCellStyle.Foreground(pr.Ctx.Theme.WarningText), constants.WaitingIcon)
 	case checks.CommitStateError, checks.CommitStateFailure:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.ErrorText)
-		return ciCellStyle.Render(constants.FailureIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.FailureIcon)
 	default:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.FaintText)
-		return ciCellStyle.Render(constants.EmptyIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.EmptyIcon)
 	}
 }
 
