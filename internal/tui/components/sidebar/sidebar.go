@@ -70,8 +70,13 @@ func (m Model) View() string {
 	return style.Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		m.ctx.Styles.Sidebar.PagerStyle.
-			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		applyBackgroundAfterReset(
+			m.ctx.Styles.Sidebar.PagerStyle.
+				Width(m.GetSidebarContentWidth()).
+				MaxWidth(m.GetSidebarContentWidth()).
+				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+			m.ctx.Theme.MainBackground,
+		),
 	))
 }
 

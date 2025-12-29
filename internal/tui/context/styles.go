@@ -177,6 +177,7 @@ func InitStyles(theme tuitheme.Theme) Styles {
 			BottomLeft:  "",
 		}).
 		BorderForeground(theme.PrimaryBorder).
+		BorderBackground(theme.MainBackground).
 		Background(theme.MainBackground)
 	s.Sidebar.PagerStyle = lipgloss.NewStyle().
 		Height(s.Sidebar.PagerHeight).
