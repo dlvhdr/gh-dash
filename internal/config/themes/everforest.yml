@@ -1,0 +1,17 @@
+name: Everforest
+colors:
+  text:
+    primary: "#d3c6aa"
+    secondary: "#a7c080"
+    faint: "#475258"
+    inverted: "#2d353b"
+    success: "#a7c080"
+    warning: "#dbbc7f"
+    error: "#e67e80"
+  background:
+    main: "#2d353b"
+    selected: "#3d484d"
+  border:
+    primary: "#7fbbb3"
+    secondary: "#83c092"
+    faint: "#3d484d"

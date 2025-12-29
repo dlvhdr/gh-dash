@@ -26,11 +26,11 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).Background(ctx.Theme.MainBackground)
 	ti.Width = ctx.MainContentWidth - lipgloss.Width(prompt) - 6
-	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
+	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText).Background(ctx.Theme.MainBackground)
 	ti.Prompt = prompt
-	ti.TextStyle = ti.TextStyle.Faint(true)
+	ti.TextStyle = ti.TextStyle.Faint(true).Background(ctx.Theme.MainBackground)
 	ti.Cursor.Style = ti.Cursor.Style.Faint(true)
 	ti.Cursor.TextStyle = ti.Cursor.TextStyle.Faint(true)
 	ti.Blur()
@@ -60,7 +60,7 @@ func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
 		Width(ctx.MainContentWidth - 4).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.ctx.Theme.PrimaryBorder).
+		BorderForeground(m.ctx.Theme.PrimaryBorder).Background(m.ctx.Theme.MainBackground).
 		Render(m.textInput.View())
 }
 

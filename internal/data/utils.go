@@ -21,19 +21,19 @@ func GetAuthorRoleIcon(role string, theme theme.Theme) string {
 	switch role {
 	case "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "NONE":
 		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(
-			theme.NewContributorIconColor)).Render(theme.NewContributorIcon)
+			theme.NewContributorIconColor)).Background(theme.MainBackground).Render(theme.NewContributorIcon)
 	case "COLLABORATOR":
 		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(
-			theme.CollaboratorIconColor)).Render(theme.CollaboratorIcon)
+			theme.CollaboratorIconColor)).Background(theme.MainBackground).Render(theme.CollaboratorIcon)
 	case "CONTRIBUTOR":
 		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(
-			theme.ContributorIconColor)).Render(theme.ContributorIcon)
+			theme.ContributorIconColor)).Background(theme.MainBackground).Render(theme.ContributorIcon)
 	case "MEMBER":
-		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(theme.MemberIconColor)).Render(theme.MemberIcon)
+		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(theme.MemberIconColor)).Background(theme.MainBackground).Render(theme.MemberIcon)
 	case "OWNER":
-		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(theme.OwnerIconColor)).Render(theme.OwnerIcon)
+		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(theme.OwnerIconColor)).Background(theme.MainBackground).Render(theme.OwnerIcon)
 	default:
 		return lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor(
-			theme.UnknownRoleIconColor)).Render(theme.UnknownRoleIcon)
+			theme.UnknownRoleIconColor)).Background(theme.MainBackground).Render(theme.UnknownRoleIcon)
 	}
 }

@@ -67,7 +67,7 @@ func (pr *PullRequest) renderReviewStatus() string {
 }
 
 func (pr *PullRequest) renderState() string {
-	mergeCellStyle := lipgloss.NewStyle()
+	mergeCellStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
 
 	if pr.Data.Primary == nil {
 		return mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
@@ -133,38 +133,49 @@ func (pr *PullRequest) RenderLines(isSelected bool) string {
 	additionsFg = pr.Ctx.Theme.SuccessText
 	deletionsFg = pr.Ctx.Theme.ErrorText
 
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
 	if isSelected {
 		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	additionsText := baseStyle.
-		Foreground(additionsFg).
-		Render(fmt.Sprintf("+%s", components.FormatNumber(pr.Data.Primary.Additions)))
-	deletionsText := baseStyle.
-		Foreground(deletionsFg).
-		Render(fmt.Sprintf("-%s", components.FormatNumber(deletions)))
-
 	return pr.getTextStyle().Render(
-		keepSameSpacesOnAddDeletions(
-			lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				additionsText,
-				baseStyle.Render(" "),
-				deletionsText,
-			)),
+		renderAdditionsDeletions(
+			pr.Data.Primary.Additions,
+			deletions,
+			baseStyle,
+			additionsFg,
+			deletionsFg,
+		),
 	)
 }
 
-func keepSameSpacesOnAddDeletions(str string) string {
-	strAsList := strings.Split(str, " ")
-	return fmt.Sprintf(
-		"%7s",
-		strAsList[0],
-	) + " " + fmt.Sprintf(
-		"%7s",
-		strAsList[1],
+func (pr *PullRequest) RenderLinesWithBackground(bg lipgloss.AdaptiveColor) string {
+	if pr.Data.Primary == nil {
+		return "-"
+	}
+	deletions := max(pr.Data.Primary.Deletions, 0)
+
+	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	additionsFg = pr.Ctx.Theme.SuccessText
+	deletionsFg = pr.Ctx.Theme.ErrorText
+
+	baseStyle := lipgloss.NewStyle().Background(bg)
+
+	return renderAdditionsDeletions(
+		pr.Data.Primary.Additions,
+		deletions,
+		baseStyle,
+		additionsFg,
+		deletionsFg,
 	)
+}
+
+func renderAdditionsDeletions(additions, deletions int, baseStyle lipgloss.Style, additionsFg, deletionsFg lipgloss.AdaptiveColor) string {
+	addStr := fmt.Sprintf("%7s", fmt.Sprintf("+%s", components.FormatNumber(additions)))
+	delStr := fmt.Sprintf("%7s", fmt.Sprintf("-%s", components.FormatNumber(deletions)))
+	additionsText := baseStyle.Foreground(additionsFg).Render(addStr)
+	deletionsText := baseStyle.Foreground(deletionsFg).Render(delStr)
+	return lipgloss.JoinHorizontal(lipgloss.Left, additionsText, baseStyle.Render(" "), deletionsText)
 }
 
 func (pr *PullRequest) renderTitle() string {
@@ -177,19 +188,17 @@ func (pr *PullRequest) renderTitle() string {
 }
 
 func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
 	if isSelected {
-		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
+		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	author := baseStyle.Render(fmt.Sprintf("@%s",
-		pr.Data.Primary.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon)))
+	author := fmt.Sprintf("@%s", pr.Data.Primary.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon))
 	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Primary.Repository.NameWithOwner,
 		fmt.Sprintf(" #%d by %s", pr.Data.Primary.Number, author))
 	branchHidden := pr.Ctx.Config.Defaults.Layout.Prs.Base.Hidden
 	if branchHidden == nil || !*branchHidden {
-		branch := baseStyle.Render(pr.Data.Primary.HeadRefName)
-		top = lipgloss.JoinHorizontal(lipgloss.Top, top, baseStyle.Render(" · "), branch)
+		top = lipgloss.JoinHorizontal(lipgloss.Top, top, " · ", pr.Data.Primary.HeadRefName)
 	}
 	title := pr.Data.Primary.Title
 	var titleColumn table.Column

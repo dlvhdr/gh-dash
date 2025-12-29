@@ -1,0 +1,17 @@
+name: Matte Black
+colors:
+  text:
+    primary: "#bebebe"
+    secondary: "#8a8a8d"
+    faint: "#555555"
+    inverted: "#121212"
+    success: "#FFC107"
+    warning: "#e68e0d"
+    error: "#D35F5F"
+  background:
+    main: "#121212"
+    selected: "#333333"
+  border:
+    primary: "#FFC107"
+    secondary: "#e68e0d"
+    faint: "#333333"

@@ -1,0 +1,17 @@
+name: Default
+colors:
+  text:
+    primary: "#c6c6c6"
+    secondary: "#8b8b8b"
+    faint: "#6c6c6c"
+    inverted: "#1a1a1a"
+    success: "#3fb950"
+    warning: "#d29922"
+    error: "#f85149"
+  background:
+    main: "#1a1a1a"
+    selected: "#2d333b"
+  border:
+    primary: "#444c56"
+    secondary: "#373e47"
+    faint: "#21262d"

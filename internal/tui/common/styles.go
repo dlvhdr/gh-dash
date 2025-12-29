@@ -41,9 +41,11 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 
 	s.MainTextStyle = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
-		Bold(true)
+		Bold(true).
+		Background(theme.MainBackground)
 	s.FaintTextStyle = lipgloss.NewStyle().
-		Foreground(theme.FaintText)
+		Foreground(theme.FaintText).
+		Background(theme.MainBackground)
 	s.FooterStyle = lipgloss.NewStyle().
 		Background(theme.SelectedBackground).
 		Height(FooterHeight)
@@ -54,27 +56,34 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 
 	s.PersonGlyph = lipgloss.NewStyle().
 		Foreground(theme.FaintText).
+		Background(theme.MainBackground).
 		Render(constants.PersonIcon)
 	s.WaitingGlyph = lipgloss.NewStyle().
 		Foreground(theme.WarningText).
+		Background(theme.MainBackground).
 		Render(constants.WaitingIcon)
 	s.FailureGlyph = lipgloss.NewStyle().
 		Foreground(theme.ErrorText).
+		Background(theme.MainBackground).
 		Render(constants.FailureIcon)
 	s.SuccessGlyph = lipgloss.NewStyle().
 		Foreground(theme.SuccessText).
+		Background(theme.MainBackground).
 		Render(constants.SuccessIcon)
 	s.CommentGlyph = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
+		Background(theme.MainBackground).
 		Render(constants.CommentIcon)
 	s.DraftGlyph = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
+		Background(theme.MainBackground).
 		Render(constants.DraftIcon)
 	s.MergedGlyph = lipgloss.NewStyle().
 		Foreground(lipgloss.AdaptiveColor{
 			Light: "#A371F7",
 			Dark:  "#A371F7",
 		}).
+		Background(theme.MainBackground).
 		Render(constants.MergedIcon)
 	return s
 }

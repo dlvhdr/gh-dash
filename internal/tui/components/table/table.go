@@ -255,7 +255,8 @@ func (m *Model) renderHeader() string {
 func (m *Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
 		Height(m.dimensions.Height).
-		Width(m.dimensions.Width)
+		Width(m.dimensions.Width).
+		Background(m.ctx.Theme.MainBackground)
 
 	if m.isLoading {
 		return lipgloss.Place(
@@ -264,6 +265,7 @@ func (m *Model) renderBody() string {
 			lipgloss.Center,
 			lipgloss.Center,
 			fmt.Sprintf("%s%s", m.loadingSpinner.View(), m.loadingMessage),
+			lipgloss.WithWhitespaceBackground(m.ctx.Theme.MainBackground),
 		)
 	}
 

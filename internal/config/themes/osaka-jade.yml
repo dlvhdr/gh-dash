@@ -1,0 +1,17 @@
+name: Osaka Jade
+colors:
+  text:
+    primary: "#C1C497"
+    secondary: "#549e6a"
+    faint: "#53685B"
+    inverted: "#111c18"
+    success: "#2DD5B7"
+    warning: "#E5C736"
+    error: "#FF5345"
+  background:
+    main: "#111c18"
+    selected: "#23372B"
+  border:
+    primary: "#509475"
+    secondary: "#2DD5B7"
+    faint: "#23372B"

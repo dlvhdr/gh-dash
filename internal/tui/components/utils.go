@@ -25,7 +25,7 @@ func FormatNumber(num int) string {
 func GetIssueTextStyle(
 	ctx *context.ProgramContext,
 ) lipgloss.Style {
-	return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
+	return lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText).Background(ctx.Theme.MainBackground)
 }
 
 func RenderIssueTitle(
@@ -43,7 +43,7 @@ func RenderIssueTitle(
 		} else {
 			prNumberFg = ctx.Theme.SecondaryText
 		}
-		prNumber = lipgloss.NewStyle().Foreground(prNumberFg).Render(prNumber)
+		prNumber = lipgloss.NewStyle().Foreground(prNumberFg).Background(ctx.Theme.MainBackground).Render(prNumber)
 		// TODO: hack - see issue https://github.com/charmbracelet/lipgloss/issues/144
 		// Provide ability to prevent insertion of Reset sequence #144
 		prNumber = strings.ReplaceAll(prNumber, "\x1b[0m", "")

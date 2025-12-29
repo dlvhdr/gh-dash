@@ -1,0 +1,17 @@
+name: Ristretto
+colors:
+  text:
+    primary: "#e6d9db"
+    secondary: "#c3b7b8"
+    faint: "#72696a"
+    inverted: "#2c2525"
+    success: "#adda78"
+    warning: "#f9cc6c"
+    error: "#fd6883"
+  background:
+    main: "#2c2525"
+    selected: "#403e41"
+  border:
+    primary: "#a8a9eb"
+    secondary: "#85dacc"
+    faint: "#403e41"

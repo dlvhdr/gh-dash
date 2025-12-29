@@ -131,6 +131,7 @@ func (m *Model) View() string {
 	return lipgloss.NewStyle().
 		Width(m.viewport.Width).
 		MaxWidth(m.viewport.Width).
+		Background(m.ctx.Theme.MainBackground).
 		Render(
 			viewport,
 		)

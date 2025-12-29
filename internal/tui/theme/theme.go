@@ -1,6 +1,10 @@
 package theme
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -8,6 +12,7 @@ import (
 )
 
 type Theme struct {
+	MainBackground          lipgloss.AdaptiveColor // config.Theme.Colors.Background.Main
 	SelectedBackground      lipgloss.AdaptiveColor // config.Theme.Colors.Background.Selected
 	PrimaryBorder           lipgloss.AdaptiveColor // config.Theme.Colors.Border.Primary
 	FaintBorder             lipgloss.AdaptiveColor // config.Theme.Colors.Border.Faint
@@ -34,6 +39,7 @@ type Theme struct {
 }
 
 var DefaultTheme = &Theme{
+	MainBackground:          lipgloss.AdaptiveColor{Light: "", Dark: ""},
 	PrimaryBorder:           lipgloss.AdaptiveColor{Light: "013", Dark: "008"},
 	SecondaryBorder:         lipgloss.AdaptiveColor{Light: "008", Dark: "007"},
 	SelectedBackground:      lipgloss.AdaptiveColor{Light: "006", Dark: "008"},
@@ -74,6 +80,10 @@ func ParseTheme(cfg *config.Config) Theme {
 	}
 
 	if cfg.Theme.Colors != nil {
+		DefaultTheme.MainBackground = _shimHex(
+			cfg.Theme.Colors.Inline.Background.Main,
+			DefaultTheme.MainBackground,
+		)
 		DefaultTheme.SelectedBackground = _shimHex(
 			cfg.Theme.Colors.Inline.Background.Selected,
 			DefaultTheme.SelectedBackground,
@@ -168,4 +178,44 @@ func ParseTheme(cfg *config.Config) Theme {
 	}
 
 	return *DefaultTheme
+}
+
+func HasDarkBackground(theme Theme) bool {
+	bg := strings.TrimSpace(theme.MainBackground.Light)
+	if bg == "" {
+		bg = strings.TrimSpace(theme.MainBackground.Dark)
+	}
+	if bg == "" {
+		return lipgloss.HasDarkBackground()
+	}
+	isDark, ok := isDarkHexColor(bg)
+	if !ok {
+		return lipgloss.HasDarkBackground()
+	}
+	return isDark
+}
+
+func isDarkHexColor(value string) (bool, bool) {
+	trimmed := strings.TrimSpace(value)
+	trimmed = strings.TrimPrefix(trimmed, "#")
+	if len(trimmed) == 3 {
+		trimmed = fmt.Sprintf("%c%c%c%c%c%c", trimmed[0], trimmed[0], trimmed[1], trimmed[1], trimmed[2], trimmed[2])
+	}
+	if len(trimmed) != 6 {
+		return false, false
+	}
+	r, err := strconv.ParseUint(trimmed[0:2], 16, 8)
+	if err != nil {
+		return false, false
+	}
+	g, err := strconv.ParseUint(trimmed[2:4], 16, 8)
+	if err != nil {
+		return false, false
+	}
+	b, err := strconv.ParseUint(trimmed[4:6], 16, 8)
+	if err != nil {
+		return false, false
+	}
+	luminance := 0.2126*float64(r) + 0.7152*float64(g) + 0.0722*float64(b)
+	return luminance < 128, true
 }

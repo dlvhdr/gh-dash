@@ -1,0 +1,17 @@
+name: Catppuccin Mocha
+colors:
+  text:
+    primary: "#cdd6f4"
+    secondary: "#a6adc8"
+    faint: "#6c7086"
+    inverted: "#1e1e2e"
+    success: "#a6e3a1"
+    warning: "#f9e2af"
+    error: "#f38ba8"
+  background:
+    main: "#1e1e2e"
+    selected: "#45475a"
+  border:
+    primary: "#b4befe"
+    secondary: "#89b4fa"
+    faint: "#313244"

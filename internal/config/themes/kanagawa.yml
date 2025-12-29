@@ -1,0 +1,17 @@
+name: Kanagawa
+colors:
+  text:
+    primary: "#dcd7ba"
+    secondary: "#c8c093"
+    faint: "#727169"
+    inverted: "#1f1f28"
+    success: "#76946a"
+    warning: "#c0a36e"
+    error: "#c34043"
+  background:
+    main: "#1f1f28"
+    selected: "#2d4f67"
+  border:
+    primary: "#7e9cd8"
+    secondary: "#957fb8"
+    faint: "#363646"

@@ -8,9 +8,11 @@ import (
 	"fmt"
 	slog "log"
 	"os"
+	"os/signal"
 	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
+	"syscall"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -222,6 +224,16 @@ func init() {
 			tea.WithReportFocus(),
 			tea.WithMouseCellMotion(),
 		)
+
+		// Handle SIGUSR2 to reload theme
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGUSR2)
+		go func() {
+			for range sigChan {
+				p.Send(constants.ThemeReloadMsg{})
+			}
+		}()
+
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)
 		}

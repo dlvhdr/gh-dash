@@ -187,12 +187,15 @@ func (m Model) View() string {
 		s.WriteString(m.inputBox.View())
 	}
 
-	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
+	content := lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Background(m.ctx.Theme.MainBackground).Render(s.String())
+	return lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground).Render(content)
 }
 
 func (m *Model) renderFullNameAndNumber() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
+		Background(m.ctx.Theme.MainBackground).
+		Width(m.getIndentedContentWidth()).
 		Render(fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
 }
 
@@ -227,7 +230,7 @@ func (m *Model) renderBody() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
+		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
@@ -240,6 +243,7 @@ func (m *Model) renderBody() string {
 		Width(width).
 		MaxWidth(width).
 		Align(lipgloss.Left).
+		Background(m.ctx.Theme.MainBackground).
 		Render(rendered)
 }
 

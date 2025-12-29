@@ -1,0 +1,17 @@
+name: Gruvbox
+colors:
+  text:
+    primary: "#d4be98"
+    secondary: "#a89984"
+    faint: "#665c54"
+    inverted: "#282828"
+    success: "#a9b665"
+    warning: "#d8a657"
+    error: "#ea6962"
+  background:
+    main: "#282828"
+    selected: "#3c3836"
+  border:
+    primary: "#7daea3"
+    secondary: "#89b482"
+    faint: "#32302f"
