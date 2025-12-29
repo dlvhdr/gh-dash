@@ -29,6 +29,7 @@ type Model struct {
 	showSeparators         bool
 	separator              string
 	styles                 Styles
+	zonePrefix             string // Unique prefix for zone IDs to avoid conflicts between views
 
 	content string
 	start   int
@@ -171,6 +172,18 @@ func WithKeyMap(km KeyMap) Option {
 	return func(m *Model) {
 		m.KeyMap = km
 	}
+}
+
+// WithZonePrefix sets a unique prefix for zone IDs to avoid conflicts between views.
+func WithZonePrefix(prefix string) Option {
+	return func(m *Model) {
+		m.zonePrefix = prefix
+	}
+}
+
+// SetZonePrefix sets a unique prefix for zone IDs.
+func (m *Model) SetZonePrefix(prefix string) {
+	m.zonePrefix = prefix
 }
 
 // Update is the Bubble Tea update loop.
@@ -381,7 +394,7 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 	}
 
 	// Wrap the item in a zone for click detection
-	zoneID := fmt.Sprintf("%s%d", TabZonePrefix, itemID)
+	zoneID := fmt.Sprintf("%s%s%d", TabZonePrefix, m.zonePrefix, itemID)
 	item = zone.Mark(zoneID, item)
 
 	if m.showSeparators && itemID != len(m.items)-1 {
@@ -395,7 +408,7 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 // Returns -1 if no tab was clicked
 func (m *Model) HandleClick(msg tea.MouseMsg) int {
 	for i := range m.items {
-		zoneID := fmt.Sprintf("%s%d", TabZonePrefix, i)
+		zoneID := fmt.Sprintf("%s%s%d", TabZonePrefix, m.zonePrefix, i)
 		if zone.Get(zoneID).InBounds(msg) {
 			return i
 		}

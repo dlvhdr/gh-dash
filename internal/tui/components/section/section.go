@@ -127,6 +127,7 @@ func NewModel(
 		"Loading...",
 		false,
 	)
+	m.Table.SetSectionId(options.Id)
 	return m
 }
 
@@ -168,6 +169,7 @@ type Table interface {
 	ResetRows()
 	GetIsLoading() bool
 	SetIsLoading(val bool)
+	HandleRowClick(msg tea.MouseMsg) int
 }
 
 type Search interface {
@@ -303,6 +305,10 @@ func (m *BaseModel) FirstItem() int {
 
 func (m *BaseModel) LastItem() int {
 	return m.Table.LastItem()
+}
+
+func (m *BaseModel) HandleRowClick(msg tea.MouseMsg) int {
+	return m.Table.HandleClick(msg)
 }
 
 func (m *BaseModel) IsSearchFocused() bool {

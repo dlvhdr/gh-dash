@@ -534,7 +534,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
 		m.ctx.View = m.ctx.Config.Defaults.View
-		m.ctx.PreviewWidth = msg.Config.Defaults.Preview.Width // Initialize preview width from config
+		// Initialize preview width from saved state, fallback to config default
+		m.ctx.PreviewWidth = msg.Config.Defaults.Preview.Width
+		if state, err := config.LoadState(); err == nil && state.PreviewWidth > 0 {
+			m.ctx.PreviewWidth = state.PreviewWidth
+		}
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.syncMainContentWidth()
@@ -685,6 +689,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, tea.Batch(cmds...)
 			}
+
+			// Check for row clicks in the main content area
+			section := m.getCurrSection()
+			if section != nil {
+				clickedRow := section.HandleRowClick(msg)
+				if clickedRow >= 0 && clickedRow < section.NumRows() {
+					// Navigate to the clicked row
+					currRow := section.CurrRow()
+					if clickedRow != currRow {
+						// Move to the clicked row
+						if clickedRow > currRow {
+							for i := currRow; i < clickedRow; i++ {
+								section.NextRow()
+							}
+						} else {
+							for i := currRow; i > clickedRow; i-- {
+								section.PrevRow()
+							}
+						}
+						cmds = append(cmds, m.onViewedRowChanged())
+						return m, tea.Batch(cmds...)
+					}
+				}
+			}
 		}
 
 		// Handle donate button click
@@ -711,6 +739,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.PreviewWidth = msg.NewWidth
 		m.syncMainContentWidth()
 		m.syncSidebar()
+
+	case sidebar.ResizeEndMsg:
+		// Save the preview width to state file when resize ends
+		if m.ctx.PreviewWidth > 0 {
+			go config.SavePreviewWidth(m.ctx.PreviewWidth)
+		}
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())

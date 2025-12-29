@@ -106,6 +106,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		Separator:         ctx.Styles.Tabs.TabSeparator,
 	})
 
+	// Set unique zone prefix based on current view to avoid zone conflicts
+	m.carousel.SetZonePrefix(fmt.Sprintf("%s-", ctx.View))
 	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.viewLogo()))
 }
 

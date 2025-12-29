@@ -115,6 +115,11 @@ func (t *TestSection) LastItem() int {
 	panic("unimplemented")
 }
 
+// HandleRowClick implements section.Section.
+func (t *TestSection) HandleRowClick(msg tea.MouseMsg) int {
+	return -1
+}
+
 // MakeSectionCmd implements section.Section.
 func (t *TestSection) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 	panic("unimplemented")

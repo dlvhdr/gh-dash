@@ -14,10 +14,13 @@ import (
 )
 
 const (
-	ResizeZoneID     = "sidebar-resize"
-	MinPreviewWidth  = 30
-	MaxPreviewWidth  = 150
-	ResizeHandleChar = "│"
+	ResizeZoneID       = "sidebar-resize"
+	MinPreviewWidth    = 30
+	MaxPreviewWidth    = 150
+	ResizeHandleChar   = "│"
+	ScrollbarWidth     = 1
+	ScrollThumbChar    = "┃"
+	ScrollTrackChar    = "│"
 )
 
 // ResizeMsg is sent when the sidebar is resized via mouse drag
@@ -157,28 +160,91 @@ func (m Model) View() string {
 	// Create the resize handle (left border) as a zone for mouse interaction
 	resizeHandle := m.renderResizeHandle(height)
 
-	// Content style without the left border (we'll add it separately)
-	contentStyle := lipgloss.NewStyle().
-		Height(height).
-		Width(width - 1). // Subtract 1 for the resize handle
-		MaxWidth(width - 1)
-
 	var content string
 	if m.data == "" {
+		// Content style without the left border and scrollbar
+		contentStyle := lipgloss.NewStyle().
+			Height(height).
+			Width(width - 1). // Subtract 1 for the resize handle
+			MaxWidth(width - 1)
 		content = contentStyle.Align(lipgloss.Center).Render(
 			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
 		)
 	} else {
-		content = contentStyle.Render(lipgloss.JoinVertical(
-			lipgloss.Top,
-			m.viewport.View(),
-			m.ctx.Styles.Sidebar.PagerStyle.
-				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
-		))
+		// Render scrollbar
+		scrollbar := m.renderScrollbar(height - m.ctx.Styles.Sidebar.PagerHeight)
+
+		// Content style - subtract space for resize handle and scrollbar
+		contentWidth := width - 1 - ScrollbarWidth
+		contentStyle := lipgloss.NewStyle().
+			Height(height).
+			Width(contentWidth).
+			MaxWidth(contentWidth)
+
+		viewportContent := lipgloss.NewStyle().
+			Width(contentWidth).
+			MaxWidth(contentWidth).
+			Render(m.viewport.View())
+
+		pager := m.ctx.Styles.Sidebar.PagerStyle.
+			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100)))
+
+		mainContent := lipgloss.JoinVertical(lipgloss.Top, viewportContent, pager)
+
+		// Join content and scrollbar
+		content = contentStyle.Render(
+			lipgloss.JoinHorizontal(lipgloss.Top, mainContent, scrollbar),
+		)
 	}
 
 	// Join the resize handle and content horizontally
 	return lipgloss.JoinHorizontal(lipgloss.Top, resizeHandle, content)
+}
+
+func (m Model) renderScrollbar(height int) string {
+	if height <= 0 {
+		return ""
+	}
+
+	totalLines := m.viewport.TotalLineCount()
+	visibleLines := m.viewport.Height
+
+	// If all content fits, no scrollbar needed
+	if totalLines <= visibleLines {
+		return lipgloss.NewStyle().
+			Width(ScrollbarWidth).
+			Height(height).
+			Render("")
+	}
+
+	// Calculate thumb size (minimum 1 line)
+	thumbSize := max(1, (visibleLines*height)/totalLines)
+
+	// Calculate thumb position
+	scrollPercent := m.viewport.ScrollPercent()
+	maxThumbPos := height - thumbSize
+	thumbPos := int(float64(maxThumbPos) * scrollPercent)
+
+	// Build scrollbar string
+	scrollbar := ""
+	trackStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder)
+	thumbStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryBorder)
+
+	for i := 0; i < height; i++ {
+		if i >= thumbPos && i < thumbPos+thumbSize {
+			scrollbar += thumbStyle.Render(ScrollThumbChar)
+		} else {
+			scrollbar += trackStyle.Render(ScrollTrackChar)
+		}
+		if i < height-1 {
+			scrollbar += "\n"
+		}
+	}
+
+	return lipgloss.NewStyle().
+		Width(ScrollbarWidth).
+		Height(height).
+		Render(scrollbar)
 }
 
 func (m Model) renderResizeHandle(height int) string {

@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/listviewport"
@@ -15,8 +16,18 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
+// RowClickedMsg is sent when a table row is clicked
+type RowClickedMsg struct {
+	RowIndex  int
+	SectionId int
+}
+
+// RowZonePrefix is used to create unique zone IDs for table rows
+const RowZonePrefix = "table-row-"
+
 type Model struct {
 	ctx            context.ProgramContext
+	sectionId      int
 	Columns        []Column
 	Rows           []Row
 	EmptyState     *string
@@ -308,10 +319,14 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		headerColId++
 	}
 
-	return m.ctx.Styles.Table.RowStyle.
+	row := m.ctx.Styles.Table.RowStyle.
 		BorderBottom(m.ctx.Config.Theme.Ui.Table.ShowSeparator).
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
+
+	// Wrap the row in a zone for click detection
+	zoneID := fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, rowId)
+	return zone.Mark(zoneID, row)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -337,4 +352,19 @@ func (m *Model) UpdateTotalItemsCount(count int) {
 
 func (m *Model) IsLoading() bool {
 	return m.isLoading
+}
+
+func (m *Model) SetSectionId(id int) {
+	m.sectionId = id
+}
+
+// HandleClick checks if a row was clicked and returns the row index, or -1 if no row was clicked
+func (m *Model) HandleClick(msg tea.MouseMsg) int {
+	for i := range m.Rows {
+		zoneID := fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, i)
+		if zone.Get(zoneID).InBounds(msg) {
+			return i
+		}
+	}
+	return -1
 }
