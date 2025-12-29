@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -127,6 +128,7 @@ func (m Model) View() string {
 
 	itemStyle := lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.PrimaryText).
+		Background(m.ctx.Theme.MainBackground).
 		Padding(0, 2).
 		Width(modalWidth - 2)
 
@@ -134,9 +136,7 @@ func (m Model) View() string {
 		Background(m.ctx.Theme.SelectedBackground).
 		Foreground(m.ctx.Theme.PrimaryText)
 
-	currentMarker := lipgloss.NewStyle().
-		Foreground(m.ctx.Theme.SuccessText).
-		Render(" ●")
+	currentMarker := m.currentThemeMarker()
 
 	// Build theme list
 	var items []string
@@ -175,6 +175,7 @@ func (m Model) View() string {
 	items = append(items, "")
 	helpStyle := lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.FaintText).
+		Background(m.ctx.Theme.MainBackground).
 		Padding(0, 2).
 		Width(modalWidth - 2)
 	items = append(items, helpStyle.Render("↑/↓: navigate • enter: select • esc: close"))
@@ -211,4 +212,32 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func (m Model) currentThemeMarker() string {
+	successSeq := foregroundSequence(m.ctx.Theme.SuccessText)
+	baseSeq := foregroundSequence(m.ctx.Theme.PrimaryText)
+	if successSeq == "" || baseSeq == "" {
+		return " ●"
+	}
+	return successSeq + " ●" + baseSeq
+}
+
+func foregroundSequence(color lipgloss.AdaptiveColor) string {
+	value := color.Light
+	if value == "" {
+		value = color.Dark
+	}
+	if value == "" {
+		return ""
+	}
+	termColor := lipgloss.ColorProfile().Color(value)
+	if termColor == nil {
+		return ""
+	}
+	seq := termColor.Sequence(false)
+	if seq == "" {
+		return ""
+	}
+	return termenv.CSI + seq + "m"
 }
