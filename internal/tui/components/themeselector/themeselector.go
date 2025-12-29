@@ -191,7 +191,7 @@ func (m Model) View() string {
 	modal := modalStyle.Render(content)
 
 	// Center the modal on screen
-	return lipgloss.Place(
+	screen := lipgloss.Place(
 		m.width,
 		m.height,
 		lipgloss.Center,
@@ -199,6 +199,11 @@ func (m Model) View() string {
 		modal,
 		lipgloss.WithWhitespaceBackground(m.ctx.Theme.MainBackground),
 	)
+	return lipgloss.NewStyle().
+		Background(m.ctx.Theme.MainBackground).
+		Width(m.width).
+		Height(m.height).
+		Render(screen)
 }
 
 func min(a, b int) int {

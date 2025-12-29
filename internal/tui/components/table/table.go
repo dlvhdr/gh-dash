@@ -319,6 +319,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = *ctx
 	m.rowsViewport.UpdateProgramContext(ctx)
+	m.loadingSpinner.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
 }
 
 func (m *Model) LastUpdated() time.Time {

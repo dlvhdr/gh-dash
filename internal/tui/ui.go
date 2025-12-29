@@ -170,6 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds            []tea.Cmd
 		currSection     = m.getCurrSection()
 		currRowData     = m.getCurrRowData()
+		refreshRows     bool
 	)
 
 	switch msg := msg.(type) {
@@ -665,6 +666,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if tf, err := config.LoadTheme(savedThemeID); err == nil {
 			config.ApplyThemeToConfig(m.ctx.Config, tf)
 			m.applyTheme()
+			refreshRows = true
 			cmd = m.notify(fmt.Sprintf("Theme reloaded: %s", tf.Name))
 		}
 
@@ -673,6 +675,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if tf, err := config.LoadTheme(msg.ThemeID); err == nil {
 			config.ApplyThemeToConfig(m.ctx.Config, tf)
 			m.applyTheme()
+			refreshRows = true
 			// Save the theme selection
 			_ = config.SaveCurrentTheme(msg.ThemeID)
 			cmd = m.notify(fmt.Sprintf("Theme changed to %s", tf.Name))
@@ -683,6 +686,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.syncProgramContext()
+	if refreshRows {
+		m.refreshAllSectionRows()
+		syncCmd := m.syncSidebar()
+		if syncCmd != nil {
+			cmds = append(cmds, syncCmd)
+		}
+	}
 
 	var bsCmd tea.Cmd
 	m.branchSidebar, bsCmd = m.branchSidebar.Update(msg)
@@ -832,6 +842,27 @@ func (m *Model) syncProgramContext() {
 	m.prView.UpdateProgramContext(m.ctx)
 	m.issueSidebar.UpdateProgramContext(m.ctx)
 	m.branchSidebar.UpdateProgramContext(m.ctx)
+}
+
+func (m *Model) refreshAllSectionRows() {
+	if m.repo != nil {
+		if repoSection, ok := m.repo.(*reposection.Model); ok && repoSection != nil {
+			repoSection.UpdateProgramContext(m.ctx)
+			repoSection.Table.SetRows(repoSection.BuildRows())
+		}
+	}
+	for i := range m.prs {
+		if prSection, ok := m.prs[i].(*prssection.Model); ok && prSection != nil {
+			prSection.UpdateProgramContext(m.ctx)
+			prSection.Table.SetRows(prSection.BuildRows())
+		}
+	}
+	for i := range m.issues {
+		if issueSection, ok := m.issues[i].(*issuessection.Model); ok && issueSection != nil {
+			issueSection.UpdateProgramContext(m.ctx)
+			issueSection.Table.SetRows(issueSection.BuildRows())
+		}
+	}
 }
 
 func (m *Model) applyTheme() {

@@ -107,6 +107,12 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	})
 
 	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.viewLogo()))
+	for i := range m.sectionTabs {
+		m.sectionTabs[i].spinner.Style = lipgloss.NewStyle().
+			Foreground(m.ctx.Theme.FaintText).
+			Background(m.ctx.Theme.MainBackground).
+			PaddingLeft(2)
+	}
 }
 
 func (m *Model) SetSections(sections []section.Section) {

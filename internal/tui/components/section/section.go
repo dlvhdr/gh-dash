@@ -262,6 +262,12 @@ func (m *BaseModel) UpdateProgramContext(ctx *context.ProgramContext) {
 		Height: max(0, newDimensions.Height-2),
 		Width:  max(0, newDimensions.Width),
 	}
+	if m.Table.EmptyState != nil {
+		emptyState := m.Ctx.Styles.Section.EmptyStateStyle.Render(
+			fmt.Sprintf("No %s were found that match the given filters", m.PluralForm),
+		)
+		m.Table.EmptyState = &emptyState
+	}
 	m.Table.SetDimensions(tableDimensions)
 	m.Table.UpdateProgramContext(ctx)
 	m.Table.SyncViewPortContent()
