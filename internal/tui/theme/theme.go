@@ -66,6 +66,7 @@ var DefaultTheme = &Theme{
 }
 
 func ParseTheme(cfg *config.Config) Theme {
+	base := *DefaultTheme
 	_shimHex := func(hex config.HexColor, fallback lipgloss.AdaptiveColor) lipgloss.AdaptiveColor {
 		if hex == "" {
 			return fallback
@@ -80,104 +81,104 @@ func ParseTheme(cfg *config.Config) Theme {
 	}
 
 	if cfg.Theme.Colors != nil {
-		DefaultTheme.MainBackground = _shimHex(
+		base.MainBackground = _shimHex(
 			cfg.Theme.Colors.Inline.Background.Main,
-			DefaultTheme.MainBackground,
+			base.MainBackground,
 		)
-		DefaultTheme.SelectedBackground = _shimHex(
+		base.SelectedBackground = _shimHex(
 			cfg.Theme.Colors.Inline.Background.Selected,
-			DefaultTheme.SelectedBackground,
+			base.SelectedBackground,
 		)
-		DefaultTheme.PrimaryBorder = _shimHex(
+		base.PrimaryBorder = _shimHex(
 			cfg.Theme.Colors.Inline.Border.Primary,
-			DefaultTheme.PrimaryBorder,
+			base.PrimaryBorder,
 		)
-		DefaultTheme.FaintBorder = _shimHex(
+		base.FaintBorder = _shimHex(
 			cfg.Theme.Colors.Inline.Border.Faint,
-			DefaultTheme.FaintBorder,
+			base.FaintBorder,
 		)
-		DefaultTheme.SecondaryBorder = _shimHex(
+		base.SecondaryBorder = _shimHex(
 			cfg.Theme.Colors.Inline.Border.Secondary,
-			DefaultTheme.SecondaryBorder,
+			base.SecondaryBorder,
 		)
-		DefaultTheme.FaintText = _shimHex(
+		base.FaintText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Faint,
-			DefaultTheme.FaintText,
+			base.FaintText,
 		)
-		DefaultTheme.PrimaryText = _shimHex(
+		base.PrimaryText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Primary,
-			DefaultTheme.PrimaryText,
+			base.PrimaryText,
 		)
-		DefaultTheme.SecondaryText = _shimHex(
+		base.SecondaryText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Secondary,
-			DefaultTheme.SecondaryText,
+			base.SecondaryText,
 		)
-		DefaultTheme.InvertedText = _shimHex(
+		base.InvertedText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Inverted,
-			DefaultTheme.InvertedText,
+			base.InvertedText,
 		)
-		DefaultTheme.SuccessText = _shimHex(
+		base.SuccessText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Success,
-			DefaultTheme.SuccessText,
+			base.SuccessText,
 		)
-		DefaultTheme.WarningText = _shimHex(
+		base.WarningText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Warning,
-			DefaultTheme.WarningText,
+			base.WarningText,
 		)
-		DefaultTheme.ErrorText = _shimHex(
+		base.ErrorText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Error,
-			DefaultTheme.ErrorText,
+			base.ErrorText,
 		)
-		DefaultTheme.NewContributorIconColor = _shimHex(
+		base.NewContributorIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.NewContributor,
-			DefaultTheme.NewContributorIconColor,
+			base.NewContributorIconColor,
 		)
-		DefaultTheme.ContributorIconColor = _shimHex(
+		base.ContributorIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.Contributor,
-			DefaultTheme.ContributorIconColor,
+			base.ContributorIconColor,
 		)
-		DefaultTheme.CollaboratorIconColor = _shimHex(
+		base.CollaboratorIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.Collaborator,
-			DefaultTheme.CollaboratorIconColor,
+			base.CollaboratorIconColor,
 		)
-		DefaultTheme.MemberIconColor = _shimHex(
+		base.MemberIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.Member,
-			DefaultTheme.MemberIconColor,
+			base.MemberIconColor,
 		)
-		DefaultTheme.OwnerIconColor = _shimHex(
+		base.OwnerIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.Owner,
-			DefaultTheme.OwnerIconColor,
+			base.OwnerIconColor,
 		)
 	}
 
 	if cfg.ShowAuthorIcons && cfg.Theme.Icons != nil {
-		DefaultTheme.NewContributorIcon = _shimIcon(
+		base.NewContributorIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.NewContributor,
-			DefaultTheme.NewContributorIcon,
+			base.NewContributorIcon,
 		)
-		DefaultTheme.ContributorIcon = _shimIcon(
+		base.ContributorIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.Contributor,
-			DefaultTheme.ContributorIcon,
+			base.ContributorIcon,
 		)
-		DefaultTheme.CollaboratorIcon = _shimIcon(
+		base.CollaboratorIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.Collaborator,
-			DefaultTheme.CollaboratorIcon,
+			base.CollaboratorIcon,
 		)
-		DefaultTheme.MemberIcon = _shimIcon(
+		base.MemberIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.Member,
-			DefaultTheme.MemberIcon,
+			base.MemberIcon,
 		)
-		DefaultTheme.OwnerIcon = _shimIcon(
+		base.OwnerIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.Owner,
-			DefaultTheme.OwnerIcon,
+			base.OwnerIcon,
 		)
-		DefaultTheme.UnknownRoleIcon = _shimIcon(
+		base.UnknownRoleIcon = _shimIcon(
 			cfg.Theme.Icons.Inline.UnknownRole,
-			DefaultTheme.UnknownRoleIcon,
+			base.UnknownRoleIcon,
 		)
 	}
 
-	return *DefaultTheme
+	return base
 }
 
 func HasDarkBackground(theme Theme) bool {
