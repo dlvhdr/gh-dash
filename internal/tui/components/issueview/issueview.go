@@ -194,13 +194,15 @@ func (m Model) View() string {
 func (m *Model) renderFullNameAndNumber() string {
 	return lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.SecondaryText).
-		Background(m.ctx.Theme.MainBackground).
+		Background(m.ctx.Theme.SelectedBackground).
 		Width(m.getIndentedContentWidth()).
 		Render(fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
 }
 
 func (m *Model) renderTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).
+	return m.ctx.Styles.Common.MainTextStyle.
+		Background(m.ctx.Theme.SelectedBackground).
+		Width(m.getIndentedContentWidth()).
 		Render(m.issue.Data.Title)
 }
 
