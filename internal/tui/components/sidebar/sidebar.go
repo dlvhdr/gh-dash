@@ -2,14 +2,13 @@ package sidebar
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
@@ -70,7 +69,7 @@ func (m Model) View() string {
 	return style.Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		applyBackgroundAfterReset(
+		common.ApplyBackgroundAfterReset(
 			m.ctx.Styles.Sidebar.PagerStyle.
 				Width(m.GetSidebarContentWidth()).
 				MaxWidth(m.GetSidebarContentWidth()).
@@ -82,7 +81,7 @@ func (m Model) View() string {
 
 func (m *Model) SetContent(data string) {
 	if m.ctx != nil {
-		data = applyBackgroundAfterReset(data, m.ctx.Theme.MainBackground)
+		data = common.ApplyBackgroundAfterReset(data, m.ctx.Theme.MainBackground)
 	}
 	m.data = data
 	m.viewport.SetContent(data)
@@ -111,30 +110,4 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
 	m.viewport.Width = m.GetSidebarContentWidth()
 	m.viewport.Style = lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
-}
-
-func applyBackgroundAfterReset(value string, bgColor lipgloss.AdaptiveColor) string {
-	bg := bgColor.Light
-	if bg == "" {
-		bg = bgColor.Dark
-	}
-	if bg == "" {
-		return value
-	}
-
-	color := lipgloss.ColorProfile().Color(bg)
-	if color == nil {
-		return value
-	}
-	seq := color.Sequence(true)
-	if seq == "" {
-		return value
-	}
-
-	reset := termenv.CSI + termenv.ResetSeq + "m"
-	if !strings.Contains(value, reset) {
-		return value
-	}
-	bgSeq := termenv.CSI + seq + "m"
-	return strings.ReplaceAll(value, reset, reset+bgSeq)
 }

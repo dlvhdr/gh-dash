@@ -11,6 +11,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -89,6 +90,10 @@ func (m Model) View() string {
 	if m.ShowAll {
 		keymap := keys.CreateKeyMapForView(m.ctx.View)
 		fullHelp := m.help.View(keymap)
+		fullHelp = lipgloss.NewStyle().
+			Background(m.ctx.Theme.MainBackground).
+			Render(fullHelp)
+		fullHelp = common.ApplyBackgroundAfterReset(fullHelp, m.ctx.Theme.MainBackground)
 		return lipgloss.JoinVertical(lipgloss.Top, footer, fullHelp)
 	}
 
