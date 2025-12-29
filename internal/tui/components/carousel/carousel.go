@@ -1,13 +1,18 @@
 package carousel
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 )
+
+const TabZonePrefix = "carousel-tab-"
 
 // Model defines a state for the carousel widget.
 type Model struct {
@@ -375,11 +380,27 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render(constants.Ellipsis))
 	}
 
+	// Wrap the item in a zone for click detection
+	zoneID := fmt.Sprintf("%s%d", TabZonePrefix, itemID)
+	item = zone.Mark(zoneID, item)
+
 	if m.showSeparators && itemID != len(m.items)-1 {
 		return lipgloss.JoinHorizontal(lipgloss.Center, item, m.styles.Separator.Render(m.separator))
 	}
 
 	return item
+}
+
+// HandleClick checks if a mouse click event is on a tab and returns the tab index if so
+// Returns -1 if no tab was clicked
+func (m *Model) HandleClick(msg tea.MouseMsg) int {
+	for i := range m.items {
+		zoneID := fmt.Sprintf("%s%d", TabZonePrefix, i)
+		if zone.Get(zoneID).InBounds(msg) {
+			return i
+		}
+	}
+	return -1
 }
 
 func max(a, b int) int {

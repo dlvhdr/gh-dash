@@ -534,6 +534,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
 		m.ctx.View = m.ctx.Config.Defaults.View
+		m.ctx.PreviewWidth = msg.Config.Defaults.Preview.Width // Initialize preview width from config
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.syncMainContentWidth()
@@ -614,24 +615,57 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		if msg.Action != tea.MouseActionRelease || msg.Button != tea.MouseButtonLeft {
-			return m, nil
-		}
-		if zone.Get("donate").InBounds(msg) {
-			log.Info("Donate clicked", "msg", msg)
-			openCmd := func() tea.Msg {
-				b := browser.New("", os.Stdout, os.Stdin)
-				err := b.Browse("https://github.com/sponsors/dlvhdr")
-				if err != nil {
-					return constants.ErrMsg{Err: err}
-				}
-				return nil
+		// Handle sidebar resize - pass all mouse events to sidebar when it's open
+		if m.sidebar.IsOpen {
+			var sidebarCmd tea.Cmd
+			m.sidebar, sidebarCmd = m.sidebar.Update(msg)
+			if sidebarCmd != nil {
+				cmds = append(cmds, sidebarCmd)
 			}
-			cmds = append(cmds, openCmd)
+			// If resizing is in progress, don't process other mouse events
+			if m.sidebar.IsResizing() {
+				return m, tea.Batch(cmds...)
+			}
+		}
+
+		// Handle tab clicks
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			// Check for tab clicks
+			if tabCmd := m.tabs.HandleClick(msg); tabCmd != nil {
+				cmds = append(cmds, tabCmd)
+				// If a tab was clicked, update the section
+				if m.tabs.CurrSectionId() != m.currSectionId {
+					m.setCurrSectionId(m.tabs.CurrSectionId())
+					cmds = append(cmds, m.onViewedRowChanged())
+				}
+				return m, tea.Batch(cmds...)
+			}
+		}
+
+		// Handle donate button click
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			if zone.Get("donate").InBounds(msg) {
+				log.Info("Donate clicked", "msg", msg)
+				openCmd := func() tea.Msg {
+					b := browser.New("", os.Stdout, os.Stdin)
+					err := b.Browse("https://github.com/sponsors/dlvhdr")
+					if err != nil {
+						return constants.ErrMsg{Err: err}
+					}
+					return nil
+				}
+				cmds = append(cmds, openCmd)
+			}
 		}
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
+
+	case sidebar.ResizeMsg:
+		// Update the preview width
+		m.ctx.PreviewWidth = msg.NewWidth
+		m.syncMainContentWidth()
+		m.syncSidebar()
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
@@ -808,7 +842,12 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 func (m *Model) syncMainContentWidth() {
 	sideBarOffset := 0
 	if m.sidebar.IsOpen {
-		sideBarOffset = m.ctx.Config.Defaults.Preview.Width
+		// Use dynamic preview width if set, otherwise use config default
+		if m.ctx.PreviewWidth > 0 {
+			sideBarOffset = m.ctx.PreviewWidth
+		} else {
+			sideBarOffset = m.ctx.Config.Defaults.Preview.Width
+		}
 	}
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
 }

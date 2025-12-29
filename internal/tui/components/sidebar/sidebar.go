@@ -7,10 +7,29 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
+
+const (
+	ResizeZoneID     = "sidebar-resize"
+	MinPreviewWidth  = 30
+	MaxPreviewWidth  = 150
+	ResizeHandleChar = "│"
+)
+
+// ResizeMsg is sent when the sidebar is resized via mouse drag
+type ResizeMsg struct {
+	NewWidth int
+}
+
+// ResizeStartMsg indicates the start of a resize drag operation
+type ResizeStartMsg struct{}
+
+// ResizeEndMsg indicates the end of a resize drag operation
+type ResizeEndMsg struct{}
 
 type Model struct {
 	IsOpen     bool
@@ -18,6 +37,7 @@ type Model struct {
 	viewport   viewport.Model
 	ctx        *context.ProgramContext
 	emptyState string
+	isResizing bool
 }
 
 func NewModel() Model {
@@ -43,9 +63,68 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, keys.Keys.PageUp):
 			m.viewport.HalfPageUp()
 		}
+
+	case tea.MouseMsg:
+		return m.handleMouseMsg(msg)
 	}
 
 	return m, nil
+}
+
+func (m Model) handleMouseMsg(msg tea.MouseMsg) (Model, tea.Cmd) {
+	if !m.IsOpen || m.ctx == nil {
+		return m, nil
+	}
+
+	// Handle resize zone interactions
+	if zone.Get(ResizeZoneID).InBounds(msg) {
+		switch msg.Action {
+		case tea.MouseActionPress:
+			if msg.Button == tea.MouseButtonLeft {
+				m.isResizing = true
+				return m, func() tea.Msg { return ResizeStartMsg{} }
+			}
+		}
+	}
+
+	// Handle drag while resizing
+	if m.isResizing {
+		switch msg.Action {
+		case tea.MouseActionMotion:
+			// Calculate new width based on mouse position
+			// Mouse X is relative to the terminal, sidebar is on the right
+			// New width = ScreenWidth - MouseX
+			newWidth := m.ctx.ScreenWidth - msg.X
+			if newWidth < MinPreviewWidth {
+				newWidth = MinPreviewWidth
+			}
+			if newWidth > MaxPreviewWidth {
+				newWidth = MaxPreviewWidth
+			}
+			// Don't let the sidebar take more than 70% of the screen
+			maxWidth := int(float64(m.ctx.ScreenWidth) * 0.7)
+			if newWidth > maxWidth {
+				newWidth = maxWidth
+			}
+			return m, func() tea.Msg { return ResizeMsg{NewWidth: newWidth} }
+
+		case tea.MouseActionRelease:
+			m.isResizing = false
+			return m, func() tea.Msg { return ResizeEndMsg{} }
+		}
+	}
+
+	return m, nil
+}
+
+// IsResizing returns whether a resize operation is in progress
+func (m Model) IsResizing() bool {
+	return m.isResizing
+}
+
+// SetResizing sets the resizing state
+func (m *Model) SetResizing(resizing bool) {
+	m.isResizing = resizing
 }
 
 func (m Model) View() string {
@@ -54,23 +133,55 @@ func (m Model) View() string {
 	}
 
 	height := m.ctx.MainContentHeight
-	style := m.ctx.Styles.Sidebar.Root.
-		Height(height).
-		Width(m.ctx.Config.Defaults.Preview.Width).
-		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
-
-	if m.data == "" {
-		return style.Align(lipgloss.Center).Render(
-			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
-		)
+	width := m.ctx.PreviewWidth
+	if width <= 0 {
+		width = m.ctx.Config.Defaults.Preview.Width
 	}
 
-	return style.Render(lipgloss.JoinVertical(
-		lipgloss.Top,
-		m.viewport.View(),
-		m.ctx.Styles.Sidebar.PagerStyle.
-			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
-	))
+	// Create the resize handle (left border) as a zone for mouse interaction
+	resizeHandle := m.renderResizeHandle(height)
+
+	// Content style without the left border (we'll add it separately)
+	contentStyle := lipgloss.NewStyle().
+		Height(height).
+		Width(width - 1). // Subtract 1 for the resize handle
+		MaxWidth(width - 1)
+
+	var content string
+	if m.data == "" {
+		content = contentStyle.Align(lipgloss.Center).Render(
+			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
+		)
+	} else {
+		content = contentStyle.Render(lipgloss.JoinVertical(
+			lipgloss.Top,
+			m.viewport.View(),
+			m.ctx.Styles.Sidebar.PagerStyle.
+				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		))
+	}
+
+	// Join the resize handle and content horizontally
+	return lipgloss.JoinHorizontal(lipgloss.Top, resizeHandle, content)
+}
+
+func (m Model) renderResizeHandle(height int) string {
+	// Create a vertical line as the resize handle
+	handleStyle := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.PrimaryBorder).
+		Width(1).
+		Height(height)
+
+	// Build the handle string (vertical line)
+	handle := ""
+	for i := 0; i < height; i++ {
+		handle += ResizeHandleChar
+		if i < height-1 {
+			handle += "\n"
+		}
+	}
+
+	return zone.Mark(ResizeZoneID, handleStyle.Render(handle))
 }
 
 func (m *Model) SetContent(data string) {
@@ -79,10 +190,14 @@ func (m *Model) SetContent(data string) {
 }
 
 func (m *Model) GetSidebarContentWidth() int {
-	if m.ctx.Config == nil {
+	if m.ctx == nil || m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.Config.Defaults.Preview.Width - m.ctx.Styles.Sidebar.BorderWidth
+	width := m.ctx.PreviewWidth
+	if width <= 0 {
+		width = m.ctx.Config.Defaults.Preview.Width
+	}
+	return width - m.ctx.Styles.Sidebar.BorderWidth
 }
 
 func (m *Model) ScrollToTop() {
@@ -99,5 +214,5 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	}
 	m.ctx = ctx
 	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
-	m.viewport.Width = m.GetSidebarContentWidth()
+	m.viewport.Width = m.GetSidebarContentWidth() - 1 // Account for resize handle
 }
