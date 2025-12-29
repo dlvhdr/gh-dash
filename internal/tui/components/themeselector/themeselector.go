@@ -185,6 +185,7 @@ func (m Model) View() string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.PrimaryBorder).
 		Width(modalWidth).
+		Background(m.ctx.Theme.MainBackground).
 		Padding(0)
 
 	modal := modalStyle.Render(content)
@@ -196,6 +197,7 @@ func (m Model) View() string {
 		lipgloss.Center,
 		lipgloss.Center,
 		modal,
+		lipgloss.WithWhitespaceBackground(m.ctx.Theme.MainBackground),
 	)
 }
 
