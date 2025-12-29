@@ -76,6 +76,22 @@ func (m Model) handleMouseMsg(msg tea.MouseMsg) (Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Handle scroll wheel in the sidebar area
+	sidebarStartX := m.ctx.ScreenWidth - m.ctx.PreviewWidth
+	if m.ctx.PreviewWidth <= 0 {
+		sidebarStartX = m.ctx.ScreenWidth - m.ctx.Config.Defaults.Preview.Width
+	}
+	if msg.X >= sidebarStartX {
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
+			m.viewport.LineUp(3)
+			return m, nil
+		case tea.MouseButtonWheelDown:
+			m.viewport.LineDown(3)
+			return m, nil
+		}
+	}
+
 	// Handle resize zone interactions
 	if zone.Get(ResizeZoneID).InBounds(msg) {
 		switch msg.Action {

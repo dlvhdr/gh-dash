@@ -615,7 +615,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		// Handle sidebar resize - pass all mouse events to sidebar when it's open
+		// Handle sidebar resize and scroll - pass mouse events to sidebar when it's open
 		if m.sidebar.IsOpen {
 			var sidebarCmd tea.Cmd
 			m.sidebar, sidebarCmd = m.sidebar.Update(msg)
@@ -625,6 +625,51 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// If resizing is in progress, don't process other mouse events
 			if m.sidebar.IsResizing() {
 				return m, tea.Batch(cmds...)
+			}
+			// If sidebar handled a scroll event, return early
+			if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
+				// Check if mouse is in sidebar area
+				sidebarStartX := m.ctx.ScreenWidth - m.ctx.PreviewWidth
+				if m.ctx.PreviewWidth <= 0 {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.Config.Defaults.Preview.Width
+				}
+				if msg.X >= sidebarStartX {
+					return m, tea.Batch(cmds...)
+				}
+			}
+		}
+
+		// Handle scroll wheel in the list area (main content)
+		if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
+			// Only handle if mouse is in the main content area (not sidebar)
+			sidebarStartX := m.ctx.ScreenWidth
+			if m.sidebar.IsOpen {
+				if m.ctx.PreviewWidth > 0 {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.PreviewWidth
+				} else {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.Config.Defaults.Preview.Width
+				}
+			}
+			if msg.X < sidebarStartX && msg.Y >= common.TabsHeight {
+				section := m.getCurrSection()
+				if section != nil {
+					if msg.Button == tea.MouseButtonWheelUp {
+						section.PrevRow()
+						section.PrevRow()
+						section.PrevRow()
+					} else {
+						prevRow := section.CurrRow()
+						section.NextRow()
+						section.NextRow()
+						nextRow := section.NextRow()
+						// Fetch more if we're near the bottom
+						if prevRow != nextRow && nextRow >= section.NumRows()-3 && m.ctx.View != config.RepoView {
+							cmds = append(cmds, section.FetchNextPageSectionRows()...)
+						}
+					}
+					cmds = append(cmds, m.onViewedRowChanged())
+					return m, tea.Batch(cmds...)
+				}
 			}
 		}
 
