@@ -85,11 +85,12 @@ func (m *Model) Next() {
 }
 
 func (m *Model) Prev() {
-	if len(m.filtered) > 0 {
-		m.selected--
-		if m.selected < 0 {
-			m.selected = len(m.filtered) - 1
-		}
+	if len(m.filtered) == 0 {
+		return
+	}
+	m.selected--
+	if m.selected < 0 {
+		m.selected = len(m.filtered) - 1
 	}
 }
 
