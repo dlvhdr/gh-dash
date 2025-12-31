@@ -1,9 +1,7 @@
 package autocomplete
 
 import (
-	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,7 +9,21 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/sahilm/fuzzy"
 )
+
+// suggestionList wraps a slice of strings to implement fuzzy.Source
+type suggestionList struct {
+	items []string
+}
+
+func (s suggestionList) String(i int) string {
+	return s.items[i]
+}
+
+func (s suggestionList) Len() int {
+	return len(s.items)
+}
 
 type Model struct {
 	ctx         *context.ProgramContext
@@ -59,16 +71,39 @@ func (m *Model) Filter(input string, excludeLabels []string) {
 		excludeMap[strings.ToLower(strings.TrimSpace(label))] = true
 	}
 
-	m.filtered = filterAndRankSuggestions(
-		m.suggestions,
-		currentLabel,
-		excludeMap,
-		m.maxVisible,
-	)
+	// Filter excluded labels first
+	var filteredSuggestions []string
+	for _, suggestion := range m.suggestions {
+		if !excludeMap[strings.ToLower(suggestion)] {
+			filteredSuggestions = append(filteredSuggestions, suggestion)
+		}
+	}
+
+	if currentLabel == "" || len(filteredSuggestions) == 0 {
+		m.filtered = filteredSuggestions
+		if len(m.filtered) > m.maxVisible {
+			m.filtered = m.filtered[:m.maxVisible]
+		}
+		m.selected = 0
+		m.visible = len(m.filtered) > 0
+		return
+	}
+
+	// Use fuzzy.FindFrom with suggestionList as Source
+	list := suggestionList{items: filteredSuggestions}
+	matches := fuzzy.FindFrom(currentLabel, list)
+
+	// Collect matched items up to maxResults
+	m.filtered = make([]string, 0, m.maxVisible)
+	for _, match := range matches {
+		if len(m.filtered) >= m.maxVisible {
+			break
+		}
+		m.filtered = append(m.filtered, match.Str)
+	}
 
 	m.selected = 0
-
-	m.visible = len(m.filtered) > 0 && strings.TrimSpace(currentLabel) != ""
+	m.visible = len(m.filtered) > 0
 }
 
 func (m *Model) Selected() string {
@@ -115,6 +150,15 @@ func (m *Model) SetWidth(width int) {
 	m.width = width
 }
 
+// fuzzy.Source interface implementation for fuzzy.FindFrom
+func (m *Model) String(i int) string {
+	return m.suggestions[i]
+}
+
+func (m *Model) Len() int {
+	return len(m.suggestions)
+}
+
 func (m *Model) View() string {
 	if !m.visible || len(m.filtered) == 0 {
 		return ""
@@ -157,78 +201,4 @@ func extractCurrentLabel(input string) string {
 		return input
 	}
 	return strings.TrimSpace(input[lastComma+1:])
-}
-
-type suggestionMatch struct {
-	label string
-	score float64
-}
-
-func filterAndRankSuggestions(suggestions []string, currentLabel string, excludeMap map[string]bool, maxResults int) []string {
-	currentLabelLower := strings.ToLower(currentLabel)
-
-	var matches []suggestionMatch
-
-	for _, suggestion := range suggestions {
-		if excludeMap[strings.ToLower(suggestion)] {
-			continue
-		}
-
-		suggestionLower := strings.ToLower(suggestion)
-
-		if strings.HasPrefix(suggestionLower, currentLabelLower) {
-			// Exact prefix match - highest score
-			matches = append(matches, suggestionMatch{
-				label: suggestion,
-				score: 1.0,
-			})
-		} else if strings.Contains(suggestionLower, currentLabelLower) {
-			// Contains match - lower score
-			matches = append(matches, suggestionMatch{
-				label: suggestion,
-				score: 0.5,
-			})
-		} else if currentLabelLower != "" && fuzzyMatch(suggestionLower, currentLabelLower) {
-			// Fuzzy match - lowest score
-			matches = append(matches, suggestionMatch{
-				label: suggestion,
-				score: 0.3,
-			})
-		}
-	}
-
-	// Sort by score descending, then alphabetically
-	sort.Slice(matches, func(i, j int) bool {
-		if matches[i].score != matches[j].score {
-			return matches[i].score > matches[j].score
-		}
-		return matches[i].label < matches[j].label
-	})
-
-	// Return top results
-	result := make([]string, 0, maxResults)
-	for i := 0; i < len(matches) && i < maxResults; i++ {
-		result = append(result, matches[i].label)
-	}
-
-	return result
-}
-
-func fuzzyMatch(text, pattern string) bool {
-	patternLen := utf8.RuneCountInString(pattern)
-	if patternLen == 0 {
-		return true
-	}
-
-	pi := 0
-	for _, r := range text {
-		if pi < patternLen && r == rune(pattern[pi]) {
-			pi++
-			if pi == patternLen {
-				break
-			}
-		}
-	}
-
-	return pi == patternLen
 }

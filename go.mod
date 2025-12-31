@@ -25,6 +25,7 @@ require (
 	github.com/lrstanley/bubblezone v1.0.0
 	github.com/maypok86/otter/v2 v2.2.1
 	github.com/muesli/termenv v0.16.0
+	github.com/sahilm/fuzzy v0.1.1
 	github.com/shurcooL/githubv4 v0.0.0-20240727222349-48295856cce7
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
