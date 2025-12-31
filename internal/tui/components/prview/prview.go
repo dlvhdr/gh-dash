@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -200,6 +201,11 @@ func (m Model) View() string {
 	header.WriteString(m.renderBranches())
 	header.WriteString("\n\n")
 	header.WriteString(m.renderAuthor())
+	requestedReviewers := m.renderRequestedReviewers()
+	if requestedReviewers != "" {
+		header.WriteString("\n")
+		header.WriteString(requestedReviewers)
+	}
 	header.WriteString("\n\n")
 	header.WriteString(lipgloss.NewStyle().Width(m.width).
 		Border(lipgloss.NormalBorder(), false, false, true, false).
@@ -314,6 +320,107 @@ func (m *Model) renderLabels() string {
 		"",
 		common.RenderLabels(width, labels, style),
 	)
+}
+
+type reviewerItem struct {
+	text        string
+	hasTeamIcon bool
+}
+
+func (m *Model) renderRequestedReviewers() string {
+	reviewRequests := m.pr.Data.Primary.ReviewRequests.Nodes
+	reviews := m.pr.Data.Primary.Reviews.Nodes
+
+	if len(reviewRequests) == 0 && len(reviews) == 0 {
+		return ""
+	}
+
+	reviewStates := make(map[string]string)
+	for _, review := range reviews {
+		login := review.Author.Login
+		reviewStates[login] = review.State
+	}
+
+	reviewerItems := make([]reviewerItem, 0)
+	reviewerStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText)
+	faintStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
+	successStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText)
+	errorStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText)
+
+	shownReviewers := make(map[string]bool)
+
+	for _, req := range reviewRequests {
+		displayName := req.GetReviewerDisplayName()
+		if displayName == "" {
+			continue
+		}
+		shownReviewers[displayName] = true
+
+		isBot := req.GetReviewerType() == "Bot" || strings.Contains(strings.ToLower(displayName), "bot")
+
+		var reviewerStr string
+		if state, hasReview := reviewStates[displayName]; hasReview && state == "COMMENTED" {
+			reviewerStr = faintStyle.Render(constants.CommentIcon + " ")
+		} else {
+			reviewerStr = faintStyle.Render(constants.WaitingIcon + " ")
+		}
+
+		hasTeamIcon := false
+		if req.IsTeam() {
+			reviewerStr += reviewerStyle.Render(displayName) + faintStyle.Render(" "+constants.TeamIcon)
+			hasTeamIcon = true
+		} else if isBot {
+			reviewerStr += reviewerStyle.Render("@" + displayName)
+		} else {
+			reviewerStr += reviewerStyle.Render("@" + displayName)
+			if req.AsCodeOwner {
+				reviewerStr += faintStyle.Render(" " + constants.OwnerIcon)
+			}
+		}
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasTeamIcon: hasTeamIcon})
+	}
+
+	for _, review := range reviews {
+		login := review.Author.Login
+		if shownReviewers[login] {
+			continue
+		}
+		if review.State != "APPROVED" && review.State != "CHANGES_REQUESTED" {
+			continue
+		}
+		shownReviewers[login] = true
+
+		var reviewerStr string
+		if review.State == "APPROVED" {
+			reviewerStr = successStyle.Render(constants.SuccessIcon + " ")
+		} else {
+			reviewerStr = errorStyle.Render(constants.FailureIcon + " ")
+		}
+		reviewerStr += reviewerStyle.Render("@" + login)
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasTeamIcon: false})
+	}
+
+	if len(reviewerItems) == 0 {
+		return ""
+	}
+
+	label := faintStyle.Render("reviewers: ")
+
+	var result strings.Builder
+	for i, item := range reviewerItems {
+		result.WriteString(item.text)
+		if i < len(reviewerItems)-1 {
+			if item.hasTeamIcon {
+				result.WriteString(" , ")
+			} else {
+				result.WriteString(", ")
+			}
+		}
+	}
+
+	return " " + label + result.String()
 }
 
 func (m *Model) renderAuthor() string {

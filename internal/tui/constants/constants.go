@@ -29,6 +29,7 @@ const (
 	Ellipsis = "…"
 
 	PersonIcon  = ""
+	TeamIcon    = ""
 	WaitingIcon = ""
 	EmptyIcon   = ""
 	FailureIcon = "󰅙"
