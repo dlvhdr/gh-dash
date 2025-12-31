@@ -63,14 +63,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.autocomplete != nil && m.autocomplete.IsVisible() {
-			switch msg.Type {
-			case tea.KeyUp, tea.KeyCtrlP:
+			switch {
+			case key.Matches(msg, autocomplete.PrevKey):
 				m.autocomplete.Prev()
 				return m, nil
-			case tea.KeyDown, tea.KeyCtrlN:
+			case key.Matches(msg, autocomplete.NextKey):
 				m.autocomplete.Next()
 				return m, nil
-			case tea.KeyEnter, tea.KeyTab:
+			case key.Matches(msg, autocomplete.SelectKey):
 				selected := m.autocomplete.Selected()
 				if selected != "" {
 					currentInput := m.textArea.Value()

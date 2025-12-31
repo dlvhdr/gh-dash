@@ -52,12 +52,20 @@ var NextKey = key.NewBinding(
 	key.WithHelp("↓/ctrl+n", "next"),
 )
 
-func (m *Model) prevKey() key.Binding {
-	return key.NewBinding(
-		key.WithKeys("up", "ctrl+p"),
-		key.WithHelp("↑/ctrl+p", "previous suggestion"),
-	)
-}
+var PrevKey = key.NewBinding(
+	key.WithKeys("up", "ctrl+p", "ctrl+y"),
+	key.WithHelp("↑/ctrl+p/ctrl+y", "previous"),
+)
+
+var SelectKey = key.NewBinding(
+	key.WithKeys("enter", "tab"),
+	key.WithHelp("enter/tab", "select"),
+)
+
+var FetchLabelsKey = key.NewBinding(
+	key.WithKeys("ctrl+f"),
+	key.WithHelp("ctrl+f", "fetch labels"),
+)
 
 func (m *Model) SetSuggestions(suggestions []string) {
 	m.suggestions = suggestions

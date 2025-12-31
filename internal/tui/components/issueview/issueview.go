@@ -41,7 +41,7 @@ type Model struct {
 	isUnassigning     bool
 
 	inputBox   inputbox.Model
-	ac         autocomplete.Model
+	ac         *autocomplete.Model
 	repoLabels []data.Label
 }
 
@@ -50,6 +50,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	inputBox.SetHeight(common.InputBoxHeight)
 
 	ac := autocomplete.NewModel(ctx)
+	inputBox.SetAutocomplete(&ac)
 
 	return Model{
 		issue: nil,
@@ -60,7 +61,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 		isUnassigning: false,
 
 		inputBox:   inputBox,
-		ac:         ac,
+		ac:         &ac,
 		repoLabels: nil,
 	}
 }
@@ -130,41 +131,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isLabeling = false
-				m.ac.Hide()
-				return m, nil
-
-			case tea.KeyUp, tea.KeyCtrlP:
-				m.ac.Prev()
-				return m, nil
-
-			case tea.KeyDown, tea.KeyCtrlN:
-				m.ac.Next()
-				return m, nil
-
-			case tea.KeyTab, tea.KeyEnter:
-				selected := m.ac.Selected()
-				if selected != "" {
-					currentInput := m.inputBox.Value()
-					currentLabel := m.inputBox.GetCurrentLabel()
-					if currentLabel != "" {
-						lastComma := strings.LastIndex(currentInput, ",")
-						if lastComma == -1 {
-							// No comma, replace entire string
-							m.inputBox.SetValue(selected + ", ")
-						} else {
-							// Replace only the text after the last comma
-							previousLabels := currentInput[:lastComma+1]
-							m.inputBox.SetValue(previousLabels + " " + selected + ", ")
-						}
-					} else {
-						// No current label, append suggestion
-						newValue := m.inputBox.Value()
-						if newValue != "" && !strings.HasSuffix(newValue, ", ") {
-							newValue += ", "
-						}
-						m.inputBox.SetValue(newValue + selected + ", ")
-					}
-				}
 				m.ac.Hide()
 				return m, nil
 			}
