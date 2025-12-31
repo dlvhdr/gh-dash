@@ -78,7 +78,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		labelNames := data.GetLabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
 		if m.isLabeling {
-			m.ac.Filter(m.inputBox.Value(), m.inputBox.GetAllLabels())
+			m.ac.Filter(m.inputBox.GetCurrentLabel(), m.inputBox.GetAllLabels())
 			m.ac.Show()
 		}
 		return m, nil
@@ -172,9 +172,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 
-			currentInput := m.inputBox.Value()
+			currentLabel := m.inputBox.GetCurrentLabel()
 			existingLabels := m.inputBox.GetAllLabels()
-			m.ac.Filter(currentInput, existingLabels)
+			m.ac.Filter(currentLabel, existingLabels)
 
 		} else if m.isAssigning {
 			switch msg.Type {
@@ -429,7 +429,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			// Use cached labels
 			m.repoLabels = labels
 			m.ac.SetSuggestions(data.GetLabelNames(labels))
-			m.ac.Filter(m.inputBox.Value(), m.inputBox.GetAllLabels())
+			m.ac.Filter(m.inputBox.GetCurrentLabel(), m.inputBox.GetAllLabels())
 			m.ac.Show()
 		} else {
 			// Fetch labels asynchronously

@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/sahilm/fuzzy"
@@ -63,9 +63,7 @@ func (m *Model) SetSuggestions(suggestions []string) {
 	m.suggestions = suggestions
 }
 
-func (m *Model) Filter(input string, excludeLabels []string) {
-	currentLabel := extractCurrentLabel(input)
-
+func (m *Model) Filter(currentLabel string, excludeLabels []string) {
 	excludeMap := make(map[string]bool)
 	for _, label := range excludeLabels {
 		excludeMap[strings.ToLower(strings.TrimSpace(label))] = true
@@ -193,12 +191,4 @@ func (m *Model) View() string {
 	}
 
 	return popupStyle.Render(b.String())
-}
-
-func extractCurrentLabel(input string) string {
-	lastComma := strings.LastIndex(input, ",")
-	if lastComma == -1 {
-		return input
-	}
-	return strings.TrimSpace(input[lastComma+1:])
 }
