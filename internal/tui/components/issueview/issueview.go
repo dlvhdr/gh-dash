@@ -77,6 +77,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.repoLabels = msg.Labels
 		labelNames := data.GetLabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
+		if m.isLabeling {
+			m.ac.Filter(m.inputBox.Value(), m.inputBox.GetAllLabels())
+			m.ac.Show()
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -425,6 +429,8 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			// Use cached labels
 			m.repoLabels = labels
 			m.ac.SetSuggestions(data.GetLabelNames(labels))
+			m.ac.Filter(m.inputBox.Value(), m.inputBox.GetAllLabels())
+			m.ac.Show()
 		} else {
 			// Fetch labels asynchronously
 			return m.fetchLabels()
