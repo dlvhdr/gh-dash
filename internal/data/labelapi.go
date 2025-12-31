@@ -7,17 +7,17 @@ import (
 	"sync"
 )
 
+var (
+	repoLabelCache = make(map[string][]Label)
+	labelCacheMu   sync.RWMutex
+)
+
 func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
 	labelCacheMu.RLock()
 	defer labelCacheMu.RUnlock()
 	labels, ok := repoLabelCache[repoNameWithOwner]
 	return labels, ok
 }
-
-var (
-	repoLabelCache = make(map[string][]Label)
-	labelCacheMu   sync.RWMutex
-)
 
 func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	// Check cache first
