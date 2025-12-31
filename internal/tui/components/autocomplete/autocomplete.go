@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -121,36 +123,29 @@ func (m *Model) View() string {
 
 	var b strings.Builder
 
-	maxLabelWidth := m.width - 4
+	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle.Width(m.width)
+	maxLabelWidth := m.width - popupStyle.GetHorizontalPadding()
+	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
 
 	for i := 0; i < numVisible && i < len(m.filtered); i++ {
 		label := m.filtered[i]
 		if len(label) > maxLabelWidth {
-			label = label[:maxLabelWidth-3] + "..."
+			label = ansi.Truncate(label, maxLabelWidth-popupStyle.GetHorizontalPadding()-ellipsisWidth, constants.Ellipsis)
 		}
 
 		// Style based on selection
 		if i == m.selected {
 			// Selected row - use inverted colors
-			selectedStyle := lipgloss.NewStyle().
-				Background(m.ctx.Theme.SelectedBackground).
-				Foreground(m.ctx.Theme.InvertedText)
-			b.WriteString(selectedStyle.Render("❯ " + label))
+			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + label))
 		} else {
 			// Non-selected row
-			b.WriteString("  " + label)
+			b.WriteString(" " + label)
 		}
 
 		if i < numVisible-1 {
 			b.WriteString("\n")
 		}
 	}
-
-	popupStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.ctx.Theme.SecondaryBorder).
-		Foreground(m.ctx.Theme.PrimaryText).
-		Width(m.width)
 
 	return popupStyle.Render(b.String())
 }
