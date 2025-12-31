@@ -138,7 +138,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 
 			case tea.KeyTab, tea.KeyEnter:
-				selected := m.ac.GetSelected()
+				selected := m.ac.Selected()
 				if selected != "" {
 					currentInput := m.inputBox.Value()
 					currentLabel := m.inputBox.GetCurrentLabel()

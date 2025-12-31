@@ -71,7 +71,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.autocomplete.Next()
 				return m, nil
 			case tea.KeyEnter, tea.KeyTab:
-				selected := m.autocomplete.GetSelected()
+				selected := m.autocomplete.Selected()
 				if selected != "" {
 					currentInput := m.textArea.Value()
 					currentLabel := extractCurrentLabel(currentInput)

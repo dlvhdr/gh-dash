@@ -38,7 +38,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m *Model) Configure(config Config) {
+func (m *Model) SetConfigure(config Config) {
 	if config.MaxVisible > 0 {
 		m.maxVisible = config.MaxVisible
 	}
@@ -101,7 +101,7 @@ func (m *Model) Filter(input string, excludeLabels []string) {
 	m.visible = len(m.filtered) > 0 && strings.TrimSpace(currentLabel) != ""
 }
 
-func (m *Model) GetSelected() string {
+func (m *Model) Selected() string {
 	if m.selected >= 0 && m.selected < len(m.filtered) {
 		return m.filtered[m.selected]
 	}
