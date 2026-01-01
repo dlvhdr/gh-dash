@@ -86,8 +86,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cursorPos := m.inputBox.GetCursorPosition()
 			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
-			m.ac.Filter(currentLabel, existingLabels)
-			m.ac.Show()
+			m.ac.Show(currentLabel, existingLabels)
 		}
 		return m, nil
 
@@ -155,7 +154,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			if currentLabel != previousLabel {
 				existingLabels := allLabels(currentValue)
-				m.ac.Filter(currentLabel, existingLabels)
+				m.ac.Show(currentLabel, existingLabels)
 			}
 
 		} else if m.isAssigning {
@@ -410,8 +409,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			cursorPos := m.inputBox.GetCursorPosition()
 			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
-			m.ac.Filter(currentLabel, existingLabels)
-			m.ac.Show()
+			m.ac.Show(currentLabel, existingLabels)
 		} else {
 			// Fetch labels asynchronously
 			return m.fetchLabels()

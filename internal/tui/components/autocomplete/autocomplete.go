@@ -71,7 +71,7 @@ func (m *Model) SetSuggestions(suggestions []string) {
 	m.suggestions = suggestions
 }
 
-func (m *Model) Filter(currentLabel string, excludeLabels []string) {
+func (m *Model) Show(currentLabel string, excludeLabels []string) {
 	excludeMap := make(map[string]bool)
 	for _, label := range excludeLabels {
 		excludeMap[strings.ToLower(strings.TrimSpace(label))] = true
@@ -133,10 +133,6 @@ func (m *Model) Prev() {
 	if m.selected < 0 {
 		m.selected = len(m.filtered) - 1
 	}
-}
-
-func (m *Model) Show() {
-	m.visible = true
 }
 
 func (m *Model) Hide() {
