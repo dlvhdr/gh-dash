@@ -110,12 +110,27 @@ func (m Model) View() string {
 }
 
 func (m Model) ViewWithAutocomplete() string {
-	baseView := m.View()
 	autocompleteView := ""
 	if m.autocomplete != nil {
 		autocompleteView = m.autocomplete.View()
 	}
-	return baseView + "\n" + autocompleteView
+
+	return lipgloss.NewStyle().
+		BorderTop(true).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(m.ctx.Theme.SecondaryBorder).
+		MarginTop(1).
+		Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				fmt.Sprintf("%s\n", m.prompt),
+				m.textArea.View(),
+				autocompleteView,
+				lipgloss.NewStyle().
+					MarginTop(1).
+					Render(m.inputHelp.ShortHelpView(inputKeys)),
+			),
+		)
 }
 
 func (m *Model) Value() string {
