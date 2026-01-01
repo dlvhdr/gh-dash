@@ -135,12 +135,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 
+			previousLabel := m.inputBox.GetCurrentLabel()
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 
 			currentLabel := m.inputBox.GetCurrentLabel()
-			existingLabels := m.inputBox.GetAllLabels()
-			m.ac.Filter(currentLabel, existingLabels)
+			if currentLabel != previousLabel {
+				existingLabels := m.inputBox.GetAllLabels()
+				m.ac.Filter(currentLabel, existingLabels)
+			}
 
 		} else if m.isAssigning {
 			switch msg.Type {
@@ -212,11 +215,7 @@ func (m Model) View() string {
 	if m.isCommenting || m.isAssigning || m.isUnassigning {
 		s.WriteString(m.inputBox.View())
 	} else if m.isLabeling {
-		s.WriteString(m.inputBox.View())
-		if m.ac.IsVisible() {
-			s.WriteString("\n")
-			s.WriteString(m.ac.View())
-		}
+		s.WriteString(m.inputBox.ViewWithAutocomplete())
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())

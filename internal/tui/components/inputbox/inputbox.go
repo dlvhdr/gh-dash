@@ -22,6 +22,16 @@ type Model struct {
 	autocomplete *autocomplete.Model
 }
 
+// LabelInfo contains information about a label at a specific cursor position
+// in a comma-separated list of labels.
+type LabelInfo struct {
+	Label    string // The trimmed label text
+	StartIdx int    // Start position in original string (inclusive)
+	EndIdx   int    // End position in original string (exclusive)
+	IsFirst  bool   // First label in list
+	IsLast   bool   // Last label in list
+}
+
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
@@ -74,23 +84,36 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				selected := m.autocomplete.Selected()
 				if selected != "" {
 					currentInput := m.textArea.Value()
-					currentLabel := extractCurrentLabel(currentInput)
-					newLabel := selected
+					cursorPos := m.GetCursorPosition()
+					labelInfo := extractLabelAtCursor(currentInput, cursorPos)
 
-					if currentLabel != "" {
-						newInput := strings.ReplaceAll(
-							currentInput,
-							currentLabel,
-							newLabel,
-						)
-						m.textArea.SetValue(newInput)
+					// Build replacement with consistent spacing:
+					// - Single space after comma (before label) for non-first labels
+					// - Always add ", " after the label for easy continuation
+					var replacement string
+					if labelInfo.IsFirst {
+						replacement = selected + ", "
+					} else {
+						replacement = " " + selected + ", "
 					}
 
-					newValue := m.textArea.Value()
-					if !strings.HasSuffix(newValue, ", ") {
-						m.textArea.SetValue(newValue + ", ")
+					// Determine what comes after the current label
+					// Skip existing comma and spaces if present
+					remainingInput := currentInput[labelInfo.EndIdx:]
+					if strings.HasPrefix(remainingInput, ",") {
+						// Skip the comma
+						remainingInput = remainingInput[1:]
+						// Skip any spaces after the comma
+						remainingInput = strings.TrimLeft(remainingInput, " \t")
 					}
-					m.textArea.SetCursor(len(m.textArea.Value()))
+
+					// Build new input by replacing the label at cursor position
+					newInput := currentInput[:labelInfo.StartIdx] + replacement + remainingInput
+					m.textArea.SetValue(newInput)
+
+					// Position cursor after the ", " we added
+					newCursorPos := labelInfo.StartIdx + len(replacement)
+					m.textArea.SetCursor(newCursorPos)
 				}
 				m.autocomplete.Hide()
 				return m, nil
@@ -166,6 +189,67 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
 
+func (m *Model) GetCursorPosition() int {
+	lineInfo := m.textArea.LineInfo()
+	return lineInfo.StartColumn + lineInfo.CharOffset
+}
+
+// extractLabelAtCursor extracts information about the label at the given cursor position
+// in a comma-separated list. It considers the entire word containing the cursor as the
+// current label.
+func extractLabelAtCursor(input string, cursorPos int) LabelInfo {
+	if input == "" {
+		return LabelInfo{
+			Label:    "",
+			StartIdx: 0,
+			EndIdx:   0,
+			IsFirst:  true,
+			IsLast:   true,
+		}
+	}
+
+	// Clamp cursor position to valid range
+	if cursorPos < 0 {
+		cursorPos = 0
+	}
+	if cursorPos > len(input) {
+		cursorPos = len(input)
+	}
+
+	// Find the comma before the cursor (or start of string)
+	startIdx := 0
+	for i := cursorPos - 1; i >= 0; i-- {
+		if input[i] == ',' {
+			startIdx = i + 1
+			break
+		}
+	}
+
+	// Find the comma after the cursor (or end of string)
+	endIdx := len(input)
+	for i := cursorPos; i < len(input); i++ {
+		if input[i] == ',' {
+			endIdx = i
+			break
+		}
+	}
+
+	// Extract and trim the label
+	label := strings.TrimSpace(input[startIdx:endIdx])
+
+	// Determine if this is the first or last label
+	isFirst := startIdx == 0
+	isLast := endIdx == len(input)
+
+	return LabelInfo{
+		Label:    label,
+		StartIdx: startIdx,
+		EndIdx:   endIdx,
+		IsFirst:  isFirst,
+		IsLast:   isLast,
+	}
+}
+
 func extractCurrentLabel(input string) string {
 	lastComma := strings.LastIndex(input, ",")
 	if lastComma == -1 {
@@ -175,7 +259,9 @@ func extractCurrentLabel(input string) string {
 }
 
 func (m *Model) GetCurrentLabel() string {
-	return extractCurrentLabel(m.textArea.Value())
+	cursorPos := m.GetCursorPosition()
+	labelInfo := extractLabelAtCursor(m.textArea.Value(), cursorPos)
+	return labelInfo.Label
 }
 
 func (m *Model) GetAllLabels() []string {
