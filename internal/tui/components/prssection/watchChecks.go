@@ -23,8 +23,8 @@ func (m *Model) watchChecks() tea.Cmd {
 
 	prNumber := pr.GetNumber()
 	title := pr.GetTitle()
-	url := pr.GetUrl()
 	repoNameWithOwner := pr.GetRepoNameWithOwner()
+	prData := pr.(*prrow.Data)
 	taskId := fmt.Sprintf("pr_reopen_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,
@@ -58,13 +58,7 @@ func (m *Model) watchChecks() tea.Cmd {
 					"stderr", errb.String(), "stdout", outb.String())
 			}
 
-			// TODO: check for installation of terminal-notifier or alternative as logo isn't supported
-			// updatedPr, err := data.FetchPullRequest(url)
-			if err != nil {
-				log.Error("Error fetching updated PR details", "url", url, "err", err)
-			}
-
-			renderedPr := prrow.PullRequest{Ctx: m.Ctx, Data: &prrow.Data{}}
+			renderedPr := prrow.PullRequest{Ctx: m.Ctx, Data: prData}
 			checksRollup := " Checks are pending"
 			switch renderedPr.GetStatusChecksRollup() {
 			case "SUCCESS":

@@ -92,6 +92,9 @@ func (pr *PullRequest) renderState() string {
 }
 
 func (pr *PullRequest) GetStatusChecksRollup() checks.CommitState {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return checks.CommitStateUnknown
+	}
 	commits := pr.Data.Primary.Commits.Nodes
 	if len(commits) == 0 {
 		return checks.CommitStateUnknown
