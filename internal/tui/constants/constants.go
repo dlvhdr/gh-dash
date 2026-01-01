@@ -28,12 +28,14 @@ type Dimensions struct {
 const (
 	Ellipsis = "…"
 
-	PersonIcon  = ""
-	TeamIcon    = ""
-	WaitingIcon = ""
-	EmptyIcon   = ""
-	FailureIcon = "󰅙"
-	SuccessIcon = ""
+	PersonIcon           = ""
+	TeamIcon             = ""
+	WaitingIcon          = ""
+	EmptyIcon            = ""
+	FailureIcon          = "󰅙"
+	SuccessIcon          = ""
+	ApprovedIcon         = "󰄬"
+	ChangesRequestedIcon = ""
 
 	CommentIcon  = ""
 	CommentsIcon = ""

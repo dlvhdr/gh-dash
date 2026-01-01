@@ -201,11 +201,6 @@ func (m Model) View() string {
 	header.WriteString(m.renderBranches())
 	header.WriteString("\n\n")
 	header.WriteString(m.renderAuthor())
-	requestedReviewers := m.renderRequestedReviewers()
-	if requestedReviewers != "" {
-		header.WriteString("\n")
-		header.WriteString(requestedReviewers)
-	}
 	header.WriteString("\n\n")
 	header.WriteString(lipgloss.NewStyle().Width(m.width).
 		Border(lipgloss.NormalBorder(), false, false, true, false).
@@ -219,6 +214,12 @@ func (m Model) View() string {
 
 	switch m.carousel.SelectedItem() {
 	case tabs[0]:
+		reviewers := m.renderRequestedReviewers()
+		if reviewers != "" {
+			body.WriteString(reviewers)
+			body.WriteString("\n\n")
+		}
+
 		labels := m.renderLabels()
 		if labels != "" {
 			body.WriteString(labels)
@@ -323,8 +324,8 @@ func (m *Model) renderLabels() string {
 }
 
 type reviewerItem struct {
-	text        string
-	hasTeamIcon bool
+	text         string
+	hasOwnerIcon bool
 }
 
 func (m *Model) renderRequestedReviewers() string {
@@ -342,8 +343,8 @@ func (m *Model) renderRequestedReviewers() string {
 	}
 
 	reviewerItems := make([]reviewerItem, 0)
+	faintStyle := m.ctx.Styles.Common.FaintTextStyle
 	reviewerStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText)
-	faintStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
 	successStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText)
 	errorStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText)
 
@@ -356,29 +357,25 @@ func (m *Model) renderRequestedReviewers() string {
 		}
 		shownReviewers[displayName] = true
 
-		isBot := req.GetReviewerType() == "Bot" || strings.Contains(strings.ToLower(displayName), "bot")
-
 		var reviewerStr string
 		if state, hasReview := reviewStates[displayName]; hasReview && state == "COMMENTED" {
-			reviewerStr = faintStyle.Render(constants.CommentIcon + " ")
+			reviewerStr = m.ctx.Styles.Common.CommentGlyph + " "
 		} else {
-			reviewerStr = faintStyle.Render(constants.WaitingIcon + " ")
+			reviewerStr = m.ctx.Styles.Common.WaitingGlyph + " "
 		}
 
-		hasTeamIcon := false
+		hasOwnerIcon := false
 		if req.IsTeam() {
-			reviewerStr += reviewerStyle.Render(displayName) + faintStyle.Render(" "+constants.TeamIcon)
-			hasTeamIcon = true
-		} else if isBot {
-			reviewerStr += reviewerStyle.Render("@" + displayName)
+			reviewerStr += reviewerStyle.Render(displayName)
 		} else {
 			reviewerStr += reviewerStyle.Render("@" + displayName)
 			if req.AsCodeOwner {
 				reviewerStr += faintStyle.Render(" " + constants.OwnerIcon)
+				hasOwnerIcon = true
 			}
 		}
 
-		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasTeamIcon: hasTeamIcon})
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasOwnerIcon: hasOwnerIcon})
 	}
 
 	for _, review := range reviews {
@@ -393,34 +390,66 @@ func (m *Model) renderRequestedReviewers() string {
 
 		var reviewerStr string
 		if review.State == "APPROVED" {
-			reviewerStr = successStyle.Render(constants.SuccessIcon + " ")
+			reviewerStr = successStyle.Render(constants.SuccessIcon) + " "
 		} else {
-			reviewerStr = errorStyle.Render(constants.FailureIcon + " ")
+			reviewerStr = errorStyle.Render(constants.FailureIcon) + " "
 		}
 		reviewerStr += reviewerStyle.Render("@" + login)
 
-		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasTeamIcon: false})
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasOwnerIcon: false})
 	}
 
 	if len(reviewerItems) == 0 {
 		return ""
 	}
 
-	label := faintStyle.Render("reviewers: ")
+	width := m.getIndentedContentWidth()
+	var rows []string
+	var currentRow strings.Builder
+	currentRowWidth := 0
 
-	var result strings.Builder
 	for i, item := range reviewerItems {
-		result.WriteString(item.text)
-		if i < len(reviewerItems)-1 {
-			if item.hasTeamIcon {
-				result.WriteString(" , ")
-			} else {
-				result.WriteString(", ")
-			}
+		itemWidth := lipgloss.Width(item.text)
+		separator := ", "
+		if item.hasOwnerIcon {
+			separator = " , "
+		}
+		separatorWidth := lipgloss.Width(separator)
+
+		// Check if adding this item would exceed the width
+		needsSeparator := i < len(reviewerItems)-1
+		totalItemWidth := itemWidth
+		if needsSeparator {
+			totalItemWidth += separatorWidth
+		}
+
+		if currentRowWidth > 0 && currentRowWidth+totalItemWidth > width {
+			// Start a new row
+			rows = append(rows, currentRow.String())
+			currentRow.Reset()
+			currentRowWidth = 0
+		}
+
+		currentRow.WriteString(item.text)
+		currentRowWidth += itemWidth
+
+		if needsSeparator {
+			currentRow.WriteString(separator)
+			currentRowWidth += separatorWidth
 		}
 	}
 
-	return " " + label + result.String()
+	// Add the last row
+	if currentRow.Len() > 0 {
+		rows = append(rows, currentRow.String())
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render("Reviewers"),
+		"",
+		strings.Join(rows, "\n"),
+	)
 }
 
 func (m *Model) renderAuthor() string {

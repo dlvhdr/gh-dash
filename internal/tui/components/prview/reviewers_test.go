@@ -15,6 +15,10 @@ import (
 )
 
 func newTestModel(t *testing.T, prData *data.PullRequestData) Model {
+	return newTestModelWithWidth(t, prData, 0)
+}
+
+func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int) Model {
 	t.Helper()
 	cfg, err := config.ParseConfig(config.Location{
 		ConfigFlag: "../../../config/testdata/test-config.yml",
@@ -36,6 +40,9 @@ func newTestModel(t *testing.T, prData *data.PullRequestData) Model {
 		Data: &prrow.Data{
 			Primary: prData,
 		},
+	}
+	if width > 0 {
+		m.width = width
 	}
 	return m
 }
@@ -67,7 +74,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				},
 			},
 			reviews:      []data.Review{},
-			wantContains: []string{"reviewers:", "@alice", constants.WaitingIcon},
+			wantContains: []string{"Reviewers", "@alice", constants.WaitingIcon},
 		},
 		"user who commented": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -86,7 +93,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			reviews: []data.Review{
 				{Author: struct{ Login string }{Login: "bob"}, State: "COMMENTED"},
 			},
-			wantContains:   []string{"reviewers:", "@bob", constants.CommentIcon},
+			wantContains:   []string{"Reviewers", "@bob", constants.CommentIcon},
 			wantNotContain: []string{constants.WaitingIcon},
 		},
 		"code owner": {
@@ -104,7 +111,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				},
 			},
 			reviews:      []data.Review{},
-			wantContains: []string{"reviewers:", "@charlie", constants.OwnerIcon},
+			wantContains: []string{"Reviewers", "@charlie", constants.OwnerIcon},
 		},
 		"team reviewer": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -120,10 +127,11 @@ func TestRenderRequestedReviewers(t *testing.T) {
 					},
 				},
 			},
-			reviews:      []data.Review{},
-			wantContains: []string{"reviewers:", "core-team", constants.TeamIcon},
+			reviews:        []data.Review{},
+			wantContains:   []string{"Reviewers", "core-team"},
+			wantNotContain: []string{"@core-team", constants.TeamIcon},
 		},
-		"bot reviewer no annotation": {
+		"user with bot in name but is code owner": {
 			reviewRequests: []data.ReviewRequestNode{
 				{
 					AsCodeOwner: true,
@@ -137,9 +145,8 @@ func TestRenderRequestedReviewers(t *testing.T) {
 					},
 				},
 			},
-			reviews:        []data.Review{},
-			wantContains:   []string{"reviewers:", "@mdn-bot"},
-			wantNotContain: []string{constants.OwnerIcon},
+			reviews:      []data.Review{},
+			wantContains: []string{"Reviewers", "@mdn-bot", constants.OwnerIcon},
 		},
 		"multiple reviewers": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -167,21 +174,21 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				},
 			},
 			reviews:      []data.Review{},
-			wantContains: []string{"reviewers:", "@alice", "@bob", ","},
+			wantContains: []string{"Reviewers", "@alice", "@bob", ","},
 		},
 		"reviewer who approved": {
 			reviewRequests: []data.ReviewRequestNode{},
 			reviews: []data.Review{
 				{Author: struct{ Login string }{Login: "alice"}, State: "APPROVED"},
 			},
-			wantContains: []string{"reviewers:", "@alice", constants.SuccessIcon},
+			wantContains: []string{"Reviewers", "@alice", constants.SuccessIcon},
 		},
 		"reviewer who requested changes": {
 			reviewRequests: []data.ReviewRequestNode{},
 			reviews: []data.Review{
 				{Author: struct{ Login string }{Login: "bob"}, State: "CHANGES_REQUESTED"},
 			},
-			wantContains: []string{"reviewers:", "@bob", constants.FailureIcon},
+			wantContains: []string{"Reviewers", "@bob", constants.FailureIcon},
 		},
 		"mix of pending and completed reviews": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -201,7 +208,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				{Author: struct{ Login string }{Login: "bob"}, State: "APPROVED"},
 				{Author: struct{ Login string }{Login: "charlie"}, State: "CHANGES_REQUESTED"},
 			},
-			wantContains: []string{"reviewers:", "@alice", "@bob", "@charlie", constants.WaitingIcon, constants.SuccessIcon, constants.FailureIcon},
+			wantContains: []string{"Reviewers", "@alice", "@bob", "@charlie", constants.WaitingIcon, constants.SuccessIcon, constants.FailureIcon},
 		},
 	}
 
@@ -237,4 +244,49 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRenderRequestedReviewersWrapping(t *testing.T) {
+	// Create multiple reviewers that would exceed a narrow width
+	reviewRequests := []data.ReviewRequestNode{}
+	for _, name := range []string{"alice", "bob", "charlie", "david", "eve"} {
+		reviewRequests = append(reviewRequests, data.ReviewRequestNode{
+			AsCodeOwner: false,
+			RequestedReviewer: struct {
+				User      data.RequestedReviewerUser      `graphql:"... on User"`
+				Team      data.RequestedReviewerTeam      `graphql:"... on Team"`
+				Bot       data.RequestedReviewerBot       `graphql:"... on Bot"`
+				Mannequin data.RequestedReviewerMannequin `graphql:"... on Mannequin"`
+			}{
+				User: data.RequestedReviewerUser{Login: name},
+			},
+		})
+	}
+
+	prData := &data.PullRequestData{
+		ReviewRequests: data.ReviewRequests{
+			TotalCount: len(reviewRequests),
+			Nodes:      reviewRequests,
+		},
+		Reviews: data.Reviews{
+			TotalCount: 0,
+			Nodes:      []data.Review{},
+		},
+	}
+
+	// Use a narrow width to force wrapping
+	m := newTestModelWithWidth(t, prData, 40)
+	got := m.renderRequestedReviewers()
+
+	// Should contain all reviewers
+	for _, name := range []string{"@alice", "@bob", "@charlie", "@david", "@eve"} {
+		require.True(t, strings.Contains(got, name),
+			"expected output to contain %q, got: %q", name, got)
+	}
+
+	// Count newlines in the reviewer list (after "Reviewers" title)
+	lines := strings.Split(got, "\n")
+	// Should have: "Reviewers", empty line, then multiple lines of reviewers
+	require.Greater(t, len(lines), 3,
+		"expected output to wrap to multiple lines, got %d lines: %q", len(lines), got)
 }
