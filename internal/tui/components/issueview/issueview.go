@@ -49,6 +49,10 @@ func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
 	inputBox.SetHeight(common.InputBoxHeight)
 
+	inputBox.OnSuggestionSelected = handleLabelSelection
+	inputBox.CurrentContext = currentLabel
+	inputBox.AllLabels = allLabels
+
 	ac := autocomplete.NewModel(ctx)
 	inputBox.SetAutocomplete(&ac)
 
@@ -79,7 +83,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		labelNames := data.GetLabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
 		if m.isLabeling {
-			m.ac.Filter(m.inputBox.GetCurrentLabel(), m.inputBox.GetAllLabels())
+			cursorPos := m.inputBox.GetCursorPosition()
+			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
+			existingLabels := allLabels(m.inputBox.Value())
+			m.ac.Filter(currentLabel, existingLabels)
 			m.ac.Show()
 		}
 		return m, nil
@@ -119,7 +126,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else if m.isLabeling {
 			switch msg.Type {
 			case tea.KeyCtrlD:
-				labels := m.inputBox.GetAllLabels()
+				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					cmd = m.label(labels)
 				}
@@ -135,13 +142,19 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 
-			previousLabel := m.inputBox.GetCurrentLabel()
+			previousCursorPos := m.inputBox.GetCursorPosition()
+			previousValue := m.inputBox.Value()
+			previousLabel := currentLabel(previousCursorPos, previousValue)
+
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 
-			currentLabel := m.inputBox.GetCurrentLabel()
+			currentCursorPos := m.inputBox.GetCursorPosition()
+			currentValue := m.inputBox.Value()
+			currentLabel := currentLabel(currentCursorPos, currentValue)
+
 			if currentLabel != previousLabel {
-				existingLabels := m.inputBox.GetAllLabels()
+				existingLabels := allLabels(currentValue)
 				m.ac.Filter(currentLabel, existingLabels)
 			}
 
@@ -394,7 +407,10 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			// Use cached labels
 			m.repoLabels = labels
 			m.ac.SetSuggestions(data.GetLabelNames(labels))
-			m.ac.Filter(m.inputBox.GetCurrentLabel(), m.inputBox.GetAllLabels())
+			cursorPos := m.inputBox.GetCursorPosition()
+			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
+			existingLabels := allLabels(m.inputBox.Value())
+			m.ac.Filter(currentLabel, existingLabels)
 			m.ac.Show()
 		} else {
 			// Fetch labels asynchronously
