@@ -222,6 +222,9 @@ func init() {
 			tea.WithReportFocus(),
 			tea.WithMouseCellMotion(),
 		)
+
+		setupThemeReload(p)
+
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)
 		}

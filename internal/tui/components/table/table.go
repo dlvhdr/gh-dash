@@ -59,7 +59,9 @@ func NewModel(
 
 	loadingSpinner := spinner.New()
 	loadingSpinner.Spinner = spinner.Dot
-	loadingSpinner.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
+	loadingSpinner.Style = lipgloss.NewStyle().
+		Foreground(ctx.Theme.SecondaryText).
+		Background(ctx.Theme.MainBackground)
 
 	return Model{
 		ctx:            ctx,
@@ -255,15 +257,22 @@ func (m *Model) renderHeader() string {
 func (m *Model) renderBody() string {
 	bodyStyle := lipgloss.NewStyle().
 		Height(m.dimensions.Height).
-		Width(m.dimensions.Width)
+		Width(m.dimensions.Width).
+		Background(m.ctx.Theme.MainBackground)
 
 	if m.isLoading {
+		loadingStyle := lipgloss.NewStyle().
+			Foreground(m.ctx.Theme.SecondaryText).
+			Background(m.ctx.Theme.MainBackground)
+		loadingContent := loadingStyle.Render(fmt.Sprintf("%s%s", m.loadingSpinner.View(), m.loadingMessage))
+		loadingContent = common.ApplyBackgroundAfterReset(loadingContent, m.ctx.Theme.MainBackground)
 		return lipgloss.Place(
 			m.dimensions.Width,
 			m.dimensions.Height,
 			lipgloss.Center,
 			lipgloss.Center,
-			fmt.Sprintf("%s%s", m.loadingSpinner.View(), m.loadingMessage),
+			loadingContent,
+			lipgloss.WithWhitespaceBackground(m.ctx.Theme.MainBackground),
 		)
 	}
 
@@ -317,6 +326,9 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = *ctx
 	m.rowsViewport.UpdateProgramContext(ctx)
+	m.loadingSpinner.Style = lipgloss.NewStyle().
+		Foreground(ctx.Theme.SecondaryText).
+		Background(ctx.Theme.MainBackground)
 }
 
 func (m *Model) LastUpdated() time.Time {

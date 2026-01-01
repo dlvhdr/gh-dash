@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
@@ -68,12 +69,20 @@ func (m Model) View() string {
 	return style.Render(lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.viewport.View(),
-		m.ctx.Styles.Sidebar.PagerStyle.
-			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		common.ApplyBackgroundAfterReset(
+			m.ctx.Styles.Sidebar.PagerStyle.
+				Width(m.GetSidebarContentWidth()).
+				MaxWidth(m.GetSidebarContentWidth()).
+				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+			m.ctx.Theme.MainBackground,
+		),
 	))
 }
 
 func (m *Model) SetContent(data string) {
+	if m.ctx != nil {
+		data = common.ApplyBackgroundAfterReset(data, m.ctx.Theme.MainBackground)
+	}
 	m.data = data
 	m.viewport.SetContent(data)
 }
@@ -100,4 +109,5 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
 	m.viewport.Width = m.GetSidebarContentWidth()
+	m.viewport.Style = lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
 }

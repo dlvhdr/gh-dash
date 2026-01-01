@@ -255,6 +255,7 @@ type ColorThemeBorder struct {
 }
 
 type ColorThemeBackground struct {
+	Main     HexColor `yaml:"main"     validate:"omitempty,hexcolor"`
 	Selected HexColor `yaml:"selected" validate:"omitempty,hexcolor"`
 }
 

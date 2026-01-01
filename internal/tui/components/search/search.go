@@ -26,11 +26,11 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText).Background(ctx.Theme.MainBackground)
 	ti.Width = ctx.MainContentWidth - lipgloss.Width(prompt) - 6
-	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
+	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText).Background(ctx.Theme.MainBackground)
 	ti.Prompt = prompt
-	ti.TextStyle = ti.TextStyle.Faint(true)
+	ti.TextStyle = ti.TextStyle.Faint(true).Background(ctx.Theme.MainBackground)
 	ti.Cursor.Style = ti.Cursor.Style.Faint(true)
 	ti.Cursor.TextStyle = ti.Cursor.TextStyle.Faint(true)
 	ti.Blur()
@@ -60,7 +60,7 @@ func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
 		Width(ctx.MainContentWidth - 4).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.ctx.Theme.PrimaryBorder).
+		BorderForeground(m.ctx.Theme.PrimaryBorder).Background(m.ctx.Theme.MainBackground).
 		Render(m.textInput.View())
 }
 
@@ -81,11 +81,13 @@ func (m *Model) SetValue(val string) {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
 	oldWidth := m.textInput.Width
 	m.textInput.Width = m.getInputWidth(ctx)
 	if m.textInput.Width != oldWidth {
 		m.textInput.CursorEnd()
 	}
+	m.applyThemeStyles(ctx)
 }
 
 func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
@@ -94,6 +96,31 @@ func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
 	// - deduce 1 for the cursor
 	// - deduce 1 for the spacing between the prompt and text
 	return max(2, ctx.MainContentWidth-lipgloss.Width(m.textInput.Prompt)-4-1-1) // borders + cursor
+}
+
+func (m *Model) applyThemeStyles(ctx *context.ProgramContext) {
+	baseStyle := lipgloss.NewStyle().
+		Foreground(ctx.Theme.PrimaryText).
+		Background(ctx.Theme.MainBackground)
+	m.textInput.PlaceholderStyle = lipgloss.NewStyle().
+		Foreground(ctx.Theme.FaintText).
+		Background(ctx.Theme.MainBackground)
+	m.textInput.PromptStyle = lipgloss.NewStyle().
+		Foreground(ctx.Theme.SecondaryText).
+		Background(ctx.Theme.MainBackground)
+
+	textStyle := baseStyle
+	cursorStyle := baseStyle
+	if m.textInput.Focused() {
+		textStyle = textStyle.Faint(false)
+	} else {
+		textStyle = textStyle.Faint(true)
+		cursorStyle = cursorStyle.Faint(true)
+	}
+
+	m.textInput.TextStyle = textStyle
+	m.textInput.Cursor.Style = cursorStyle
+	m.textInput.Cursor.TextStyle = cursorStyle
 }
 
 func (m Model) Value() string {

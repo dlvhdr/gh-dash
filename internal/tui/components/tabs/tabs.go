@@ -70,7 +70,7 @@ func (m Model) View() string {
 		Width(m.ctx.ScreenWidth).
 		Height(common.HeaderHeight).
 		Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
-			lipgloss.NewStyle().Width(
+			lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground).Width(
 				m.ctx.ScreenWidth-lipgloss.Width(logo)).Render(c), logo))
 }
 
@@ -107,6 +107,12 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	})
 
 	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.viewLogo()))
+	for i := range m.sectionTabs {
+		m.sectionTabs[i].spinner.Style = lipgloss.NewStyle().
+			Foreground(m.ctx.Theme.FaintText).
+			Background(m.ctx.Theme.MainBackground).
+			PaddingLeft(2)
+	}
 }
 
 func (m *Model) SetSections(sections []section.Section) {
@@ -114,7 +120,7 @@ func (m *Model) SetSections(sections []section.Section) {
 	for _, s := range sections {
 		tab := SectionTab{section: s, spinner: spinner.New(
 			spinner.WithSpinner(spinner.Dot), spinner.WithStyle(
-				lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).PaddingLeft(2)))}
+				lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).PaddingLeft(2)))}
 		sectionTabs = append(sectionTabs, tab)
 	}
 	m.sectionTabs = sectionTabs
@@ -145,18 +151,18 @@ func (m *Model) UpdateTabTitles() {
 }
 
 func (m *Model) viewLogo() string {
-	version := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Render(m.ctx.Version)
+	version := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Background(m.ctx.Theme.MainBackground).Render(m.ctx.Version)
 	if m.latestVersion != "" && m.ctx.Version != "dev" && m.ctx.Version != m.latestVersion {
 		version = lipgloss.JoinVertical(lipgloss.Left,
 			version,
-			lipgloss.NewStyle().Foreground(m.ctx.Styles.Colors.SuccessText).Render(" Update available!"),
+			lipgloss.NewStyle().Foreground(m.ctx.Styles.Colors.SuccessText).Background(m.ctx.Theme.MainBackground).Render(" Update available!"),
 		)
 	} else {
 		version = lipgloss.PlaceVertical(2, lipgloss.Bottom, version)
 	}
 
-	return lipgloss.NewStyle().Padding(0, 1, 0, 2).Height(2).Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
-		lipgloss.NewStyle().Foreground(context.LogoColor).Render(constants.Logo),
+	return lipgloss.NewStyle().Padding(0, 1, 0, 2).Height(2).Background(m.ctx.Theme.MainBackground).Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
+		lipgloss.NewStyle().Foreground(context.LogoColor).Background(m.ctx.Theme.MainBackground).Render(constants.Logo),
 		" ",
 		version,
 	))

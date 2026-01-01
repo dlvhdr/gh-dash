@@ -1,0 +1,17 @@
+name: Nord
+colors:
+  text:
+    primary: "#d8dee9"
+    secondary: "#e5e9f0"
+    faint: "#4c566a"
+    inverted: "#2e3440"
+    success: "#a3be8c"
+    warning: "#ebcb8b"
+    error: "#bf616a"
+  background:
+    main: "#2e3440"
+    selected: "#434c5e"
+  border:
+    primary: "#81a1c1"
+    secondary: "#5e81ac"
+    faint: "#3b4252"

@@ -63,7 +63,7 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 
 	if m.branch == nil {
-		return "No branch selected"
+		return lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground).Render("No branch selected")
 	}
 
 	s.WriteString(m.branch.Data.Name)
@@ -72,7 +72,7 @@ func (m Model) View() string {
 		s.WriteString(fmt.Sprintf("#%d %s", m.branch.PR.GetNumber(), m.branch.PR.Title))
 	}
 
-	return s.String()
+	return lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground).Render(s.String())
 }
 
 type updateBranchStatusMsg struct {

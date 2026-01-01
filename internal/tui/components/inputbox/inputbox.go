@@ -29,15 +29,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
 	ta.CharLimit = 65536
-	ta.FocusedStyle.Base = lipgloss.NewStyle()
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
-		Background(ctx.Theme.FaintBorder).
-		Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
-	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	applyThemeStyles(&ta, ctx)
 	ta.Focus()
 
 	h := help.New()
@@ -109,4 +101,18 @@ func (m *Model) Reset() {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
+	applyThemeStyles(&m.textArea, ctx)
+}
+
+func applyThemeStyles(ta *textarea.Model, ctx *context.ProgramContext) {
+	ta.FocusedStyle.Base = lipgloss.NewStyle()
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
+		Background(ctx.Theme.FaintBorder).
+		Foreground(ctx.Theme.PrimaryText)
+	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
+	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
+	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	ta.BlurredStyle = ta.FocusedStyle
 }

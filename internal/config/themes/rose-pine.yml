@@ -1,0 +1,17 @@
+name: Rose Pine
+colors:
+  text:
+    primary: "#e0def4"
+    secondary: "#908caa"
+    faint: "#6e6a86"
+    inverted: "#191724"
+    success: "#9ccfd8"
+    warning: "#f6c177"
+    error: "#eb6f92"
+  background:
+    main: "#191724"
+    selected: "#26233a"
+  border:
+    primary: "#c4a7e7"
+    secondary: "#ebbcba"
+    faint: "#1f1d2e"

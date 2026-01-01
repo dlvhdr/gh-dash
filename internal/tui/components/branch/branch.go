@@ -49,7 +49,7 @@ func (b *Branch) renderReviewStatus() string {
 }
 
 func (b *Branch) renderState() string {
-	mergeCellStyle := lipgloss.NewStyle()
+	mergeCellStyle := lipgloss.NewStyle().Background(b.Ctx.Theme.MainBackground)
 
 	if b.PR == nil {
 		return mergeCellStyle.Foreground(b.Ctx.Theme.SuccessText).Render("󰜛")
@@ -115,7 +115,7 @@ func (b *Branch) renderLines(isSelected bool) string {
 	additionsFg = b.Ctx.Theme.SuccessText
 	deletionsFg = b.Ctx.Theme.ErrorText
 
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(b.Ctx.Theme.MainBackground)
 	if isSelected {
 		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
 	}
@@ -271,7 +271,7 @@ func (b *Branch) renderBranch(isSelected bool, width int) string {
 }
 
 func (b *Branch) getBaseStyle(isSelected bool) lipgloss.Style {
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(b.Ctx.Theme.MainBackground)
 	if isSelected {
 		baseStyle = baseStyle.Background(b.Ctx.Theme.SelectedBackground)
 	}

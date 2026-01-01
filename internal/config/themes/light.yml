@@ -1,0 +1,17 @@
+name: Light
+colors:
+  text:
+    primary: "#24292f"
+    secondary: "#57606a"
+    faint: "#8c959f"
+    inverted: "#ffffff"
+    success: "#1a7f37"
+    warning: "#9a6700"
+    error: "#cf222e"
+  background:
+    main: "#ffffff"
+    selected: "#ddf4ff"
+  border:
+    primary: "#0969da"
+    secondary: "#d0d7de"
+    faint: "#eaeef2"

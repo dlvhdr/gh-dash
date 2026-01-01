@@ -22,7 +22,7 @@ type RenderedActivity struct {
 func (m *Model) renderActivity() string {
 	width := m.getIndentedContentWidth() - 2
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
-	bodyStyle := lipgloss.NewStyle().PaddingLeft(2)
+	bodyStyle := lipgloss.NewStyle().PaddingLeft(2).Background(m.ctx.Theme.MainBackground)
 
 	var activities []RenderedActivity
 	var comments []comment
@@ -110,19 +110,21 @@ type comment struct {
 
 func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRenderer) (string, error) {
 	width := m.getIndentedContentWidth()
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
 	authorAndTime := lipgloss.NewStyle().
 		Width(width).
 		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(m.ctx.Theme.FaintBorder).Render(
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		Background(m.ctx.Theme.MainBackground).Render(
 		lipgloss.JoinHorizontal(lipgloss.Top,
 			m.ctx.Styles.Common.MainTextStyle.Render(comment.Author),
-			" ",
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+			bgStyle.Render(" "),
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Render(utils.TimeElapsed(comment.UpdatedAt)),
 		))
 
 	var header string
 	if comment.Path != nil && comment.Line != nil {
-		filePath := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Width(width).Render(
+		filePath := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Width(width).Render(
 			fmt.Sprintf(
 				"%s#l%d",
 				*comment.Path,
@@ -155,12 +157,13 @@ func (m *Model) renderReview(review data.Review, markdownRenderer glamour.TermRe
 }
 
 func (m *Model) renderReviewHeader(review data.Review) string {
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
 	return lipgloss.JoinHorizontal(lipgloss.Top,
 		m.renderReviewDecision(review.State),
-		" ",
+		bgStyle.Render(" "),
 		m.ctx.Styles.Common.MainTextStyle.Render(review.Author.Login),
-		" ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+		bgStyle.Render(" "),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Render(
 			"reviewed "+utils.TimeElapsed(review.UpdatedAt)),
 	)
 }
@@ -170,7 +173,7 @@ func (m *Model) renderReviewDecision(decision string) string {
 	case "PENDING":
 		return m.ctx.Styles.Common.WaitingGlyph
 	case "COMMENTED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render("󰈈")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Render("󰈈")
 	case "APPROVED":
 		return m.ctx.Styles.Common.SuccessGlyph
 	case "CHANGES_REQUESTED":

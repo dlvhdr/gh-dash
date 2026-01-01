@@ -1,0 +1,17 @@
+name: Tokyo Night
+colors:
+  text:
+    primary: "#a9b1d6"
+    secondary: "#787c99"
+    faint: "#565f89"
+    inverted: "#1a1b26"
+    success: "#9ece6a"
+    warning: "#e0af68"
+    error: "#f7768e"
+  background:
+    main: "#1a1b26"
+    selected: "#33467c"
+  border:
+    primary: "#7aa2f7"
+    secondary: "#3d59a1"
+    faint: "#292e42"

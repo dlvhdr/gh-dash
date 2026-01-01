@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
+	tuitheme "github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 type Styles struct {
@@ -86,8 +86,9 @@ const (
 	LogoColor = lipgloss.Color("#00F9FB")
 )
 
-func InitStyles(theme theme.Theme) Styles {
+func InitStyles(theme tuitheme.Theme) Styles {
 	var s Styles
+	isDarkBackground := tuitheme.HasDarkBackground(theme)
 
 	s.Colors.OpenIssue = lipgloss.AdaptiveColor{
 		Light: "#42A0FA",
@@ -141,12 +142,14 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.Section.ContainerPadding = 1
 	s.Section.ContainerStyle = lipgloss.NewStyle().
-		Padding(0, s.Section.ContainerPadding)
-	s.Section.SpinnerStyle = lipgloss.NewStyle().Padding(0, 1)
+		Padding(0, s.Section.ContainerPadding).
+		Background(theme.MainBackground)
+	s.Section.SpinnerStyle = lipgloss.NewStyle().Padding(0, 1).Background(theme.MainBackground)
 	s.Section.EmptyStateStyle = lipgloss.NewStyle().
 		Faint(true).
 		PaddingLeft(1).
-		MarginBottom(1)
+		MarginBottom(1).
+		Background(theme.MainBackground)
 	s.Section.KeyStyle = lipgloss.NewStyle().
 		Foreground(theme.PrimaryText).
 		Background(theme.SelectedBackground).
@@ -173,11 +176,14 @@ func InitStyles(theme theme.Theme) Styles {
 			BottomRight: "",
 			BottomLeft:  "",
 		}).
-		BorderForeground(theme.PrimaryBorder)
+		BorderForeground(theme.PrimaryBorder).
+		BorderBackground(theme.MainBackground).
+		Background(theme.MainBackground)
 	s.Sidebar.PagerStyle = lipgloss.NewStyle().
 		Height(s.Sidebar.PagerHeight).
 		Bold(true).
-		Foreground(theme.FaintText)
+		Foreground(theme.FaintText).
+		Background(theme.MainBackground)
 
 	s.ListViewPort.PagerStyle = lipgloss.NewStyle().
 		Padding(0, 1).
@@ -186,7 +192,8 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.Table.CellStyle = lipgloss.NewStyle().PaddingLeft(1).
 		PaddingRight(1).
-		MaxHeight(1)
+		MaxHeight(1).
+		Background(theme.MainBackground)
 	s.Table.SelectedCellStyle = s.Table.CellStyle.
 		Background(theme.SelectedBackground)
 	s.Table.TitleCellStyle = s.Table.CellStyle.
@@ -194,27 +201,35 @@ func InitStyles(theme theme.Theme) Styles {
 		Foreground(theme.PrimaryText)
 	s.Table.SingleRuneTitleCellStyle = s.Table.TitleCellStyle.
 		Width(common.SingleRuneWidth)
-	s.Table.HeaderStyle = lipgloss.NewStyle()
+	s.Table.HeaderStyle = lipgloss.NewStyle().
+		Background(theme.MainBackground)
 	s.Table.RowStyle = lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(theme.FaintBorder)
+		BorderForeground(theme.FaintBorder).
+		Background(theme.MainBackground)
 
 	s.Tabs.Tab = lipgloss.NewStyle().
-		Faint(true).
-		Padding(0, 2)
+		Padding(0, 2).
+		Foreground(theme.SecondaryText).
+		Background(theme.MainBackground)
+	if isDarkBackground {
+		s.Tabs.Tab = s.Tabs.Tab.Faint(true)
+	}
 	s.Tabs.ActiveTab = s.Tabs.Tab.
 		Faint(false).
 		Bold(true).
 		Background(theme.SelectedBackground).
 		Foreground(theme.PrimaryText)
-	s.Tabs.OverflowIndicator = s.Common.FaintTextStyle.Bold(true).Padding(0, 1)
+	s.Tabs.OverflowIndicator = s.Common.FaintTextStyle.Bold(true).Padding(0, 1).Background(theme.MainBackground)
 	s.Tabs.TabSeparator = lipgloss.NewStyle().
-		Foreground(theme.SecondaryBorder)
+		Foreground(theme.SecondaryBorder).
+		Background(theme.MainBackground)
 	s.Tabs.TabsRow = lipgloss.NewStyle().
 		Height(common.TabsContentHeight).
 		BorderBottom(true).
 		BorderStyle(lipgloss.ThickBorder()).
-		BorderBottomForeground(theme.PrimaryBorder)
+		BorderBottomForeground(theme.PrimaryBorder).
+		Background(theme.MainBackground)
 	s.ViewSwitcher.Root = lipgloss.NewStyle().
 		Background(s.Common.FooterStyle.GetBackground()).
 		Foreground(theme.InvertedText).

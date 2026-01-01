@@ -1,0 +1,17 @@
+name: Hackerman
+colors:
+  text:
+    primary: "#ddf7ff"
+    secondary: "#85E1FB"
+    faint: "#6a6e95"
+    inverted: "#0B0C16"
+    success: "#50f872"
+    warning: "#50f7d4"
+    error: "#85ff9d"
+  background:
+    main: "#0B0C16"
+    selected: "#1a1b2e"
+  border:
+    primary: "#7cf8f7"
+    secondary: "#50f872"
+    faint: "#1a1b2e"

@@ -32,8 +32,9 @@ func (pr *PullRequest) renderNumComments() string {
 		return "-"
 	}
 
-	numCommentsStyle := pr.Ctx.Styles.Common.FaintTextStyle
-	return numCommentsStyle.Render(
+	numCommentsStyle := lipgloss.NewStyle().Foreground(pr.Ctx.Theme.FaintText)
+	return components.RenderWithoutReset(
+		numCommentsStyle,
 		fmt.Sprintf(
 			"%d",
 			pr.Data.Primary.Comments.TotalCount+pr.Data.Primary.ReviewThreads.TotalCount,
@@ -49,45 +50,43 @@ func (pr *PullRequest) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.SuccessText,
 		)
-		return reviewCellStyle.Render("󰄬")
+		return components.RenderWithoutReset(reviewCellStyle, "󰄬")
 	}
 
 	if pr.Data.Primary.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("")
+		return components.RenderWithoutReset(reviewCellStyle, "")
 	}
 
 	if pr.Data.Primary.Reviews.TotalCount > 0 {
-		return reviewCellStyle.Render(pr.Ctx.Styles.Common.CommentGlyph)
+		return components.RenderWithoutReset(reviewCellStyle, constants.CommentIcon)
 	}
 
-	return reviewCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
+	return components.RenderWithoutReset(reviewCellStyle.Foreground(pr.Ctx.Theme.WarningText), constants.WaitingIcon)
 }
 
 func (pr *PullRequest) renderState() string {
 	mergeCellStyle := lipgloss.NewStyle()
 
 	if pr.Data.Primary == nil {
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText), "󰜛")
 	}
 
 	switch pr.Data.Primary.State {
 	case "OPEN":
 		if pr.Data.Primary.IsDraft {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
+			return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText), constants.DraftIcon)
 		} else {
-			return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR).Render(constants.OpenIcon)
+			return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR), constants.OpenIcon)
 		}
 	case "CLOSED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).
-			Render(constants.ClosedIcon)
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR), constants.ClosedIcon)
 	case "MERGED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).
-			Render(constants.MergedIcon)
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR), constants.MergedIcon)
 	default:
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("-")
+		return components.RenderWithoutReset(mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText), "-")
 	}
 }
 
@@ -114,15 +113,15 @@ func (pr *PullRequest) renderCiStatus() string {
 	switch accStatus {
 	case checks.CommitStateSuccess:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.SuccessText)
-		return ciCellStyle.Render(constants.SuccessIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.SuccessIcon)
 	case checks.CommitStateExpected, checks.CommitStatePending:
-		return ciCellStyle.Render(pr.Ctx.Styles.Common.WaitingGlyph)
+		return components.RenderWithoutReset(ciCellStyle.Foreground(pr.Ctx.Theme.WarningText), constants.WaitingIcon)
 	case checks.CommitStateError, checks.CommitStateFailure:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.ErrorText)
-		return ciCellStyle.Render(constants.FailureIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.FailureIcon)
 	default:
 		ciCellStyle = ciCellStyle.Foreground(pr.Ctx.Theme.FaintText)
-		return ciCellStyle.Render(constants.EmptyIcon)
+		return components.RenderWithoutReset(ciCellStyle, constants.EmptyIcon)
 	}
 }
 
@@ -136,38 +135,49 @@ func (pr *PullRequest) RenderLines(isSelected bool) string {
 	additionsFg = pr.Ctx.Theme.SuccessText
 	deletionsFg = pr.Ctx.Theme.ErrorText
 
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
 	if isSelected {
 		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	additionsText := baseStyle.
-		Foreground(additionsFg).
-		Render(fmt.Sprintf("+%s", components.FormatNumber(pr.Data.Primary.Additions)))
-	deletionsText := baseStyle.
-		Foreground(deletionsFg).
-		Render(fmt.Sprintf("-%s", components.FormatNumber(deletions)))
-
 	return pr.getTextStyle().Render(
-		keepSameSpacesOnAddDeletions(
-			lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				additionsText,
-				baseStyle.Render(" "),
-				deletionsText,
-			)),
+		renderAdditionsDeletions(
+			pr.Data.Primary.Additions,
+			deletions,
+			baseStyle,
+			additionsFg,
+			deletionsFg,
+		),
 	)
 }
 
-func keepSameSpacesOnAddDeletions(str string) string {
-	strAsList := strings.Split(str, " ")
-	return fmt.Sprintf(
-		"%7s",
-		strAsList[0],
-	) + " " + fmt.Sprintf(
-		"%7s",
-		strAsList[1],
+func (pr *PullRequest) RenderLinesWithBackground(bg lipgloss.AdaptiveColor) string {
+	if pr.Data.Primary == nil {
+		return "-"
+	}
+	deletions := max(pr.Data.Primary.Deletions, 0)
+
+	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	additionsFg = pr.Ctx.Theme.SuccessText
+	deletionsFg = pr.Ctx.Theme.ErrorText
+
+	baseStyle := lipgloss.NewStyle().Background(bg)
+
+	return renderAdditionsDeletions(
+		pr.Data.Primary.Additions,
+		deletions,
+		baseStyle,
+		additionsFg,
+		deletionsFg,
 	)
+}
+
+func renderAdditionsDeletions(additions, deletions int, baseStyle lipgloss.Style, additionsFg, deletionsFg lipgloss.AdaptiveColor) string {
+	addStr := fmt.Sprintf("%7s", fmt.Sprintf("+%s", components.FormatNumber(additions)))
+	delStr := fmt.Sprintf("%7s", fmt.Sprintf("-%s", components.FormatNumber(deletions)))
+	additionsText := baseStyle.Foreground(additionsFg).Render(addStr)
+	deletionsText := baseStyle.Foreground(deletionsFg).Render(delStr)
+	return lipgloss.JoinHorizontal(lipgloss.Left, additionsText, baseStyle.Render(" "), deletionsText)
 }
 
 func (pr *PullRequest) renderTitle() string {
@@ -180,19 +190,17 @@ func (pr *PullRequest) renderTitle() string {
 }
 
 func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
-	baseStyle := lipgloss.NewStyle()
+	baseStyle := lipgloss.NewStyle().Background(pr.Ctx.Theme.MainBackground)
 	if isSelected {
-		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
+		baseStyle = baseStyle.Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	author := baseStyle.Render(fmt.Sprintf("@%s",
-		pr.Data.Primary.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon)))
+	author := fmt.Sprintf("@%s", pr.Data.Primary.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon))
 	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Primary.Repository.NameWithOwner,
 		fmt.Sprintf(" #%d by %s", pr.Data.Primary.Number, author))
 	branchHidden := pr.Ctx.Config.Defaults.Layout.Prs.Base.Hidden
 	if branchHidden == nil || !*branchHidden {
-		branch := baseStyle.Render(pr.Data.Primary.HeadRefName)
-		top = lipgloss.JoinHorizontal(lipgloss.Top, top, baseStyle.Render(" · "), branch)
+		top = lipgloss.JoinHorizontal(lipgloss.Top, top, " · ", pr.Data.Primary.HeadRefName)
 	}
 	title := pr.Data.Primary.Title
 	var titleColumn table.Column

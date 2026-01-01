@@ -34,9 +34,11 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/themeselector"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
@@ -55,6 +57,7 @@ type Model struct {
 	ctx           *context.ProgramContext
 	taskSpinner   spinner.Model
 	tasks         map[string]context.Task
+	themeSelector themeselector.Model
 }
 
 func NewModel(location config.Location) Model {
@@ -93,6 +96,7 @@ func NewModel(location config.Location) Model {
 	m.issueSidebar = issueview.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.tabs = tabs.NewModel(m.ctx)
+	m.themeSelector = themeselector.NewModel(m.ctx)
 
 	return m
 }
@@ -166,6 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds            []tea.Cmd
 		currSection     = m.getCurrSection()
 		currRowData     = m.getCurrRowData()
+		refreshRows     bool
 	)
 
 	switch msg := msg.(type) {
@@ -198,7 +203,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		// Handle theme selector if visible
+		if m.themeSelector.IsVisible() {
+			m.themeSelector, cmd = m.themeSelector.Update(msg)
+			return m, cmd
+		}
+
 		switch {
+		case msg.String() == "t":
+			m.themeSelector.SetSize(m.ctx.ScreenWidth, m.ctx.ScreenHeight)
+			m.themeSelector.Show()
+			return m, nil
 		case m.isUserDefinedKeybinding(msg):
 			cmd = m.executeKeybinding(msg.String())
 			return m, cmd
@@ -531,8 +546,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case initMsg:
 		m.ctx.Config = &msg.Config
 		m.ctx.RepoUrl = msg.RepoUrl
-		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
-		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
+
+		// Load saved theme
+		savedThemeID := config.GetCurrentTheme()
+		if tf, err := config.LoadTheme(savedThemeID); err == nil {
+			config.ApplyThemeToConfig(m.ctx.Config, tf)
+		}
+
+		m.applyTheme()
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
@@ -638,9 +659,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case constants.ErrMsg:
 		m.ctx.Error = msg.Err
+
+	case constants.ThemeReloadMsg:
+		// Reload theme from state file
+		savedThemeID := config.GetCurrentTheme()
+		if tf, err := config.LoadTheme(savedThemeID); err == nil {
+			config.ApplyThemeToConfig(m.ctx.Config, tf)
+			m.applyTheme()
+			refreshRows = true
+			cmd = m.notify(fmt.Sprintf("Theme reloaded: %s", tf.Name))
+		}
+
+	case themeselector.ThemeSelectedMsg:
+		// Apply the selected theme
+		if tf, err := config.LoadTheme(msg.ThemeID); err == nil {
+			config.ApplyThemeToConfig(m.ctx.Config, tf)
+			m.applyTheme()
+			refreshRows = true
+			// Save the theme selection
+			_ = config.SaveCurrentTheme(msg.ThemeID)
+			cmd = m.notify(fmt.Sprintf("Theme changed to %s", tf.Name))
+		}
+
+	case themeselector.ThemeSelectorClosedMsg:
+		// Theme selector was closed without selection, nothing to do
 	}
 
 	m.syncProgramContext()
+	if refreshRows {
+		m.refreshAllSectionRows()
+		syncCmd := m.syncSidebar()
+		if syncCmd != nil {
+			cmds = append(cmds, syncCmd)
+		}
+	}
 
 	var bsCmd tea.Cmd
 	m.branchSidebar, bsCmd = m.branchSidebar.Update(msg)
@@ -722,7 +774,29 @@ func (m Model) View() string {
 		s.WriteString(m.footer.View())
 	}
 
-	return zone.Scan(s.String())
+	output := s.String()
+
+	// Render theme selector overlay if visible
+	if m.themeSelector.IsVisible() {
+		output = m.themeSelector.View()
+	}
+
+	// Apply full-screen background if theme has a main background color
+	bgColor := m.ctx.Theme.MainBackground.Dark
+	if lipgloss.HasDarkBackground() {
+		bgColor = m.ctx.Theme.MainBackground.Dark
+	} else {
+		bgColor = m.ctx.Theme.MainBackground.Light
+	}
+	if bgColor != "" {
+		bgStyle := lipgloss.NewStyle().
+			Background(lipgloss.Color(bgColor)).
+			Width(m.ctx.ScreenWidth).
+			Height(m.ctx.ScreenHeight)
+		output = bgStyle.Render(output)
+	}
+
+	return zone.Scan(output)
 }
 
 type initMsg struct {
@@ -755,6 +829,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 		m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
 	}
 	m.syncMainContentWidth()
+	m.themeSelector.SetSize(msg.Width, msg.Height)
 }
 
 func (m *Model) syncProgramContext() {
@@ -767,6 +842,36 @@ func (m *Model) syncProgramContext() {
 	m.prView.UpdateProgramContext(m.ctx)
 	m.issueSidebar.UpdateProgramContext(m.ctx)
 	m.branchSidebar.UpdateProgramContext(m.ctx)
+}
+
+func (m *Model) refreshAllSectionRows() {
+	if m.repo != nil {
+		if repoSection, ok := m.repo.(*reposection.Model); ok && repoSection != nil {
+			repoSection.UpdateProgramContext(m.ctx)
+			repoSection.Table.SetRows(repoSection.BuildRows())
+		}
+	}
+	for i := range m.prs {
+		if prSection, ok := m.prs[i].(*prssection.Model); ok && prSection != nil {
+			prSection.UpdateProgramContext(m.ctx)
+			prSection.Table.SetRows(prSection.BuildRows())
+		}
+	}
+	for i := range m.issues {
+		if issueSection, ok := m.issues[i].(*issuessection.Model); ok && issueSection != nil {
+			issueSection.UpdateProgramContext(m.ctx)
+			issueSection.Table.SetRows(issueSection.BuildRows())
+		}
+	}
+}
+
+func (m *Model) applyTheme() {
+	m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
+	m.ctx.Styles = context.InitStyles(m.ctx.Theme)
+	m.taskSpinner.Style = lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground)
+	hasDarkBackground := theme.HasDarkBackground(m.ctx.Theme)
+	markdown.InitializeMarkdownStyle(hasDarkBackground)
+	markdown.SetBackgroundColor(themeBackgroundColor(m.ctx.Theme, hasDarkBackground))
 }
 
 func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
@@ -950,6 +1055,19 @@ func (m *Model) switchSelectedView() config.ViewType {
 	default:
 		return config.PRsView
 	}
+}
+
+func themeBackgroundColor(th theme.Theme, hasDark bool) string {
+	if hasDark {
+		if th.MainBackground.Dark != "" {
+			return th.MainBackground.Dark
+		}
+		return th.MainBackground.Light
+	}
+	if th.MainBackground.Light != "" {
+		return th.MainBackground.Light
+	}
+	return th.MainBackground.Dark
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {

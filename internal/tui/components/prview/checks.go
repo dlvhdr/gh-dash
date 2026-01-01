@@ -42,7 +42,7 @@ func (m *Model) renderChecksOverview() string {
 		borderColor = m.ctx.Theme.SuccessText
 	}
 
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(borderColor).Width(w)
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(borderColor).Width(w).Background(m.ctx.Theme.MainBackground)
 	parts := make([]string, 0)
 	if review != "" {
 		parts = append(parts, review)
@@ -143,7 +143,7 @@ func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
 
 func (m *Model) viewMergedStatus() string {
 	w := m.getIndentedContentWidth()
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Styles.Colors.MergedPR).Width(w)
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Styles.Colors.MergedPR).Width(w).Background(m.ctx.Theme.MainBackground)
 	return box.Render(m.viewCheckCategory(
 		m.ctx.Styles.Common.MergedGlyph,
 		"Pull request successfully merged and closed",
@@ -154,7 +154,7 @@ func (m *Model) viewMergedStatus() string {
 
 func (m *Model) viewClosedStatus() string {
 	w := m.getIndentedContentWidth()
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Theme.FaintBorder).Width(w)
+	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Theme.FaintBorder).Width(w).Background(m.ctx.Theme.MainBackground)
 	return box.Render(m.viewCheckCategory(
 		"",
 		"Closed with unmerged commits",
@@ -235,15 +235,20 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 		Border(lipgloss.NormalBorder(), false, false, !isLast, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Width(w).
-		Padding(1)
+		Padding(1).
+		Background(m.ctx.Theme.MainBackground)
 
-	sTitle := lipgloss.NewStyle().Bold(true)
-	sSub := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
+	sTitle := bgStyle.Bold(true)
+	sSub := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground).Width(w - 4)
 
-	category := lipgloss.JoinHorizontal(lipgloss.Top, icon, " ", sTitle.Render(title))
+	titleLine := lipgloss.JoinHorizontal(lipgloss.Top, bgStyle.Render(icon), bgStyle.Render(" "), sTitle.Render(title))
+	// Wrap title line to fill full width
+	category := stripANSIReset(bgStyle.Width(w - 4).Render(titleLine))
 
 	if subtitle != "" {
-		category = lipgloss.JoinVertical(lipgloss.Left, category, sSub.MarginLeft(2).Render(subtitle))
+		subLine := stripANSIReset(sSub.MarginLeft(2).Render(subtitle))
+		category = lipgloss.JoinVertical(lipgloss.Left, category, subLine)
 	}
 	if category == "" {
 		return ""
@@ -254,6 +259,7 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 func (m *Model) viewChecksBar() string {
 	w := m.getIndentedContentWidth() - 4
 	stats := m.getChecksStats()
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
 	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress)
 	numSections := 0
 	if stats.failed > 0 {
@@ -274,26 +280,26 @@ func (m *Model) viewChecksBar() string {
 	sections := make([]string, 0)
 	if stats.failed > 0 {
 		failWidth := int(math.Floor((float64(stats.failed) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(
+		sections = append(sections, bgStyle.Width(failWidth).Foreground(
 			m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
 	}
 	if stats.inProgress > 0 {
 		ipWidth := int(math.Floor((float64(stats.inProgress) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(ipWidth).Foreground(
+		sections = append(sections, bgStyle.Width(ipWidth).Foreground(
 			m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", ipWidth)))
 	}
 	if stats.skipped > 0 || stats.neutral > 0 {
 		skipWidth := int(math.Floor((float64(stats.skipped+stats.neutral) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(skipWidth).Foreground(
+		sections = append(sections, bgStyle.Width(skipWidth).Foreground(
 			m.ctx.Theme.FaintText).Height(1).Render(strings.Repeat("▃", skipWidth)))
 	}
 	if stats.succeeded > 0 {
 		succWidth := int(math.Floor((float64(stats.succeeded) / total) * float64(w)))
-		sections = append(sections, lipgloss.NewStyle().Width(succWidth).Foreground(
+		sections = append(sections, bgStyle.Width(succWidth).Foreground(
 			m.ctx.Theme.SuccessText).Height(1).Render(strings.Repeat("▃", succWidth)))
 	}
 
-	return strings.Join(sections, " ")
+	return strings.Join(sections, bgStyle.Render(" "))
 }
 
 func renderCheckRunName(checkRun data.CheckRun) string {
@@ -418,7 +424,7 @@ func (sidebar *Model) renderChecks() string {
 			lipgloss.Left,
 			title,
 			lipgloss.NewStyle().
-				Italic(true).
+				Italic(true).Background(sidebar.ctx.Theme.MainBackground).
 				PaddingLeft(2).
 				Width(sidebar.getIndentedContentWidth()).
 				Render("No checks to display..."),
@@ -433,7 +439,7 @@ func (sidebar *Model) renderChecks() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
-		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Render(
+		lipgloss.NewStyle().PaddingLeft(2).Width(sidebar.getIndentedContentWidth()).Background(sidebar.ctx.Theme.MainBackground).Render(
 			lipgloss.JoinVertical(lipgloss.Left, parts...)),
 	)
 }

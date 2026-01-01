@@ -19,6 +19,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
+	tuitheme "github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
@@ -201,7 +202,7 @@ func (m Model) View() string {
 	header.WriteString("\n\n")
 	header.WriteString(m.renderAuthor())
 	header.WriteString("\n\n")
-	header.WriteString(lipgloss.NewStyle().Width(m.width).
+	header.WriteString(lipgloss.NewStyle().Width(m.width).Background(m.ctx.Theme.MainBackground).
 		Border(lipgloss.NormalBorder(), false, false, true, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Render(m.carousel.View()),
@@ -221,11 +222,11 @@ func (m Model) View() string {
 
 		body.WriteString(m.renderSummary())
 		body.WriteString("\n\n")
-		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"))
+		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Width(m.getIndentedContentWidth()).Render(" Changes"))
 		body.WriteString("\n")
 		body.WriteString(m.renderChangesOverview())
 		body.WriteString("\n\n")
-		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
+		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Width(m.getIndentedContentWidth()).Render(" Checks"))
 		body.WriteString("\n")
 		body.WriteString(m.renderChecksOverview())
 
@@ -244,10 +245,11 @@ func (m Model) View() string {
 		body.WriteString(m.renderChangedFiles())
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left,
+	content := lipgloss.JoinVertical(lipgloss.Left,
 		header.String(),
-		lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(body.String()),
+		lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Background(m.ctx.Theme.MainBackground).Render(body.String()),
 	)
+	return lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground).Render(content)
 }
 
 func (m *Model) renderFullNameAndNumber() string {
@@ -270,13 +272,16 @@ func (m *Model) renderTitle() string {
 }
 
 func (m *Model) renderBranches() string {
-	return lipgloss.JoinHorizontal(lipgloss.Left,
-		" ",
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
+	content := lipgloss.JoinHorizontal(lipgloss.Left,
+		bgStyle.Render(" "),
 		m.renderStatusPill(),
-		" ",
+		bgStyle.Render(" "),
 		lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SecondaryText).
+			Background(m.ctx.Theme.MainBackground).
 			Render(m.pr.Data.Primary.BaseRefName+"  "+m.pr.Data.Primary.HeadRefName))
+	return bgStyle.Width(m.getIndentedContentWidth()).Render(content)
 }
 
 func (m *Model) renderStatusPill() string {
@@ -321,18 +326,20 @@ func (m *Model) renderAuthor() string {
 	if authorAssociation == "" {
 		authorAssociation = "unknown role"
 	}
-	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.Primary.CreatedAt))
-	return lipgloss.JoinHorizontal(lipgloss.Top,
-		" by ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(
-			lipgloss.NewStyle().Bold(true).Render("@"+m.pr.Data.Primary.Author.Login)),
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
-			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
-			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.Primary.AuthorAssociation,
-				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
-		),
+	bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
+	faintStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Background(m.ctx.Theme.MainBackground)
+	time := bgStyle.Render(utils.TimeElapsed(m.pr.Data.Primary.CreatedAt))
+	content := lipgloss.JoinHorizontal(lipgloss.Top,
+		bgStyle.Render(" by "),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Background(m.ctx.Theme.MainBackground).Bold(true).Render("@"+m.pr.Data.Primary.Author.Login),
+		faintStyle.Render(" ⋅ "),
+		time,
+		faintStyle.Render(" ago ⋅ "),
+		data.GetAuthorRoleIcon(m.pr.Data.Primary.AuthorAssociation, m.ctx.Theme),
+		bgStyle.Render(" "),
+		faintStyle.Render(strings.ToLower(authorAssociation)),
 	)
+	return lipgloss.NewStyle().Width(m.getIndentedContentWidth()).Background(m.ctx.Theme.MainBackground).Render(content)
 }
 
 func (m *Model) renderSummary() string {
@@ -341,13 +348,13 @@ func (m *Model) renderSummary() string {
 	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Primary.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
-	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Summary")
+	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Width(width).Render(" Summary")
 	title := lipgloss.JoinVertical(
 		lipgloss.Left,
 		desc,
 		"",
 	)
-	sbody := lipgloss.NewStyle().Width(m.getIndentedContentWidth())
+	sbody := lipgloss.NewStyle().Width(m.getIndentedContentWidth()).Background(m.ctx.Theme.MainBackground)
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return lipgloss.JoinVertical(
@@ -365,16 +372,27 @@ func (m *Model) renderSummary() string {
 
 	bodyHeight := lipgloss.Height(rendered)
 	if !m.summaryViewMore && bodyHeight > foldBodyHeight {
-		rendered = lipgloss.NewStyle().MaxHeight(foldBodyHeight).Render(rendered)
+		rendered = lipgloss.NewStyle().MaxHeight(foldBodyHeight).Background(m.ctx.Theme.MainBackground).Render(rendered)
+		moreLineRaw := lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Bold(true).Italic(true).Background(m.ctx.Theme.MainBackground).Render("Press "),
+			lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground).Foreground(m.ctx.Theme.PrimaryText).Render("e"),
+			lipgloss.NewStyle().Bold(true).Italic(true).Background(m.ctx.Theme.MainBackground).Render(" to read more..."),
+		)
+		bgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.MainBackground)
+		indentWidth := m.getIndentedContentWidth()
+		padding := indentWidth - lipgloss.Width(moreLineRaw)
+		if padding < 0 {
+			padding = 0
+		}
+		leftPad := padding / 2
+		rightPad := padding - leftPad
+		moreLine := bgStyle.Render(strings.Repeat(" ", leftPad)) +
+			moreLineRaw +
+			bgStyle.Render(strings.Repeat(" ", rightPad))
 		rendered = lipgloss.JoinVertical(lipgloss.Left,
 			rendered,
 			"",
-			lipgloss.PlaceHorizontal(m.getIndentedContentWidth(), lipgloss.Center,
-				lipgloss.JoinHorizontal(lipgloss.Top,
-					lipgloss.NewStyle().Bold(true).Italic(true).Render("Press "),
-					lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground).Foreground(m.ctx.Theme.PrimaryText).Render("e"),
-					lipgloss.NewStyle().Bold(true).Italic(true).Render(" to read more...")),
-			),
+			moreLine,
 		)
 	}
 
@@ -383,6 +401,7 @@ func (m *Model) renderSummary() string {
 			Width(width).
 			MaxWidth(width).
 			Align(lipgloss.Left).
+			Background(m.ctx.Theme.MainBackground).
 			Render(rendered),
 	)
 }
@@ -439,10 +458,29 @@ func (m *Model) GetIsCommenting() bool {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
+	isDarkBackground := tuitheme.HasDarkBackground(m.ctx.Theme)
+	itemStyle := lipgloss.NewStyle().
+		Padding(0, 1).
+		Background(m.ctx.Theme.MainBackground)
+	if isDarkBackground {
+		itemStyle = itemStyle.Foreground(m.ctx.Theme.FaintText)
+	} else {
+		itemStyle = itemStyle.Foreground(m.ctx.Theme.SecondaryText)
+	}
 	m.carousel.SetStyles(
 		carousel.Styles{
-			Item:     lipgloss.NewStyle().Padding(0, 1).Foreground(m.ctx.Theme.FaintText),
-			Selected: lipgloss.NewStyle().Padding(0, 1).Bold(true),
+			Item: itemStyle,
+			Selected: lipgloss.NewStyle().
+				Padding(0, 1).
+				Bold(true).
+				Foreground(m.ctx.Theme.PrimaryText).
+				Background(m.ctx.Theme.SelectedBackground),
+			OverflowIndicator: lipgloss.NewStyle().
+				Foreground(m.ctx.Theme.FaintText).
+				Background(m.ctx.Theme.MainBackground),
+			Separator: lipgloss.NewStyle().
+				Foreground(m.ctx.Theme.SecondaryBorder).
+				Background(m.ctx.Theme.MainBackground),
 		},
 	)
 }
