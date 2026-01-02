@@ -317,7 +317,8 @@ func (m *Model) renderLabels() string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render("Labels"),
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+			fmt.Sprintf("%s Labels", constants.LabelsIcon)),
 		"",
 		common.RenderLabels(width, labels, style),
 	)
@@ -450,7 +451,8 @@ func (m *Model) renderRequestedReviewers() string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render("Reviewers"),
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+			fmt.Sprintf("%s Reviewers", constants.CodeReviewIcon)),
 		"",
 		strings.Join(rows, "\n"),
 	)
