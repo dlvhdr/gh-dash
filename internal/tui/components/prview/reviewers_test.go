@@ -74,7 +74,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				},
 			},
 			reviews:      []data.Review{},
-			wantContains: []string{"Reviewers", "@alice", constants.WaitingIcon},
+			wantContains: []string{"Reviewers", "@alice", constants.DotIcon},
 		},
 		"user who commented": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -181,14 +181,14 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			reviews: []data.Review{
 				{Author: struct{ Login string }{Login: "alice"}, State: "APPROVED"},
 			},
-			wantContains: []string{"Reviewers", "@alice", constants.SuccessIcon},
+			wantContains: []string{"Reviewers", "@alice", constants.ApprovedIcon},
 		},
 		"reviewer who requested changes": {
 			reviewRequests: []data.ReviewRequestNode{},
 			reviews: []data.Review{
 				{Author: struct{ Login string }{Login: "bob"}, State: "CHANGES_REQUESTED"},
 			},
-			wantContains: []string{"Reviewers", "@bob", constants.FailureIcon},
+			wantContains: []string{"Reviewers", "@bob", constants.ChangesRequestedIcon},
 		},
 		"mix of pending and completed reviews": {
 			reviewRequests: []data.ReviewRequestNode{
@@ -208,7 +208,10 @@ func TestRenderRequestedReviewers(t *testing.T) {
 				{Author: struct{ Login string }{Login: "bob"}, State: "APPROVED"},
 				{Author: struct{ Login string }{Login: "charlie"}, State: "CHANGES_REQUESTED"},
 			},
-			wantContains: []string{"Reviewers", "@alice", "@bob", "@charlie", constants.WaitingIcon, constants.SuccessIcon, constants.FailureIcon},
+			wantContains: []string{
+				"Reviewers", "@alice", "@bob", "@charlie", constants.DotIcon,
+				constants.ApprovedIcon, constants.ChangesRequestedIcon,
+			},
 		},
 	}
 
