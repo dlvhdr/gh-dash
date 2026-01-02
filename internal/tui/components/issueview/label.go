@@ -36,6 +36,11 @@ func (m *Model) label(labels []string) tea.Cmd {
 		labelsMap[label] = true
 	}
 
+	existingLabelsColorMap := make(map[string]string)
+	for _, label := range m.issue.Data.Labels.Nodes {
+		existingLabelsColorMap[label.Name] = label.Color
+	}
+
 	for _, label := range m.issue.Data.Labels.Nodes {
 		if _, ok := labelsMap[label.Name]; !ok {
 			commandArgs = append(commandArgs, "--remove-label")
@@ -56,7 +61,10 @@ func (m *Model) label(labels []string) tea.Cmd {
 
 		returnedLabels := data.IssueLabels{Nodes: []data.Label{}}
 		for _, label := range labels {
-			returnedLabels.Nodes = append(returnedLabels.Nodes, data.Label{Name: label})
+			returnedLabels.Nodes = append(returnedLabels.Nodes, data.Label{
+				Name:  label,
+				Color: existingLabelsColorMap[label],
+			})
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.sectionId,
