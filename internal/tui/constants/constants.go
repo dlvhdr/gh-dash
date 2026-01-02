@@ -31,6 +31,7 @@ const (
 	PersonIcon           = ""
 	TeamIcon             = ""
 	WaitingIcon          = ""
+	DotIcon              = ""
 	EmptyIcon            = ""
 	FailureIcon          = "󰅙"
 	SuccessIcon          = ""
@@ -61,9 +62,9 @@ const (
 	MemberIcon = "" // \uf42b nf-oct-organization
 
 	// The person/s who has administrative ownership over the organization or repository (not always the same as the original author)
-	OwnerIcon = "󱇐" // \udb84\uddd0 nf-md-crown_outline
+	OwnerIcon = "" // \uf511 nf-oct-shield_lock
 
-	UnknownRoleIcon = "󱐡" // \udb85\udc21 nf-md-incognito_circle
+	UnknownRoleIcon = "󰭙" // \udb82\udf59 nf-md-account_question
 
 	Logo = `▜▔▚▐▔▌▚▔▐ ▌
 ▟▁▞▐▔▌▁▚▐▔▌`

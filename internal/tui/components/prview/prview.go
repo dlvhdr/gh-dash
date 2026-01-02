@@ -344,7 +344,7 @@ func (m *Model) renderRequestedReviewers() string {
 
 	reviewerItems := make([]reviewerItem, 0)
 	faintStyle := m.ctx.Styles.Common.FaintTextStyle
-	reviewerStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText)
+	reviewerStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
 	successStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText)
 	errorStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText)
 
@@ -358,10 +358,11 @@ func (m *Model) renderRequestedReviewers() string {
 		shownReviewers[displayName] = true
 
 		var reviewerStr string
+		stateIcon := ""
 		if state, hasReview := reviewStates[displayName]; hasReview && state == "COMMENTED" {
-			reviewerStr = m.ctx.Styles.Common.CommentGlyph + " "
+			stateIcon = m.ctx.Styles.Common.CommentGlyph
 		} else {
-			reviewerStr = m.ctx.Styles.Common.WaitingGlyph + " "
+			stateIcon = m.ctx.Styles.Common.WaitingDotGlyph
 		}
 
 		hasOwnerIcon := false
@@ -369,11 +370,14 @@ func (m *Model) renderRequestedReviewers() string {
 			reviewerStr += reviewerStyle.Render(displayName)
 		} else {
 			reviewerStr += reviewerStyle.Render("@" + displayName)
-			if req.AsCodeOwner {
-				reviewerStr += faintStyle.Render(" " + constants.OwnerIcon)
-				hasOwnerIcon = true
-			}
 		}
+
+		if req.AsCodeOwner {
+			reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top,
+				faintStyle.Render(constants.OwnerIcon), " ", reviewerStr)
+			hasOwnerIcon = true
+		}
+		reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top, stateIcon, " ", reviewerStr)
 
 		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasOwnerIcon: hasOwnerIcon})
 	}
@@ -390,9 +394,9 @@ func (m *Model) renderRequestedReviewers() string {
 
 		var reviewerStr string
 		if review.State == "APPROVED" {
-			reviewerStr = successStyle.Render(constants.SuccessIcon) + " "
+			reviewerStr = successStyle.Render(constants.ApprovedIcon) + " "
 		} else {
-			reviewerStr = errorStyle.Render(constants.FailureIcon) + " "
+			reviewerStr = errorStyle.Render(constants.ChangesRequestedIcon) + " "
 		}
 		reviewerStr += reviewerStyle.Render("@" + login)
 
