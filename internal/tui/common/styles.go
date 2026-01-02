@@ -27,6 +27,7 @@ type CommonStyles struct {
 	FaintTextStyle  lipgloss.Style
 	FooterStyle     lipgloss.Style
 	ErrorStyle      lipgloss.Style
+	SuccessStyle    lipgloss.Style
 	DraftGlyph      string
 	PersonGlyph     string
 	WaitingGlyph    string
@@ -49,9 +50,8 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		Background(theme.SelectedBackground).
 		Height(FooterHeight)
 
-	s.ErrorStyle = s.FooterStyle.
-		Foreground(theme.ErrorText).
-		MaxHeight(FooterHeight)
+	s.ErrorStyle = lipgloss.NewStyle().Foreground(theme.ErrorText)
+	s.SuccessStyle = lipgloss.NewStyle().Foreground(theme.SuccessText)
 
 	s.PersonGlyph = lipgloss.NewStyle().
 		Foreground(theme.FaintText).

@@ -29,11 +29,12 @@ type EnrichedPullRequestData struct {
 	Url                string
 	Number             int
 	Repository         Repository
-	Commits            CommitsWithStatusChecks   `graphql:"commits(last: 1)"`
-	Comments           CommentsWithBody          `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	ReviewThreads      ReviewThreadsWithComments `graphql:"reviewThreads(last: 50)"`
-	ReviewRequests     ReviewRequests            `graphql:"reviewRequests(last: 100)"`
-	Reviews            Reviews                   `graphql:"reviews(last: 100)"`
+	Commits            LastCommitWithStatusChecks `graphql:"commits(last: 1)"`
+	AllCommits         AllCommits                 `graphql:"allCommits: commits(last: 100)"`
+	Comments           CommentsWithBody           `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	ReviewThreads      ReviewThreadsWithComments  `graphql:"reviewThreads(last: 50)"`
+	ReviewRequests     ReviewRequests             `graphql:"reviewRequests(last: 100)"`
+	Reviews            Reviews                    `graphql:"reviews(last: 100)"`
 	SuggestedReviewers []SuggestedReviewer
 }
 
@@ -98,7 +99,35 @@ type StatusContext struct {
 	}
 }
 
-type CommitsWithStatusChecks struct {
+type StatusCheckRollupStats struct {
+	State    checks.CommitState
+	Contexts struct {
+		TotalCount                 graphql.Int
+		CheckRunCount              graphql.Int
+		CheckRunCountsByState      []ContextCountByState
+		StatusContextCount         graphql.Int
+		StatusContextCountsByState []ContextCountByState
+	} `graphql:"contexts(last: 1)"`
+}
+
+type AllCommits struct {
+	Nodes []struct {
+		Commit struct {
+			AbbreviatedOid  string
+			AuthoredDate    time.Time
+			MessageHeadline string
+			Author          struct {
+				Name string
+				User struct {
+					Login string
+				}
+			}
+			StatusCheckRollup StatusCheckRollupStats
+		}
+	}
+}
+
+type LastCommitWithStatusChecks struct {
 	Nodes []struct {
 		Commit struct {
 			Deployments struct {

@@ -446,6 +446,30 @@ type checksStats struct {
 	inProgress int
 }
 
+func (m *Model) getStatusCheckRollupStats(rollup data.StatusCheckRollupStats) checksStats {
+	var res checksStats
+	allChecks := make([]data.ContextCountByState, 0)
+	allChecks = append(allChecks, rollup.Contexts.CheckRunCountsByState...)
+	allChecks = append(allChecks, rollup.Contexts.StatusContextCountsByState...)
+
+	for _, count := range allChecks {
+		state := string(count.State)
+		if ghchecks.IsStatusWaiting(state) {
+			res.inProgress += int(count.Count)
+		} else if ghchecks.IsConclusionAFailure(state) {
+			res.failed += int(count.Count)
+		} else if ghchecks.IsConclusionASkip(state) {
+			res.skipped += int(count.Count)
+		} else if ghchecks.IsConclusionNeutral(state) {
+			res.neutral += int(count.Count)
+		} else if ghchecks.IsConclusionASuccess(state) {
+			res.succeeded += int(count.Count)
+		}
+	}
+
+	return res
+}
+
 func (m *Model) getChecksStats() checksStats {
 	var res checksStats
 	commits := m.pr.Data.Enriched.Commits.Nodes
