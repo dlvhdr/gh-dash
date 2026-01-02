@@ -325,15 +325,25 @@ func (m *Model) renderLabels() string {
 }
 
 type reviewerItem struct {
-	text         string
-	hasOwnerIcon bool
+	text string
 }
 
 func (m *Model) renderRequestedReviewers() string {
-	reviewRequests := m.pr.Data.Primary.ReviewRequests.Nodes
-	reviews := m.pr.Data.Primary.Reviews.Nodes
+	if !m.pr.Data.IsEnriched {
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+				fmt.Sprintf("%s Reviewers", constants.CodeReviewIcon)),
+			"",
+			lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.WaitingGlyph, " ", m.ctx.Styles.Common.FaintTextStyle.Render("Loading...")),
+		)
+	}
 
-	if len(reviewRequests) == 0 && len(reviews) == 0 {
+	reviewRequests := m.pr.Data.Enriched.ReviewRequests.Nodes
+	reviews := m.pr.Data.Enriched.Reviews.Nodes
+	suggestedReviewers := m.pr.Data.Enriched.SuggestedReviewers
+
+	if len(reviewRequests) == 0 && len(reviews) == 0 && len(suggestedReviewers) == 0 {
 		return ""
 	}
 
@@ -366,7 +376,6 @@ func (m *Model) renderRequestedReviewers() string {
 			stateIcon = m.ctx.Styles.Common.WaitingDotGlyph
 		}
 
-		hasOwnerIcon := false
 		if req.IsTeam() {
 			reviewerStr += reviewerStyle.Render(displayName)
 		} else {
@@ -376,11 +385,10 @@ func (m *Model) renderRequestedReviewers() string {
 		if req.AsCodeOwner {
 			reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top,
 				faintStyle.Render(constants.OwnerIcon), " ", reviewerStr)
-			hasOwnerIcon = true
 		}
 		reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top, stateIcon, " ", reviewerStr)
 
-		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasOwnerIcon: hasOwnerIcon})
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
 	}
 
 	for _, review := range reviews {
@@ -388,20 +396,42 @@ func (m *Model) renderRequestedReviewers() string {
 		if shownReviewers[login] {
 			continue
 		}
-		if review.State != "APPROVED" && review.State != "CHANGES_REQUESTED" {
+		if review.State != "APPROVED" && review.State != "CHANGES_REQUESTED" && review.State != "COMMENTED" {
 			continue
 		}
 		shownReviewers[login] = true
 
-		var reviewerStr string
-		if review.State == "APPROVED" {
-			reviewerStr = successStyle.Render(constants.ApprovedIcon) + " "
-		} else {
-			reviewerStr = errorStyle.Render(constants.ChangesRequestedIcon) + " "
+		var stateIcon string
+		switch review.State {
+		case "APPROVED":
+			stateIcon = successStyle.Render(constants.ApprovedIcon)
+		case "CHANGES_REQUESTED":
+			stateIcon = errorStyle.Render(constants.ChangesRequestedIcon)
+		case "COMMENTED":
+			stateIcon = m.ctx.Styles.Common.CommentGlyph
 		}
-		reviewerStr += reviewerStyle.Render("@" + login)
+		reviewerStr := stateIcon + " " + reviewerStyle.Render("@"+login)
 
-		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr, hasOwnerIcon: false})
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
+	}
+
+	// Show suggested reviewers (= code owners) who haven't been requested or reviewed yet
+	for _, suggested := range suggestedReviewers {
+		login := suggested.Reviewer.Login
+		if shownReviewers[login] {
+			continue
+		}
+		if suggested.IsAuthor {
+			continue
+		}
+		shownReviewers[login] = true
+
+		reviewerStr := lipgloss.JoinHorizontal(lipgloss.Top,
+			faintStyle.Render(constants.OwnerIcon), " ",
+			faintStyle.Render("@"+login),
+		)
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
 	}
 
 	if len(reviewerItems) == 0 {
@@ -416,9 +446,6 @@ func (m *Model) renderRequestedReviewers() string {
 	for i, item := range reviewerItems {
 		itemWidth := lipgloss.Width(item.text)
 		separator := ", "
-		if item.hasOwnerIcon {
-			separator = " , "
-		}
 		separatorWidth := lipgloss.Width(separator)
 
 		// Check if adding this item would exceed the width
