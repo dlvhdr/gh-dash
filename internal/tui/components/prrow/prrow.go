@@ -49,14 +49,14 @@ func (pr *PullRequest) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.SuccessText,
 		)
-		return reviewCellStyle.Render("󰄬")
+		return reviewCellStyle.Render(constants.ApprovedIcon)
 	}
 
 	if pr.Data.Primary.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("")
+		return reviewCellStyle.Render(constants.ChangesRequestedIcon)
 	}
 
 	if pr.Data.Primary.Reviews.TotalCount > 0 {

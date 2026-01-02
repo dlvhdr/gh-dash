@@ -214,11 +214,72 @@ type ChangedFiles struct {
 	Nodes      []ChangedFile
 }
 
+type RequestedReviewerUser struct {
+	Login string `graphql:"login"`
+}
+
+type RequestedReviewerTeam struct {
+	Slug string `graphql:"slug"`
+	Name string `graphql:"name"`
+}
+
+type RequestedReviewerBot struct {
+	Login string `graphql:"login"`
+}
+
+type RequestedReviewerMannequin struct {
+	Login string `graphql:"login"`
+}
+
+type ReviewRequestNode struct {
+	AsCodeOwner       bool `graphql:"asCodeOwner"`
+	RequestedReviewer struct {
+		User      RequestedReviewerUser      `graphql:"... on User"`
+		Team      RequestedReviewerTeam      `graphql:"... on Team"`
+		Bot       RequestedReviewerBot       `graphql:"... on Bot"`
+		Mannequin RequestedReviewerMannequin `graphql:"... on Mannequin"`
+	} `graphql:"requestedReviewer"`
+}
+
 type ReviewRequests struct {
 	TotalCount int
-	Nodes      []struct {
-		AsCodeOwner bool `graphql:"asCodeOwner"`
+	Nodes      []ReviewRequestNode
+}
+
+func (r ReviewRequestNode) GetReviewerDisplayName() string {
+	if r.RequestedReviewer.User.Login != "" {
+		return r.RequestedReviewer.User.Login
 	}
+	if r.RequestedReviewer.Team.Slug != "" {
+		return r.RequestedReviewer.Team.Slug
+	}
+	if r.RequestedReviewer.Bot.Login != "" {
+		return r.RequestedReviewer.Bot.Login
+	}
+	if r.RequestedReviewer.Mannequin.Login != "" {
+		return r.RequestedReviewer.Mannequin.Login
+	}
+	return ""
+}
+
+func (r ReviewRequestNode) GetReviewerType() string {
+	if r.RequestedReviewer.User.Login != "" {
+		return "User"
+	}
+	if r.RequestedReviewer.Team.Slug != "" {
+		return "Team"
+	}
+	if r.RequestedReviewer.Bot.Login != "" {
+		return "Bot"
+	}
+	if r.RequestedReviewer.Mannequin.Login != "" {
+		return "Mannequin"
+	}
+	return ""
+}
+
+func (r ReviewRequestNode) IsTeam() bool {
+	return r.RequestedReviewer.Team.Slug != ""
 }
 
 type PRLabel struct {
