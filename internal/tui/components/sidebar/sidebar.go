@@ -11,16 +11,17 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 const (
-	ResizeZoneID       = "sidebar-resize"
-	MinPreviewWidth    = 30
-	MaxPreviewWidth    = 150
-	ResizeHandleChar   = "│"
-	ScrollbarWidth     = 1
-	ScrollThumbChar    = "┃"
-	ScrollTrackChar    = "│"
+	ResizeZoneID     = "sidebar-resize"
+	MinPreviewWidth  = 30
+	MaxPreviewWidth  = 150
+	ResizeHandleChar = "│"
+	ScrollbarWidth   = 1
+	ScrollThumbChar  = "┃"
+	ScrollTrackChar  = "│"
 )
 
 // ResizeMsg is sent when the sidebar is resized via mouse drag
@@ -157,16 +158,12 @@ func (m Model) View() string {
 		width = m.ctx.Config.Defaults.Preview.Width
 	}
 
-	// Create the resize handle (left border) as a zone for mouse interaction
-	resizeHandle := m.renderResizeHandle(height)
-
 	var content string
 	if m.data == "" {
 		// Content style without the left border and scrollbar
 		contentStyle := lipgloss.NewStyle().
 			Height(height).
-			Width(width - 1). // Subtract 1 for the resize handle
-			MaxWidth(width - 1)
+			Width(width - 1) // Subtract 1 for the resize handle
 		content = contentStyle.Align(lipgloss.Center).Render(
 			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
 		)
@@ -176,25 +173,31 @@ func (m Model) View() string {
 
 		// Content style - subtract space for resize handle and scrollbar
 		contentWidth := width - 1 - ScrollbarWidth
-		contentStyle := lipgloss.NewStyle().
-			Height(height).
-			Width(contentWidth).
-			MaxWidth(contentWidth)
 
-		viewportContent := lipgloss.NewStyle().
-			Width(contentWidth).
-			MaxWidth(contentWidth).
-			Render(m.viewport.View())
+		// Note: Avoid using MaxWidth() on content that may contain zone markers
+		// as it can truncate them and cause visual artifacts.
+		viewportContent := m.viewport.View()
 
-		pager := m.ctx.Styles.Sidebar.PagerStyle.
-			Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100)))
+		pager := lipgloss.NewStyle().
+			Width(contentWidth).
+			Render(m.ctx.Styles.Sidebar.PagerStyle.
+				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))))
 
 		mainContent := lipgloss.JoinVertical(lipgloss.Top, viewportContent, pager)
 
 		// Join content and scrollbar
-		content = contentStyle.Render(
-			lipgloss.JoinHorizontal(lipgloss.Top, mainContent, scrollbar),
-		)
+		content = lipgloss.JoinHorizontal(lipgloss.Top, mainContent, scrollbar)
+	}
+
+	contentHeight := lipgloss.Height(content)
+	if height > contentHeight {
+		content = lipgloss.PlaceVertical(height, lipgloss.Top, content)
+		contentHeight = lipgloss.Height(content)
+	}
+	actualHeight := utils.Max(height, contentHeight)
+	resizeHandle := m.renderResizeHandle(actualHeight)
+	if contentHeight < actualHeight {
+		content = lipgloss.PlaceVertical(actualHeight, lipgloss.Top, content)
 	}
 
 	// Join the resize handle and content horizontally

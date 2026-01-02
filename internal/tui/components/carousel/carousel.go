@@ -233,6 +233,7 @@ func (m Model) View() string {
 // UpdateSize updates the carousel size based on the previously defined
 // items and width.
 func (m *Model) UpdateSize() {
+	// First pass: render items WITHOUT zone markers to allow truncation
 	leftover := m.width
 	itemsContent := ""
 
@@ -243,13 +244,13 @@ func (m *Model) UpdateSize() {
 	lastRight := right
 	for len(m.items) > 0 && leftover > 0 && (left >= 0 || right < len(m.items)) {
 		if currDirection < 0 && left >= 0 {
-			lItem := m.renderItem(left, leftover)
+			lItem := m.renderItemContent(left, leftover)
 			leftover -= lipgloss.Width(lItem)
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Top, lItem, itemsContent)
 			lastLeft = left
 			left--
 		} else if currDirection > 0 && right < len(m.items) {
-			rItem := m.renderItem(right, leftover)
+			rItem := m.renderItemContent(right, leftover)
 			leftover -= lipgloss.Width(rItem)
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Top, itemsContent, rItem)
 			lastRight = right
@@ -281,6 +282,7 @@ func (m *Model) UpdateSize() {
 		l -= lipgloss.Width(roIndicator)
 	}
 
+	// Apply truncation to the content (safe because no zone markers yet)
 	if loIndicator != "" {
 		truncate := lipgloss.Width(itemsContent) - l + 1
 		itemsContent = ansi.TruncateLeft(itemsContent, truncate, "")
@@ -294,6 +296,41 @@ func (m *Model) UpdateSize() {
 			itemsContent = ansi.Truncate(itemsContent, l, "")
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Center, itemsContent,
 				m.styles.Item.Inline(true).Render(constants.Ellipsis))
+		}
+	}
+
+	// Second pass: rebuild with zone markers on items that fit completely
+	// Only add zone markers when we're NOT truncating content
+	needsTruncation := (loIndicator != "" || lipgloss.Width(itemsContent) > l)
+
+	if !needsTruncation && len(m.items) > 0 {
+		// Rebuild with zone markers since no truncation is needed
+		itemsContent = ""
+		leftover = l
+		left = m.cursor
+		right = min(m.cursor+1, len(m.items))
+		currDirection = -1
+
+		for leftover > 0 && (left >= lastLeft || right <= lastRight) {
+			if currDirection < 0 && left >= lastLeft {
+				lItem := m.renderItem(left, leftover)
+				leftover -= lipgloss.Width(lItem)
+				itemsContent = lipgloss.JoinHorizontal(lipgloss.Top, lItem, itemsContent)
+				left--
+			} else if currDirection > 0 && right <= lastRight {
+				rItem := m.renderItem(right, leftover)
+				leftover -= lipgloss.Width(rItem)
+				itemsContent = lipgloss.JoinHorizontal(lipgloss.Top, itemsContent, rItem)
+				right++
+			}
+
+			if left < lastLeft {
+				currDirection = 1
+			} else if right > lastRight {
+				currDirection = -1
+			} else {
+				currDirection = currDirection * -1
+			}
 		}
 	}
 
@@ -376,7 +413,9 @@ func (m *Model) MoveRight() {
 	m.UpdateSize()
 }
 
-func (m *Model) renderItem(itemID int, maxWidth int) string {
+// renderItemContent renders an item without zone marking.
+// Zone markers should be added separately after all truncation operations are complete.
+func (m *Model) renderItemContent(itemID int, maxWidth int) string {
 	var item string
 	if itemID == m.cursor {
 		item = m.styles.Selected.Render(m.items[itemID])
@@ -393,15 +432,21 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render(constants.Ellipsis))
 	}
 
-	// Wrap the item in a zone for click detection
-	zoneID := fmt.Sprintf("%s%s%d", TabZonePrefix, m.zonePrefix, itemID)
-	item = zone.Mark(zoneID, item)
-
 	if m.showSeparators && itemID != len(m.items)-1 {
 		return lipgloss.JoinHorizontal(lipgloss.Center, item, m.styles.Separator.Render(m.separator))
 	}
 
 	return item
+}
+
+// renderItem renders an item with zone marking for click detection.
+// This should only be used when the item won't be further truncated.
+func (m *Model) renderItem(itemID int, maxWidth int) string {
+	item := m.renderItemContent(itemID, maxWidth)
+
+	// Wrap the item in a zone for click detection
+	zoneID := fmt.Sprintf("%s%s%d", TabZonePrefix, m.zonePrefix, itemID)
+	return zone.Mark(zoneID, item)
 }
 
 // HandleClick checks if a mouse click event is on a tab and returns the tab index if so

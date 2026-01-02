@@ -11,25 +11,26 @@ import (
 )
 
 type KeyMap struct {
-	viewType      config.ViewType
-	Up            key.Binding
-	Down          key.Binding
-	FirstLine     key.Binding
-	LastLine      key.Binding
-	TogglePreview key.Binding
-	OpenGithub    key.Binding
-	Refresh       key.Binding
-	RefreshAll    key.Binding
-	Redraw        key.Binding
-	PageDown      key.Binding
-	PageUp        key.Binding
-	NextSection   key.Binding
-	PrevSection   key.Binding
-	Search        key.Binding
-	CopyUrl       key.Binding
-	CopyNumber    key.Binding
-	Help          key.Binding
-	Quit          key.Binding
+	viewType           config.ViewType
+	Up                 key.Binding
+	Down               key.Binding
+	FirstLine          key.Binding
+	LastLine           key.Binding
+	TogglePreview      key.Binding
+	ResetPreviewWidth  key.Binding
+	OpenGithub         key.Binding
+	Refresh            key.Binding
+	RefreshAll         key.Binding
+	Redraw             key.Binding
+	PageDown           key.Binding
+	PageUp             key.Binding
+	NextSection        key.Binding
+	PrevSection        key.Binding
+	Search             key.Binding
+	CopyUrl            key.Binding
+	CopyNumber         key.Binding
+	Help               key.Binding
+	Quit               key.Binding
 }
 
 func CreateKeyMapForView(viewType config.ViewType) help.KeyMap {
@@ -94,6 +95,7 @@ func (k KeyMap) AppKeys() []key.Binding {
 		k.Refresh,
 		k.RefreshAll,
 		k.TogglePreview,
+		k.ResetPreviewWidth,
 		k.OpenGithub,
 		k.CopyNumber,
 		k.CopyUrl,
@@ -125,6 +127,10 @@ var Keys = &KeyMap{
 	TogglePreview: key.NewBinding(
 		key.WithKeys("p"),
 		key.WithHelp("p", "open in Preview"),
+	),
+	ResetPreviewWidth: key.NewBinding(
+		key.WithKeys("P"),
+		key.WithHelp("P", "reset preview width"),
 	),
 	OpenGithub: key.NewBinding(
 		key.WithKeys("o"),
@@ -243,6 +249,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 			key = &Keys.LastLine
 		case "togglePreview":
 			key = &Keys.TogglePreview
+		case "resetPreviewWidth":
+			key = &Keys.ResetPreviewWidth
 		case "openGithub":
 			key = &Keys.OpenGithub
 		case "refresh":

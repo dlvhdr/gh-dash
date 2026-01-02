@@ -324,7 +324,6 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
 
-	// Wrap the row in a zone for click detection
 	zoneID := fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, rowId)
 	return zone.Mark(zoneID, row)
 }

@@ -245,6 +245,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
 
+		case key.Matches(msg, m.keys.ResetPreviewWidth):
+			// Reset preview width to config default
+			m.ctx.PreviewWidth = m.ctx.Config.Defaults.Preview.Width
+			m.syncMainContentWidth()
+			m.syncSidebar()
+			// Clear the saved state
+			go config.SavePreviewWidth(0)
+
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
 			currSection.ResetRows()

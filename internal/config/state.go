@@ -8,6 +8,7 @@ import (
 )
 
 const StateFileName = "state.yml"
+const DEFAULT_XDG_STATE_DIRNAME = ".local/state"
 
 // State holds runtime state that should persist between sessions
 type State struct {
@@ -15,16 +16,17 @@ type State struct {
 }
 
 // GetStatePath returns the path to the state file
+// State files are stored in $XDG_STATE_HOME (defaults to ~/.local/state)
 func GetStatePath() (string, error) {
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
+	stateDir := os.Getenv("XDG_STATE_HOME")
+	if stateDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
-		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
+		stateDir = filepath.Join(homeDir, DEFAULT_XDG_STATE_DIRNAME)
 	}
-	return filepath.Join(configDir, DashDir, StateFileName), nil
+	return filepath.Join(stateDir, DashDir, StateFileName), nil
 }
 
 // LoadState loads the state from the state file

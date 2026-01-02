@@ -128,12 +128,12 @@ func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 
 func (m *Model) View() string {
 	viewport := m.viewport.View()
+	// Note: Avoid using MaxWidth() on content containing zone markers as it can
+	// truncate them and cause visual artifacts. The viewport already constrains
+	// content to its width.
 	return lipgloss.NewStyle().
 		Width(m.viewport.Width).
-		MaxWidth(m.viewport.Width).
-		Render(
-			viewport,
-		)
+		Render(viewport)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
