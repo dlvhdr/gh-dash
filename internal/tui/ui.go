@@ -703,22 +703,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if section != nil {
 				clickedRow := section.HandleRowClick(msg)
 				if clickedRow >= 0 && clickedRow < section.NumRows() {
-					// Navigate to the clicked row
 					currRow := section.CurrRow()
 					if clickedRow != currRow {
-						// Move to the clicked row
-						if clickedRow > currRow {
-							for i := currRow; i < clickedRow; i++ {
-								section.NextRow()
-							}
-						} else {
-							for i := currRow; i > clickedRow; i-- {
-								section.PrevRow()
-							}
-						}
+						section.SetCurrRow(clickedRow)
 						cmds = append(cmds, m.onViewedRowChanged())
-						return m, tea.Batch(cmds...)
 					}
+					return m, tea.Batch(cmds...)
 				}
 			}
 		}

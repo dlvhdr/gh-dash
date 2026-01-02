@@ -25,6 +25,11 @@ func (t *TestSection) CurrRow() int {
 	panic("unimplemented")
 }
 
+// SetCurrRow implements section.Section.
+func (t *TestSection) SetCurrRow(index int) {
+	panic("unimplemented")
+}
+
 // FetchNextPageSectionRows implements section.Section.
 func (t *TestSection) FetchNextPageSectionRows() []tea.Cmd {
 	panic("unimplemented")

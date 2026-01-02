@@ -160,6 +160,11 @@ func (m *Model) LastItem() int {
 	return currItem
 }
 
+func (m *Model) SetCurrItem(index int) {
+	m.rowsViewport.SetCurrItem(index)
+	m.SyncViewPortContent()
+}
+
 func (m *Model) cacheColumnWidths() {
 	columns := m.renderHeaderColumns()
 	for i, col := range columns {

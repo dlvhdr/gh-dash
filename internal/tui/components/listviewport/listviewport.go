@@ -121,6 +121,41 @@ func (m *Model) LastItem() int {
 	return m.currId
 }
 
+func (m *Model) SetCurrItem(index int) {
+	if m.NumCurrentItems == 0 {
+		m.currId = 0
+		m.topBoundId = 0
+		m.bottomBoundId = 0
+		m.viewport.GotoTop()
+		return
+	}
+
+	index = utils.Max(0, utils.Min(index, m.NumCurrentItems-1))
+	itemsPerPage := m.getNumPrsPerPage()
+
+	if itemsPerPage <= 0 {
+		m.currId = index
+		m.topBoundId = 0
+		m.bottomBoundId = 0
+		m.viewport.GotoTop()
+		return
+	}
+
+	if index < m.topBoundId {
+		diff := m.topBoundId - index
+		m.viewport.ScrollUp(diff * m.ListItemHeight)
+		m.topBoundId = index
+		m.bottomBoundId = utils.Min(m.topBoundId+itemsPerPage-1, m.NumCurrentItems-1)
+	} else if index > m.bottomBoundId {
+		diff := index - m.bottomBoundId
+		m.viewport.ScrollDown(diff * m.ListItemHeight)
+		m.bottomBoundId = index
+		m.topBoundId = utils.Max(0, m.bottomBoundId-itemsPerPage+1)
+	}
+
+	m.currId = index
+}
+
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.viewport.Height = max(0, dimensions.Height)
 	m.viewport.Width = max(0, dimensions.Width)
