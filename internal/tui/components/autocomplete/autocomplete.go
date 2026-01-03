@@ -30,6 +30,21 @@ func (s suggestionList) Len() int {
 	return len(s.items)
 }
 
+var (
+	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/ctrl+n", "next"))
+	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String()), key.WithHelp("↑/Ctrl+p", "previous"))
+	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String(), tea.KeyCtrlY.String()), key.WithHelp("tab/enter/Ctrl+y", "select"))
+	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
+	ToggleSuggestions     = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
+)
+
+var suggestionKeys = []key.Binding{
+	NextKey,
+	PrevKey,
+	SelectKey,
+	RefreshSuggestionsKey,
+}
+
 const (
 	FetchStateIdle FetchState = iota
 	FetchStateLoading
@@ -75,21 +90,6 @@ func NewModel(ctx *context.ProgramContext) Model {
 		fetchState:     FetchStateIdle,
 		spinner:        sp,
 	}
-}
-
-var (
-	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/ctrl+n", "next"))
-	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String(), tea.KeyCtrlY.String()), key.WithHelp("↑/Ctrl+p/Ctrl+y", "previous"))
-	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String()), key.WithHelp("tab/enter", "select"))
-	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
-	ToggleSuggestions     = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
-)
-
-var suggestionKeys = []key.Binding{
-	NextKey,
-	PrevKey,
-	SelectKey,
-	RefreshSuggestionsKey,
 }
 
 func (m *Model) SetSuggestions(suggestions []string) {
