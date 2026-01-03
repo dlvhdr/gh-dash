@@ -222,7 +222,7 @@ func (m *Model) View() string {
 	for i := 0; i < numVisible && i < len(m.filtered); i++ {
 		label := m.filtered[i]
 		if len(label) > maxLabelWidth {
-			label = ansi.Truncate(label, maxLabelWidth-popupStyle.GetHorizontalPadding()-ellipsisWidth, constants.Ellipsis)
+			label = ansi.Truncate(label, maxLabelWidth-ellipsisWidth, constants.Ellipsis)
 		}
 
 		// Style based on selection
