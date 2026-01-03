@@ -38,7 +38,12 @@ func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int
 	m.pr = &prrow.PullRequest{
 		Ctx: ctx,
 		Data: &prrow.Data{
-			Primary: prData,
+			Primary:    prData,
+			IsEnriched: true,
+			Enriched: data.EnrichedPullRequestData{
+				ReviewRequests: prData.ReviewRequests,
+				Reviews:        prData.Reviews,
+			},
 		},
 	}
 	if width > 0 {
@@ -190,6 +195,31 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			},
 			wantContains: []string{"Reviewers", "@bob", constants.ChangesRequestedIcon},
 		},
+		"reviewer who only commented": {
+			reviewRequests: []data.ReviewRequestNode{},
+			reviews: []data.Review{
+				{Author: struct{ Login string }{Login: "charlie"}, State: "COMMENTED"},
+			},
+			wantContains: []string{"Reviewers", "@charlie", constants.CommentIcon},
+		},
+		"reviewer who approved then commented": {
+			reviewRequests: []data.ReviewRequestNode{},
+			reviews: []data.Review{
+				{Author: struct{ Login string }{Login: "alice"}, State: "APPROVED"},
+				{Author: struct{ Login string }{Login: "alice"}, State: "COMMENTED"},
+			},
+			wantContains:   []string{"Reviewers", "@alice", constants.ApprovedIcon},
+			wantNotContain: []string{constants.CommentIcon},
+		},
+		"reviewer who requested changes then commented": {
+			reviewRequests: []data.ReviewRequestNode{},
+			reviews: []data.Review{
+				{Author: struct{ Login string }{Login: "bob"}, State: "CHANGES_REQUESTED"},
+				{Author: struct{ Login string }{Login: "bob"}, State: "COMMENTED"},
+			},
+			wantContains:   []string{"Reviewers", "@bob", constants.ChangesRequestedIcon},
+			wantNotContain: []string{constants.CommentIcon},
+		},
 		"mix of pending and completed reviews": {
 			reviewRequests: []data.ReviewRequestNode{
 				{
@@ -292,4 +322,86 @@ func TestRenderRequestedReviewersWrapping(t *testing.T) {
 	// Should have: "Reviewers", empty line, then multiple lines of reviewers
 	require.Greater(t, len(lines), 3,
 		"expected output to wrap to multiple lines, got %d lines: %q", len(lines), got)
+}
+
+func TestRenderRequestedReviewersLoading(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../../../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	thm := theme.ParseTheme(&cfg)
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		Theme:  thm,
+		Styles: context.InitStyles(thm),
+	}
+
+	m := NewModel(ctx)
+	m.ctx = ctx
+	m.pr = &prrow.PullRequest{
+		Ctx: ctx,
+		Data: &prrow.Data{
+			Primary:    &data.PullRequestData{},
+			IsEnriched: false, // Not yet enriched - should show loading
+		},
+	}
+
+	got := m.renderRequestedReviewers()
+
+	require.True(t, strings.Contains(got, "Reviewers"),
+		"expected output to contain 'Reviewers' title, got: %q", got)
+	require.True(t, strings.Contains(got, "Loading..."),
+		"expected output to contain 'Loading...', got: %q", got)
+}
+
+func TestRenderSuggestedReviewers(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../../../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	thm := theme.ParseTheme(&cfg)
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		Theme:  thm,
+		Styles: context.InitStyles(thm),
+	}
+
+	m := NewModel(ctx)
+	m.ctx = ctx
+	m.pr = &prrow.PullRequest{
+		Ctx: ctx,
+		Data: &prrow.Data{
+			Primary:    &data.PullRequestData{},
+			IsEnriched: true,
+			Enriched: data.EnrichedPullRequestData{
+				ReviewRequests: data.ReviewRequests{},
+				Reviews:        data.Reviews{},
+				SuggestedReviewers: []data.SuggestedReviewer{
+					{
+						IsAuthor:    false,
+						IsCommenter: false,
+						Reviewer:    struct{ Login string }{Login: "codeowner1"},
+					},
+					{
+						IsAuthor:    true, // Should be skipped
+						IsCommenter: false,
+						Reviewer:    struct{ Login string }{Login: "author"},
+					},
+				},
+			},
+		},
+	}
+
+	got := m.renderRequestedReviewers()
+
+	require.True(t, strings.Contains(got, "Reviewers"),
+		"expected output to contain 'Reviewers' title, got: %q", got)
+	require.True(t, strings.Contains(got, "@codeowner1"),
+		"expected output to contain suggested reviewer '@codeowner1', got: %q", got)
+	require.True(t, strings.Contains(got, constants.OwnerIcon),
+		"expected output to contain owner icon for suggested reviewer, got: %q", got)
+	require.False(t, strings.Contains(got, "@author"),
+		"expected output to NOT contain '@author' (PR author), got: %q", got)
 }

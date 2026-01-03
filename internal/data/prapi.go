@@ -17,13 +17,24 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
+type SuggestedReviewer struct {
+	IsAuthor    bool
+	IsCommenter bool
+	Reviewer    struct {
+		Login string
+	}
+}
+
 type EnrichedPullRequestData struct {
-	Url           string
-	Number        int
-	Repository    Repository
-	Commits       CommitsWithStatusChecks   `graphql:"commits(last: 1)"`
-	Comments      CommentsWithBody          `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	ReviewThreads ReviewThreadsWithComments `graphql:"reviewThreads(last: 50)"`
+	Url                string
+	Number             int
+	Repository         Repository
+	Commits            CommitsWithStatusChecks   `graphql:"commits(last: 1)"`
+	Comments           CommentsWithBody          `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	ReviewThreads      ReviewThreadsWithComments `graphql:"reviewThreads(last: 50)"`
+	ReviewRequests     ReviewRequests            `graphql:"reviewRequests(last: 100)"`
+	Reviews            Reviews                   `graphql:"reviews(last: 100)"`
+	SuggestedReviewers []SuggestedReviewer
 }
 
 type PullRequestData struct {
