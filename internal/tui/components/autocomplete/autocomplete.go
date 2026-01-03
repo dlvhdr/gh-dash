@@ -250,7 +250,7 @@ func (m *Model) View() string {
 		if m.fetchError != nil {
 			errMsg = m.fetchError.Error()
 		}
-		statusView = m.ctx.Styles.Common.FailureGlyph + errMsg
+		statusView = m.ctx.Styles.Common.FailureGlyph + " " + errMsg
 	}
 
 	return popupStyle.Render(
