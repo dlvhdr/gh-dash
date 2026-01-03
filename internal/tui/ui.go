@@ -667,20 +667,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if section != nil {
 					if msg.Button == tea.MouseButtonWheelUp {
 						section.PrevRow()
-						section.PrevRow()
-						section.PrevRow()
 					} else {
 						prevRow := section.CurrRow()
-						section.NextRow()
-						section.NextRow()
 						nextRow := section.NextRow()
 						// Fetch more if we're near the bottom
 						if prevRow != nextRow && nextRow >= section.NumRows()-3 && m.ctx.View != config.RepoView {
 							cmds = append(cmds, section.FetchNextPageSectionRows()...)
 						}
 					}
-					cmds = append(cmds, m.onViewedRowChanged())
-					return m, tea.Batch(cmds...)
+					cmd = m.onViewedRowChanged()
 				}
 			}
 		}
@@ -706,9 +701,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					currRow := section.CurrRow()
 					if clickedRow != currRow {
 						section.SetCurrRow(clickedRow)
-						cmds = append(cmds, m.onViewedRowChanged())
+						cmd = m.onViewedRowChanged()
 					}
-					return m, tea.Batch(cmds...)
 				}
 			}
 		}

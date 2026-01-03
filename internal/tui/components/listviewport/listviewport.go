@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -162,13 +161,10 @@ func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 }
 
 func (m *Model) View() string {
-	viewport := m.viewport.View()
-	// Note: Avoid using MaxWidth() on content containing zone markers as it can
-	// truncate them and cause visual artifacts. The viewport already constrains
-	// content to its width.
-	return lipgloss.NewStyle().
-		Width(m.viewport.Width).
-		Render(viewport)
+	// Return viewport content directly without additional Width/MaxWidth styling.
+	// The viewport already constrains content to its width, and applying
+	// Width/MaxWidth to content containing zone markers can cause visual artifacts.
+	return m.viewport.View()
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
