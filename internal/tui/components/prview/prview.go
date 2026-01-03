@@ -350,6 +350,11 @@ func (m *Model) renderRequestedReviewers() string {
 	reviewStates := make(map[string]string)
 	for _, review := range reviews {
 		login := review.Author.Login
+		existingState := reviewStates[login]
+		// Don't override APPROVED or CHANGES_REQUESTED with COMMENTED
+		if review.State == "COMMENTED" && (existingState == "APPROVED" || existingState == "CHANGES_REQUESTED") {
+			continue
+		}
 		reviewStates[login] = review.State
 	}
 
@@ -391,18 +396,17 @@ func (m *Model) renderRequestedReviewers() string {
 		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
 	}
 
-	for _, review := range reviews {
-		login := review.Author.Login
+	for login, state := range reviewStates {
 		if shownReviewers[login] {
 			continue
 		}
-		if review.State != "APPROVED" && review.State != "CHANGES_REQUESTED" && review.State != "COMMENTED" {
+		if state != "APPROVED" && state != "CHANGES_REQUESTED" && state != "COMMENTED" {
 			continue
 		}
 		shownReviewers[login] = true
 
 		var stateIcon string
-		switch review.State {
+		switch state {
 		case "APPROVED":
 			stateIcon = successStyle.Render(constants.ApprovedIcon)
 		case "CHANGES_REQUESTED":

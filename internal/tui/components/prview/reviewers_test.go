@@ -202,6 +202,24 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			},
 			wantContains: []string{"Reviewers", "@charlie", constants.CommentIcon},
 		},
+		"reviewer who approved then commented": {
+			reviewRequests: []data.ReviewRequestNode{},
+			reviews: []data.Review{
+				{Author: struct{ Login string }{Login: "alice"}, State: "APPROVED"},
+				{Author: struct{ Login string }{Login: "alice"}, State: "COMMENTED"},
+			},
+			wantContains:   []string{"Reviewers", "@alice", constants.ApprovedIcon},
+			wantNotContain: []string{constants.CommentIcon},
+		},
+		"reviewer who requested changes then commented": {
+			reviewRequests: []data.ReviewRequestNode{},
+			reviews: []data.Review{
+				{Author: struct{ Login string }{Login: "bob"}, State: "CHANGES_REQUESTED"},
+				{Author: struct{ Login string }{Login: "bob"}, State: "COMMENTED"},
+			},
+			wantContains:   []string{"Reviewers", "@bob", constants.ChangesRequestedIcon},
+			wantNotContain: []string{constants.CommentIcon},
+		},
 		"mix of pending and completed reviews": {
 			reviewRequests: []data.ReviewRequestNode{
 				{
