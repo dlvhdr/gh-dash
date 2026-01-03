@@ -62,7 +62,7 @@ func (m *Model) renderCommits() string {
 			fainter.Render("│ "),
 			faint.Render(fmt.Sprintf("@%s", name)),
 			faint.Render(" committed "),
-			faint.Render(utils.TimeElapsed(commit.AuthoredDate)),
+			faint.Render(utils.TimeElapsed(commit.CommittedDate)),
 			faint.Render(" ago"),
 			statsStr,
 		)

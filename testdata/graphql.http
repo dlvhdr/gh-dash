@@ -21,7 +21,7 @@ query PullRequestChecks($url: URI!){
         nodes {
           commit {
             abbreviatedOid
-            authoredDate
+            committedDate
             messageHeadline
             author {
               name
@@ -49,4 +49,4 @@ query PullRequestChecks($url: URI!){
   }
 }
 
-{ "url": "https://github.com/dlvhdr/gh-dash/pull/724" }
+{ "url": "https://github.com/dlvhdr/gh-dash/pull/729" }

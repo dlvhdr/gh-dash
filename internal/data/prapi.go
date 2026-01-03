@@ -114,7 +114,7 @@ type AllCommits struct {
 	Nodes []struct {
 		Commit struct {
 			AbbreviatedOid  string
-			AuthoredDate    time.Time
+			CommittedDate   time.Time
 			MessageHeadline string
 			Author          struct {
 				Name string
