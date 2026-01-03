@@ -3,7 +3,9 @@ package autocomplete
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
@@ -28,46 +30,48 @@ func (s suggestionList) Len() int {
 type FetchLabelsRequestedMsg struct{}
 
 type Model struct {
-	ctx         *context.ProgramContext
-	suggestions []string
-	filtered    []string
-	selected    int
-	visible     bool
-	maxVisible  int
-	posX        int
-	posY        int
-	width       int
+	ctx            *context.ProgramContext
+	suggestionHelp help.Model
+	suggestions    []string
+	filtered       []string
+	selected       int
+	visible        bool
+	maxVisible     int
+	posX           int
+	posY           int
+	width          int
+	// whether the user explicitly hid the suggestions; when true
+	// Show() will not re-open the popup automatically until Unsuppress()
+	hiddenByUser bool
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
+	h := help.New()
+	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
-		ctx:        ctx,
-		visible:    false,
-		selected:   0,
-		maxVisible: 5,
-		width:      30,
+		ctx:            ctx,
+		suggestionHelp: h,
+		visible:        false,
+		selected:       0,
+		maxVisible:     5,
+		width:          30,
 	}
 }
 
-var NextKey = key.NewBinding(
-	key.WithKeys("down", "ctrl+n"),
-	key.WithHelp("↓/ctrl+n", "next"),
+var (
+	NextKey           = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/ctrl+n", "next"))
+	PrevKey           = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String(), tea.KeyCtrlY.String()), key.WithHelp("↑/Ctrl+p/Ctrl+y", "previous"))
+	SelectKey         = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String()), key.WithHelp("tab/enter", "select"))
+	FetchLabelsKey    = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "fetch labels"))
+	ToggleSuggestions = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
 )
 
-var PrevKey = key.NewBinding(
-	key.WithKeys("up", "ctrl+p", "ctrl+y"),
-	key.WithHelp("↑/ctrl+p/ctrl+y", "previous"),
-)
-
-var SelectKey = key.NewBinding(
-	key.WithKeys("enter", "tab"),
-	key.WithHelp("enter/tab", "select"),
-)
-
-var FetchLabelsKey = key.NewBinding(
-	key.WithKeys("ctrl+f"),
-	key.WithHelp("ctrl+f", "fetch labels"),
-)
+var suggestionKeys = []key.Binding{
+	NextKey,
+	PrevKey,
+	SelectKey,
+	FetchLabelsKey,
+}
 
 func (m *Model) SetSuggestions(suggestions []string) {
 	m.suggestions = suggestions
@@ -93,7 +97,12 @@ func (m *Model) Show(currentLabel string, excludeLabels []string) {
 			m.filtered = m.filtered[:m.maxVisible]
 		}
 		m.selected = 0
-		m.visible = len(m.filtered) > 0
+		// respect suppression: don't auto-show if suppressed
+		if m.hiddenByUser {
+			m.visible = false
+		} else {
+			m.visible = len(m.filtered) > 0
+		}
 		return
 	}
 
@@ -111,7 +120,12 @@ func (m *Model) Show(currentLabel string, excludeLabels []string) {
 	}
 
 	m.selected = 0
-	m.visible = len(m.filtered) > 0
+	// respect suppression: don't auto-show if suppressed
+	if m.hiddenByUser {
+		m.visible = false
+	} else {
+		m.visible = len(m.filtered) > 0
+	}
 }
 
 func (m *Model) Selected() string {
@@ -141,8 +155,27 @@ func (m *Model) Hide() {
 	m.visible = false
 }
 
+// Suppress hides the popup immediately and prevents it from being shown again
+// automatically until `Unsuppress()` is called. The underlying filtered results
+// are still updated while suppressed so navigation and selection keys will
+// operate on up-to-date suggestions even though the popup is not visible.
+func (m *Model) Suppress() {
+	m.hiddenByUser = true
+	m.visible = false
+}
+
+// Unsuppress clears the user hide flag and allows auto-showing again.
+func (m *Model) Unsuppress() {
+	m.hiddenByUser = false
+}
+
 func (m *Model) IsVisible() bool {
 	return m.visible
+}
+
+// HasSuggestions returns true if there are filtered suggestions available.
+func (m *Model) HasSuggestions() bool {
+	return len(m.filtered) > 0
 }
 
 func (m *Model) SetPosition(x, y int) {
@@ -196,5 +229,13 @@ func (m *Model) View() string {
 		}
 	}
 
-	return popupStyle.Render(b.String())
+	return popupStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			b.String(),
+			lipgloss.NewStyle().
+				MarginTop(1).
+				Render(m.suggestionHelp.ShortHelpView(suggestionKeys)),
+		),
+	)
 }

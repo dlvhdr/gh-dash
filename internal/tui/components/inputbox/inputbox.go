@@ -27,9 +27,7 @@ type Model struct {
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
-	autocomplete.NextKey,
-	autocomplete.PrevKey,
-	autocomplete.SelectKey,
+	autocomplete.ToggleSuggestions,
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -67,7 +65,30 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.autocomplete != nil && m.autocomplete.IsVisible() {
+		// Allow toggling suggestions at any time
+		if m.autocomplete != nil && key.Matches(msg, autocomplete.ToggleSuggestions) {
+			if m.autocomplete.IsVisible() {
+				m.autocomplete.Suppress()
+				return m, nil
+			}
+
+			m.autocomplete.Unsuppress()
+			currentValue := m.textArea.Value()
+			cursorPos := m.GetCursorPosition()
+			var currentLabel string
+			var existingLabels []string
+			if m.CurrentContext != nil {
+				currentLabel = m.CurrentContext(cursorPos, currentValue)
+			}
+			if m.AllLabels != nil {
+				existingLabels = m.AllLabels(currentValue)
+			}
+			m.autocomplete.Show(currentLabel, existingLabels)
+			return m, nil
+		}
+
+		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
+		if m.autocomplete != nil && (m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
 			switch {
 			case key.Matches(msg, autocomplete.PrevKey):
 				m.autocomplete.Prev()
