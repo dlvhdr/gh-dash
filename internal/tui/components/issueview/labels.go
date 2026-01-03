@@ -6,6 +6,7 @@ import (
 
 // LabelInfo contains information about a label at a specific cursor position
 // in a comma-separated list of labels.
+// StartIdx and EndIdx are rune indices (not byte indices).
 type LabelInfo struct {
 	Label    string
 	StartIdx int
@@ -16,7 +17,8 @@ type LabelInfo struct {
 
 // extractLabelAtCursor extracts information about the label at the given cursor position
 // in a comma-separated list. It considers the entire word containing the cursor as the
-// current label.
+// current label. The cursor position and returned indices are rune-based (not byte-based)
+// to correctly handle multi-byte Unicode characters.
 func extractLabelAtCursor(input string, cursorPos int) LabelInfo {
 	if input == "" {
 		return LabelInfo{
@@ -28,38 +30,40 @@ func extractLabelAtCursor(input string, cursorPos int) LabelInfo {
 		}
 	}
 
+	runes := []rune(input)
+
 	// Clamp cursor position to valid range
 	if cursorPos < 0 {
 		cursorPos = 0
 	}
-	if cursorPos > len(input) {
-		cursorPos = len(input)
+	if cursorPos > len(runes) {
+		cursorPos = len(runes)
 	}
 
 	// Find the comma before the cursor (or start of string)
 	startIdx := 0
 	for i := cursorPos - 1; i >= 0; i-- {
-		if input[i] == ',' {
+		if runes[i] == ',' {
 			startIdx = i + 1
 			break
 		}
 	}
 
 	// Find the comma after the cursor (or end of string)
-	endIdx := len(input)
-	for i := cursorPos; i < len(input); i++ {
-		if input[i] == ',' {
+	endIdx := len(runes)
+	for i := cursorPos; i < len(runes); i++ {
+		if runes[i] == ',' {
 			endIdx = i
 			break
 		}
 	}
 
 	// Extract and trim the label
-	label := strings.TrimSpace(input[startIdx:endIdx])
+	label := strings.TrimSpace(string(runes[startIdx:endIdx]))
 
 	// Determine if this is the first or last label
 	isFirst := startIdx == 0
-	isLast := endIdx == len(input)
+	isLast := endIdx == len(runes)
 
 	return LabelInfo{
 		Label:    label,
@@ -96,8 +100,10 @@ func allLabels(value string) []string {
 // It enforces consistent formatting:
 // - Single space after comma for non-first labels
 // - Always adds ", " after the label for easy continuation
+// All indices are rune-based to correctly handle multi-byte Unicode characters.
 func handleLabelSelection(selected string, cursorPos int, currentValue string) (string, int) {
 	labelInfo := extractLabelAtCursor(currentValue, cursorPos)
+	runes := []rune(currentValue)
 
 	// Build replacement with consistent spacing and trailing comma
 	var replacement string
@@ -109,17 +115,17 @@ func handleLabelSelection(selected string, cursorPos int, currentValue string) (
 
 	// Determine what comes after the current label
 	// Skip existing comma and spaces if present to avoid duplication
-	remainingInput := currentValue[labelInfo.EndIdx:]
+	remainingInput := string(runes[labelInfo.EndIdx:])
 	// Remove the comma
 	remainingInput = strings.TrimPrefix(remainingInput, ",")
 	// Skip any spaces after the comma
 	remainingInput = strings.TrimLeft(remainingInput, " \t")
 
 	// Build new input by replacing the label at cursor position
-	newValue := currentValue[:labelInfo.StartIdx] + replacement + remainingInput
+	newValue := string(runes[:labelInfo.StartIdx]) + replacement + remainingInput
 
 	// Position cursor after the ", " we added
-	newCursorPos := labelInfo.StartIdx + len(replacement)
+	newCursorPos := labelInfo.StartIdx + len([]rune(replacement))
 
 	return newValue, newCursorPos
 }
