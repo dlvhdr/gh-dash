@@ -55,7 +55,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 
 	inputBox.OnSuggestionSelected = handleLabelSelection
 	inputBox.CurrentContext = labelAtCursor
-	inputBox.AllLabels = allLabels
+	inputBox.SuggestionsToExclude = allLabels
 
 	ac := autocomplete.NewModel(ctx)
 	inputBox.SetAutocomplete(&ac)

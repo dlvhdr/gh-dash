@@ -14,14 +14,24 @@ import (
 )
 
 type Model struct {
-	ctx                  *context.ProgramContext
-	textArea             textarea.Model
-	inputHelp            help.Model
-	prompt               string
-	autocomplete         *autocomplete.Model
+	ctx          *context.ProgramContext
+	textArea     textarea.Model
+	inputHelp    help.Model
+	prompt       string
+	autocomplete *autocomplete.Model
+
+	// OnSuggestionSelected is called when a user selects an autocomplete suggestion.
+	// It receives the selected suggestion, current cursor position, and current value in inputbox.
+	// It should return the new value for the inputbox and new cursor position after insertion.
 	OnSuggestionSelected func(selected string, cursorPos int, currentValue string) (newValue string, newCursorPos int)
-	CurrentContext       func(cursorPos int, currentValue string) string
-	AllLabels            func(currentValue string) []string
+
+	// CurrentContext extracts the "current context" (e.g., partial label being typed)
+	// at the given cursor position, used for filtering autocomplete suggestions.
+	CurrentContext func(cursorPos int, currentValue string) string
+
+	// SuggestionsToExclude parses the current value in the inputbox and returns all complete items,
+	// used to exclude already-entered items from autocomplete suggestions.
+	SuggestionsToExclude func(currentValue string) []string
 }
 
 var inputKeys = []key.Binding{
@@ -80,8 +90,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.CurrentContext != nil {
 				currentLabel = m.CurrentContext(cursorPos, currentValue)
 			}
-			if m.AllLabels != nil {
-				existingLabels = m.AllLabels(currentValue)
+			if m.SuggestionsToExclude != nil {
+				existingLabels = m.SuggestionsToExclude(currentValue)
 			}
 			m.autocomplete.Show(currentLabel, existingLabels)
 			return m, nil
@@ -199,7 +209,13 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
 
+// GetCursorPosition returns the cursor position within the current logical line
+// in runes. This correctly handles multi-byte Unicode characters since the
+// textarea internally uses rune-based positioning via [][]rune.
+//
+// Use this for single-line input contexts like comma-separated labels.
+// For multi-line contexts (e.g., @mentions in comments), use GetAbsoluteCursorPosition.
 func (m *Model) GetCursorPosition() int {
 	lineInfo := m.textArea.LineInfo()
-	return lineInfo.StartColumn + lineInfo.CharOffset
+	return lineInfo.StartColumn + lineInfo.ColumnOffset
 }
