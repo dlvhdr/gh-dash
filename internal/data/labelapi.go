@@ -44,9 +44,13 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	}
 
 	labelCacheMu.Lock()
-	repoLabelCache[repoNameWithOwner] = filteredLabels
-	labelCacheMu.Unlock()
+	defer labelCacheMu.Unlock()
 
+	if labels, ok := repoLabelCache[repoNameWithOwner]; ok {
+		return labels, nil
+	}
+
+	repoLabelCache[repoNameWithOwner] = filteredLabels
 	return filteredLabels, nil
 }
 
