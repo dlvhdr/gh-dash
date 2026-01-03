@@ -8,7 +8,7 @@ Authorization: Bearer {{GH_TOKEN}}
 query PullRequestChecks($url: URI!){
   resource(url: $url) {
     ... on PullRequest {
-      commits(last: 1) {
+      lastCommit: commits(last: 1) {
         nodes {
           commit {
             statusCheckRollup {
@@ -17,8 +17,36 @@ query PullRequestChecks($url: URI!){
           }
         }
       }
+      allCommits: commits(last: 100) {
+        nodes {
+          commit {
+            abbreviatedOid
+            committedDate
+            messageHeadline
+            author {
+              name
+              user {
+                login
+              }
+            }
+            statusCheckRollup {
+              state
+              contexts(last: 1) {
+                checkRunCount
+                checkRunCountsByState {
+                  count
+                  state
+                }
+              }
+            }
+            checkSuites {
+              totalCount
+            }
+          }
+        }
+      }
     }
   }
 }
 
-{ "url": "https://github.com/port-labs/Port/pull/9946" }
+{ "url": "https://github.com/dlvhdr/gh-dash/pull/729" }

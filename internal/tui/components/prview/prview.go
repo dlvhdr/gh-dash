@@ -48,7 +48,7 @@ type Model struct {
 	inputBox inputbox.Model
 }
 
-var tabs = []string{" Overview", " Checks", " Activity", " Files Changed"}
+var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
@@ -241,13 +241,14 @@ func (m Model) View() string {
 		}
 
 	case tabs[1]:
+		body.WriteString(m.renderActivity())
+	case tabs[2]:
+		body.WriteString(m.renderCommits())
+	case tabs[3]:
 		body.WriteString(m.renderChecksOverview())
 		body.WriteString("\n\n")
 		body.WriteString(m.renderChecks())
-
-	case tabs[2]:
-		body.WriteString(m.renderActivity())
-	case tabs[3]:
+	case tabs[4]:
 		body.WriteString(m.renderChangedFiles())
 	}
 

@@ -20,9 +20,9 @@ type RenderedActivity struct {
 }
 
 func (m *Model) renderActivity() string {
-	width := m.getIndentedContentWidth() - 2
+	width := m.getIndentedContentWidth()
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
-	bodyStyle := lipgloss.NewStyle().PaddingLeft(2)
+	bodyStyle := lipgloss.NewStyle()
 
 	var activities []RenderedActivity
 	var comments []comment
