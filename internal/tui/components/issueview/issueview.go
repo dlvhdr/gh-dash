@@ -94,7 +94,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case autocomplete.FetchLabelsRequestedMsg:
+	case autocomplete.FetchSuggestionsRequestedMsg:
 		// Only fetch when we're in labeling mode (where labels are relevant)
 		if m.isLabeling {
 			return m, m.fetchLabels()
