@@ -203,7 +203,7 @@ func (m *Model) SetPosition(x, y int) {
 }
 
 func (m *Model) SetWidth(width int) {
-	m.width = width
+	m.width = max(0, width)
 }
 
 func (m *Model) View() string {
