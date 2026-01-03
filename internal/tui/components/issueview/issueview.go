@@ -312,7 +312,7 @@ func (m *Model) getIndentedContentWidth() int {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.inputBox.SetWidth(width)
-	m.ac.SetWidth(width - 10)
+	m.ac.SetWidth(width - 4)
 }
 
 func (m *Model) SetSectionId(id int) {
