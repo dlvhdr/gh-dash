@@ -187,15 +187,6 @@ func (m *Model) SetWidth(width int) {
 	m.width = width
 }
 
-// fuzzy.Source interface implementation for fuzzy.FindFrom
-func (m *Model) String(i int) string {
-	return m.suggestions[i]
-}
-
-func (m *Model) Len() int {
-	return len(m.suggestions)
-}
-
 func (m *Model) View() string {
 	if !m.visible || len(m.filtered) == 0 {
 		return ""
