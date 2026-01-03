@@ -426,11 +426,11 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
+			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 		} else {
 			// Fetch labels asynchronously
-			return m.fetchLabels()
+			return tea.Sequence(m.fetchLabels(), textarea.Blink, m.inputBox.Focus())
 		}
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
