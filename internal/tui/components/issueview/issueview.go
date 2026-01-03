@@ -83,6 +83,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case RepoLabelsFetchedMsg:
+		m.ac.SetFetchSuccess()
 		m.repoLabels = msg.Labels
 		labelNames := data.GetLabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
@@ -92,6 +93,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
 		}
+		return m, nil
+
+	case RepoLabelsFetchFailedMsg:
+		m.ac.SetFetchError(msg.Err)
 		return m, nil
 
 	case autocomplete.FetchSuggestionsRequestedMsg:
@@ -432,6 +437,8 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 
 // fetchLabels returns a command to fetch repository labels
 func (m *Model) fetchLabels() tea.Cmd {
+	m.ac.SetFetchLoading()
+
 	return func() tea.Msg {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
 		labels, err := data.FetchRepoLabels(repoName)

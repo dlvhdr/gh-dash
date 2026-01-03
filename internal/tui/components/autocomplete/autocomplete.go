@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
@@ -23,9 +24,18 @@ func (s suggestionList) String(i int) string {
 	return s.items[i]
 }
 
+type FetchState int
+
 func (s suggestionList) Len() int {
 	return len(s.items)
 }
+
+const (
+	FetchStateIdle FetchState = iota
+	FetchStateLoading
+	FetchStateSuccess
+	FetchStateError
+)
 
 type FetchSuggestionsRequestedMsg struct{}
 
@@ -40,12 +50,19 @@ type Model struct {
 	posX           int
 	posY           int
 	width          int
+	fetchState     FetchState
+	fetchError     error
+	spinner        spinner.Model
 	// whether the user explicitly hid the suggestions; when true
 	// Show() will not re-open the popup automatically until Unsuppress()
 	hiddenByUser bool
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
+	sp := spinner.New()
+	sp.Spinner = spinner.Dot
+	sp.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
+
 	h := help.New()
 	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
@@ -55,6 +72,8 @@ func NewModel(ctx *context.ProgramContext) Model {
 		selected:       0,
 		maxVisible:     5,
 		width:          30,
+		fetchState:     FetchStateIdle,
+		spinner:        sp,
 	}
 }
 
@@ -220,6 +239,20 @@ func (m *Model) View() string {
 		}
 	}
 
+	var statusView string
+	switch m.fetchState {
+	case FetchStateLoading:
+		statusView = m.spinner.View() + " Fetching suggestions" + constants.Ellipsis
+	case FetchStateSuccess:
+		statusView = m.ctx.Styles.Common.SuccessGlyph + " Suggestions loaded"
+	case FetchStateError:
+		errMsg := "Failed to fetch suggestions"
+		if m.fetchError != nil {
+			errMsg = m.fetchError.Error()
+		}
+		statusView = m.ctx.Styles.Common.FailureGlyph + errMsg
+	}
+
 	return popupStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
@@ -227,6 +260,35 @@ func (m *Model) View() string {
 			lipgloss.NewStyle().
 				MarginTop(1).
 				Render(m.suggestionHelp.ShortHelpView(suggestionKeys)),
+			statusView,
 		),
 	)
+}
+
+func (m *Model) SetFetchLoading() tea.Cmd {
+	m.fetchState = FetchStateLoading
+	m.fetchError = nil
+	return m.spinner.Tick
+}
+
+func (m *Model) SetFetchSuccess() {
+	m.fetchState = FetchStateSuccess
+	m.fetchError = nil
+}
+
+func (m *Model) SetFetchError(err error) {
+	m.fetchState = FetchStateError
+	m.fetchError = err
+}
+
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case spinner.TickMsg:
+		if m.fetchState == FetchStateLoading {
+			var cmd tea.Cmd
+			m.spinner, cmd = m.spinner.Update(msg)
+			return m, cmd
+		}
+	}
+	return m, nil
 }
