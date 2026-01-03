@@ -105,7 +105,7 @@ func (m *Model) Show(currentLabel string, excludeLabels []string) {
 	// Filter excluded labels first
 	var filteredSuggestions []string
 	for _, suggestion := range m.suggestions {
-		if !excludeMap[strings.ToLower(suggestion)] {
+		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion))] {
 			filteredSuggestions = append(filteredSuggestions, suggestion)
 		}
 	}
