@@ -54,7 +54,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	inputBox.SetHeight(common.InputBoxHeight)
 
 	inputBox.OnSuggestionSelected = handleLabelSelection
-	inputBox.CurrentContext = currentLabel
+	inputBox.CurrentContext = labelAtCursor
 	inputBox.AllLabels = allLabels
 
 	ac := autocomplete.NewModel(ctx)
@@ -88,7 +88,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.ac.SetSuggestions(labelNames)
 		if m.isLabeling {
 			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
+			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
 		}
@@ -154,14 +154,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			previousCursorPos := m.inputBox.GetCursorPosition()
 			previousValue := m.inputBox.Value()
-			previousLabel := currentLabel(previousCursorPos, previousValue)
+			previousLabel := labelAtCursor(previousCursorPos, previousValue)
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 
 			currentCursorPos := m.inputBox.GetCursorPosition()
 			currentValue := m.inputBox.Value()
-			currentLabel := currentLabel(currentCursorPos, currentValue)
+			currentLabel := labelAtCursor(currentCursorPos, currentValue)
 
 			if currentLabel != previousLabel {
 				existingLabels := allLabels(currentValue)
@@ -418,7 +418,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 			m.repoLabels = labels
 			m.ac.SetSuggestions(data.GetLabelNames(labels))
 			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
+			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
 		} else {

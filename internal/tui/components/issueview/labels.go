@@ -74,8 +74,8 @@ func extractLabelAtCursor(input string, cursorPos int) LabelInfo {
 	}
 }
 
-// currentLabel returns the label text at the cursor position
-func currentLabel(cursorPos int, currentValue string) string {
+// labelAtCursor returns the label text at the cursor position
+func labelAtCursor(cursorPos int, currentValue string) string {
 	labelInfo := extractLabelAtCursor(currentValue, cursorPos)
 	return labelInfo.Label
 }
