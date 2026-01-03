@@ -21,8 +21,8 @@ func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
 
 func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	// Check cache first
-	if labels, ok := GetCachedRepoLabels(repoNameWithOwner); ok {
-		return labels, nil
+	if cachedLabels, ok := GetCachedRepoLabels(repoNameWithOwner); ok {
+		return cachedLabels, nil
 	}
 
 	cmd := exec.Command("gh", "label", "list", "-R", repoNameWithOwner, "--json", "name,color", "--limit", "100")
