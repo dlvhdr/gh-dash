@@ -23,11 +23,6 @@ type Model struct {
 	width       int
 }
 
-type Config struct {
-	MaxVisible int
-	Width      int
-}
-
 func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		ctx:        ctx,
@@ -38,37 +33,10 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m *Model) SetConfigure(config Config) {
-	if config.MaxVisible > 0 {
-		m.maxVisible = config.MaxVisible
-	}
-	if config.Width > 0 {
-		m.width = config.Width
-	}
-}
-
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.nextKey()):
-			m.Next()
-			return m, nil
-		case key.Matches(msg, m.prevKey()):
-			m.Prev()
-			return m, nil
-		}
-	}
-	return m, cmd
-}
-
-func (m *Model) nextKey() key.Binding {
-	return key.NewBinding(
-		key.WithKeys("down", "ctrl+n"),
-		key.WithHelp("↓/ctrl+n", "next suggestion"),
-	)
-}
+var NextKey = key.NewBinding(
+	key.WithKeys("down", "ctrl+n"),
+	key.WithHelp("↓/ctrl+n", "next"),
+)
 
 func (m *Model) prevKey() key.Binding {
 	return key.NewBinding(
