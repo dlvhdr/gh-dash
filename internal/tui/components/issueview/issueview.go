@@ -28,6 +28,10 @@ type RepoLabelsFetchedMsg struct {
 	Labels []data.Label
 }
 
+type RepoLabelsFetchFailedMsg struct {
+	Err error
+}
+
 type Model struct {
 	ctx       *context.ProgramContext
 	issue     *issuerow.Issue
@@ -87,6 +91,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			currentLabel := currentLabel(cursorPos, m.inputBox.Value())
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
+		}
+		return m, nil
+
+	case autocomplete.FetchLabelsRequestedMsg:
+		// Only fetch when we're in labeling mode (where labels are relevant)
+		if m.isLabeling {
+			return m, m.fetchLabels()
 		}
 		return m, nil
 

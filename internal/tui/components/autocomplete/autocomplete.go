@@ -25,6 +25,8 @@ func (s suggestionList) Len() int {
 	return len(s.items)
 }
 
+type FetchLabelsRequestedMsg struct{}
+
 type Model struct {
 	ctx         *context.ProgramContext
 	suggestions []string

@@ -27,6 +27,9 @@ type Model struct {
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
+	autocomplete.NextKey,
+	autocomplete.PrevKey,
+	autocomplete.SelectKey,
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -85,6 +88,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 		}
+		// Allow fetching labels via keybinding at any time
+		if key.Matches(msg, autocomplete.FetchLabelsKey) {
+			return m, func() tea.Msg { return autocomplete.FetchLabelsRequestedMsg{} }
+		}
+
 	}
 
 	m.textArea, cmd = m.textArea.Update(msg)
