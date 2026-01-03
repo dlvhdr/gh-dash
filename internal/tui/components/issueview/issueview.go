@@ -443,7 +443,7 @@ func (m *Model) fetchLabels() tea.Cmd {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
 		labels, err := data.FetchRepoLabels(repoName)
 		if err != nil {
-			return nil
+			return RepoLabelsFetchFailedMsg{Err: err}
 		}
 		return RepoLabelsFetchedMsg{Labels: labels}
 	}
