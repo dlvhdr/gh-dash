@@ -27,7 +27,7 @@ type IssueData struct {
 	Assignees         Assignees      `graphql:"assignees(first: 3)"`
 	Comments          IssueComments  `graphql:"comments(first: 15)"`
 	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
-	Labels            IssueLabels    `graphql:"labels(first: 3)"`
+	Labels            IssueLabels    `graphql:"labels(first: 20)"`
 }
 
 type IssueComments struct {
