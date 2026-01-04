@@ -96,10 +96,10 @@ func (m *Model) SetSuggestions(suggestions []string) {
 	m.suggestions = suggestions
 }
 
-func (m *Model) Show(currentLabel string, excludeLabels []string) {
+func (m *Model) Show(currentItem string, excludeItems []string) {
 	excludeMap := make(map[string]bool)
-	for _, label := range excludeLabels {
-		excludeMap[strings.ToLower(strings.TrimSpace(label))] = true
+	for _, item := range excludeItems {
+		excludeMap[strings.ToLower(strings.TrimSpace(item))] = true
 	}
 
 	// Filter excluded labels first
@@ -110,7 +110,7 @@ func (m *Model) Show(currentLabel string, excludeLabels []string) {
 		}
 	}
 
-	if currentLabel == "" || len(filteredSuggestions) == 0 {
+	if currentItem == "" || len(filteredSuggestions) == 0 {
 		m.filtered = filteredSuggestions
 		if len(m.filtered) > m.maxVisible {
 			m.filtered = m.filtered[:m.maxVisible]
@@ -127,7 +127,7 @@ func (m *Model) Show(currentLabel string, excludeLabels []string) {
 
 	// Use fuzzy.FindFrom with suggestionList as Source
 	list := suggestionList{items: filteredSuggestions}
-	matches := fuzzy.FindFrom(currentLabel, list)
+	matches := fuzzy.FindFrom(currentItem, list)
 
 	// Collect matched items up to maxResults
 	m.filtered = make([]string, 0, m.maxVisible)
