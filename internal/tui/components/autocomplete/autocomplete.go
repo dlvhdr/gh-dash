@@ -117,11 +117,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 		}
 		m.selected = 0
 		// respect suppression: don't auto-show if suppressed
-		if m.hiddenByUser {
-			m.visible = false
-		} else {
-			m.visible = len(m.filtered) > 0
-		}
+		m.UpdateVisible()
 		return
 	}
 
@@ -140,11 +136,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 
 	m.selected = 0
 	// respect suppression: don't auto-show if suppressed
-	if m.hiddenByUser {
-		m.visible = false
-	} else {
-		m.visible = len(m.filtered) > 0
-	}
+	m.UpdateVisible()
 }
 
 func (m *Model) Selected() string {
@@ -279,6 +271,14 @@ func (m *Model) SetFetchSuccess() {
 func (m *Model) SetFetchError(err error) {
 	m.fetchState = FetchStateError
 	m.fetchError = err
+}
+
+func (m *Model) UpdateVisible() {
+	if m.hiddenByUser {
+		m.visible = false
+	} else {
+		m.visible = len(m.filtered) > 0
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
