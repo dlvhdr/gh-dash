@@ -49,14 +49,14 @@ func (pr *PullRequest) renderReviewStatus() string {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.SuccessText,
 		)
-		return reviewCellStyle.Render("󰄬")
+		return reviewCellStyle.Render(constants.ApprovedIcon)
 	}
 
 	if pr.Data.Primary.ReviewDecision == "CHANGES_REQUESTED" {
 		reviewCellStyle = reviewCellStyle.Foreground(
 			pr.Ctx.Theme.ErrorText,
 		)
-		return reviewCellStyle.Render("")
+		return reviewCellStyle.Render(constants.ChangesRequestedIcon)
 	}
 
 	if pr.Data.Primary.Reviews.TotalCount > 0 {
@@ -92,6 +92,9 @@ func (pr *PullRequest) renderState() string {
 }
 
 func (pr *PullRequest) GetStatusChecksRollup() checks.CommitState {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return checks.CommitStateUnknown
+	}
 	commits := pr.Data.Primary.Commits.Nodes
 	if len(commits) == 0 {
 		return checks.CommitStateUnknown

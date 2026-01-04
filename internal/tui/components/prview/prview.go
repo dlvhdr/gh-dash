@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -47,7 +48,7 @@ type Model struct {
 	inputBox inputbox.Model
 }
 
-var tabs = []string{" Overview", " Checks", " Activity", " Files Changed"}
+var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
@@ -213,6 +214,12 @@ func (m Model) View() string {
 
 	switch m.carousel.SelectedItem() {
 	case tabs[0]:
+		reviewers := m.renderRequestedReviewers()
+		if reviewers != "" {
+			body.WriteString(reviewers)
+			body.WriteString("\n\n")
+		}
+
 		labels := m.renderLabels()
 		if labels != "" {
 			body.WriteString(labels)
@@ -234,13 +241,14 @@ func (m Model) View() string {
 		}
 
 	case tabs[1]:
+		body.WriteString(m.renderActivity())
+	case tabs[2]:
+		body.WriteString(m.renderCommits())
+	case tabs[3]:
 		body.WriteString(m.renderChecksOverview())
 		body.WriteString("\n\n")
 		body.WriteString(m.renderChecks())
-
-	case tabs[2]:
-		body.WriteString(m.renderActivity())
-	case tabs[3]:
+	case tabs[4]:
 		body.WriteString(m.renderChangedFiles())
 	}
 
@@ -310,9 +318,175 @@ func (m *Model) renderLabels() string {
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render("Labels"),
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+			fmt.Sprintf("%s Labels", constants.LabelsIcon)),
 		"",
 		common.RenderLabels(width, labels, style),
+	)
+}
+
+type reviewerItem struct {
+	text string
+}
+
+func (m *Model) renderRequestedReviewers() string {
+	if !m.pr.Data.IsEnriched {
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+				fmt.Sprintf("%s Reviewers", constants.CodeReviewIcon)),
+			"",
+			lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.WaitingGlyph, " ", m.ctx.Styles.Common.FaintTextStyle.Render("Loading...")),
+		)
+	}
+
+	reviewRequests := m.pr.Data.Enriched.ReviewRequests.Nodes
+	reviews := m.pr.Data.Enriched.Reviews.Nodes
+	suggestedReviewers := m.pr.Data.Enriched.SuggestedReviewers
+
+	if len(reviewRequests) == 0 && len(reviews) == 0 && len(suggestedReviewers) == 0 {
+		return ""
+	}
+
+	reviewStates := make(map[string]string)
+	for _, review := range reviews {
+		login := review.Author.Login
+		existingState := reviewStates[login]
+		// Don't override APPROVED or CHANGES_REQUESTED with COMMENTED
+		if review.State == "COMMENTED" && (existingState == "APPROVED" || existingState == "CHANGES_REQUESTED") {
+			continue
+		}
+		reviewStates[login] = review.State
+	}
+
+	reviewerItems := make([]reviewerItem, 0)
+	faintStyle := m.ctx.Styles.Common.FaintTextStyle
+	reviewerStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
+	successStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText)
+	errorStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText)
+
+	shownReviewers := make(map[string]bool)
+
+	for _, req := range reviewRequests {
+		displayName := req.GetReviewerDisplayName()
+		if displayName == "" {
+			continue
+		}
+		shownReviewers[displayName] = true
+
+		var reviewerStr string
+		stateIcon := ""
+		if state, hasReview := reviewStates[displayName]; hasReview && state == "COMMENTED" {
+			stateIcon = m.ctx.Styles.Common.CommentGlyph
+		} else {
+			stateIcon = m.ctx.Styles.Common.WaitingDotGlyph
+		}
+
+		if req.IsTeam() {
+			reviewerStr += reviewerStyle.Render(displayName)
+		} else {
+			reviewerStr += reviewerStyle.Render("@" + displayName)
+		}
+
+		if req.AsCodeOwner {
+			reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top,
+				faintStyle.Render(constants.OwnerIcon), " ", reviewerStr)
+		}
+		reviewerStr = lipgloss.JoinHorizontal(lipgloss.Top, stateIcon, " ", reviewerStr)
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
+	}
+
+	for login, state := range reviewStates {
+		if shownReviewers[login] {
+			continue
+		}
+		if state != "APPROVED" && state != "CHANGES_REQUESTED" && state != "COMMENTED" {
+			continue
+		}
+		shownReviewers[login] = true
+
+		var stateIcon string
+		switch state {
+		case "APPROVED":
+			stateIcon = successStyle.Render(constants.ApprovedIcon)
+		case "CHANGES_REQUESTED":
+			stateIcon = errorStyle.Render(constants.ChangesRequestedIcon)
+		case "COMMENTED":
+			stateIcon = m.ctx.Styles.Common.CommentGlyph
+		}
+		reviewerStr := stateIcon + " " + reviewerStyle.Render("@"+login)
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
+	}
+
+	// Show suggested reviewers (= code owners) who haven't been requested or reviewed yet
+	for _, suggested := range suggestedReviewers {
+		login := suggested.Reviewer.Login
+		if shownReviewers[login] {
+			continue
+		}
+		if suggested.IsAuthor {
+			continue
+		}
+		shownReviewers[login] = true
+
+		reviewerStr := lipgloss.JoinHorizontal(lipgloss.Top,
+			faintStyle.Render(constants.OwnerIcon), " ",
+			faintStyle.Render("@"+login),
+		)
+
+		reviewerItems = append(reviewerItems, reviewerItem{text: reviewerStr})
+	}
+
+	if len(reviewerItems) == 0 {
+		return ""
+	}
+
+	width := m.getIndentedContentWidth()
+	var rows []string
+	var currentRow strings.Builder
+	currentRowWidth := 0
+
+	for i, item := range reviewerItems {
+		itemWidth := lipgloss.Width(item.text)
+		separator := ", "
+		separatorWidth := lipgloss.Width(separator)
+
+		// Check if adding this item would exceed the width
+		needsSeparator := i < len(reviewerItems)-1
+		totalItemWidth := itemWidth
+		if needsSeparator {
+			totalItemWidth += separatorWidth
+		}
+
+		if currentRowWidth > 0 && currentRowWidth+totalItemWidth > width {
+			// Start a new row
+			rows = append(rows, currentRow.String())
+			currentRow.Reset()
+			currentRowWidth = 0
+		}
+
+		currentRow.WriteString(item.text)
+		currentRowWidth += itemWidth
+
+		if needsSeparator {
+			currentRow.WriteString(separator)
+			currentRowWidth += separatorWidth
+		}
+	}
+
+	// Add the last row
+	if currentRow.Len() > 0 {
+		rows = append(rows, currentRow.String())
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
+			fmt.Sprintf("%s Reviewers", constants.CodeReviewIcon)),
+		"",
+		strings.Join(rows, "\n"),
 	)
 }
 

@@ -17,13 +17,25 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
+type SuggestedReviewer struct {
+	IsAuthor    bool
+	IsCommenter bool
+	Reviewer    struct {
+		Login string
+	}
+}
+
 type EnrichedPullRequestData struct {
-	Url           string
-	Number        int
-	Repository    Repository
-	Commits       CommitsWithStatusChecks   `graphql:"commits(last: 1)"`
-	Comments      CommentsWithBody          `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
-	ReviewThreads ReviewThreadsWithComments `graphql:"reviewThreads(last: 50)"`
+	Url                string
+	Number             int
+	Repository         Repository
+	Commits            LastCommitWithStatusChecks `graphql:"commits(last: 1)"`
+	AllCommits         AllCommits                 `graphql:"allCommits: commits(last: 100)"`
+	Comments           CommentsWithBody           `graphql:"comments(last: 50, orderBy: { field: UPDATED_AT, direction: DESC })"`
+	ReviewThreads      ReviewThreadsWithComments  `graphql:"reviewThreads(last: 50)"`
+	ReviewRequests     ReviewRequests             `graphql:"reviewRequests(last: 100)"`
+	Reviews            Reviews                    `graphql:"reviews(last: 100)"`
+	SuggestedReviewers []SuggestedReviewer
 }
 
 type PullRequestData struct {
@@ -87,7 +99,35 @@ type StatusContext struct {
 	}
 }
 
-type CommitsWithStatusChecks struct {
+type StatusCheckRollupStats struct {
+	State    checks.CommitState
+	Contexts struct {
+		TotalCount                 graphql.Int
+		CheckRunCount              graphql.Int
+		CheckRunCountsByState      []ContextCountByState
+		StatusContextCount         graphql.Int
+		StatusContextCountsByState []ContextCountByState
+	} `graphql:"contexts(last: 1)"`
+}
+
+type AllCommits struct {
+	Nodes []struct {
+		Commit struct {
+			AbbreviatedOid  string
+			CommittedDate   time.Time
+			MessageHeadline string
+			Author          struct {
+				Name string
+				User struct {
+					Login string
+				}
+			}
+			StatusCheckRollup StatusCheckRollupStats
+		}
+	}
+}
+
+type LastCommitWithStatusChecks struct {
 	Nodes []struct {
 		Commit struct {
 			Deployments struct {
@@ -214,11 +254,72 @@ type ChangedFiles struct {
 	Nodes      []ChangedFile
 }
 
+type RequestedReviewerUser struct {
+	Login string `graphql:"login"`
+}
+
+type RequestedReviewerTeam struct {
+	Slug string `graphql:"slug"`
+	Name string `graphql:"name"`
+}
+
+type RequestedReviewerBot struct {
+	Login string `graphql:"login"`
+}
+
+type RequestedReviewerMannequin struct {
+	Login string `graphql:"login"`
+}
+
+type ReviewRequestNode struct {
+	AsCodeOwner       bool `graphql:"asCodeOwner"`
+	RequestedReviewer struct {
+		User      RequestedReviewerUser      `graphql:"... on User"`
+		Team      RequestedReviewerTeam      `graphql:"... on Team"`
+		Bot       RequestedReviewerBot       `graphql:"... on Bot"`
+		Mannequin RequestedReviewerMannequin `graphql:"... on Mannequin"`
+	} `graphql:"requestedReviewer"`
+}
+
 type ReviewRequests struct {
 	TotalCount int
-	Nodes      []struct {
-		AsCodeOwner bool `graphql:"asCodeOwner"`
+	Nodes      []ReviewRequestNode
+}
+
+func (r ReviewRequestNode) GetReviewerDisplayName() string {
+	if r.RequestedReviewer.User.Login != "" {
+		return r.RequestedReviewer.User.Login
 	}
+	if r.RequestedReviewer.Team.Slug != "" {
+		return r.RequestedReviewer.Team.Slug
+	}
+	if r.RequestedReviewer.Bot.Login != "" {
+		return r.RequestedReviewer.Bot.Login
+	}
+	if r.RequestedReviewer.Mannequin.Login != "" {
+		return r.RequestedReviewer.Mannequin.Login
+	}
+	return ""
+}
+
+func (r ReviewRequestNode) GetReviewerType() string {
+	if r.RequestedReviewer.User.Login != "" {
+		return "User"
+	}
+	if r.RequestedReviewer.Team.Slug != "" {
+		return "Team"
+	}
+	if r.RequestedReviewer.Bot.Login != "" {
+		return "Bot"
+	}
+	if r.RequestedReviewer.Mannequin.Login != "" {
+		return "Mannequin"
+	}
+	return ""
+}
+
+func (r ReviewRequestNode) IsTeam() bool {
+	return r.RequestedReviewer.Team.Slug != ""
 }
 
 type PRLabel struct {
