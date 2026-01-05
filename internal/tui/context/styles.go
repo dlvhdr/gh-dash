@@ -241,7 +241,8 @@ func InitStyles(theme theme.Theme) Styles {
 
 	s.Autocomplete.SelectedStyle = lipgloss.NewStyle().
 		Background(theme.SelectedBackground).
-		Foreground(theme.PrimaryText)
+		Foreground(theme.PrimaryText).
+		Bold(true)
 
 	return s
 }
