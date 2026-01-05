@@ -41,9 +41,9 @@ func (m *Model) watchChecks() tea.Cmd {
 			"checks",
 			"--watch",
 			"--fail-fast",
-			fmt.Sprint(m.GetCurrRow().GetNumber()),
+			fmt.Sprint(prNumber),
 			"-R",
-			m.GetCurrRow().GetRepoNameWithOwner(),
+			repoNameWithOwner,
 		)
 
 		var outb, errb bytes.Buffer

@@ -276,10 +276,11 @@ func (m *Model) NumRows() int {
 }
 
 func (m *Model) GetCurrRow() data.RowData {
-	if len(m.Issues) == 0 {
+	idx := m.Table.GetCurrItem()
+	if idx < 0 || idx >= len(m.Issues) {
 		return nil
 	}
-	issue := m.Issues[m.Table.GetCurrItem()]
+	issue := m.Issues[idx]
 	return &issue
 }
 

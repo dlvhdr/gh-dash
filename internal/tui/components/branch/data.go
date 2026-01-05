@@ -13,6 +13,9 @@ type BranchData struct {
 }
 
 func (b BranchData) GetRepoNameWithOwner() string {
+	if len(b.Data.Remotes) == 0 {
+		return ""
+	}
 	return b.Data.Remotes[0]
 }
 
@@ -35,5 +38,8 @@ func (b BranchData) GetUrl() string {
 }
 
 func (b BranchData) GetUpdatedAt() time.Time {
+	if b.Data.LastUpdatedAt == nil {
+		return time.Time{}
+	}
 	return *b.Data.LastUpdatedAt
 }
