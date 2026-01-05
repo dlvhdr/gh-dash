@@ -78,8 +78,6 @@ type Model struct {
 	selected       int
 	visible        bool
 	maxVisible     int
-	posX           int
-	posY           int
 	width          int
 	fetchState     FetchState
 	fetchError     error
@@ -203,11 +201,6 @@ func (m *Model) IsVisible() bool {
 // HasSuggestions returns true if there are filtered suggestions available.
 func (m *Model) HasSuggestions() bool {
 	return len(m.filtered) > 0
-}
-
-func (m *Model) SetPosition(x, y int) {
-	m.posX = x
-	m.posY = y
 }
 
 func (m *Model) SetWidth(width int) {
