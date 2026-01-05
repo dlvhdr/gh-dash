@@ -229,10 +229,10 @@ func (m *Model) View() string {
 		// Style based on selection
 		if i == m.selected {
 			// Selected row - use inverted colors
-			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + label))
+			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + " " + label))
 		} else {
 			// Non-selected row
-			b.WriteString(" " + label)
+			b.WriteString("  " + label)
 		}
 
 		if i < numVisible-1 {
