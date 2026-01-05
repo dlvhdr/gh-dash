@@ -192,7 +192,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				existingLabels := allLabels(currentValue)
 				m.ac.Show(currentLabel, existingLabels)
 			}
-
 		} else if m.isAssigning {
 			switch msg.Type {
 			case tea.KeyCtrlD:
