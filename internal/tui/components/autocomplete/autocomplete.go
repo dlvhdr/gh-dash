@@ -246,11 +246,11 @@ func (m *Model) View() string {
 	var statusView string
 	switch m.fetchState {
 	case FetchStateLoading:
-		statusView = m.spinner.View() + " Fetching suggestions" + constants.Ellipsis
+		statusView = m.spinner.View() + "Fetching suggestions" + constants.Ellipsis
 	case FetchStateSuccess:
 		statusView = m.ctx.Styles.Common.SuccessGlyph + " Suggestions loaded"
 	case FetchStateError:
-		errMsg := "Failed to fetch suggestions"
+		errMsg := m.ctx.Styles.Common.FailureGlyph + " Failed to fetch suggestions"
 		if m.fetchError != nil {
 			errMsg = m.fetchError.Error()
 		}
@@ -261,10 +261,9 @@ func (m *Model) View() string {
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			b.String(),
-			lipgloss.NewStyle().
-				MarginTop(1).
-				Render(m.suggestionHelp.ShortHelpView(suggestionKeys)),
 			statusView,
+			lipgloss.NewStyle().
+				Render(m.suggestionHelp.ShortHelpView(suggestionKeys)),
 		),
 	)
 }
