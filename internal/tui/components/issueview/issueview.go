@@ -5,12 +5,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -22,6 +25,14 @@ var (
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 	commentPrompt    = "Leave a comment..."
 )
+
+type RepoLabelsFetchedMsg struct {
+	Labels []data.Label
+}
+
+type RepoLabelsFetchFailedMsg struct {
+	Err error
+}
 
 type Model struct {
 	ctx       *context.ProgramContext
@@ -35,12 +46,22 @@ type Model struct {
 	isAssigning       bool
 	isUnassigning     bool
 
-	inputBox inputbox.Model
+	inputBox   inputbox.Model
+	ac         *autocomplete.Model
+	repoLabels []data.Label
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
-	inputBox.SetHeight(common.InputBoxHeight)
+	linesToAdjust := 5
+	inputBox.SetHeight(common.InputBoxHeight - linesToAdjust)
+
+	inputBox.OnSuggestionSelected = handleLabelSelection
+	inputBox.CurrentContext = labelAtCursor
+	inputBox.SuggestionsToExclude = allLabels
+
+	ac := autocomplete.NewModel(ctx)
+	inputBox.SetAutocomplete(&ac)
 
 	return Model{
 		issue: nil,
@@ -50,7 +71,9 @@ func NewModel(ctx *context.ProgramContext) Model {
 		isAssigning:   false,
 		isUnassigning: false,
 
-		inputBox: inputBox,
+		inputBox:   inputBox,
+		ac:         &ac,
+		repoLabels: nil,
 	}
 }
 
@@ -62,6 +85,39 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
+	case RepoLabelsFetchedMsg:
+		clearCmd := m.ac.SetFetchSuccess()
+		m.repoLabels = msg.Labels
+		labelNames := data.GetLabelNames(msg.Labels)
+		m.ac.SetSuggestions(labelNames)
+		if m.isLabeling {
+			cursorPos := m.inputBox.GetCursorPosition()
+			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
+			existingLabels := allLabels(m.inputBox.Value())
+			m.ac.Show(currentLabel, existingLabels)
+		}
+		return m, clearCmd
+
+	case RepoLabelsFetchFailedMsg:
+		clearCmd := m.ac.SetFetchError(msg.Err)
+		return m, clearCmd
+
+	case autocomplete.FetchSuggestionsRequestedMsg:
+		// Only fetch when we're in labeling mode (where labels are relevant)
+		if m.isLabeling {
+			// If this is a forced refresh (e.g., via Ctrl+F), clear the cached labels
+			// for this repo so FetchRepoLabels will actually call the gh CLI.
+			if msg.Force {
+				if m.issue != nil {
+					repoName := m.issue.Data.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+			}
+			cmd := m.fetchLabels()
+			return m, cmd
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		if m.isCommenting {
 			switch msg.Type {
@@ -97,25 +153,45 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else if m.isLabeling {
 			switch msg.Type {
 			case tea.KeyCtrlD:
-				labels := strings.Split(m.inputBox.Value(), ",")
-				for i := range labels {
-					labels[i] = strings.TrimSpace(labels[i])
-				}
+				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					cmd = m.label(labels)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
+				m.ac.Hide()
 				return m, cmd
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isLabeling = false
+				m.ac.Hide()
 				return m, nil
 			}
 
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.issue != nil {
+					repoName := m.issue.Data.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+				cmds = append(cmds, m.fetchLabels())
+			}
+
+			previousCursorPos := m.inputBox.GetCursorPosition()
+			previousValue := m.inputBox.Value()
+			previousLabel := labelAtCursor(previousCursorPos, previousValue)
+
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
+
+			currentCursorPos := m.inputBox.GetCursorPosition()
+			currentValue := m.inputBox.Value()
+			currentLabel := labelAtCursor(currentCursorPos, currentValue)
+
+			if currentLabel != previousLabel {
+				existingLabels := allLabels(currentValue)
+				m.ac.Show(currentLabel, existingLabels)
+			}
 		} else if m.isAssigning {
 			switch msg.Type {
 			case tea.KeyCtrlD:
@@ -159,6 +235,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
+	switch msg.(type) {
+	case spinner.TickMsg, autocomplete.ClearFetchStatusMsg:
+		var acCmd tea.Cmd
+		*m.ac, acCmd = m.ac.Update(msg)
+		cmds = append(cmds, acCmd)
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -183,8 +266,10 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning || m.isLabeling {
+	if m.isCommenting || m.isAssigning || m.isUnassigning {
 		s.WriteString(m.inputBox.View())
+	} else if m.isLabeling {
+		s.WriteString(m.inputBox.ViewWithAutocomplete())
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
@@ -258,6 +343,7 @@ func (m *Model) getIndentedContentWidth() int {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.inputBox.SetWidth(width)
+	m.ac.SetWidth(width - 4)
 }
 
 func (m *Model) SetSectionId(id int) {
@@ -348,12 +434,47 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
+	labels = append(labels, "")
 	m.inputBox.SetValue(strings.Join(labels, ", "))
 
+	// Reset autocomplete
+	m.ac.Hide()
+	m.ac.SetSuggestions(nil)
+
+	// Trigger label fetching for autocomplete
 	if isLabeling {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		if labels, ok := data.GetCachedRepoLabels(repoName); ok {
+			// Use cached labels
+			m.repoLabels = labels
+			m.ac.SetSuggestions(data.GetLabelNames(labels))
+			cursorPos := m.inputBox.GetCursorPosition()
+			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
+			existingLabels := allLabels(m.inputBox.Value())
+			m.ac.Show(currentLabel, existingLabels)
+			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+		} else {
+			// Fetch labels asynchronously
+			return tea.Sequence(m.fetchLabels(), textarea.Blink, m.inputBox.Focus())
+		}
 	}
 	return nil
+}
+
+// fetchLabels returns a command to fetch repository labels
+func (m *Model) fetchLabels() tea.Cmd {
+	spinnerTickCmd := m.ac.SetFetchLoading()
+
+	fetchCmd := func() tea.Msg {
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		labels, err := data.FetchRepoLabels(repoName)
+		if err != nil {
+			return RepoLabelsFetchFailedMsg{Err: err}
+		}
+		return RepoLabelsFetchedMsg{Labels: labels}
+	}
+
+	return tea.Batch(spinnerTickCmd, fetchCmd)
 }
 
 func (m *Model) userAssignedToIssue(login string) bool {
@@ -398,4 +519,5 @@ func (m *Model) issueAssignees() []string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
+	m.ac.UpdateProgramContext(ctx)
 }

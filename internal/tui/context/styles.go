@@ -80,6 +80,10 @@ type Styles struct {
 		Root           lipgloss.Style
 		ViewsSeparator lipgloss.Style
 	}
+	Autocomplete struct {
+		PopupStyle    lipgloss.Style
+		SelectedStyle lipgloss.Style
+	}
 }
 
 const (
@@ -230,6 +234,15 @@ func InitStyles(theme theme.Theme) Styles {
 	s.ViewSwitcher.InactiveView = lipgloss.NewStyle().
 		Background(theme.FaintBorder).
 		Foreground(theme.FaintText)
+	s.Autocomplete.PopupStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(theme.SecondaryBorder).
+		Foreground(theme.PrimaryText)
+
+	s.Autocomplete.SelectedStyle = lipgloss.NewStyle().
+		Background(theme.SelectedBackground).
+		Foreground(theme.PrimaryText).
+		Bold(true)
 
 	return s
 }
