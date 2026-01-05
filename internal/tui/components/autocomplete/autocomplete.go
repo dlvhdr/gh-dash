@@ -2,6 +2,7 @@ package autocomplete
 
 import (
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -51,6 +52,9 @@ const (
 	FetchStateSuccess
 	FetchStateError
 )
+
+// ClearFetchStatusMsg is sent to clear the fetch status after a delay
+type ClearFetchStatusMsg struct{}
 
 // FetchSuggestionsRequestedMsg requests that the current view fetch suggestions from upstream.
 //
@@ -274,14 +278,23 @@ func (m *Model) SetFetchLoading() tea.Cmd {
 	return m.spinner.Tick
 }
 
-func (m *Model) SetFetchSuccess() {
+func (m *Model) SetFetchSuccess() tea.Cmd {
 	m.fetchState = FetchStateSuccess
 	m.fetchError = nil
+	return m.clearFetchStatusAfterDelay()
 }
 
-func (m *Model) SetFetchError(err error) {
+func (m *Model) SetFetchError(err error) tea.Cmd {
 	m.fetchState = FetchStateError
 	m.fetchError = err
+	return m.clearFetchStatusAfterDelay()
+}
+
+// clearFetchStatusAfterDelay returns a command that will send a ClearFetchStatusMsg after 2 seconds
+func (m *Model) clearFetchStatusAfterDelay() tea.Cmd {
+	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+		return ClearFetchStatusMsg{}
+	})
 }
 
 func (m *Model) UpdateVisible() {
@@ -299,6 +312,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			var cmd tea.Cmd
 			m.spinner, cmd = m.spinner.Update(msg)
 			return m, cmd
+		}
+	case ClearFetchStatusMsg:
+		// Only clear if we're in a success or error state (not loading or already idle)
+		if m.fetchState == FetchStateSuccess || m.fetchState == FetchStateError {
+			m.fetchState = FetchStateIdle
+			m.fetchError = nil
 		}
 	}
 	return m, nil

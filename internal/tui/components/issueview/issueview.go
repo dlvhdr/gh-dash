@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -84,7 +85,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case RepoLabelsFetchedMsg:
-		m.ac.SetFetchSuccess()
+		clearCmd := m.ac.SetFetchSuccess()
 		m.repoLabels = msg.Labels
 		labelNames := data.GetLabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
@@ -94,11 +95,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
 		}
-		return m, nil
+		return m, clearCmd
 
 	case RepoLabelsFetchFailedMsg:
-		m.ac.SetFetchError(msg.Err)
-		return m, nil
+		clearCmd := m.ac.SetFetchError(msg.Err)
+		return m, clearCmd
 
 	case autocomplete.FetchSuggestionsRequestedMsg:
 		// Only fetch when we're in labeling mode (where labels are relevant)
@@ -224,6 +225,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else {
 			return m, nil
 		}
+	}
+
+	switch msg.(type) {
+	case spinner.TickMsg, autocomplete.ClearFetchStatusMsg:
+		var acCmd tea.Cmd
+		*m.ac, acCmd = m.ac.Update(msg)
+		cmds = append(cmds, acCmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -447,9 +455,9 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 
 // fetchLabels returns a command to fetch repository labels
 func (m *Model) fetchLabels() tea.Cmd {
-	m.ac.SetFetchLoading()
+	spinnerTickCmd := m.ac.SetFetchLoading()
 
-	return func() tea.Msg {
+	fetchCmd := func() tea.Msg {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
 		labels, err := data.FetchRepoLabels(repoName)
 		if err != nil {
@@ -457,6 +465,8 @@ func (m *Model) fetchLabels() tea.Cmd {
 		}
 		return RepoLabelsFetchedMsg{Labels: labels}
 	}
+
+	return tea.Batch(spinnerTickCmd, fetchCmd)
 }
 
 func (m *Model) userAssignedToIssue(login string) bool {
