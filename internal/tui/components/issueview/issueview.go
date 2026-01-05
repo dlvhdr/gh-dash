@@ -511,4 +511,5 @@ func (m *Model) issueAssignees() []string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
+	m.ac.UpdateProgramContext(ctx)
 }

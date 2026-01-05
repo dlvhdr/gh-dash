@@ -315,3 +315,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 	return m, nil
 }
+
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.suggestionHelp.Styles = ctx.Styles.Help.BubbleStyles
+}
