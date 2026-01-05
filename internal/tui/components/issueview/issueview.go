@@ -51,7 +51,8 @@ type Model struct {
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
-	inputBox.SetHeight(common.InputBoxHeight)
+	linesToAdjust := 5
+	inputBox.SetHeight(common.InputBoxHeight - linesToAdjust)
 
 	inputBox.OnSuggestionSelected = handleLabelSelection
 	inputBox.CurrentContext = labelAtCursor

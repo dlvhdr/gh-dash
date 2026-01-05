@@ -85,7 +85,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 		suggestionHelp: h,
 		visible:        false,
 		selected:       0,
-		maxVisible:     5,
+		maxVisible:     4,
 		width:          30,
 		fetchState:     FetchStateIdle,
 		spinner:        sp,
