@@ -119,11 +119,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 		}
-		// Allow fetching labels via keybinding at any time
-		if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
-			return m, autocomplete.NewFetchSuggestionsRequestedCmd(true)
-		}
-
 	}
 
 	m.textArea, cmd = m.textArea.Update(msg)

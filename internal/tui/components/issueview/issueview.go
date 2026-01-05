@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -166,6 +167,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isLabeling = false
 				m.ac.Hide()
 				return m, nil
+			}
+
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.issue != nil {
+					repoName := m.issue.Data.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+				cmds = append(cmds, m.fetchLabels())
 			}
 
 			previousCursorPos := m.inputBox.GetCursorPosition()
