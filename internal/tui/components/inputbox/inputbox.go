@@ -121,7 +121,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		// Allow fetching labels via keybinding at any time
 		if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
-			return m, func() tea.Msg { return autocomplete.FetchSuggestionsRequestedMsg{} }
+			return m, autocomplete.NewFetchSuggestionsRequestedCmd(true)
 		}
 
 	}

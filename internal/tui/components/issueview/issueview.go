@@ -103,7 +103,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case autocomplete.FetchSuggestionsRequestedMsg:
 		// Only fetch when we're in labeling mode (where labels are relevant)
 		if m.isLabeling {
-			return m, m.fetchLabels()
+			// If this is a forced refresh (e.g., via Ctrl+F), clear the cached labels
+			// for this repo so FetchRepoLabels will actually call the gh CLI.
+			if msg.Force {
+				if m.issue != nil {
+					repoName := m.issue.Data.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+			}
+			cmd := m.fetchLabels()
+			return m, cmd
 		}
 		return m, nil
 

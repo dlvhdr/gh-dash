@@ -10,6 +10,8 @@ import (
 var (
 	repoLabelCache = make(map[string][]Label)
 	labelCacheMu   sync.RWMutex
+	// execCommand is injectable for testing; defaults to exec.Command
+	execCommand = exec.Command
 )
 
 func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
@@ -25,7 +27,7 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 		return cachedLabels, nil
 	}
 
-	cmd := exec.Command("gh", "label", "list", "-R", repoNameWithOwner, "--json", "name,color", "--limit", "300")
+	cmd := execCommand("gh", "label", "list", "-R", repoNameWithOwner, "--json", "name,color", "--limit", "300")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -58,6 +60,12 @@ func ClearLabelCache() {
 	labelCacheMu.Lock()
 	defer labelCacheMu.Unlock()
 	repoLabelCache = make(map[string][]Label)
+}
+
+func ClearRepoLabelCache(repoNameWithOwner string) {
+	labelCacheMu.Lock()
+	defer labelCacheMu.Unlock()
+	delete(repoLabelCache, repoNameWithOwner)
 }
 
 func GetLabelNames(labels []Label) []string {

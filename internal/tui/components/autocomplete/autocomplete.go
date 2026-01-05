@@ -52,7 +52,19 @@ const (
 	FetchStateError
 )
 
-type FetchSuggestionsRequestedMsg struct{}
+// FetchSuggestionsRequestedMsg requests that the current view fetch suggestions from upstream.
+//
+// When Force is true the fetch should bypass any local cache and request fresh
+// data from the gh CLI.
+type FetchSuggestionsRequestedMsg struct {
+	Force bool
+}
+
+// NewFetchSuggestionsRequestedCmd returns a tea.Cmd that emits a
+// FetchSuggestionsRequestedMsg with the given force flag.
+func NewFetchSuggestionsRequestedCmd(force bool) tea.Cmd {
+	return func() tea.Msg { return FetchSuggestionsRequestedMsg{Force: force} }
+}
 
 type Model struct {
 	ctx            *context.ProgramContext
