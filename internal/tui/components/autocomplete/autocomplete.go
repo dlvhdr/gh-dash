@@ -32,7 +32,7 @@ func (s suggestionList) Len() int {
 }
 
 var (
-	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/ctrl+n", "next"))
+	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/Ctrl+n", "next"))
 	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String()), key.WithHelp("↑/Ctrl+p", "previous"))
 	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String(), tea.KeyCtrlY.String()), key.WithHelp("tab/enter/Ctrl+y", "select"))
 	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
