@@ -268,6 +268,16 @@ func (m *Model) View() string {
 func (m *Model) SetFetchLoading() tea.Cmd {
 	m.fetchState = FetchStateLoading
 	m.fetchError = nil
+
+	placeholders := make([]string, 0, m.maxVisible)
+	for i := 0; i < m.maxVisible; i++ {
+		placeholders = append(placeholders, "")
+	}
+	m.filtered = placeholders
+	m.selected = 0
+
+	m.UpdateVisible()
+
 	return m.spinner.Tick
 }
 
