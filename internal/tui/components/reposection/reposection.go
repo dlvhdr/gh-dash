@@ -442,17 +442,19 @@ type SectionPullRequestsFetchedMsg struct {
 }
 
 func (m *Model) getCurrBranch() *branch.Branch {
-	if len(m.repo.Branches) == 0 {
+	idx := m.Table.GetCurrItem()
+	if idx < 0 || idx >= len(m.Branches) {
 		return nil
 	}
-	return &m.Branches[m.Table.GetCurrItem()]
+	return &m.Branches[idx]
 }
 
 func (m *Model) GetCurrRow() data.RowData {
-	if len(m.repo.Branches) == 0 {
+	idx := m.Table.GetCurrItem()
+	if idx < 0 || idx >= len(m.repo.Branches) {
 		return nil
 	}
-	b := m.repo.Branches[m.Table.GetCurrItem()]
+	b := m.repo.Branches[idx]
 	pr := findPRForRef(m.Prs, b.Name)
 	return branch.BranchData{
 		Data: b,

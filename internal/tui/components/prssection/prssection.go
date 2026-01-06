@@ -408,10 +408,11 @@ type SectionPullRequestsFetchedMsg struct {
 }
 
 func (m *Model) GetCurrRow() data.RowData {
-	if len(m.Prs) == 0 {
+	idx := m.Table.GetCurrItem()
+	if idx < 0 || idx >= len(m.Prs) {
 		return nil
 	}
-	pr := m.Prs[m.Table.GetCurrItem()]
+	pr := m.Prs[idx]
 	return &pr
 }
 

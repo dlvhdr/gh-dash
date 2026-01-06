@@ -381,10 +381,14 @@ type PullRequestsResponse struct {
 	PageInfo   PageInfo
 }
 
-var client *gh.GraphQLClient
+var (
+	client       *gh.GraphQLClient
+	cachedClient *gh.GraphQLClient
+)
 
 func SetClient(c *gh.GraphQLClient) {
 	client = c
+	cachedClient = c
 }
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
@@ -445,9 +449,11 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
-	client, err := gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
-	if err != nil {
-		return EnrichedPullRequestData{}, err
+	if cachedClient == nil {
+		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+		if err != nil {
+			return EnrichedPullRequestData{}, err
+		}
 	}
 
 	var queryResult struct {
@@ -463,7 +469,7 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching PR", "url", prUrl)
-	err = client.Query("FetchPullRequest", &queryResult, variables)
+	err = cachedClient.Query("FetchPullRequest", &queryResult, variables)
 	if err != nil {
 		return EnrichedPullRequestData{}, err
 	}

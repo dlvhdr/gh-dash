@@ -92,10 +92,10 @@ func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 
 	if debug {
 		var fileErr error
-		newConfigFile, fileErr := os.OpenFile("debug.log",
+		loggerFile, fileErr = os.OpenFile("debug.log",
 			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 		if fileErr == nil {
-			log.SetOutput(newConfigFile)
+			log.SetOutput(loggerFile)
 			log.SetTimeFormat(time.Kitchen)
 			log.SetReportCaller(true)
 			setDebugLogLevel()
