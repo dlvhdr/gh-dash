@@ -61,7 +61,16 @@ type EnrichedPullRequestData struct {
 	ReviewRequests     ReviewRequests             `graphql:"reviewRequests(last: 100)"`
 	Reviews            Reviews                    `graphql:"reviews(last: 100)"`
 	SuggestedReviewers []SuggestedReviewer
-	Files              ChangedFiles `graphql:"files(first: 5)"`
+	Files              ChangedFiles  `graphql:"files(first: 5)"`
+	PipelineJobs       []PipelineJob // For GitLab - CI pipeline jobs
+}
+
+// PipelineJob represents a GitLab CI job
+type PipelineJob struct {
+	Name   string
+	Status string // "success", "failed", "running", "pending", "skipped", "canceled"
+	Stage  string
+	WebURL string
 }
 
 type PullRequestData struct {
@@ -747,9 +756,24 @@ func fetchPullRequestFromGitLab(prUrl string) (EnrichedPullRequestData, error) {
 			TotalCount: resp.Reviews.TotalCount,
 			Nodes:      reviews,
 		},
-		AllCommits: allCommits,
-		Files:      convertChangedFiles(resp.ChangedFiles),
+		AllCommits:   allCommits,
+		Files:        convertChangedFiles(resp.ChangedFiles),
+		PipelineJobs: convertPipelineJobs(resp.PipelineJobs),
 	}, nil
+}
+
+// convertPipelineJobs converts provider PipelineJobs to data PipelineJobs
+func convertPipelineJobs(providerJobs []provider.PipelineJob) []PipelineJob {
+	jobs := make([]PipelineJob, len(providerJobs))
+	for i, j := range providerJobs {
+		jobs[i] = PipelineJob{
+			Name:   j.Name,
+			Status: j.Status,
+			Stage:  j.Stage,
+			WebURL: j.WebURL,
+		}
+	}
+	return jobs
 }
 
 // convertChangedFiles converts provider ChangedFiles to data ChangedFiles

@@ -148,8 +148,13 @@ type glabMergeRequest struct {
 		Full string `json:"full"`
 	} `json:"references"`
 	Pipeline *struct {
+		ID     int    `json:"id"`
 		Status string `json:"status"`
 	} `json:"pipeline"`
+	HeadPipeline *struct {
+		ID     int    `json:"id"`
+		Status string `json:"status"`
+	} `json:"head_pipeline"`
 }
 
 type glabIssue struct {
@@ -332,6 +337,8 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 	ciStatus := ""
 	if mr.Pipeline != nil {
 		ciStatus = mr.Pipeline.Status
+	} else if mr.HeadPipeline != nil {
+		ciStatus = mr.HeadPipeline.Status
 	}
 
 	// Parse changes count (it's a string in the API)
@@ -507,6 +514,38 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		reviewRequests[i].RequestedReviewer.User.Login = r.Username
 	}
 
+	// Fetch pipeline jobs if there's a pipeline (check both pipeline and head_pipeline)
+	var pipelineJobs []PipelineJob
+	var pipelineID int
+	if mr.Pipeline != nil && mr.Pipeline.ID > 0 {
+		pipelineID = mr.Pipeline.ID
+	} else if mr.HeadPipeline != nil && mr.HeadPipeline.ID > 0 {
+		pipelineID = mr.HeadPipeline.ID
+	}
+
+	if pipelineID > 0 {
+		jobsEndpoint := fmt.Sprintf("projects/%s/pipelines/%d/jobs", encodedProject, pipelineID)
+		jobsOutput, err := g.runGlab("api", jobsEndpoint)
+		if err == nil && len(jobsOutput) > 0 {
+			var jobs []struct {
+				Name   string `json:"name"`
+				Status string `json:"status"`
+				Stage  string `json:"stage"`
+				WebURL string `json:"web_url"`
+			}
+			if json.Unmarshal(jobsOutput, &jobs) == nil {
+				for _, j := range jobs {
+					pipelineJobs = append(pipelineJobs, PipelineJob{
+						Name:   j.Name,
+						Status: j.Status,
+						Stage:  j.Stage,
+						WebURL: j.WebURL,
+					})
+				}
+			}
+		}
+	}
+
 	return EnrichedPullRequestData{
 		Url:            mr.WebURL,
 		Number:         mr.IID,
@@ -517,6 +556,7 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		Reviews:        Reviews{TotalCount: 0},
 		Commits:        commits,
 		ChangedFiles:   changedFiles,
+		PipelineJobs:   pipelineJobs,
 	}, nil
 }
 

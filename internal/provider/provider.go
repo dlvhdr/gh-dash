@@ -241,6 +241,15 @@ type EnrichedPullRequestData struct {
 	Reviews        Reviews
 	Commits        []CommitData
 	ChangedFiles   []ChangedFile
+	PipelineJobs   []PipelineJob // GitLab CI jobs
+}
+
+// PipelineJob represents a GitLab CI job
+type PipelineJob struct {
+	Name   string
+	Status string // "success", "failed", "running", "pending", "skipped", "canceled"
+	Stage  string
+	WebURL string
 }
 
 // CommitData represents commit data
