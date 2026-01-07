@@ -15,9 +15,11 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	zone "github.com/lrstanley/bubblezone"
+	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/testutils"
 )
@@ -135,4 +137,21 @@ func setMockClient(t *testing.T) {
 		t.Errorf("failed creating gh client %v", err)
 	}
 	data.SetClient(client)
+}
+
+func TestGetCurrentViewSections_RepoViewWithNilRepo(t *testing.T) {
+	// This test verifies that getCurrentViewSections returns an empty slice
+	// when in RepoView but m.repo is nil (before data is loaded).
+	// Previously this would return []section.Section{nil} which caused a panic.
+	m := Model{
+		ctx: &context.ProgramContext{
+			View: config.RepoView,
+		},
+		repo: nil,
+	}
+
+	sections := m.getCurrentViewSections()
+
+	require.NotNil(t, sections, "sections should not be nil")
+	require.Empty(t, sections, "sections should be empty when repo is nil")
 }
