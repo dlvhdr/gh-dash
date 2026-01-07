@@ -56,6 +56,14 @@ func getPRLabel() string {
 	return "PR"
 }
 
+// getRepoFlag returns "--repo" for GitLab and "-R" for GitHub
+func getRepoFlag() string {
+	if provider.IsGitLab() {
+		return "--repo"
+	}
+	return "-R"
+}
+
 type GitHubTask struct {
 	Id           string
 	Args         []string
@@ -100,7 +108,7 @@ func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch
 			"view",
 			"--web",
 			branch,
-			"-R",
+			getRepoFlag(),
 			ctx.RepoUrl,
 		},
 		Section:      section,
@@ -121,7 +129,7 @@ func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 			getPRSubCommand(),
 			"reopen",
 			fmt.Sprint(prNumber),
-			"-R",
+			getRepoFlag(),
 			pr.GetRepoNameWithOwner(),
 		},
 		Section:      section,
@@ -145,7 +153,7 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 			getPRSubCommand(),
 			"close",
 			fmt.Sprint(prNumber),
-			"-R",
+			getRepoFlag(),
 			pr.GetRepoNameWithOwner(),
 		},
 		Section:      section,
@@ -163,15 +171,31 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	label := getPRLabel()
-	return fireTask(ctx, GitHubTask{
-		Id: buildTaskId("pr_ready", prNumber),
-		Args: []string{
-			getPRSubCommand(),
+	
+	// GitLab uses 'mr update --ready', GitHub uses 'pr ready'
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"mr",
+			"update",
+			fmt.Sprint(prNumber),
+			"--repo",
+			pr.GetRepoNameWithOwner(),
+			"--ready",
+		}
+	} else {
+		args = []string{
+			"pr",
 			"ready",
 			fmt.Sprint(prNumber),
 			"-R",
 			pr.GetRepoNameWithOwner(),
-		},
+		}
+	}
+	
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_ready", prNumber),
+		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Marking %s #%d as ready for review", label, prNumber),
 		FinishedText: fmt.Sprintf("%s #%d has been marked as ready for review", label, prNumber),
@@ -188,18 +212,12 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	prNumber := pr.GetNumber()
 	cliCmd := provider.GetCLICommand()
 
-	// GitLab uses "mr" instead of "pr"
-	subCmd := "pr"
-	if provider.IsGitLab() {
-		subCmd = "mr"
-	}
-
 	c := exec.Command(
 		cliCmd,
-		subCmd,
+		getPRSubCommand(),
 		"merge",
 		fmt.Sprint(prNumber),
-		"-R",
+		getRepoFlag(),
 		pr.GetRepoNameWithOwner(),
 	)
 
@@ -232,28 +250,23 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 
 func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName string, title string) tea.Cmd {
 	cliCmd := provider.GetCLICommand()
-
-	// GitLab uses "mr" instead of "pr"
-	subCmd := "pr"
-	if provider.IsGitLab() {
-		subCmd = "mr"
-	}
+	label := getPRLabel()
 
 	c := exec.Command(
 		cliCmd,
-		subCmd,
+		getPRSubCommand(),
 		"create",
 		"--title",
 		title,
-		"-R",
+		getRepoFlag(),
 		ctx.RepoUrl,
 	)
 
 	taskId := fmt.Sprintf("create_pr_%s", title)
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf(`Creating PR "%s"`, title),
-		FinishedText: fmt.Sprintf(`PR "%s" has been created`, title),
+		StartText:    fmt.Sprintf(`Creating %s "%s"`, label, title),
+		FinishedText: fmt.Sprintf(`%s "%s" has been created`, label, title),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
@@ -275,22 +288,36 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName
 func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	label := getPRLabel()
-	return fireTask(ctx, GitHubTask{
-		Id: buildTaskId("pr_update", prNumber),
-		Args: []string{
-			getPRSubCommand(),
+	
+	// GitLab uses 'mr rebase', GitHub uses 'pr update-branch'
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"mr",
+			"rebase",
+			fmt.Sprint(prNumber),
+			"--repo",
+			pr.GetRepoNameWithOwner(),
+		}
+	} else {
+		args = []string{
+			"pr",
 			"update-branch",
 			fmt.Sprint(prNumber),
 			"-R",
 			pr.GetRepoNameWithOwner(),
-		},
+		}
+	}
+	
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_update", prNumber),
+		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Updating %s #%d", label, prNumber),
 		FinishedText: fmt.Sprintf("%s #%d has been updated", label, prNumber),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			return UpdatePRMsg{
 				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(true),
 			}
 		},
 	})
