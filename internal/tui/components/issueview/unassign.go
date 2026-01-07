@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -23,21 +24,34 @@ func (m *Model) unassign(usernames []string) tea.Cmd {
 		Error:        nil,
 	}
 
-	commandArgs := []string{
-		"issue",
-		"edit",
-		fmt.Sprint(issueNumber),
-		"-R",
-		issue.GetRepoNameWithOwner(),
-	}
-	for _, assignee := range usernames {
-		commandArgs = append(commandArgs, "--remove-assignee")
-		commandArgs = append(commandArgs, assignee)
-	}
-
 	startCmd := m.ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command("gh", commandArgs...)
+		var c *exec.Cmd
+		if provider.IsGitLab() {
+			// GitLab: unassign by using --unassign flag
+			commandArgs := []string{
+				"issue",
+				"update",
+				fmt.Sprint(issueNumber),
+				"--repo",
+				issue.GetRepoNameWithOwner(),
+				"--unassign",
+			}
+			c = exec.Command("glab", commandArgs...)
+		} else {
+			commandArgs := []string{
+				"issue",
+				"edit",
+				fmt.Sprint(issueNumber),
+				"-R",
+				issue.GetRepoNameWithOwner(),
+			}
+			for _, assignee := range usernames {
+				commandArgs = append(commandArgs, "--remove-assignee")
+				commandArgs = append(commandArgs, assignee)
+			}
+			c = exec.Command("gh", commandArgs...)
+		}
 
 		err := c.Run()
 		returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}

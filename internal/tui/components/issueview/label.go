@@ -3,10 +3,12 @@ package issueview
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -24,13 +26,6 @@ func (m *Model) label(labels []string) tea.Cmd {
 		Error:        nil,
 	}
 
-	commandArgs := []string{
-		"issue",
-		"edit",
-		fmt.Sprint(issueNumber),
-		"-R",
-		issue.GetRepoNameWithOwner(),
-	}
 	labelsMap := make(map[string]bool)
 	for _, label := range labels {
 		labelsMap[label] = true
@@ -41,21 +36,49 @@ func (m *Model) label(labels []string) tea.Cmd {
 		existingLabelsColorMap[label.Name] = label.Color
 	}
 
-	for _, label := range m.issue.Data.Labels.Nodes {
-		if _, ok := labelsMap[label.Name]; !ok {
-			commandArgs = append(commandArgs, "--remove-label")
-			commandArgs = append(commandArgs, label.Name)
-		}
-	}
-
-	for _, label := range labels {
-		commandArgs = append(commandArgs, "--add-label")
-		commandArgs = append(commandArgs, label)
-	}
-
 	startCmd := m.ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command("gh", commandArgs...)
+		var c *exec.Cmd
+		if provider.IsGitLab() {
+			// GitLab: use glab issue update --label
+			commandArgs := []string{
+				"issue",
+				"update",
+				fmt.Sprint(issueNumber),
+				"--repo",
+				issue.GetRepoNameWithOwner(),
+				"--label",
+				strings.Join(labels, ","),
+			}
+			// Remove labels not in the new list
+			for _, label := range m.issue.Data.Labels.Nodes {
+				if _, ok := labelsMap[label.Name]; !ok {
+					commandArgs = append(commandArgs, "--unlabel", label.Name)
+				}
+			}
+			c = exec.Command("glab", commandArgs...)
+		} else {
+			commandArgs := []string{
+				"issue",
+				"edit",
+				fmt.Sprint(issueNumber),
+				"-R",
+				issue.GetRepoNameWithOwner(),
+			}
+
+			for _, label := range m.issue.Data.Labels.Nodes {
+				if _, ok := labelsMap[label.Name]; !ok {
+					commandArgs = append(commandArgs, "--remove-label")
+					commandArgs = append(commandArgs, label.Name)
+				}
+			}
+
+			for _, label := range labels {
+				commandArgs = append(commandArgs, "--add-label")
+				commandArgs = append(commandArgs, label)
+			}
+			c = exec.Command("gh", commandArgs...)
+		}
 
 		err := c.Run()
 

@@ -6,6 +6,9 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
 
+// defaultLabelColor is used when no color is provided (e.g., GitLab labels)
+const defaultLabelColor = "6e7681"
+
 func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Style) string {
 	width := sidebarWidth
 
@@ -15,7 +18,16 @@ func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Styl
 	currentRowLabels := []string{}
 
 	for _, l := range labels {
-		c := lipgloss.Color("#" + l.Color)
+		// Use default color if no color is provided
+		colorHex := l.Color
+		if colorHex == "" {
+			colorHex = defaultLabelColor
+		}
+		// Remove # prefix if present (GitLab includes it, GitHub doesn't)
+		if len(colorHex) > 0 && colorHex[0] == '#' {
+			colorHex = colorHex[1:]
+		}
+		c := lipgloss.Color("#" + colorHex)
 		currentLabel := pillStyle.
 			BorderForeground(c).
 			Background(c).

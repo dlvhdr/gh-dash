@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
@@ -23,14 +24,26 @@ func (m *Model) close() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"issue",
-			"close",
-			fmt.Sprint(m.GetCurrRow().GetNumber()),
-			"-R",
-			m.GetCurrRow().GetRepoNameWithOwner(),
-		)
+		var c *exec.Cmd
+		if provider.IsGitLab() {
+			c = exec.Command(
+				"glab",
+				"issue",
+				"close",
+				fmt.Sprint(m.GetCurrRow().GetNumber()),
+				"--repo",
+				m.GetCurrRow().GetRepoNameWithOwner(),
+			)
+		} else {
+			c = exec.Command(
+				"gh",
+				"issue",
+				"close",
+				fmt.Sprint(m.GetCurrRow().GetNumber()),
+				"-R",
+				m.GetCurrRow().GetRepoNameWithOwner(),
+			)
+		}
 
 		err := c.Run()
 		return constants.TaskFinishedMsg{

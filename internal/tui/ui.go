@@ -181,14 +181,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.prView.IsTextInputBoxFocused() {
 			m.prView, cmd = m.prView.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.issueSidebar.IsTextInputBoxFocused() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.footer.ShowConfirmQuit && (msg.String() == "y" || msg.String() == "enter") {
@@ -244,6 +244,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
+			if m.sidebar.IsOpen {
+				cmd = m.syncSidebar()
+				cmds = append(cmds, cmd)
+			}
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
@@ -588,6 +592,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			log.Error("failed enriching pr", "err", msg.Err)
 		}
 
+	case issueview.IssueCommentsMsg:
+		log.Info("IssueCommentsMsg received", "url", msg.IssueUrl, "comments", len(msg.Comments), "err", msg.Err)
+		if msg.Err == nil {
+			m.issueSidebar.SetIssueComments(msg.IssueUrl, msg.Comments)
+			// Just update the sidebar content, don't call syncSidebar which would overwrite
+			m.sidebar.SetContent(m.issueSidebar.View())
+		} else {
+			log.Error("failed fetching issue comments", "err", msg.Err)
+		}
+
 	case spinner.TickMsg:
 		if len(m.tasks) > 0 {
 			taskSpinner, internalTickCmd := m.taskSpinner.Update(msg)
@@ -738,10 +752,10 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 func (m *Model) onViewedRowChanged() tea.Cmd {
 	m.prView.SetSummaryViewLess()
 	m.prView.GoToFirstTab()
-	m.syncSidebar()
-	cmd := m.prView.EnrichCurrRow()
+	sidebarCmd := m.syncSidebar()
+	prCmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
-	return cmd
+	return tea.Batch(sidebarCmd, prCmd)
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
@@ -837,6 +851,8 @@ func (m *Model) syncSidebar() tea.Cmd {
 		m.issueSidebar.SetRow(row)
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
+		// Fetch comments for GitLab issues
+		cmd = m.issueSidebar.EnrichIssueComments()
 	}
 
 	return cmd
