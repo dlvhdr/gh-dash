@@ -257,3 +257,27 @@ func FetchIssue(issueUrl string) (IssueData, error) {
 
 	return queryResult.Resource.Issue, nil
 }
+
+// FetchIssueComments fetches comments for a single issue (GitLab only)
+func FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	if !provider.IsGitLab() {
+		return nil, nil // GitHub fetches comments in the main query
+	}
+
+	p := provider.GetProvider()
+	providerComments, err := p.FetchIssueComments(issueUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	comments := make([]IssueComment, len(providerComments))
+	for i, c := range providerComments {
+		comments[i] = IssueComment{
+			Author:    struct{ Login string }{Login: c.Author.Login},
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		}
+	}
+
+	return comments, nil
+}

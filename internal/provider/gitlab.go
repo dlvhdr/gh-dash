@@ -195,6 +195,15 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 
 	args := []string{"mr", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
 
+	// Handle pagination - use EndCursor as page number
+	page := 1
+	if pageInfo != nil && pageInfo.EndCursor != "" {
+		if p, err := strconv.Atoi(pageInfo.EndCursor); err == nil {
+			page = p
+		}
+	}
+	args = append(args, "--page", strconv.Itoa(page))
+
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
 	}
@@ -262,12 +271,18 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 		prs = append(prs, pr)
 	}
 
-	log.Info("Successfully fetched MRs from GitLab", "count", len(prs))
+	log.Info("Successfully fetched MRs from GitLab", "count", len(prs), "page", page)
+
+	// Calculate next page cursor
+	nextPage := strconv.Itoa(page + 1)
 
 	return PullRequestsResponse{
 		Prs:        prs,
 		TotalCount: len(prs),
-		PageInfo:   PageInfo{HasNextPage: len(prs) == limit},
+		PageInfo: PageInfo{
+			HasNextPage: len(prs) == limit,
+			EndCursor:   nextPage,
+		},
 	}, nil
 }
 
@@ -530,6 +545,15 @@ func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo
 
 	args := []string{"issue", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
 
+	// Handle pagination - use EndCursor as page number
+	page := 1
+	if pageInfo != nil && pageInfo.EndCursor != "" {
+		if p, err := strconv.Atoi(pageInfo.EndCursor); err == nil {
+			page = p
+		}
+	}
+	args = append(args, "--page", strconv.Itoa(page))
+
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
 	}
@@ -578,12 +602,18 @@ func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo
 		issues = append(issues, g.convertGitLabIssue(issue))
 	}
 
-	log.Info("Successfully fetched issues from GitLab", "count", len(issues))
+	log.Info("Successfully fetched issues from GitLab", "count", len(issues), "page", page)
+
+	// Calculate next page cursor
+	nextPage := strconv.Itoa(page + 1)
 
 	return IssuesResponse{
 		Issues:     issues,
 		TotalCount: len(issues),
-		PageInfo:   PageInfo{HasNextPage: len(issues) == limit},
+		PageInfo: PageInfo{
+			HasNextPage: len(issues) == limit,
+			EndCursor:   nextPage,
+		},
 	}, nil
 }
 
@@ -685,4 +715,58 @@ func (g *GitLabProvider) parseQuery(query string) map[string]string {
 	}
 
 	return filters
+}
+
+// FetchIssueComments fetches comments for a single issue
+func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	// Parse project and issue IID from URL
+	// Format: https://gitlab.example.com/group/project/-/issues/123
+	parsedURL, err := url.Parse(issueUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	path := parsedURL.Path
+	re := regexp.MustCompile(`(.+?)/-/issues/(\d+)`)
+	matches := re.FindStringSubmatch(path)
+	if len(matches) < 3 {
+		return nil, fmt.Errorf("invalid issue URL format: %s", issueUrl)
+	}
+
+	project := strings.TrimPrefix(matches[1], "/")
+	issueID := matches[2]
+
+	// Get issue notes/comments via API
+	encodedProject := url.PathEscape(project)
+	notesEndpoint := fmt.Sprintf("projects/%s/issues/%s/notes", encodedProject, issueID)
+	notesOutput, err := g.runGlab("api", notesEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	var comments []IssueComment
+	if len(notesOutput) > 0 {
+		var notes []struct {
+			Body      string    `json:"body"`
+			Author    struct{ Username string } `json:"author"`
+			CreatedAt time.Time `json:"created_at"`
+			System    bool      `json:"system"`
+		}
+		if err := json.Unmarshal(notesOutput, &notes); err != nil {
+			return nil, err
+		}
+		for _, note := range notes {
+			// Skip system-generated notes
+			if note.System {
+				continue
+			}
+			comments = append(comments, IssueComment{
+				Author:    Author{Login: note.Author.Username},
+				Body:      note.Body,
+				UpdatedAt: note.CreatedAt,
+			})
+		}
+	}
+
+	return comments, nil
 }

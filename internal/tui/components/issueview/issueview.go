@@ -391,11 +391,46 @@ func (m *Model) SetSectionId(id int) {
 	m.sectionId = id
 }
 
-func (m *Model) SetRow(data *data.IssueData) {
-	if data == nil {
+func (m *Model) SetRow(issueData *data.IssueData) {
+	if issueData == nil {
 		m.issue = nil
 	} else {
-		m.issue = &issuerow.Issue{Ctx: m.ctx, Data: *data}
+		m.issue = &issuerow.Issue{Ctx: m.ctx, Data: *issueData}
+	}
+}
+
+// EnrichIssueComments fetches comments for the current issue (for GitLab)
+func (m *Model) EnrichIssueComments() tea.Cmd {
+	if m.issue == nil {
+		return nil
+	}
+	// Only fetch if we don't have comments yet but TotalCount says there are some
+	if len(m.issue.Data.Comments.Nodes) > 0 || m.issue.Data.Comments.TotalCount == 0 {
+		return nil
+	}
+	issueUrl := m.issue.Data.Url
+	return func() tea.Msg {
+		comments, err := data.FetchIssueComments(issueUrl)
+		return IssueCommentsMsg{
+			IssueUrl: issueUrl,
+			Comments: comments,
+			Err:      err,
+		}
+	}
+}
+
+// IssueCommentsMsg is sent when issue comments are fetched
+type IssueCommentsMsg struct {
+	IssueUrl string
+	Comments []data.IssueComment
+	Err      error
+}
+
+// SetIssueComments updates the issue with fetched comments
+func (m *Model) SetIssueComments(issueUrl string, comments []data.IssueComment) {
+	if m.issue != nil && m.issue.Data.Url == issueUrl {
+		m.issue.Data.Comments.Nodes = comments
+		m.issue.Data.Comments.TotalCount = len(comments)
 	}
 }
 
