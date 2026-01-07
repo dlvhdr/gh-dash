@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/gen2brain/beeep"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -26,25 +27,46 @@ func (m *Model) watchChecks() tea.Cmd {
 	repoNameWithOwner := pr.GetRepoNameWithOwner()
 	prData := pr.(*prrow.Data)
 	taskId := fmt.Sprintf("pr_reopen_%d", prNumber)
+
+	label := "PR"
+	if provider.IsGitLab() {
+		label = "MR"
+	}
+
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Watching checks for PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("Watching checks for PR #%d", prNumber),
+		StartText:    fmt.Sprintf("Watching checks for %s #%d", label, prNumber),
+		FinishedText: fmt.Sprintf("Watching checks for %s #%d", label, prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"pr",
-			"checks",
-			"--watch",
-			"--fail-fast",
-			fmt.Sprint(prNumber),
-			"-R",
-			repoNameWithOwner,
-		)
+		var c *exec.Cmd
+		if provider.IsGitLab() {
+			// GitLab: use glab ci status to watch pipeline
+			c = exec.Command(
+				"glab",
+				"ci",
+				"status",
+				"--live",
+				"--repo",
+				repoNameWithOwner,
+				"--branch",
+				prData.Primary.HeadRefName,
+			)
+		} else {
+			c = exec.Command(
+				"gh",
+				"pr",
+				"checks",
+				"--watch",
+				"--fail-fast",
+				fmt.Sprint(prNumber),
+				"-R",
+				repoNameWithOwner,
+			)
+		}
 
 		var outb, errb bytes.Buffer
 		c.Stdout = &outb
