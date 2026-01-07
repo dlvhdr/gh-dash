@@ -329,8 +329,11 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		MaxWidth(m.dimensions.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...))
 
-	zoneID := fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, rowId)
-	return zone.Mark(zoneID, row)
+	return zone.Mark(m.rowZoneID(rowId), row)
+}
+
+func (m *Model) rowZoneID(rowID int) string {
+	return fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, rowID)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -365,8 +368,7 @@ func (m *Model) SetSectionId(id int) {
 // HandleClick checks if a row was clicked and returns the row index, or -1 if no row was clicked
 func (m *Model) HandleClick(msg tea.MouseMsg) int {
 	for i := range m.Rows {
-		zoneID := fmt.Sprintf("%s%d-%d", RowZonePrefix, m.sectionId, i)
-		if zone.Get(zoneID).InBounds(msg) {
+		if zone.Get(m.rowZoneID(i)).InBounds(msg) {
 			return i
 		}
 	}

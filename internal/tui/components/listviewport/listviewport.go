@@ -74,7 +74,13 @@ func (m *Model) getNumPrsPerPage() int {
 }
 
 func (m *Model) ResetCurrItem() {
+	m.resetCurrItem()
+}
+
+func (m *Model) resetCurrItem() {
 	m.currId = 0
+	m.topBoundId = 0
+	m.bottomBoundId = 0
 	m.viewport.GotoTop()
 }
 
@@ -122,10 +128,7 @@ func (m *Model) LastItem() int {
 
 func (m *Model) SetCurrItem(index int) {
 	if m.NumCurrentItems == 0 {
-		m.currId = 0
-		m.topBoundId = 0
-		m.bottomBoundId = 0
-		m.viewport.GotoTop()
+		m.resetCurrItem()
 		return
 	}
 
@@ -133,10 +136,8 @@ func (m *Model) SetCurrItem(index int) {
 	itemsPerPage := m.getNumPrsPerPage()
 
 	if itemsPerPage <= 0 {
+		m.resetCurrItem()
 		m.currId = index
-		m.topBoundId = 0
-		m.bottomBoundId = 0
-		m.viewport.GotoTop()
 		return
 	}
 
@@ -153,6 +154,11 @@ func (m *Model) SetCurrItem(index int) {
 	}
 
 	m.currId = index
+	if m.currId == 0 && m.topBoundId > 0 {
+		m.topBoundId = 0
+		m.bottomBoundId = utils.Min(itemsPerPage-1, m.NumCurrentItems-1)
+		m.viewport.GotoTop()
+	}
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {

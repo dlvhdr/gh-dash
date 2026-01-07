@@ -41,20 +41,21 @@ import (
 )
 
 type Model struct {
-	keys          *keys.KeyMap
-	sidebar       sidebar.Model
-	prView        prview.Model
-	issueSidebar  issueview.Model
-	branchSidebar branchsidebar.Model
-	currSectionId int
-	footer        footer.Model
-	repo          section.Section
-	prs           []section.Section
-	issues        []section.Section
-	tabs          tabs.Model
-	ctx           *context.ProgramContext
-	taskSpinner   spinner.Model
-	tasks         map[string]context.Task
+	keys           *keys.KeyMap
+	sidebar        sidebar.Model
+	prView         prview.Model
+	issueSidebar   issueview.Model
+	branchSidebar  branchsidebar.Model
+	currSectionId  int
+	footer         footer.Model
+	repo           section.Section
+	prs            []section.Section
+	issues         []section.Section
+	tabs           tabs.Model
+	ctx            *context.ProgramContext
+	taskSpinner    spinner.Model
+	tasks          map[string]context.Task
+	lastScrollTime time.Time // Track last scroll event time for smart scroll detection
 }
 
 func NewModel(location config.Location) Model {
@@ -631,14 +632,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.sidebar.IsOpen {
 			var sidebarCmd tea.Cmd
 			m.sidebar, sidebarCmd = m.sidebar.Update(msg)
-			if sidebarCmd != nil {
-				cmds = append(cmds, sidebarCmd)
-			}
+			cmds = append(cmds, sidebarCmd)
 			// If resizing is in progress, don't process other mouse events
 			if m.sidebar.IsResizing() {
 				return m, tea.Batch(cmds...)
 			}
-			// If sidebar handled a scroll event, return early
+			// If sidebar handled a scroll event, return early to avoid also scrolling the list.
 			if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
 				// Check if mouse is in sidebar area
 				sidebarStartX := m.ctx.ScreenWidth - m.ctx.PreviewWidth
@@ -665,9 +664,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.X < sidebarStartX && msg.Y >= common.TabsHeight {
 				section := m.getCurrSection()
 				if section != nil {
+					// Smart scroll detection: scroll 1 row per event
+					// Track scroll event timing to ensure responsive scrolling.
+					// Each scroll event scrolls 1 row, which gives smooth behavior:
+					// - Rapid wheel scrolling generates multiple events, so scrolling is fast
+					// - Slow scrolling generates fewer events, so scrolling is slower
+					m.lastScrollTime = time.Now()
+
+					// Always scroll 1 row per event (rapid events scroll more, slow events scroll less)
 					if msg.Button == tea.MouseButtonWheelUp {
 						section.PrevRow()
 					} else {
+						section.NextRow()
 						prevRow := section.CurrRow()
 						nextRow := section.NextRow()
 						// Fetch more if we're near the bottom

@@ -2,6 +2,7 @@ package carousel
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -90,13 +91,13 @@ func TestCarousel(t *testing.T) {
 		// The view should contain the items (after zone.Scan)
 		scanned := zone.Scan(view)
 		for _, item := range items {
-			if !contains(scanned, item) {
+			if !strings.Contains(scanned, item) {
 				t.Errorf("Expected view to contain %q", item)
 			}
 		}
 	})
 
-	t.Run("HandleClick should check zones for each tab", func(t *testing.T) {
+	t.Run("HandleClick should return index for clicked tab", func(t *testing.T) {
 		items := []string{"Tab 1", "Tab 2", "Tab 3"}
 		c := New(WithItems(items), WithWidth(200))
 		c.UpdateSize()
@@ -105,14 +106,39 @@ func TestCarousel(t *testing.T) {
 		view := c.View()
 		_ = zone.Scan(view)
 
-		// Verify that zone IDs are being used in the rendered output
-		for i := range items {
-			zoneID := fmt.Sprintf("%s%d", TabZonePrefix, i)
-			// The zone should be marked in the view
-			if !contains(view, zoneID) {
-				// This is expected - zones are encoded differently
-				// The important thing is that HandleClick uses the correct zone IDs
-			}
+		// Click inside the first tab's zone
+		zoneID := fmt.Sprintf("%s%d", TabZonePrefix, 0)
+		z := zone.Get(zoneID)
+		if z.IsZero() {
+			t.Fatal("Expected zone to be registered")
+		}
+		msg := tea.MouseMsg{
+			X:      z.StartX,
+			Y:      z.StartY,
+			Button: tea.MouseButtonLeft,
+			Action: tea.MouseActionRelease,
+		}
+
+		result := c.HandleClick(msg)
+		if result != 0 {
+			t.Errorf("Expected tab index 0, got %d", result)
+		}
+	})
+
+	t.Run("HandleClick should return -1 for empty items", func(t *testing.T) {
+		c := New(WithItems([]string{}), WithWidth(100))
+		c.UpdateSize()
+
+		msg := tea.MouseMsg{
+			X:      1,
+			Y:      1,
+			Button: tea.MouseButtonLeft,
+			Action: tea.MouseActionRelease,
+		}
+
+		result := c.HandleClick(msg)
+		if result != -1 {
+			t.Errorf("Expected -1 for empty items, got %d", result)
 		}
 	})
 
@@ -134,17 +160,4 @@ func TestCarousel(t *testing.T) {
 			t.Errorf("Expected -1 for click outside tabs, got %d", result)
 		}
 	})
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

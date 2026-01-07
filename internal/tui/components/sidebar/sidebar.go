@@ -1,8 +1,6 @@
 package sidebar
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,7 +19,7 @@ const (
 	ResizeHandleChar = "│"
 	ScrollbarWidth   = 1
 	ScrollThumbChar  = "┃"
-	ScrollTrackChar  = "│"
+	ScrollTrackChar  = "║"
 )
 
 // ResizeMsg is sent when the sidebar is resized via mouse drag
@@ -115,17 +113,11 @@ func (m Model) handleMouseMsg(msg tea.MouseMsg) (Model, tea.Cmd) {
 			// Mouse X is relative to the terminal, sidebar is on the right
 			// New width = ScreenWidth - MouseX
 			newWidth := m.ctx.ScreenWidth - msg.X
-			if newWidth < MinPreviewWidth {
-				newWidth = MinPreviewWidth
-			}
-			if newWidth > MaxPreviewWidth {
-				newWidth = MaxPreviewWidth
-			}
+			newWidth = max(newWidth, MinPreviewWidth)
+			newWidth = min(newWidth, MaxPreviewWidth)
 			// Don't let the sidebar take more than 70% of the screen
 			maxWidth := int(float64(m.ctx.ScreenWidth) * 0.7)
-			if newWidth > maxWidth {
-				newWidth = maxWidth
-			}
+			newWidth = min(newWidth, maxWidth)
 			return m, func() tea.Msg { return ResizeMsg{NewWidth: newWidth} }
 
 		case tea.MouseActionRelease:
@@ -157,38 +149,30 @@ func (m Model) View() string {
 	if width <= 0 {
 		width = m.ctx.Config.Defaults.Preview.Width
 	}
+	handleWidth := lipgloss.Width(ResizeHandleChar)
 
 	var content string
 	if m.data == "" {
 		// Content style without the left border and scrollbar
 		contentStyle := lipgloss.NewStyle().
 			Height(height).
-			Width(width - 1) // Subtract 1 for the resize handle
+			Width(width - handleWidth)
 		content = contentStyle.Align(lipgloss.Center).Render(
 			lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
 		)
 	} else {
 		// Render scrollbar
-		scrollbar := m.renderScrollbar(height - m.ctx.Styles.Sidebar.PagerHeight)
-
-		// Content style - subtract space for resize handle and scrollbar
-		contentWidth := width - 1 - ScrollbarWidth
+		scrollbar := m.renderScrollbar(height)
 
 		// Note: Avoid using MaxWidth() on content that may contain zone markers
 		// as it can truncate them and cause visual artifacts.
 		viewportContent := m.viewport.View()
 
-		pager := lipgloss.NewStyle().
-			Width(contentWidth).
-			Render(m.ctx.Styles.Sidebar.PagerStyle.
-				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))))
-
-		mainContent := lipgloss.JoinVertical(lipgloss.Top, viewportContent, pager)
-
 		// Join content and scrollbar
-		content = lipgloss.JoinHorizontal(lipgloss.Top, mainContent, scrollbar)
+		content = lipgloss.JoinHorizontal(lipgloss.Top, viewportContent, scrollbar)
 	}
 
+	// Normalize heights so the resize handle and content align without truncation.
 	contentHeight := lipgloss.Height(content)
 	if height > contentHeight {
 		content = lipgloss.PlaceVertical(height, lipgloss.Top, content)
@@ -230,8 +214,8 @@ func (m Model) renderScrollbar(height int) string {
 
 	// Build scrollbar string
 	scrollbar := ""
-	trackStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder)
-	thumbStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryBorder)
+	trackStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryBorder).Bold(true)
+	thumbStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Bold(true)
 
 	for i := 0; i < height; i++ {
 		if i >= thumbPos && i < thumbPos+thumbSize {
@@ -298,6 +282,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		return
 	}
 	m.ctx = ctx
-	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
+	m.viewport.Height = m.ctx.MainContentHeight
 	m.viewport.Width = m.GetSidebarContentWidth() - 1 // Account for resize handle
 }

@@ -445,6 +445,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 			Selected: lipgloss.NewStyle().Padding(0, 1).Bold(true),
 		},
 	)
+	// Set unique zone prefix based on current view to avoid zone conflicts
+	m.carousel.SetZonePrefix(fmt.Sprintf("%s-prview-", ctx.View))
 }
 
 func (m *Model) shouldCancelComment() bool {
