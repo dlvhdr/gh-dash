@@ -748,5 +748,25 @@ func fetchPullRequestFromGitLab(prUrl string) (EnrichedPullRequestData, error) {
 			Nodes:      reviews,
 		},
 		AllCommits: allCommits,
+		Files:      convertChangedFiles(resp.ChangedFiles),
 	}, nil
 }
+
+// convertChangedFiles converts provider ChangedFiles to data ChangedFiles
+func convertChangedFiles(providerFiles []provider.ChangedFile) ChangedFiles {
+	files := make([]ChangedFile, len(providerFiles))
+	for i, f := range providerFiles {
+		files[i] = ChangedFile{
+			Additions:  f.Additions,
+			Deletions:  f.Deletions,
+			Path:       f.Path,
+			ChangeType: f.ChangeType,
+		}
+	}
+	return ChangedFiles{
+		TotalCount: len(files),
+		Nodes:      files,
+	}
+}
+
+
