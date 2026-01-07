@@ -237,6 +237,7 @@ type EnrichedPullRequestData struct {
 	ReviewRequests ReviewRequests
 	Reviews        Reviews
 	Commits        []CommitData
+	ChangedFiles   []ChangedFile
 }
 
 // CommitData represents commit data

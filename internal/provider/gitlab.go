@@ -319,6 +319,12 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 		ciStatus = mr.Pipeline.Status
 	}
 
+	// Parse changes count (it's a string in the API)
+	changesCount := 0
+	if mr.ChangesCount != "" {
+		fmt.Sscanf(mr.ChangesCount, "%d", &changesCount)
+	}
+
 	return PullRequestData{
 		Number:            mr.IID,
 		Title:             mr.Title,
@@ -343,7 +349,7 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 		ReviewThreads:     ReviewThreads{TotalCount: 0},
 		Reviews:           Reviews{TotalCount: 0, Nodes: nil},
 		ReviewRequests:    ReviewRequests{TotalCount: len(reviewRequests), Nodes: reviewRequests},
-		Files:             ChangedFiles{TotalCount: 0, Nodes: nil},
+		Files:             ChangedFiles{TotalCount: changesCount, Nodes: nil},
 		IsDraft:           mr.Draft,
 		Commits:           Commits{TotalCount: 0},
 		Labels:            Labels{Nodes: labels},
@@ -402,6 +408,77 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		}
 	}
 
+	// Get MR commits via API
+	encodedProject := url.PathEscape(project)
+	commitsEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/commits", encodedProject, mrID)
+	commitsOutput, err := g.runGlab("api", commitsEndpoint)
+	var commits []CommitData
+	if err == nil && len(commitsOutput) > 0 {
+		var glabCommits []struct {
+			ID            string    `json:"id"`
+			ShortID       string    `json:"short_id"`
+			Title         string    `json:"title"`
+			AuthorName    string    `json:"author_name"`
+			AuthorEmail   string    `json:"author_email"`
+			CommittedDate time.Time `json:"committed_date"`
+		}
+		if json.Unmarshal(commitsOutput, &glabCommits) == nil {
+			for _, c := range glabCommits {
+				commits = append(commits, CommitData{
+					AbbreviatedOid:  c.ShortID,
+					CommittedDate:   c.CommittedDate,
+					MessageHeadline: c.Title,
+					Author: struct {
+						Name string
+						User struct{ Login string }
+					}{
+						Name: c.AuthorName,
+						User: struct{ Login string }{Login: ""},
+					},
+				})
+			}
+		}
+	}
+
+	// Get MR changes (files) via API
+	changesEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/changes", encodedProject, mrID)
+	changesOutput, err := g.runGlab("api", changesEndpoint)
+	var changedFiles []ChangedFile
+	if err == nil && len(changesOutput) > 0 {
+		var changesResp struct {
+			Changes []struct {
+				OldPath     string `json:"old_path"`
+				NewPath     string `json:"new_path"`
+				NewFile     bool   `json:"new_file"`
+				RenamedFile bool   `json:"renamed_file"`
+				DeletedFile bool   `json:"deleted_file"`
+				Diff        string `json:"diff"`
+			} `json:"changes"`
+		}
+		if json.Unmarshal(changesOutput, &changesResp) == nil {
+			for _, c := range changesResp.Changes {
+				changeType := "MODIFIED"
+				if c.NewFile {
+					changeType = "ADDED"
+				} else if c.DeletedFile {
+					changeType = "DELETED"
+				} else if c.RenamedFile {
+					changeType = "RENAMED"
+				}
+
+				// Count additions and deletions from diff
+				additions, deletions := countDiffStats(c.Diff)
+
+				changedFiles = append(changedFiles, ChangedFile{
+					Path:       c.NewPath,
+					ChangeType: changeType,
+					Additions:  additions,
+					Deletions:  deletions,
+				})
+			}
+		}
+	}
+
 	reviewRequests := make([]ReviewRequestNode, len(mr.Reviewers))
 	for i, r := range mr.Reviewers {
 		reviewRequests[i] = ReviewRequestNode{}
@@ -416,8 +493,24 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		ReviewThreads:  ReviewThreads{TotalCount: 0},
 		ReviewRequests: ReviewRequests{TotalCount: len(reviewRequests), Nodes: reviewRequests},
 		Reviews:        Reviews{TotalCount: 0},
-		Commits:        nil,
+		Commits:        commits,
+		ChangedFiles:   changedFiles,
 	}, nil
+}
+
+// countDiffStats counts additions and deletions from a unified diff string
+func countDiffStats(diff string) (additions, deletions int) {
+	lines := strings.Split(diff, "\n")
+	for _, line := range lines {
+		if len(line) > 0 {
+			if line[0] == '+' && !strings.HasPrefix(line, "+++") {
+				additions++
+			} else if line[0] == '-' && !strings.HasPrefix(line, "---") {
+				deletions++
+			}
+		}
+	}
+	return
 }
 
 func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
