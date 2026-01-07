@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -16,29 +17,47 @@ func (m *Model) approve(comment string) tea.Cmd {
 	pr := m.pr.Data.Primary
 	prNumber := pr.GetNumber()
 	taskId := fmt.Sprintf("pr_approve_%d", prNumber)
+
+	label := "PR"
+	if provider.IsGitLab() {
+		label = "MR"
+	}
+
 	task := context.Task{
 		Id:           taskId,
-		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
-		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
+		StartText:    fmt.Sprintf("Approving %s #%d", label, prNumber),
+		FinishedText: fmt.Sprintf("%s #%d has been approved", label, prNumber),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
-	commandArgs := []string{
-		"pr",
-		"review",
-		"-R",
-		pr.GetRepoNameWithOwner(),
-		fmt.Sprint(prNumber),
-		"--approve",
-	}
-	if comment != "" {
-		commandArgs = append(commandArgs, "--body", comment)
-	}
-
 	startCmd := m.ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command("gh", commandArgs...)
+		var c *exec.Cmd
+		if provider.IsGitLab() {
+			// GitLab uses 'glab mr approve'
+			commandArgs := []string{
+				"mr",
+				"approve",
+				fmt.Sprint(prNumber),
+				"--repo",
+				pr.GetRepoNameWithOwner(),
+			}
+			c = exec.Command("glab", commandArgs...)
+		} else {
+			commandArgs := []string{
+				"pr",
+				"review",
+				"-R",
+				pr.GetRepoNameWithOwner(),
+				fmt.Sprint(prNumber),
+				"--approve",
+			}
+			if comment != "" {
+				commandArgs = append(commandArgs, "--body", comment)
+			}
+			c = exec.Command("gh", commandArgs...)
+		}
 
 		err := c.Run()
 		return constants.TaskFinishedMsg{
