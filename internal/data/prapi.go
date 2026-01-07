@@ -14,6 +14,7 @@ import (
 	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
@@ -462,6 +463,11 @@ func IsEnrichmentCacheCleared() bool {
 }
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
+	// Use GitLab provider if configured
+	if provider.IsGitLab() {
+		return fetchPullRequestsFromGitLab(query, limit, pageInfo)
+	}
+
 	var err error
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
@@ -514,7 +520,122 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	}, nil
 }
 
+// fetchPullRequestsFromGitLab fetches MRs from GitLab and converts them to the internal format
+func fetchPullRequestsFromGitLab(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
+	p := provider.GetProvider()
+
+	var providerPageInfo *provider.PageInfo
+	if pageInfo != nil {
+		providerPageInfo = &provider.PageInfo{
+			HasNextPage: pageInfo.HasNextPage,
+			StartCursor: pageInfo.StartCursor,
+			EndCursor:   pageInfo.EndCursor,
+		}
+	}
+
+	resp, err := p.FetchPullRequests(query, limit, providerPageInfo)
+	if err != nil {
+		return PullRequestsResponse{}, err
+	}
+
+	prs := make([]PullRequestData, len(resp.Prs))
+	for i, pr := range resp.Prs {
+		prs[i] = convertProviderPRToData(pr)
+	}
+
+	return PullRequestsResponse{
+		Prs:        prs,
+		TotalCount: resp.TotalCount,
+		PageInfo: PageInfo{
+			HasNextPage: resp.PageInfo.HasNextPage,
+			StartCursor: resp.PageInfo.StartCursor,
+			EndCursor:   resp.PageInfo.EndCursor,
+		},
+	}, nil
+}
+
+// convertProviderPRToData converts provider.PullRequestData to data.PullRequestData
+func convertProviderPRToData(pr provider.PullRequestData) PullRequestData {
+	assignees := make([]Assignee, len(pr.Assignees.Nodes))
+	for i, a := range pr.Assignees.Nodes {
+		assignees[i] = Assignee{Login: a.Login}
+	}
+
+	labels := make([]Label, len(pr.Labels.Nodes))
+	for i, l := range pr.Labels.Nodes {
+		labels[i] = Label{Name: l.Name, Color: l.Color}
+	}
+
+	files := make([]ChangedFile, len(pr.Files.Nodes))
+	for i, f := range pr.Files.Nodes {
+		files[i] = ChangedFile{
+			Additions:  f.Additions,
+			Deletions:  f.Deletions,
+			Path:       f.Path,
+			ChangeType: f.ChangeType,
+		}
+	}
+
+	reviewRequests := make([]ReviewRequestNode, len(pr.ReviewRequests.Nodes))
+	for i, r := range pr.ReviewRequests.Nodes {
+		reviewRequests[i] = ReviewRequestNode{
+			AsCodeOwner: r.AsCodeOwner,
+		}
+		reviewRequests[i].RequestedReviewer.User.Login = r.RequestedReviewer.User.Login
+		reviewRequests[i].RequestedReviewer.Team.Slug = r.RequestedReviewer.Team.Slug
+		reviewRequests[i].RequestedReviewer.Team.Name = r.RequestedReviewer.Team.Name
+		reviewRequests[i].RequestedReviewer.Bot.Login = r.RequestedReviewer.Bot.Login
+		reviewRequests[i].RequestedReviewer.Mannequin.Login = r.RequestedReviewer.Mannequin.Login
+	}
+
+	reviews := make([]Review, len(pr.Reviews.Nodes))
+	for i, r := range pr.Reviews.Nodes {
+		reviews[i] = Review{
+			Author: struct{ Login string }{Login: r.Author.Login},
+			Body:      r.Body,
+			State:     r.State,
+			UpdatedAt: r.UpdatedAt,
+		}
+	}
+
+	return PullRequestData{
+		Number: pr.Number,
+		Title:  pr.Title,
+		Body:   pr.Body,
+		Author: struct{ Login string }{Login: pr.Author.Login},
+		AuthorAssociation: pr.AuthorAssociation,
+		UpdatedAt:         pr.UpdatedAt,
+		CreatedAt:         pr.CreatedAt,
+		Url:               pr.Url,
+		State:             pr.State,
+		Mergeable:         pr.Mergeable,
+		ReviewDecision:    pr.ReviewDecision,
+		Additions:         pr.Additions,
+		Deletions:         pr.Deletions,
+		HeadRefName:       pr.HeadRefName,
+		BaseRefName:       pr.BaseRefName,
+		HeadRepository:    struct{ Name string }{Name: pr.HeadRepository.Name},
+		HeadRef:           struct{ Name string }{Name: pr.HeadRef.Name},
+		Repository:        Repository{NameWithOwner: pr.Repository.NameWithOwner, IsArchived: pr.Repository.IsArchived},
+		Assignees:         Assignees{Nodes: assignees},
+		Comments:          Comments{TotalCount: pr.Comments.TotalCount},
+		ReviewThreads:     ReviewThreads{TotalCount: pr.ReviewThreads.TotalCount},
+		Reviews:           Reviews{TotalCount: pr.Reviews.TotalCount, Nodes: reviews},
+		ReviewRequests:    ReviewRequests{TotalCount: pr.ReviewRequests.TotalCount, Nodes: reviewRequests},
+		Files:             ChangedFiles{TotalCount: pr.Files.TotalCount, Nodes: files},
+		IsDraft:           pr.IsDraft,
+		Commits:           Commits{TotalCount: pr.Commits.TotalCount},
+		Labels:            PRLabels{Nodes: labels},
+		MergeStateStatus:  MergeStateStatus(pr.MergeStateStatus),
+	}
+}
+
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
+	// Use GitLab provider if configured
+	if provider.IsGitLab() {
+		return fetchPullRequestFromGitLab(prUrl)
+	}
+
 	var err error
 	if client == nil {
 		client, err = gh.DefaultGraphQLClient()
@@ -543,4 +664,89 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	log.Info("Successfully fetched PR", "url", prUrl)
 
 	return queryResult.Resource.PullRequest, nil
+}
+
+// fetchPullRequestFromGitLab fetches a single MR from GitLab
+func fetchPullRequestFromGitLab(prUrl string) (EnrichedPullRequestData, error) {
+	p := provider.GetProvider()
+
+	resp, err := p.FetchPullRequest(prUrl)
+	if err != nil {
+		return EnrichedPullRequestData{}, err
+	}
+
+	comments := make([]Comment, len(resp.Comments.Nodes))
+	for i, c := range resp.Comments.Nodes {
+		comments[i] = Comment{
+			Author:    struct{ Login string }{Login: c.Author.Login},
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		}
+	}
+
+	reviewRequests := make([]ReviewRequestNode, len(resp.ReviewRequests.Nodes))
+	for i, r := range resp.ReviewRequests.Nodes {
+		reviewRequests[i] = ReviewRequestNode{
+			AsCodeOwner: r.AsCodeOwner,
+		}
+		reviewRequests[i].RequestedReviewer.User.Login = r.RequestedReviewer.User.Login
+		reviewRequests[i].RequestedReviewer.Team.Slug = r.RequestedReviewer.Team.Slug
+		reviewRequests[i].RequestedReviewer.Team.Name = r.RequestedReviewer.Team.Name
+	}
+
+	reviews := make([]Review, len(resp.Reviews.Nodes))
+	for i, r := range resp.Reviews.Nodes {
+		reviews[i] = Review{
+			Author:    struct{ Login string }{Login: r.Author.Login},
+			Body:      r.Body,
+			State:     r.State,
+			UpdatedAt: r.UpdatedAt,
+		}
+	}
+
+	// Convert commits
+	allCommits := AllCommits{}
+	for _, c := range resp.Commits {
+		node := struct {
+			Commit struct {
+				AbbreviatedOid    string
+				CommittedDate     time.Time
+				MessageHeadline   string
+				Author            struct {
+					Name string
+					User struct{ Login string }
+				}
+				StatusCheckRollup StatusCheckRollupStats
+			}
+		}{}
+		node.Commit.AbbreviatedOid = c.AbbreviatedOid
+		node.Commit.CommittedDate = c.CommittedDate
+		node.Commit.MessageHeadline = c.MessageHeadline
+		node.Commit.Author.Name = c.Author.Name
+		node.Commit.Author.User.Login = c.Author.User.Login
+		allCommits.Nodes = append(allCommits.Nodes, node)
+	}
+
+	return EnrichedPullRequestData{
+		Url:    resp.Url,
+		Number: resp.Number,
+		Repository: Repository{
+			NameWithOwner: resp.Repository.NameWithOwner,
+			IsArchived:    resp.Repository.IsArchived,
+		},
+		Comments: CommentsWithBody{
+			TotalCount: graphql.Int(resp.Comments.TotalCount),
+			Nodes:      comments,
+		},
+		ReviewThreads: ReviewThreadsWithComments{},
+		ReviewRequests: ReviewRequests{
+			TotalCount: resp.ReviewRequests.TotalCount,
+			Nodes:      reviewRequests,
+		},
+		Reviews: Reviews{
+			TotalCount: resp.Reviews.TotalCount,
+			Nodes:      reviews,
+		},
+		AllCommits: allCommits,
+	}, nil
 }
