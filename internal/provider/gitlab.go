@@ -719,6 +719,7 @@ func (g *GitLabProvider) parseQuery(query string) map[string]string {
 
 // FetchIssueComments fetches comments for a single issue
 func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	log.Info("FetchIssueComments called", "url", issueUrl)
 	// Parse project and issue IID from URL
 	// Format: https://gitlab.example.com/group/project/-/issues/123
 	parsedURL, err := url.Parse(issueUrl)
@@ -739,10 +740,14 @@ func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, er
 	// Get issue notes/comments via API
 	encodedProject := url.PathEscape(project)
 	notesEndpoint := fmt.Sprintf("projects/%s/issues/%s/notes", encodedProject, issueID)
+	log.Info("Fetching notes", "endpoint", notesEndpoint)
 	notesOutput, err := g.runGlab("api", notesEndpoint)
 	if err != nil {
+		log.Error("Failed to fetch notes", "err", err)
 		return nil, err
 	}
+
+	log.Info("Notes output", "length", len(notesOutput))
 
 	var comments []IssueComment
 	if len(notesOutput) > 0 {
@@ -753,8 +758,10 @@ func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, er
 			System    bool      `json:"system"`
 		}
 		if err := json.Unmarshal(notesOutput, &notes); err != nil {
+			log.Error("Failed to parse notes", "err", err)
 			return nil, err
 		}
+		log.Info("Parsed notes", "count", len(notes))
 		for _, note := range notes {
 			// Skip system-generated notes
 			if note.System {
@@ -768,5 +775,6 @@ func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, er
 		}
 	}
 
+	log.Info("Returning comments", "count", len(comments))
 	return comments, nil
 }

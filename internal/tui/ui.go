@@ -723,10 +723,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.updateNotificationSections(msg))
 
 	case issueview.IssueCommentsMsg:
+		log.Info("IssueCommentsMsg received", "url", msg.IssueUrl, "comments", len(msg.Comments), "err", msg.Err)
 		if msg.Err == nil {
 			m.issueSidebar.SetIssueComments(msg.IssueUrl, msg.Comments)
-			syncCmd := m.syncSidebar()
-			cmds = append(cmds, syncCmd)
+			// Just update the sidebar content, don't call syncSidebar which would overwrite
+			m.sidebar.SetContent(m.issueSidebar.View())
 		} else {
 			log.Error("failed fetching issue comments", "err", msg.Err)
 		}
