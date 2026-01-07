@@ -25,20 +25,32 @@ func (m *Model) renderChangesOverview() string {
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Width(m.getIndentedContentWidth())
 
+	// Use enriched data if available (for GitLab)
+	filesCount := m.pr.Data.Primary.Files.TotalCount
+	commitsCount := m.pr.Data.Primary.Commits.TotalCount
+	if m.pr.Data.IsEnriched {
+		if m.pr.Data.Enriched.Files.TotalCount > 0 {
+			filesCount = m.pr.Data.Enriched.Files.TotalCount
+		}
+		if len(m.pr.Data.Enriched.AllCommits.Nodes) > 0 {
+			commitsCount = len(m.pr.Data.Enriched.AllCommits.Nodes)
+		}
+	}
+
 	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.pr.Data.Primary.UpdatedAt))
 	return box.Render(
 		lipgloss.JoinVertical(lipgloss.Left,
 			changes.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
-					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d files changed", m.pr.Data.Primary.Files.TotalCount),
+					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
+					fmt.Sprintf("%d files changed", filesCount),
 					" ",
 					m.pr.RenderLines(false)),
 			),
 			commits.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
-					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d commits", m.pr.Data.Primary.Commits.TotalCount),
+					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
+					fmt.Sprintf("%d commits", commitsCount),
 					" ",
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("%s ago", time)),
 				),
@@ -49,7 +61,16 @@ func (m *Model) renderChangesOverview() string {
 
 func (m *Model) renderChangedFiles() string {
 	files := make([]string, 0)
-	for _, file := range m.pr.Data.Primary.Files.Nodes {
+
+	// Use enriched data if available (GitLab populates this), otherwise use primary
+	var fileNodes []data.ChangedFile
+	if m.pr.Data.IsEnriched && len(m.pr.Data.Enriched.Files.Nodes) > 0 {
+		fileNodes = m.pr.Data.Enriched.Files.Nodes
+	} else {
+		fileNodes = m.pr.Data.Primary.Files.Nodes
+	}
+
+	for _, file := range fileNodes {
 		files = append(files, m.renderFile(file))
 	}
 
@@ -83,17 +104,17 @@ func (m *Model) renderFile(file data.ChangedFile) string {
 func (m *Model) renderChangeTypeIcon(changeType string) string {
 	switch changeType {
 	case "ADDED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText).Render("")
 	case "DELETED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("")
 	case "RENAMED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
 	case "COPIED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
 	case "MODIFIED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
 	case "CHANGED":
-		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
+		return lipgloss.NewStyle().Foreground(m.ctx.Theme.WarningText).Render("")
 	default:
 		return ""
 	}
