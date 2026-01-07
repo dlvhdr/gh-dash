@@ -181,14 +181,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.prView.IsTextInputBoxFocused() {
 			m.prView, cmd = m.prView.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.issueSidebar.IsTextInputBoxFocused() {
 			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.footer.ShowConfirmQuit && (msg.String() == "y" || msg.String() == "enter") {
@@ -244,6 +244,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
+			if m.sidebar.IsOpen {
+				cmd = m.syncSidebar()
+				cmds = append(cmds, cmd)
+			}
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
@@ -747,10 +751,10 @@ func (m *Model) setCurrSectionId(newSectionId int) {
 func (m *Model) onViewedRowChanged() tea.Cmd {
 	m.prView.SetSummaryViewLess()
 	m.prView.GoToFirstTab()
-	m.syncSidebar()
-	cmd := m.prView.EnrichCurrRow()
+	sidebarCmd := m.syncSidebar()
+	prCmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
-	return cmd
+	return tea.Batch(sidebarCmd, prCmd)
 }
 
 func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
