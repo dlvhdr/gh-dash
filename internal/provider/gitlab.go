@@ -15,7 +15,8 @@ import (
 
 // GitLabProvider implements the Provider interface for GitLab
 type GitLabProvider struct {
-	host string
+	host        string
+	labelColors map[string]map[string]string // project -> label name -> color
 }
 
 // NewGitLabProvider creates a new GitLab provider
@@ -26,7 +27,8 @@ func NewGitLabProvider(host string) *GitLabProvider {
 	host = strings.TrimSuffix(host, "/")
 
 	return &GitLabProvider{
-		host: host,
+		host:        host,
+		labelColors: make(map[string]map[string]string),
 	}
 }
 
@@ -59,6 +61,56 @@ func (g *GitLabProvider) runGlab(args ...string) ([]byte, error) {
 		return nil, err
 	}
 	return output, nil
+}
+
+// glabLabel represents a GitLab label with color information
+type glabLabel struct {
+	Name      string `json:"name"`
+	Color     string `json:"color"`
+	TextColor string `json:"text_color"`
+}
+
+// fetchLabelColors fetches and caches label colors for a project
+func (g *GitLabProvider) fetchLabelColors(project string) {
+	if project == "" {
+		return
+	}
+
+	// Check if already cached
+	if _, ok := g.labelColors[project]; ok {
+		return
+	}
+
+	output, err := g.runGlab("label", "list", "--repo", project, "--output", "json", "--per-page", "100")
+	if err != nil {
+		log.Debug("Failed to fetch labels for color cache", "project", project, "err", err)
+		return
+	}
+
+	var labels []glabLabel
+	if err := json.Unmarshal(output, &labels); err != nil {
+		log.Debug("Failed to parse labels", "err", err)
+		return
+	}
+
+	g.labelColors[project] = make(map[string]string)
+	for _, l := range labels {
+		// Remove # prefix if present
+		color := strings.TrimPrefix(l.Color, "#")
+		g.labelColors[project][l.Name] = color
+	}
+
+	log.Debug("Cached label colors", "project", project, "count", len(labels))
+}
+
+// getLabelColor returns the color for a label, or empty string if not found
+func (g *GitLabProvider) getLabelColor(project, labelName string) string {
+	if projectLabels, ok := g.labelColors[project]; ok {
+		if color, ok := projectLabels[labelName]; ok {
+			return color
+		}
+	}
+	return ""
 }
 
 // GitLab API response structures
@@ -133,10 +185,15 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 	// GitLab uses different query syntax than GitHub
 	// Common filters: state, labels, author, assignee, reviewer
 
-	args := []string{"mr", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
-
 	// Parse query for common filters
 	filters := g.parseQuery(query)
+
+	// Fetch label colors for the project (if specified)
+	if project, ok := filters["repo"]; ok {
+		g.fetchLabelColors(project)
+	}
+
+	args := []string{"mr", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
 
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
@@ -220,9 +277,19 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 		assignees[i] = Assignee{Login: a.Username}
 	}
 
+	// Extract project path from full reference (e.g., "group/project!123")
+	projectPath := ""
+	if mr.References.Full != "" {
+		parts := strings.Split(mr.References.Full, "!")
+		if len(parts) > 0 {
+			projectPath = parts[0]
+		}
+	}
+
+	// Get label colors from cache
 	labels := make([]Label, len(mr.Labels))
 	for i, l := range mr.Labels {
-		labels[i] = Label{Name: l, Color: ""}
+		labels[i] = Label{Name: l, Color: g.getLabelColor(projectPath, l)}
 	}
 
 	reviewRequests := make([]ReviewRequestNode, len(mr.Reviewers))
@@ -250,15 +317,6 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 	ciStatus := ""
 	if mr.Pipeline != nil {
 		ciStatus = mr.Pipeline.Status
-	}
-
-	// Extract project path from full reference (e.g., "group/project!123")
-	projectPath := ""
-	if mr.References.Full != "" {
-		parts := strings.Split(mr.References.Full, "!")
-		if len(parts) > 0 {
-			projectPath = parts[0]
-		}
 	}
 
 	return PullRequestData{
@@ -363,9 +421,14 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 }
 
 func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
-	args := []string{"issue", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
-
 	filters := g.parseQuery(query)
+
+	// Fetch label colors for the project (if specified)
+	if project, ok := filters["repo"]; ok {
+		g.fetchLabelColors(project)
+	}
+
+	args := []string{"issue", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
 
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
@@ -430,18 +493,6 @@ func (g *GitLabProvider) convertGitLabIssue(issue glabIssue) IssueData {
 		assignees[i] = Assignee{Login: a.Username}
 	}
 
-	labels := make([]Label, len(issue.Labels))
-	for i, l := range issue.Labels {
-		labels[i] = Label{Name: l, Color: ""}
-	}
-
-	state := issue.State
-	if state == "opened" {
-		state = "OPEN"
-	} else if state == "closed" {
-		state = "CLOSED"
-	}
-
 	// Extract project path from full reference
 	projectPath := ""
 	if issue.References.Full != "" {
@@ -449,6 +500,19 @@ func (g *GitLabProvider) convertGitLabIssue(issue glabIssue) IssueData {
 		if len(parts) > 0 {
 			projectPath = parts[0]
 		}
+	}
+
+	// Get label colors from cache
+	labels := make([]Label, len(issue.Labels))
+	for i, l := range issue.Labels {
+		labels[i] = Label{Name: l, Color: g.getLabelColor(projectPath, l)}
+	}
+
+	state := issue.State
+	if state == "opened" {
+		state = "OPEN"
+	} else if state == "closed" {
+		state = "CLOSED"
 	}
 
 	return IssueData{
