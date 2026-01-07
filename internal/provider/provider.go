@@ -29,6 +29,9 @@ type Provider interface {
 	// FetchIssues fetches issues
 	FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error)
 
+	// FetchIssueComments fetches comments for a single issue (GitLab only)
+	FetchIssueComments(issueUrl string) ([]IssueComment, error)
+
 	// GetCurrentUser returns the current authenticated user
 	GetCurrentUser() (string, error)
 

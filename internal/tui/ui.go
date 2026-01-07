@@ -588,6 +588,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			log.Error("failed enriching pr", "err", msg.Err)
 		}
 
+	case issueview.IssueCommentsMsg:
+		if msg.Err == nil {
+			m.issueSidebar.SetIssueComments(msg.IssueUrl, msg.Comments)
+			syncCmd := m.syncSidebar()
+			cmds = append(cmds, syncCmd)
+		} else {
+			log.Error("failed fetching issue comments", "err", msg.Err)
+		}
+
 	case spinner.TickMsg:
 		if len(m.tasks) > 0 {
 			taskSpinner, internalTickCmd := m.taskSpinner.Update(msg)
@@ -837,6 +846,8 @@ func (m *Model) syncSidebar() tea.Cmd {
 		m.issueSidebar.SetRow(row)
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
+		// Fetch comments for GitLab issues
+		cmd = m.issueSidebar.EnrichIssueComments()
 	}
 
 	return cmd

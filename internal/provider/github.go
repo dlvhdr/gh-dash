@@ -52,3 +52,10 @@ func (g *GitHubProvider) GetCurrentUser() (string, error) {
 	// This should not be called - data package handles GitHub directly
 	panic("GitHubProvider.GetCurrentUser should not be called directly")
 }
+
+// FetchIssueComments is not implemented for GitHub provider
+// GitHub fetches comments as part of the GraphQL query
+func (g *GitHubProvider) FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	// This should not be called - GitHub fetches comments in the main query
+	panic("GitHubProvider.FetchIssueComments should not be called directly")
+}
