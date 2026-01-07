@@ -388,28 +388,35 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		return EnrichedPullRequestData{}, fmt.Errorf("failed to parse MR: %w", err)
 	}
 
-	// Get MR notes/comments
-	notesOutput, err := g.runGlab("mr", "note", "list", mrID, "--repo", project, "--output", "json")
+	// Get MR notes/comments via API
+	encodedProject := url.PathEscape(project)
+	notesEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/notes", encodedProject, mrID)
+	notesOutput, err := g.runGlab("api", notesEndpoint)
 	comments := CommentsWithBody{TotalCount: mr.UserNotesCount}
 	if err == nil && len(notesOutput) > 0 {
 		var notes []struct {
 			Body      string    `json:"body"`
 			Author    struct{ Username string } `json:"author"`
 			CreatedAt time.Time `json:"created_at"`
+			System    bool      `json:"system"` // Filter out system notes
 		}
 		if json.Unmarshal(notesOutput, &notes) == nil {
 			for _, note := range notes {
+				// Skip system-generated notes (like "mentioned in commit", "changed the description", etc.)
+				if note.System {
+					continue
+				}
 				comments.Nodes = append(comments.Nodes, Comment{
 					Author:    Author{Login: note.Author.Username},
 					Body:      note.Body,
 					UpdatedAt: note.CreatedAt,
 				})
 			}
+			comments.TotalCount = len(comments.Nodes)
 		}
 	}
 
 	// Get MR commits via API
-	encodedProject := url.PathEscape(project)
 	commitsEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/commits", encodedProject, mrID)
 	commitsOutput, err := g.runGlab("api", commitsEndpoint)
 	var commits []CommitData
