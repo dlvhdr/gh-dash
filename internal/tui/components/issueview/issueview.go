@@ -404,8 +404,8 @@ func (m *Model) EnrichIssueComments() tea.Cmd {
 	if m.issue == nil {
 		return nil
 	}
-	// Only fetch if we don't have comments yet but TotalCount says there are some
-	if len(m.issue.Data.Comments.Nodes) > 0 || m.issue.Data.Comments.TotalCount == 0 {
+	// Only fetch if we don't have comments yet
+	if len(m.issue.Data.Comments.Nodes) > 0 {
 		return nil
 	}
 	issueUrl := m.issue.Data.Url

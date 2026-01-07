@@ -186,14 +186,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.prView.IsTextInputBoxFocused() {
 			m.prView, cmd = m.prView.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.issueSidebar.IsTextInputBoxFocused() {
 			m.issueSidebar, cmd, _ = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.footer.ShowConfirmQuit && (msg.String() == "y" || msg.String() == "enter") {
@@ -260,6 +260,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
+			if m.sidebar.IsOpen {
+				cmd = m.syncSidebar()
+				cmds = append(cmds, cmd)
+			}
 
 		case key.Matches(msg, m.keys.Refresh):
 			data.ClearEnrichmentCache()
