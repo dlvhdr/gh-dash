@@ -172,15 +172,31 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	label := prLabel()
-	return fireTask(ctx, GitHubTask{
-		Id: buildTaskId("pr_ready", prNumber),
-		Args: []string{
-			prSubCmd(),
+
+	// GitLab uses 'mr update --ready', GitHub uses 'pr ready'
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"mr",
+			"update",
+			fmt.Sprint(prNumber),
+			"--repo",
+			pr.GetRepoNameWithOwner(),
+			"--ready",
+		}
+	} else {
+		args = []string{
+			"pr",
 			"ready",
 			fmt.Sprint(prNumber),
-			repoFlag(),
+			"-R",
 			pr.GetRepoNameWithOwner(),
-		},
+		}
+	}
+
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_ready", prNumber),
+		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Marking %s #%d as ready for review", label, prNumber),
 		FinishedText: fmt.Sprintf("%s #%d has been marked as ready for review", label, prNumber),
@@ -269,22 +285,36 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName
 func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
 	label := prLabel()
-	return fireTask(ctx, GitHubTask{
-		Id: buildTaskId("pr_update", prNumber),
-		Args: []string{
-			prSubCmd(),
+
+	// GitLab uses 'mr rebase', GitHub uses 'pr update-branch'
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"mr",
+			"rebase",
+			fmt.Sprint(prNumber),
+			"--repo",
+			pr.GetRepoNameWithOwner(),
+		}
+	} else {
+		args = []string{
+			"pr",
 			"update-branch",
 			fmt.Sprint(prNumber),
-			repoFlag(),
+			"-R",
 			pr.GetRepoNameWithOwner(),
-		},
+		}
+	}
+
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_update", prNumber),
+		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Updating %s #%d", label, prNumber),
 		FinishedText: fmt.Sprintf("%s #%d has been updated", label, prNumber),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			return UpdatePRMsg{
 				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(true),
 			}
 		},
 	})
