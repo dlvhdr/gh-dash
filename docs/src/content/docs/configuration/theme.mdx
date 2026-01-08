@@ -41,6 +41,7 @@ colors:
     faint: "#8a8a8a"
     warning: "#800000"
     success: "#008000"
+    actor: "#c6c6c6"
   background:
     selected: "#808080"
   border:
@@ -211,6 +212,18 @@ dashboard UI:
 - The icon for the `ci` column's icon when a PR's checks are all passing
 - The icon for passing checks for PRs in the preview pane
 - Success messages for commands, like when the dashboard fetches work items.
+
+#### Actor Text Color
+
+| Property | Type | default                                   |
+| :------- | :--- | :---------------------------------------- |
+| `actor`  | hex  | `#c6c6c6` for dark or `#808080` for light |
+
+This setting determines the color of the text for the following elements in the
+dashboard UI:
+
+- The username of the person who triggered a notification, displayed after the
+  notification title in the notifications view
 
 ### Background Colors (`background`)
 

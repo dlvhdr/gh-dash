@@ -2,11 +2,13 @@ package data
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/charmbracelet/log"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
+	"github.com/shurcooL/githubv4"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
@@ -25,7 +27,7 @@ type IssueData struct {
 	Url               string
 	Repository        Repository
 	Assignees         Assignees      `graphql:"assignees(first: 3)"`
-	Comments          IssueComments  `graphql:"comments(first: 15)"`
+	Comments          IssueComments  `graphql:"comments(last: 15)"`
 	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
 	Labels            IssueLabels    `graphql:"labels(first: 20)"`
 }
@@ -146,4 +148,36 @@ type IssuesResponse struct {
 	Issues     []IssueData
 	TotalCount int
 	PageInfo   PageInfo
+}
+
+// FetchIssue fetches a single issue by its GitHub URL
+func FetchIssue(issueUrl string) (IssueData, error) {
+	var err error
+	if cachedClient == nil {
+		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+		if err != nil {
+			return IssueData{}, err
+		}
+	}
+
+	var queryResult struct {
+		Resource struct {
+			Issue IssueData `graphql:"... on Issue"`
+		} `graphql:"resource(url: $url)"`
+	}
+	parsedUrl, err := url.Parse(issueUrl)
+	if err != nil {
+		return IssueData{}, err
+	}
+	variables := map[string]any{
+		"url": githubv4.URI{URL: parsedUrl},
+	}
+	log.Debug("Fetching Issue", "url", issueUrl)
+	err = cachedClient.Query("FetchIssue", &queryResult, variables)
+	if err != nil {
+		return IssueData{}, err
+	}
+	log.Info("Successfully fetched Issue", "url", issueUrl)
+
+	return queryResult.Resource.Issue, nil
 }

@@ -109,6 +109,12 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) renderViewButton(view config.ViewType) string {
+	if view == config.NotificationsView {
+		if m.ctx.View == view {
+			return m.ctx.Styles.ViewSwitcher.ActiveView.Render("")
+		}
+		return m.ctx.Styles.ViewSwitcher.InactiveView.Render("")
+	}
 	v := " PRs"
 	if view == config.IssuesView {
 		v = " Issues"
@@ -137,7 +143,9 @@ func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 
 	view := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.PRsView)),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.NotificationsView)),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
+		m.renderViewButton(config.PRsView),
 		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
 		m.renderViewButton(config.IssuesView),
 		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(

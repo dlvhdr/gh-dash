@@ -33,6 +33,7 @@ type Column struct {
 	Width         *int
 	ComputedWidth int
 	Grow          *bool
+	Align         *lipgloss.Position // Optional alignment (defaults to left)
 }
 
 type Row []string
@@ -297,12 +298,15 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 			colHeight = 2
 		}
 		col := m.Rows[rowId][i]
-		renderedCol := style.
+		cellStyle := style.
 			Width(colWidth).
 			MaxWidth(colWidth).
 			Height(colHeight).
-			MaxHeight(colHeight).
-			Render(col)
+			MaxHeight(colHeight)
+		if column.Align != nil {
+			cellStyle = cellStyle.Align(*column.Align)
+		}
+		renderedCol := cellStyle.Render(col)
 
 		renderedColumns = append(renderedColumns, renderedCol)
 		headerColId++
