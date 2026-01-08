@@ -93,6 +93,12 @@ func (m *Model) ScrollToBottom() {
 	m.viewport.GotoBottom()
 }
 
+func (m *Model) ScrollToPercent(percent float64) {
+	totalLines := m.viewport.TotalLineCount()
+	targetLine := int(float64(totalLines) * percent)
+	m.viewport.SetYOffset(targetLine)
+}
+
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	if ctx == nil {
 		return

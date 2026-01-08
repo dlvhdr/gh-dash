@@ -57,6 +57,8 @@ func (a *ViewType) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	switch strings.ToLower(s) {
+	case "notifications":
+		*a = NotificationsView
 	case "prs":
 		*a = PRsView
 	case "issues":
@@ -69,9 +71,10 @@ func (a *ViewType) UnmarshalJSON(b []byte) error {
 }
 
 const (
-	PRsView    ViewType = "prs"
-	IssuesView ViewType = "issues"
-	RepoView   ViewType = "repo"
+	NotificationsView ViewType = "notifications"
+	PRsView           ViewType = "prs"
+	IssuesView        ViewType = "issues"
+	RepoView          ViewType = "repo"
 )
 
 type SectionConfig struct {
@@ -246,6 +249,7 @@ type ColorThemeText struct {
 	Warning   HexColor `yaml:"warning"   validate:"omitempty,hexcolor"`
 	Success   HexColor `yaml:"success"   validate:"omitempty,hexcolor"`
 	Error     HexColor `yaml:"error"     validate:"omitempty,hexcolor"`
+	Actor     HexColor `yaml:"actor"     validate:"omitempty,hexcolor"`
 }
 
 type ColorThemeBorder struct {

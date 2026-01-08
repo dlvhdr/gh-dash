@@ -36,6 +36,7 @@ type ProgramContext struct {
 	ScreenWidth       int
 	MainContentWidth  int
 	MainContentHeight int
+	SidebarOpen       bool
 	Config            *config.Config
 	ConfigFlag        string
 	Version           string
@@ -57,6 +58,11 @@ func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 			Limit:   utils.IntPtr(20),
 			Type:    &t,
 		}.ToSectionConfig())
+	case config.NotificationsView:
+		configs = append(configs, config.SectionConfig{
+			Title:   "Notifications",
+			Filters: "",
+		})
 	case config.PRsView:
 		for _, cfg := range ctx.Config.PRSections {
 			configs = append(configs, cfg.ToSectionConfig())

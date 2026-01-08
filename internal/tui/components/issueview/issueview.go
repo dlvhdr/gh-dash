@@ -18,6 +18,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 var (
@@ -255,6 +256,8 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderStatusPill())
 	s.WriteString("\n\n")
+	s.WriteString(m.renderAuthor())
+	s.WriteString("\n\n")
 
 	labels := m.renderLabels()
 	if labels != "" {
@@ -276,14 +279,12 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return lipgloss.NewStyle().
-		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
+	return common.RenderPreviewHeader(m.ctx.Theme, m.width,
+		fmt.Sprintf("#%d · %s", m.issue.Data.GetNumber(), m.issue.Data.GetRepoNameWithOwner()))
 }
 
 func (m *Model) renderTitle() string {
-	return m.ctx.Styles.Common.MainTextStyle.Width(m.getIndentedContentWidth()).
-		Render(m.issue.Data.Title)
+	return common.RenderPreviewTitle(m.ctx.Theme, m.ctx.Styles.Common, m.width, m.issue.Data.Title)
 }
 
 func (m *Model) renderStatusPill() string {
@@ -302,6 +303,25 @@ func (m *Model) renderStatusPill() string {
 		BorderForeground(lipgloss.Color(bgColor)).
 		Background(lipgloss.Color(bgColor)).
 		Render(content)
+}
+
+func (m *Model) renderAuthor() string {
+	authorAssociation := m.issue.Data.AuthorAssociation
+	if authorAssociation == "" {
+		authorAssociation = "unknown role"
+	}
+	time := lipgloss.NewStyle().Render(utils.TimeElapsed(m.issue.Data.CreatedAt))
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		" by ",
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText).Render(
+			lipgloss.NewStyle().Bold(true).Render("@"+m.issue.Data.Author.Login)),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
+		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
+			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.issue.Data.AuthorAssociation,
+				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+		),
+	)
 }
 
 func (m *Model) renderBody() string {
