@@ -107,7 +107,8 @@ func TestCarousel(t *testing.T) {
 		_ = zone.Scan(view)
 
 		// Click inside the first tab's zone
-		zoneID := fmt.Sprintf("%s%d", TabZonePrefix, 0)
+		// Zone IDs now include the zonePrefix, so construct it the same way as tabZoneID()
+		zoneID := fmt.Sprintf("%s%s%d", TabZonePrefix, c.zonePrefix, 0)
 		z := zone.Get(zoneID)
 		if z.IsZero() {
 			t.Fatal("Expected zone to be registered")
