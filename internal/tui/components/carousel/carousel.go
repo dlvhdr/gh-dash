@@ -1,13 +1,18 @@
 package carousel
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	zone "github.com/lrstanley/bubblezone"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 )
+
+const TabZonePrefix = "carousel-tab-"
 
 // Model defines a state for the carousel widget.
 type Model struct {
@@ -24,6 +29,7 @@ type Model struct {
 	showSeparators         bool
 	separator              string
 	styles                 Styles
+	zonePrefix             string // Unique prefix for zone IDs to avoid conflicts between views
 
 	content string
 	start   int
@@ -168,6 +174,18 @@ func WithKeyMap(km KeyMap) Option {
 	}
 }
 
+// WithZonePrefix sets a unique prefix for zone IDs to avoid conflicts between views.
+func WithZonePrefix(prefix string) Option {
+	return func(m *Model) {
+		m.zonePrefix = prefix
+	}
+}
+
+// SetZonePrefix sets a unique prefix for zone IDs.
+func (m *Model) SetZonePrefix(prefix string) {
+	m.zonePrefix = prefix
+}
+
 // Update is the Bubble Tea update loop.
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if !m.focus {
@@ -215,6 +233,7 @@ func (m Model) View() string {
 // UpdateSize updates the carousel size based on the previously defined
 // items and width.
 func (m *Model) UpdateSize() {
+	// First pass: render items with zone markers to ensure they're clickable even when truncated
 	leftover := m.width
 	itemsContent := ""
 
@@ -263,6 +282,8 @@ func (m *Model) UpdateSize() {
 		l -= lipgloss.Width(roIndicator)
 	}
 
+	// Apply truncation to the content. Zone markers remain intact through truncation,
+	// ensuring items stay clickable even when partially displayed
 	if loIndicator != "" {
 		truncate := lipgloss.Width(itemsContent) - l + 1
 		itemsContent = ansi.TruncateLeft(itemsContent, truncate, "")
@@ -358,6 +379,9 @@ func (m *Model) MoveRight() {
 	m.UpdateSize()
 }
 
+// renderItem renders an item with zone marking for click detection.
+// Zone markers are applied to the content and persist through truncation,
+// ensuring items remain clickable even when partially displayed.
 func (m *Model) renderItem(itemID int, maxWidth int) string {
 	var item string
 	if itemID == m.cursor {
@@ -376,10 +400,26 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 	}
 
 	if m.showSeparators && itemID != len(m.items)-1 {
-		return lipgloss.JoinHorizontal(lipgloss.Center, item, m.styles.Separator.Render(m.separator))
+		item = lipgloss.JoinHorizontal(lipgloss.Center, item, m.styles.Separator.Render(m.separator))
 	}
 
-	return item
+	// Wrap the item in a zone for click detection
+	return zone.Mark(m.tabZoneID(itemID), item)
+}
+
+// HandleClick checks if a mouse click event is on a tab and returns the tab index if so
+// Returns -1 if no tab was clicked
+func (m *Model) HandleClick(msg tea.MouseMsg) int {
+	for i := range m.items {
+		if zone.Get(m.tabZoneID(i)).InBounds(msg) {
+			return i
+		}
+	}
+	return -1
+}
+
+func (m *Model) tabZoneID(itemID int) string {
+	return fmt.Sprintf("%s%s%d", TabZonePrefix, m.zonePrefix, itemID)
 }
 
 func max(a, b int) int {

@@ -127,6 +127,7 @@ func NewModel(
 		"Loading...",
 		false,
 	)
+	m.Table.SetSectionId(options.Id)
 	return m
 }
 
@@ -159,6 +160,7 @@ type Table interface {
 	NumRows() int
 	GetCurrRow() data.RowData
 	CurrRow() int
+	SetCurrRow(index int)
 	NextRow() int
 	PrevRow() int
 	FirstItem() int
@@ -168,6 +170,7 @@ type Table interface {
 	ResetRows()
 	GetIsLoading() bool
 	SetIsLoading(val bool)
+	HandleRowClick(msg tea.MouseMsg) int
 }
 
 type Search interface {
@@ -289,6 +292,10 @@ func (m *BaseModel) CurrRow() int {
 	return m.Table.GetCurrItem()
 }
 
+func (m *BaseModel) SetCurrRow(index int) {
+	m.Table.SetCurrItem(index)
+}
+
 func (m *BaseModel) NextRow() int {
 	return m.Table.NextItem()
 }
@@ -303,6 +310,10 @@ func (m *BaseModel) FirstItem() int {
 
 func (m *BaseModel) LastItem() int {
 	return m.Table.LastItem()
+}
+
+func (m *BaseModel) HandleRowClick(msg tea.MouseMsg) int {
+	return m.Table.HandleClick(msg)
 }
 
 func (m *BaseModel) IsSearchFocused() bool {

@@ -25,6 +25,11 @@ func (t *TestSection) CurrRow() int {
 	panic("unimplemented")
 }
 
+// SetCurrRow implements section.Section.
+func (t *TestSection) SetCurrRow(index int) {
+	panic("unimplemented")
+}
+
 // FetchNextPageSectionRows implements section.Section.
 func (t *TestSection) FetchNextPageSectionRows() []tea.Cmd {
 	panic("unimplemented")
@@ -113,6 +118,11 @@ func (t *TestSection) IsSearchFocused() bool {
 // LastItem implements section.Section.
 func (t *TestSection) LastItem() int {
 	panic("unimplemented")
+}
+
+// HandleRowClick implements section.Section.
+func (t *TestSection) HandleRowClick(msg tea.MouseMsg) int {
+	return -1
 }
 
 // MakeSectionCmd implements section.Section.

@@ -36,6 +36,7 @@ type ProgramContext struct {
 	ScreenWidth       int
 	MainContentWidth  int
 	MainContentHeight int
+	PreviewWidth      int // Current preview pane width (can be resized dynamically)
 	Config            *config.Config
 	ConfigFlag        string
 	Version           string

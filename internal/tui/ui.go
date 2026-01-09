@@ -41,20 +41,20 @@ import (
 )
 
 type Model struct {
-	keys          *keys.KeyMap
-	sidebar       sidebar.Model
-	prView        prview.Model
-	issueSidebar  issueview.Model
-	branchSidebar branchsidebar.Model
-	currSectionId int
-	footer        footer.Model
-	repo          section.Section
-	prs           []section.Section
-	issues        []section.Section
-	tabs          tabs.Model
-	ctx           *context.ProgramContext
-	taskSpinner   spinner.Model
-	tasks         map[string]context.Task
+	keys           *keys.KeyMap
+	sidebar        sidebar.Model
+	prView         prview.Model
+	issueSidebar   issueview.Model
+	branchSidebar  branchsidebar.Model
+	currSectionId  int
+	footer         footer.Model
+	repo           section.Section
+	prs            []section.Section
+	issues         []section.Section
+	tabs           tabs.Model
+	ctx            *context.ProgramContext
+	taskSpinner    spinner.Model
+	tasks          map[string]context.Task
 }
 
 func NewModel(location config.Location) Model {
@@ -244,6 +244,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
+
+		case key.Matches(msg, m.keys.ResetPreviewWidth):
+			// Reset preview width to config default
+			m.ctx.PreviewWidth = m.ctx.Config.Defaults.Preview.Width
+			m.syncMainContentWidth()
+			m.syncSidebar()
+			// Clear the saved state
+			go config.SavePreviewWidth(0)
 
 		case key.Matches(msg, m.keys.Refresh):
 			currSection.ResetFilters()
@@ -534,6 +542,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
 		m.ctx.View = m.ctx.Config.Defaults.View
+		// Initialize preview width from saved state, fallback to config default
+		m.ctx.PreviewWidth = msg.Config.Defaults.Preview.Width
+		if state, err := config.LoadState(); err == nil && state.PreviewWidth > 0 {
+			m.ctx.PreviewWidth = state.PreviewWidth
+		}
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.syncMainContentWidth()
@@ -614,24 +627,114 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		if msg.Action != tea.MouseActionRelease || msg.Button != tea.MouseButtonLeft {
-			return m, nil
-		}
-		if zone.Get("donate").InBounds(msg) {
-			log.Info("Donate clicked", "msg", msg)
-			openCmd := func() tea.Msg {
-				b := browser.New("", os.Stdout, os.Stdin)
-				err := b.Browse("https://github.com/sponsors/dlvhdr")
-				if err != nil {
-					return constants.ErrMsg{Err: err}
-				}
-				return nil
+		// Handle sidebar resize and scroll - pass mouse events to sidebar when it's open
+		if m.sidebar.IsOpen {
+			var sidebarCmd tea.Cmd
+			m.sidebar, sidebarCmd = m.sidebar.Update(msg)
+			cmds = append(cmds, sidebarCmd)
+			// If resizing is in progress, don't process other mouse events
+			if m.sidebar.IsResizing() {
+				return m, tea.Batch(cmds...)
 			}
-			cmds = append(cmds, openCmd)
+			// If sidebar handled a scroll event, return early to avoid also scrolling the list.
+			if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
+				// Check if mouse is in sidebar area
+				sidebarStartX := m.ctx.ScreenWidth - m.ctx.PreviewWidth
+				if m.ctx.PreviewWidth <= 0 {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.Config.Defaults.Preview.Width
+				}
+				if msg.X >= sidebarStartX {
+					return m, tea.Batch(cmds...)
+				}
+			}
+		}
+
+		// Handle scroll wheel in the list area (main content)
+		if msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown {
+			// Only handle if mouse is in the main content area (not sidebar)
+			sidebarStartX := m.ctx.ScreenWidth
+			if m.sidebar.IsOpen {
+				if m.ctx.PreviewWidth > 0 {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.PreviewWidth
+				} else {
+					sidebarStartX = m.ctx.ScreenWidth - m.ctx.Config.Defaults.Preview.Width
+				}
+			}
+			if msg.X < sidebarStartX && msg.Y >= common.TabsHeight {
+				section := m.getCurrSection()
+				if section != nil {
+					if msg.Button == tea.MouseButtonWheelUp {
+						section.PrevRow()
+					} else {
+						prevRow := section.CurrRow()
+						nextRow := section.NextRow()
+						// Fetch more if we're near the bottom
+						if prevRow != nextRow && nextRow >= section.NumRows()-3 && m.ctx.View != config.RepoView {
+							cmds = append(cmds, section.FetchNextPageSectionRows()...)
+						}
+					}
+					cmd = m.onViewedRowChanged()
+				}
+			}
+		}
+
+		// Handle tab clicks
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			// Check for tab clicks
+			if tabCmd := m.tabs.HandleClick(msg); tabCmd != nil {
+				cmds = append(cmds, tabCmd)
+				// If a tab was clicked, update the section
+				if m.tabs.CurrSectionId() != m.currSectionId {
+					m.setCurrSectionId(m.tabs.CurrSectionId())
+					cmds = append(cmds, m.onViewedRowChanged())
+				}
+				return m, tea.Batch(cmds...)
+			}
+
+			// Check for row clicks in the main content area
+			section := m.getCurrSection()
+			if section != nil {
+				clickedRow := section.HandleRowClick(msg)
+				if clickedRow >= 0 && clickedRow < section.NumRows() {
+					currRow := section.CurrRow()
+					if clickedRow != currRow {
+						section.SetCurrRow(clickedRow)
+						cmd = m.onViewedRowChanged()
+					}
+				}
+			}
+		}
+
+		// Handle donate button click
+		if msg.Action == tea.MouseActionRelease && msg.Button == tea.MouseButtonLeft {
+			if zone.Get("donate").InBounds(msg) {
+				log.Info("Donate clicked", "msg", msg)
+				openCmd := func() tea.Msg {
+					b := browser.New("", os.Stdout, os.Stdin)
+					err := b.Browse("https://github.com/sponsors/dlvhdr")
+					if err != nil {
+						return constants.ErrMsg{Err: err}
+					}
+					return nil
+				}
+				cmds = append(cmds, openCmd)
+			}
 		}
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
+
+	case sidebar.ResizeMsg:
+		// Update the preview width
+		m.ctx.PreviewWidth = msg.NewWidth
+		m.syncMainContentWidth()
+		m.syncSidebar()
+
+	case sidebar.ResizeEndMsg:
+		// Save the preview width to state file when resize ends
+		if m.ctx.PreviewWidth > 0 {
+			go config.SavePreviewWidth(m.ctx.PreviewWidth)
+		}
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
@@ -808,7 +911,12 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 func (m *Model) syncMainContentWidth() {
 	sideBarOffset := 0
 	if m.sidebar.IsOpen {
-		sideBarOffset = m.ctx.Config.Defaults.Preview.Width
+		// Use dynamic preview width if set, otherwise use config default
+		if m.ctx.PreviewWidth > 0 {
+			sideBarOffset = m.ctx.PreviewWidth
+		} else {
+			sideBarOffset = m.ctx.Config.Defaults.Preview.Width
+		}
 	}
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
 }

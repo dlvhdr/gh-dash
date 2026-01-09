@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/exp/teatest"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -127,6 +128,7 @@ func TestTabs(t *testing.T) {
 }
 
 func init() {
+	zone.NewGlobal()
 	lipgloss.SetColorProfile(termenv.Ascii)
 	if d := os.Getenv("DEBUG"); d != "" {
 		log.SetLevel(log.DebugLevel)
@@ -220,5 +222,5 @@ func (m testModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m testModel) View() string {
-	return m.tabs.View()
+	return zone.Scan(m.tabs.View())
 }

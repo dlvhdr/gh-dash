@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -75,7 +74,13 @@ func (m *Model) getNumPrsPerPage() int {
 }
 
 func (m *Model) ResetCurrItem() {
+	m.resetCurrItem()
+}
+
+func (m *Model) resetCurrItem() {
 	m.currId = 0
+	m.topBoundId = 0
+	m.bottomBoundId = 0
 	m.viewport.GotoTop()
 }
 
@@ -121,19 +126,51 @@ func (m *Model) LastItem() int {
 	return m.currId
 }
 
+func (m *Model) SetCurrItem(index int) {
+	if m.NumCurrentItems == 0 {
+		m.resetCurrItem()
+		return
+	}
+
+	index = utils.Max(0, utils.Min(index, m.NumCurrentItems-1))
+	itemsPerPage := m.getNumPrsPerPage()
+
+	if itemsPerPage <= 0 {
+		m.resetCurrItem()
+		m.currId = index
+		return
+	}
+
+	if index < m.topBoundId {
+		diff := m.topBoundId - index
+		m.viewport.ScrollUp(diff * m.ListItemHeight)
+		m.topBoundId = index
+		m.bottomBoundId = utils.Min(m.topBoundId+itemsPerPage-1, m.NumCurrentItems-1)
+	} else if index > m.bottomBoundId {
+		diff := index - m.bottomBoundId
+		m.viewport.ScrollDown(diff * m.ListItemHeight)
+		m.bottomBoundId = index
+		m.topBoundId = utils.Max(0, m.bottomBoundId-itemsPerPage+1)
+	}
+
+	m.currId = index
+	if m.currId == 0 && m.topBoundId > 0 {
+		m.topBoundId = 0
+		m.bottomBoundId = utils.Min(itemsPerPage-1, m.NumCurrentItems-1)
+		m.viewport.GotoTop()
+	}
+}
+
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
 	m.viewport.Height = max(0, dimensions.Height)
 	m.viewport.Width = max(0, dimensions.Width)
 }
 
 func (m *Model) View() string {
-	viewport := m.viewport.View()
-	return lipgloss.NewStyle().
-		Width(m.viewport.Width).
-		MaxWidth(m.viewport.Width).
-		Render(
-			viewport,
-		)
+	// Return viewport content directly without additional Width/MaxWidth styling.
+	// The viewport already constrains content to its width, and applying
+	// Width/MaxWidth to content containing zone markers can cause visual artifacts.
+	return m.viewport.View()
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {

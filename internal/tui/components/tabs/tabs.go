@@ -106,6 +106,8 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		Separator:         ctx.Styles.Tabs.TabSeparator,
 	})
 
+	// Set unique zone prefix based on current view to avoid zone conflicts
+	m.carousel.SetZonePrefix(fmt.Sprintf("%s-", ctx.View))
 	m.carousel.SetWidth(ctx.ScreenWidth - lipgloss.Width(m.viewLogo()))
 }
 
@@ -169,4 +171,22 @@ func (m *Model) SetAllLoading() []tea.Cmd {
 	}
 
 	return cmds
+}
+
+// TabClickedMsg is sent when a tab is clicked
+type TabClickedMsg struct {
+	TabIndex int
+}
+
+// HandleClick checks if a mouse click event is on a tab and handles it
+// Returns a command if a tab was clicked, nil otherwise
+func (m *Model) HandleClick(msg tea.MouseMsg) tea.Cmd {
+	clickedTab := m.carousel.HandleClick(msg)
+	if clickedTab >= 0 && clickedTab < len(m.sectionTabs) {
+		m.carousel.SetCursor(clickedTab)
+		return func() tea.Msg {
+			return TabClickedMsg{TabIndex: clickedTab}
+		}
+	}
+	return nil
 }
