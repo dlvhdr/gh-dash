@@ -55,7 +55,6 @@ type Model struct {
 	ctx            *context.ProgramContext
 	taskSpinner    spinner.Model
 	tasks          map[string]context.Task
-	lastScrollTime time.Time // Track last scroll event time for smart scroll detection
 }
 
 func NewModel(location config.Location) Model {
@@ -664,18 +663,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.X < sidebarStartX && msg.Y >= common.TabsHeight {
 				section := m.getCurrSection()
 				if section != nil {
-					// Smart scroll detection: scroll 1 row per event
-					// Track scroll event timing to ensure responsive scrolling.
-					// Each scroll event scrolls 1 row, which gives smooth behavior:
-					// - Rapid wheel scrolling generates multiple events, so scrolling is fast
-					// - Slow scrolling generates fewer events, so scrolling is slower
-					m.lastScrollTime = time.Now()
-
-					// Always scroll 1 row per event (rapid events scroll more, slow events scroll less)
 					if msg.Button == tea.MouseButtonWheelUp {
 						section.PrevRow()
 					} else {
-						section.NextRow()
 						prevRow := section.CurrRow()
 						nextRow := section.NextRow()
 						// Fetch more if we're near the bottom
