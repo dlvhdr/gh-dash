@@ -2,6 +2,7 @@ package table
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -25,6 +26,7 @@ type Model struct {
 	loadingSpinner spinner.Model
 	dimensions     constants.Dimensions
 	rowsViewport   listviewport.Model
+	ContentHeight  int // Optional: override content height (0 = use default from config)
 }
 
 type Column struct {
@@ -179,6 +181,17 @@ func (m *Model) SetRows(rows []Row) {
 	m.SyncViewPortContent()
 }
 
+// SetContentHeight sets a custom content height for rows (use 0 to use default config-based height)
+func (m *Model) SetContentHeight(height int) {
+	m.ContentHeight = height
+	// Recalculate item height for viewport
+	itemHeight := height
+	if m.ctx.Config.Theme.Ui.Table.ShowSeparator {
+		itemHeight += 1
+	}
+	m.rowsViewport.SetItemHeight(itemHeight)
+}
+
 func (m *Model) OnLineDown() {
 	m.rowsViewport.NextItem()
 }
@@ -211,10 +224,23 @@ func (m *Model) renderHeaderColumns() []string {
 		}
 
 		if column.Width != nil {
-			renderedColumns[i] = m.ctx.Styles.Table.TitleCellStyle.
+			title := column.Title
+			style := m.ctx.Styles.Table.TitleCellStyle
+			// Align headers for right-aligned columns
+			// Use padding-free style to avoid truncation from PlaceHorizontal + padding
+			if column.Align != nil && *column.Align == lipgloss.Right {
+				// Center short headers (icons), right-align longer headers (text)
+				headerAlign := lipgloss.Right
+				if lipgloss.Width(title) <= 2 {
+					headerAlign = lipgloss.Center
+				}
+				title = lipgloss.PlaceHorizontal(*column.Width, headerAlign, title)
+				style = lipgloss.NewStyle().Bold(true).Foreground(m.ctx.Theme.PrimaryText)
+			}
+			renderedColumns[i] = style.
 				Width(*column.Width).
 				MaxWidth(*column.Width).
-				Render(column.Title)
+				Render(title)
 			takenWidth += *column.Width
 			continue
 		}
@@ -294,19 +320,49 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 
 		colWidth := lipgloss.Width(headerColumns[headerColId])
 		colHeight := 1
-		if !m.ctx.Config.Theme.Ui.Table.Compact {
+		if m.ContentHeight > 0 {
+			// Use custom content height if set
+			colHeight = m.ContentHeight
+		} else if !m.ctx.Config.Theme.Ui.Table.Compact {
 			colHeight = 2
 		}
 		col := m.Rows[rowId][i]
-		cellStyle := style.
-			Width(colWidth).
-			MaxWidth(colWidth).
-			Height(colHeight).
-			MaxHeight(colHeight)
-		if column.Align != nil {
-			cellStyle = cellStyle.Align(*column.Align)
+		// For multi-line content, truncate long lines and pad short lines
+		// so lines don't wrap and background color extends properly
+		// Account for cell padding (1 left + 1 right = 2)
+		contentWidth := colWidth - 2
+		if contentWidth < 1 {
+			contentWidth = 1
 		}
-		renderedCol := cellStyle.Render(col)
+		var renderedCol string
+		if strings.Contains(col, "\n") {
+			// For multi-line content, apply cell style to each line individually
+			// This ensures background color extends properly despite ANSI resets in content
+			lines := strings.Split(col, "\n")
+			renderedLines := make([]string, len(lines))
+			for j, line := range lines {
+				lineWidth := lipgloss.Width(line)
+				if lineWidth > contentWidth {
+					line = ansi.Truncate(line, contentWidth, constants.Ellipsis)
+				}
+				lineStyle := style.Width(colWidth).MaxWidth(colWidth).Height(1)
+				if column.Align != nil {
+					lineStyle = lineStyle.Align(*column.Align)
+				}
+				renderedLines[j] = lineStyle.Render(line)
+			}
+			renderedCol = strings.Join(renderedLines, "\n")
+		} else {
+			cellStyle := style.
+				Width(colWidth).
+				MaxWidth(colWidth).
+				Height(colHeight).
+				MaxHeight(colHeight)
+			if column.Align != nil {
+				cellStyle = cellStyle.Align(*column.Align)
+			}
+			renderedCol = cellStyle.Render(col)
+		}
 
 		renderedColumns = append(renderedColumns, renderedCol)
 		headerColId++

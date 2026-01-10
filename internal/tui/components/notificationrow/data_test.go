@@ -474,6 +474,39 @@ func TestGetTitle(t *testing.T) {
 			},
 			expected: "",
 		},
+		{
+			name: "strips trailing carriage return",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Title: "Set creation URL of worker settings\r",
+					},
+				},
+			},
+			expected: "Set creation URL of worker settings",
+		},
+		{
+			name: "strips embedded carriage returns",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Title: "Line one\r\nLine two",
+					},
+				},
+			},
+			expected: "Line one Line two",
+		},
+		{
+			name: "trims whitespace",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Title: "  Title with spaces  ",
+					},
+				},
+			},
+			expected: "Title with spaces",
+		},
 	}
 
 	for _, tt := range tests {
@@ -608,6 +641,209 @@ func TestGetId(t *testing.T) {
 			result := tt.data.GetId()
 			if result != tt.expected {
 				t.Errorf("GetId() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerateActivityDescription(t *testing.T) {
+	tests := []struct {
+		name        string
+		reason      string
+		subjectType string
+		actor       string
+		expected    string
+	}{
+		// comment reason
+		{
+			name:        "comment on PR with actor",
+			reason:      "comment",
+			subjectType: "PullRequest",
+			actor:       "octocat",
+			expected:    "@octocat commented on this pull request",
+		},
+		{
+			name:        "comment on Issue with actor",
+			reason:      "comment",
+			subjectType: "Issue",
+			actor:       "octocat",
+			expected:    "@octocat commented on this issue",
+		},
+		{
+			name:        "comment on other type with actor",
+			reason:      "comment",
+			subjectType: "Discussion",
+			actor:       "octocat",
+			expected:    "@octocat commented",
+		},
+		{
+			name:        "comment without actor",
+			reason:      "comment",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "New comment",
+		},
+
+		// review_requested reason
+		{
+			name:        "review requested with actor",
+			reason:      "review_requested",
+			subjectType: "PullRequest",
+			actor:       "reviewer",
+			expected:    "@reviewer requested your review",
+		},
+		{
+			name:        "review requested without actor",
+			reason:      "review_requested",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "Review requested",
+		},
+
+		// mention reason
+		{
+			name:        "mention with actor",
+			reason:      "mention",
+			subjectType: "Issue",
+			actor:       "commenter",
+			expected:    "@commenter mentioned you",
+		},
+		{
+			name:        "mention without actor",
+			reason:      "mention",
+			subjectType: "Issue",
+			actor:       "",
+			expected:    "You were mentioned",
+		},
+
+		// author reason
+		{
+			name:        "author reason",
+			reason:      "author",
+			subjectType: "PullRequest",
+			actor:       "someone",
+			expected:    "Activity on your thread",
+		},
+
+		// assign reason
+		{
+			name:        "assign reason",
+			reason:      "assign",
+			subjectType: "Issue",
+			actor:       "assigner",
+			expected:    "You were assigned",
+		},
+
+		// state_change reason
+		{
+			name:        "state change on PR",
+			reason:      "state_change",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "Pull request state changed",
+		},
+		{
+			name:        "state change on Issue",
+			reason:      "state_change",
+			subjectType: "Issue",
+			actor:       "",
+			expected:    "Issue state changed",
+		},
+		{
+			name:        "state change on other type",
+			reason:      "state_change",
+			subjectType: "Discussion",
+			actor:       "",
+			expected:    "State changed",
+		},
+
+		// ci_activity reason
+		{
+			name:        "CI activity",
+			reason:      "ci_activity",
+			subjectType: "CheckSuite",
+			actor:       "",
+			expected:    "CI activity",
+		},
+
+		// subscribed reason
+		{
+			name:        "subscribed PR with actor",
+			reason:      "subscribed",
+			subjectType: "PullRequest",
+			actor:       "contributor",
+			expected:    "@contributor commented on this pull request",
+		},
+		{
+			name:        "subscribed Issue with actor",
+			reason:      "subscribed",
+			subjectType: "Issue",
+			actor:       "contributor",
+			expected:    "@contributor commented on this issue",
+		},
+		{
+			name:        "subscribed other type with actor",
+			reason:      "subscribed",
+			subjectType: "Discussion",
+			actor:       "contributor",
+			expected:    "Activity on subscribed thread",
+		},
+		{
+			name:        "subscribed without actor",
+			reason:      "subscribed",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "Activity on subscribed thread",
+		},
+
+		// team_mention reason
+		{
+			name:        "team mention",
+			reason:      "team_mention",
+			subjectType: "Issue",
+			actor:       "",
+			expected:    "Your team was mentioned",
+		},
+
+		// security_alert reason
+		{
+			name:        "security alert",
+			reason:      "security_alert",
+			subjectType: "RepositoryVulnerabilityAlert",
+			actor:       "",
+			expected:    "Security vulnerability detected",
+		},
+
+		// unknown reason
+		{
+			name:        "unknown reason with actor",
+			reason:      "unknown_reason",
+			subjectType: "PullRequest",
+			actor:       "someone",
+			expected:    "@someone triggered this notification",
+		},
+		{
+			name:        "unknown reason without actor",
+			reason:      "unknown_reason",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "",
+		},
+		{
+			name:        "empty reason without actor",
+			reason:      "",
+			subjectType: "PullRequest",
+			actor:       "",
+			expected:    "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GenerateActivityDescription(tt.reason, tt.subjectType, tt.actor)
+			if result != tt.expected {
+				t.Errorf("GenerateActivityDescription(%q, %q, %q) = %q, want %q",
+					tt.reason, tt.subjectType, tt.actor, result, tt.expected)
 			}
 		})
 	}

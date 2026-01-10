@@ -3,21 +3,29 @@ package notificationrow
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
 
 type Data struct {
-	Notification     data.NotificationData
-	NewCommentsCount int    // Number of new comments since last read
-	SubjectState     string // State of the PR/Issue (OPEN, CLOSED, MERGED)
-	IsDraft          bool   // Whether PR is a draft
-	Actor            string // Username of the user who triggered the notification
+	Notification        data.NotificationData
+	NewCommentsCount    int    // Number of new comments since last read
+	SubjectState        string // State of the PR/Issue (OPEN, CLOSED, MERGED)
+	IsDraft             bool   // Whether PR is a draft
+	Actor               string // Username of the user who triggered the notification
+	ActivityDescription string // Human-readable description of the activity (e.g., "@user commented on this PR")
 }
 
 func (d Data) GetTitle() string {
-	return d.Notification.Subject.Title
+	// Sanitize title: remove carriage returns and other control characters
+	// that can corrupt terminal rendering (e.g., GitHub sometimes returns
+	// titles with trailing \r characters)
+	title := d.Notification.Subject.Title
+	title = strings.ReplaceAll(title, "\r", "")
+	title = strings.ReplaceAll(title, "\n", " ")
+	return strings.TrimSpace(title)
 }
 
 func (d Data) GetRepoNameWithOwner() string {
@@ -102,4 +110,68 @@ func extractNumberFromUrl(apiUrl string) string {
 		}
 	}
 	return ""
+}
+
+// GenerateActivityDescription creates a human-readable description of the notification activity
+func GenerateActivityDescription(reason, subjectType, actor string) string {
+	switch reason {
+	case "comment":
+		if actor != "" {
+			switch subjectType {
+			case "PullRequest":
+				return fmt.Sprintf("@%s commented on this pull request", actor)
+			case "Issue":
+				return fmt.Sprintf("@%s commented on this issue", actor)
+			default:
+				return fmt.Sprintf("@%s commented", actor)
+			}
+		}
+		return "New comment"
+	case "review_requested":
+		if actor != "" {
+			return fmt.Sprintf("@%s requested your review", actor)
+		}
+		return "Review requested"
+	case "mention":
+		if actor != "" {
+			return fmt.Sprintf("@%s mentioned you", actor)
+		}
+		return "You were mentioned"
+	case "author":
+		return "Activity on your thread"
+	case "assign":
+		return "You were assigned"
+	case "state_change":
+		switch subjectType {
+		case "PullRequest":
+			return "Pull request state changed"
+		case "Issue":
+			return "Issue state changed"
+		default:
+			return "State changed"
+		}
+	case "ci_activity":
+		return "CI activity"
+	case "subscribed":
+		if actor != "" {
+			switch subjectType {
+			case "PullRequest":
+				return fmt.Sprintf("@%s commented on this pull request", actor)
+			case "Issue":
+				return fmt.Sprintf("@%s commented on this issue", actor)
+			default:
+				return "Activity on subscribed thread"
+			}
+		}
+		return "Activity on subscribed thread"
+	case "team_mention":
+		return "Your team was mentioned"
+	case "security_alert":
+		return "Security vulnerability detected"
+	default:
+		if actor != "" {
+			return fmt.Sprintf("@%s triggered this notification", actor)
+		}
+		return ""
+	}
 }

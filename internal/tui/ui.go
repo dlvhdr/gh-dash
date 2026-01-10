@@ -1026,96 +1026,93 @@ func (m *Model) syncSidebar() tea.Cmd {
 
 func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) string {
 	var content strings.Builder
-	leftPad := "   "
 
-	// Type and repo header - using common preview styling
 	subjectType := row.GetSubjectType()
-	displayType := subjectType
-	if subjectType == "PullRequest" {
-		displayType = "Pull Request"
-	}
-	repo := row.GetRepoNameWithOwner()
-	content.WriteString(common.RenderPreviewHeader(m.ctx.Theme, width, fmt.Sprintf("%s · %s", displayType, repo)))
-	content.WriteString("\n")
+	leftMargin := "      " // Left margin for content
 
-	// Title - using common preview styling
-	content.WriteString(common.RenderPreviewTitle(m.ctx.Theme, m.ctx.Styles.Common, width, row.GetTitle()))
-	content.WriteString("\n\n")
+	// Styles
+	normalText := lipgloss.NewStyle().Foreground(m.ctx.Theme.PrimaryText)
+	faintText := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
+	// Highlighted key style for main prompt (with background)
+	highlightKeyStyle := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.PrimaryText).
+		Background(m.ctx.Theme.FaintBorder).
+		Padding(0, 1)
+	// Simple key style for table (no background)
+	keyStyle := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.PrimaryText)
+	actionStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText)
+	headerStyle := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.PrimaryText).
+		Bold(true)
 
-	// Build key actions table
-	borderColor := m.ctx.Theme.FaintBorder
-	keyColor := m.ctx.Theme.PrimaryText
-	actionColor := m.ctx.Theme.SecondaryText
-
-	// Determine Enter key action based on type
+	// Determine subject type display name and primary action
+	typeName := "PR"
 	enterAction := "view"
-	if subjectType != "PullRequest" && subjectType != "Issue" {
+	if subjectType == "Issue" {
+		typeName = "Issue"
+	} else if subjectType != "PullRequest" {
+		typeName = subjectType
 		enterAction = "open in browser"
 	}
 
-	// Table entries
-	keyActions := []struct {
+	// Main prompt: "Press Enter to view the PR" or "Press Enter to open in browser"
+	content.WriteString("\n")
+	content.WriteString(leftMargin)
+	content.WriteString(normalText.Render("Press "))
+	content.WriteString(highlightKeyStyle.Render("Enter"))
+	if enterAction == "view" {
+		content.WriteString(normalText.Render(fmt.Sprintf(" to %s the %s", enterAction, typeName)))
+	} else {
+		content.WriteString(normalText.Render(fmt.Sprintf(" to %s", enterAction)))
+	}
+	content.WriteString("\n")
+
+	// Note about marking as read
+	content.WriteString(leftMargin)
+	content.WriteString(faintText.Render("(Note: this will mark it as read)"))
+	content.WriteString("\n")
+
+	content.WriteString("\n")
+
+	// Other Actions header
+	content.WriteString(leftMargin)
+	content.WriteString(headerStyle.Render("Other Actions"))
+	content.WriteString("\n\n")
+
+	// Key-action pairs (simple list without borders)
+	actions := []struct {
 		key    string
 		action string
 	}{
-		{"d", "mark done"},
-		{"m", "mark read"},
+		{"d", "mark as done"},
+		{"m", "mark as read"},
 		{"u", "unsubscribe"},
 		{"b", "toggle bookmark"},
 		{"t", "toggle filtering"},
+		{"S", "sort by repo"},
 		{"o", "open in browser"},
-		{"Enter", enterAction},
 	}
 
-	// Build table with header
-	headerStyle := lipgloss.NewStyle().
-		Foreground(m.ctx.Theme.SecondaryText).
-		Bold(true)
-	indent := leftPad
-
-	// Header row (no borders)
-	content.WriteString(indent)
-	content.WriteString("   Key    Action\n")
-
-	// Helper to pad strings
-	padCenter := func(s string, width int) string {
-		if len(s) >= width {
-			return s[:width]
-		}
-		left := (width - len(s)) / 2
-		right := width - len(s) - left
-		return strings.Repeat(" ", left) + s + strings.Repeat(" ", right)
-	}
-	padRight := func(s string, width int) string {
-		if len(s) >= width {
-			return s[:width]
-		}
-		return s + strings.Repeat(" ", width-len(s))
-	}
-	_ = headerStyle // silence unused warning
-
-	// Table with borders
-	b := lipgloss.NewStyle().Foreground(borderColor).Render
-	k := lipgloss.NewStyle().Bold(true).Foreground(keyColor).Render
-	a := lipgloss.NewStyle().Foreground(actionColor).Render
-
-	content.WriteString(indent + b("┌───────┬──────────────────┐") + "\n")
-
-	for i, entry := range keyActions {
-		content.WriteString(indent)
-		content.WriteString(b("│"))
-		content.WriteString(k(padCenter(entry.key, 7)))
-		content.WriteString(b("│"))
-		content.WriteString(a(" " + padRight(entry.action, 17)))
-		content.WriteString(b("│"))
+	keyWidth := 7 // Width for key column
+	for _, a := range actions {
+		content.WriteString(leftMargin)
+		// Right-align the key in its column
+		padding := strings.Repeat(" ", keyWidth-len(a.key))
+		content.WriteString(padding)
+		content.WriteString(keyStyle.Render(a.key))
+		content.WriteString("  ")
+		content.WriteString(actionStyle.Render(a.action))
 		content.WriteString("\n")
-
-		if i < len(keyActions)-1 {
-			content.WriteString(indent + b("├───────┼──────────────────┤") + "\n")
-		}
 	}
 
-	content.WriteString(indent + b("└───────┴──────────────────┘"))
+	// Add Enter at the end
+	content.WriteString(leftMargin)
+	padding := strings.Repeat(" ", keyWidth-len("Enter"))
+	content.WriteString(padding)
+	content.WriteString(keyStyle.Render("Enter"))
+	content.WriteString("  ")
+	content.WriteString(actionStyle.Render(enterAction))
 
 	return content.String()
 }

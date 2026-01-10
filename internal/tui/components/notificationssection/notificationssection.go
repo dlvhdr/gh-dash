@@ -141,6 +141,8 @@ func NewModel(
 			CreatedAt:   lastUpdated,
 		},
 	)
+	// Set 3-line content height for notification rows
+	m.Table.SetContentHeight(3)
 	// Reset search to empty - notifications are global by default,
 	// not filtered by current repo
 	m.SearchValue = ""
@@ -283,6 +285,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Notifications[i].SubjectState = msg.SubjectState
 				m.Notifications[i].IsDraft = msg.IsDraft
 				m.Notifications[i].Actor = msg.Actor
+				// Generate activity description based on reason, type, and actor
+				m.Notifications[i].ActivityDescription = notificationrow.GenerateActivityDescription(
+					m.Notifications[i].GetReason(),
+					m.Notifications[i].GetSubjectType(),
+					msg.Actor,
+				)
 				m.Table.SetRows(m.BuildRows())
 				log.Debug("Updated notification", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 				break
@@ -332,41 +340,25 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 }
 
 func GetSectionColumns(ctx *context.ProgramContext) []table.Column {
-	// Use wider repo column when sidebar is closed
-	repoWidth := 20
-	if !ctx.SidebarOpen {
-		repoWidth = 35
-	}
-
 	return []table.Column{
 		{
-			Title: "",
-			Width: utils.IntPtr(3), // Type icon (includes unread indicator)
-		},
-		{
-			Title: "",
-			Width: utils.IntPtr(2), // Bookmark indicator
-		},
-		{
-			Title: "",
-			Width: utils.IntPtr(repoWidth), // Repo name
+			Title: "Type",
+			Width: utils.IntPtr(6), // Type icon
+			Align: func() *lipgloss.Position { p := lipgloss.Center; return &p }(),
 		},
 		{
 			Title: "Title",
-			Grow:  utils.BoolPtr(true),
+			Grow:  utils.BoolPtr(true), // 3-line title block (includes bookmark icon)
 		},
 		{
-			Title: "",
-			Width: utils.IntPtr(5), // New comments count
+			Title: "Activity",
+			Width: utils.IntPtr(10), // Comments count with icon
 			Align: func() *lipgloss.Position { p := lipgloss.Right; return &p }(),
 		},
 		{
-			Title: "Reason",
-			Width: utils.IntPtr(12),
-		},
-		{
-			Title: "󱦻",
-			Width: utils.IntPtr(7), // Updated at
+			Title: "󱦻    ",          // Trailing padding to center when right-aligned
+			Width: utils.IntPtr(12), // Updated at (e.g., "12mo ago")
+			Align: func() *lipgloss.Position { p := lipgloss.Right; return &p }(),
 		},
 	}
 }
@@ -538,7 +530,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			}
 
 			if include {
-				notifications = append(notifications, notificationrow.Data{Notification: n})
+				notifications = append(notifications, notificationrow.Data{
+					Notification: n,
+					// Generate initial activity description (will be updated with actor later)
+					ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
+				})
 			}
 		}
 
