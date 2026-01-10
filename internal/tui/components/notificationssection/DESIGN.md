@@ -39,19 +39,29 @@ Unlike PRs and Issues which auto-fetch content when selected, notifications requ
 - Users should consciously decide when to mark something as read
 - Prevents accidental "read" marking when just browsing the list
 
-When a notification is selected but not yet viewed, a prompt is displayed showing available actions:
+When a notification is selected but not yet viewed, a prompt is displayed in the Preview pane:
 
 ```
-   Key    Action
-┌───────┬─────────────────┐
-│   d   │ mark done       │
-│   m   │ mark read       │
-│   u   │ unsubscribe     │
-│   b   │ toggle bookmark │
-│   o   │ open in browser │
-│ Enter │ view            │
-└───────┴─────────────────┘
+      Press [Enter] to view the PR
+      (Note: this will mark it as read)
+
+      Other Actions
+
+            [d]  mark as done
+            [m]  mark as read
+            [u]  unsubscribe
+            [b]  toggle bookmark
+            [t]  toggle filtering
+            [S]  sort by repo
+            [o]  open in browser
+        [Enter]  view
 ```
+
+- Keys are displayed with a background highlight
+- Actions are displayed in green (success color)
+- The note about marking as read appears for all notification types
+- For PR/Issue types: "Press Enter to view the PR/Issue"
+- For other notification types (Discussion, Release, etc.): "Press Enter to open in browser"
 
 #### 2. Notification Data Flow
 
@@ -85,14 +95,56 @@ For PR and Issue notifications, the username of the person who triggered the not
 
 - Fetches the author from `latest_comment_url` (the comment that triggered the notification)
 - Falls back to the PR/Issue author for new items without comments
-- Appends `@username` to the notification title
 - Helps identify spam without needing to open the notification
 - Fetched alongside comment counts (no additional latency)
 - Color is configurable via `theme.colors.text.actor` (defaults to secondary text color)
 
-#### 5. Bookmark System
+#### 5. Three-Line Row Layout
 
-Bookmarks allow users to keep notifications visible even after marking them as read. Since GitHub's API doesn't support bookmarks, this is implemented with local storage:
+Each notification row displays three lines of information:
+
+```
+repo/name #123 🔖                        +5💬  2d ago
+Title of the notification (bold if unread)
+@username commented on this pull request
+```
+
+(The 🔖 bookmark icon only appears if the notification is bookmarked)
+
+- **Line 1:** Repository name with issue/PR number, bookmark icon if bookmarked (SecondaryText color for unread, FaintText for read; bookmark icon in WarningText color)
+- **Line 2:** Notification title (PrimaryText, bold for unread notifications)
+- **Line 3:** Activity description (FaintText color, generated from reason, type, and actor)
+
+The three lines use distinct colors to create visual hierarchy: line 1 is secondary, line 2 is primary/bold, and line 3 is faint.
+
+Activity descriptions are generated based on the notification reason:
+- `comment`: "@username commented on this pull request/issue"
+- `review_requested`: "@username requested your review" or "Review requested"
+- `mention`: "@username mentioned you"
+- `author`: "Activity on your thread"
+- `assign`: "You were assigned"
+- `state_change`: "Pull request/Issue state changed"
+- `ci_activity`: "CI activity"
+- `subscribed`: "@username commented on this pull request/issue"
+
+#### 6. Title Sanitization
+
+Notification titles from GitHub's API may contain control characters (e.g., trailing `\r`) that corrupt terminal rendering. The `GetTitle()` method sanitizes titles by:
+- Removing carriage return characters (`\r`)
+- Replacing newlines (`\n`) with spaces
+- Trimming leading/trailing whitespace
+
+#### 7. Multi-Line Row Background
+
+The table component applies cell styling to each line individually in multi-line content. This ensures the background color (for selected rows) extends properly across the entire cell.
+
+To preserve parent background colors, row content uses raw ANSI escape codes for foreground styling without trailing reset sequences. The `getStylePrefix()` helper extracts ANSI codes from lipgloss styles while stripping the reset, preventing internal resets from breaking the cell's background color.
+
+Title truncation is handled dynamically by the table component based on actual column width, with ellipsis added when content is truncated. This allows titles to adjust when the sidebar is shown/hidden.
+
+#### 8. Bookmark System
+
+Bookmarks allow users to keep notifications visible even after marking them as read. Since GitHub's API doesn't support bookmarks, this is implemented locally:
 
 - Bookmarks are stored in `~/.config/gh-dash/bookmarks.json`
 - `BookmarkStore` singleton manages bookmark state with thread-safe operations
@@ -100,7 +152,7 @@ Bookmarks allow users to keep notifications visible even after marking them as r
 - Bookmarked notifications are styled as read (faint text) but show a bookmark indicator
 - When user explicitly searches `is:unread`, bookmarked+read items are excluded
 
-#### 6. Unsubscribe
+#### 9. Unsubscribe
 
 The unsubscribe feature allows users to stop receiving notifications for a thread:
 
@@ -108,7 +160,7 @@ The unsubscribe feature allows users to stop receiving notifications for a threa
 - Removes the subscription without marking the notification as done
 - Useful for threads that are no longer relevant but shouldn't be deleted
 
-#### 7. State Management
+#### 10. State Management
 
 Notification state (read/unread, done) is tracked both:
 - Locally in the `notificationrow.Data` struct for immediate UI updates
@@ -155,6 +207,7 @@ The table component was extended to support per-column alignment via an `Align` 
 | M | Mark all as read |
 | u | Unsubscribe from thread |
 | b | Toggle bookmark |
+| t | Toggle smart filtering (filter to current repo) |
 | y | Copy PR/Issue number |
 | Y | Copy URL |
 | S | Sort by repository |

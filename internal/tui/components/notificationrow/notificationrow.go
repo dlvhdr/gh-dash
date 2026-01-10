@@ -21,11 +21,8 @@ type Notification struct {
 func (n *Notification) ToTableRow() table.Row {
 	return table.Row{
 		n.renderType(),
-		n.renderBookmark(),
-		n.renderRepoName(),
-		n.renderTitle(),
-		n.renderNewComments(),
-		n.renderReason(),
+		n.renderTitleBlock(),
+		n.renderActivity(),
 		n.renderUpdatedAt(),
 	}
 }
@@ -42,20 +39,6 @@ func (n *Notification) getReadAwareStyle() lipgloss.Style {
 		style = style.Foreground(n.Ctx.Theme.FaintText)
 	}
 	return style
-}
-
-func (n *Notification) renderUnreadIndicator() string {
-	if n.Data.IsUnread() {
-		return lipgloss.NewStyle().Foreground(n.Ctx.Theme.PrimaryText).Render("")
-	}
-	return n.getTextStyle().Render(" ")
-}
-
-func (n *Notification) renderBookmark() string {
-	if data.GetBookmarkStore().IsBookmarked(n.Data.GetId()) {
-		return lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText).Render("")
-	}
-	return " "
 }
 
 func (n *Notification) renderType() string {
@@ -93,78 +76,145 @@ func (n *Notification) renderType() string {
 	case "Issue":
 		// Use state-based icons/colors matching issuerow.go
 		if n.Data.SubjectState == "CLOSED" || isRead {
-			return style.Render("")
+			return style.Render("")
 		}
 		return style.Foreground(n.Ctx.Styles.Colors.OpenIssue).Render("")
 	case "Discussion":
 		if !isRead {
 			style = style.Foreground(n.Ctx.Theme.SecondaryText)
 		}
-		return style.Render("")
+		return style.Render("")
 	case "Release":
 		if !isRead {
 			style = style.Foreground(n.Ctx.Theme.SuccessText)
 		}
-		return style.Render("")
+		return style.Render("")
 	case "Commit":
 		if !isRead {
 			style = style.Foreground(n.Ctx.Theme.SecondaryText)
 		}
-		return style.Render("")
-	default:
 		return style.Render("")
+	case "CheckSuite":
+		if !isRead {
+			style = style.Foreground(n.Ctx.Theme.WarningText)
+		}
+		return style.Render(constants.WorkflowIcon)
+	case "RepositoryVulnerabilityAlert":
+		if !isRead {
+			style = style.Foreground(n.Ctx.Theme.ErrorText)
+		}
+		return style.Render(constants.SecurityIcon)
+	default:
+		// Generic notification icon for unknown types
+		if !isRead {
+			style = style.Foreground(n.Ctx.Theme.SecondaryText)
+		}
+		return style.Render(constants.NotificationIcon)
 	}
 }
 
-func (n *Notification) renderRepoName() string {
-	return n.getReadAwareStyle().Render(n.Data.Notification.Repository.FullName)
+// getStylePrefix extracts ANSI codes from a lipgloss style without the trailing reset.
+// This allows styled text to be concatenated without breaking parent background colors.
+func getStylePrefix(s lipgloss.Style) string {
+	rendered := s.Render("")
+	// Strip trailing reset sequence if present
+	if len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m" {
+		return rendered[:len(rendered)-4]
+	}
+	return rendered
 }
 
-func (n *Notification) renderTitle() string {
-	style := n.getReadAwareStyle()
+// renderTitleBlock returns a 3-line block:
+// Line 1: repo/name #number [bookmark icon if bookmarked]
+// Line 2: Title (bold for unread)
+// Line 3: Activity description
+// Note: Truncation is handled dynamically by the table component based on actual column width
+// Note: Uses raw ANSI codes without resets to preserve parent background colors
+func (n *Notification) renderTitleBlock() string {
+	// Line 1: repo #number (secondary color, no ANSI reset to preserve background)
+	repoStyle := lipgloss.NewStyle().Foreground(n.Ctx.Theme.SecondaryText)
+	if !n.Data.IsUnread() {
+		// Dim for read notifications
+		repoStyle = lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText)
+	}
+	repoPrefix := getStylePrefix(repoStyle)
+	repo := n.Data.GetRepoNameWithOwner()
+	number := n.Data.GetNumber()
+	line1 := repo
+	if number > 0 {
+		line1 = fmt.Sprintf("%s #%d", repo, number)
+	}
+	// Add bookmark icon if bookmarked (using raw ANSI for warning color)
+	if data.GetBookmarkStore().IsBookmarked(n.Data.GetId()) {
+		bookmarkPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText))
+		line1 = line1 + " " + bookmarkPrefix + ""
+	}
+	line1Rendered := repoPrefix + line1
+
+	// Line 2: Title (bold for unread)
+	titleStyle := n.getReadAwareStyle()
 	if n.Data.IsUnread() {
-		style = style.Bold(true)
+		titleStyle = titleStyle.Bold(true)
 	}
+	titlePrefix := getStylePrefix(titleStyle)
 	title := n.Data.GetTitle()
-	if n.Data.Actor != "" {
-		actorStyle := lipgloss.NewStyle().Foreground(n.Ctx.Theme.ActorText)
-		title = title + " " + actorStyle.Render("@"+n.Data.Actor)
+	line2Rendered := titlePrefix + title
+
+	// Line 3: Activity description (no ANSI reset)
+	activityPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
+	line3 := n.Data.ActivityDescription
+	if line3 == "" {
+		// Fallback to reason-based description
+		line3 = n.getReasonDescription()
 	}
-	return style.Render(title)
+	line3Rendered := activityPrefix + line3
+
+	return line1Rendered + "\n" + line2Rendered + "\n" + line3Rendered
 }
 
-func (n *Notification) renderNewComments() string {
-	if n.Data.NewCommentsCount <= 0 {
-		return ""
-	}
-	style := lipgloss.NewStyle().Foreground(n.Ctx.Theme.SuccessText)
-	return style.Render(fmt.Sprintf("+%d", n.Data.NewCommentsCount))
-}
-
-func (n *Notification) renderReason() string {
+// getReasonDescription returns a fallback description based on notification reason
+func (n *Notification) getReasonDescription() string {
 	reason := n.Data.GetReason()
-	style := n.Ctx.Styles.Common.FaintTextStyle
+	subjectType := n.Data.GetSubjectType()
 
 	switch reason {
 	case "review_requested":
-		return style.Render("review")
+		return "Review requested"
 	case "subscribed":
-		return style.Render("subscribed")
+		return "Activity on subscribed thread"
 	case "mention":
-		return style.Foreground(n.Ctx.Theme.WarningText).Render("mention")
+		return "You were mentioned"
 	case "author":
-		return style.Render("author")
+		return "Activity on your thread"
 	case "comment":
-		return style.Render("comment")
+		switch subjectType {
+		case "PullRequest":
+			return "New comment on pull request"
+		case "Issue":
+			return "New comment on issue"
+		}
+		return "New comment"
 	case "assign":
-		return style.Render("assigned")
+		return "You were assigned"
 	case "state_change":
-		return style.Render("state")
+		return "State changed"
 	case "ci_activity":
-		return style.Render("CI")
+		return "CI activity"
 	default:
-		return style.Render(reason)
+		return ""
 	}
+}
+
+// renderActivity shows the new comments count with icon
+func (n *Notification) renderActivity() string {
+	if n.Data.NewCommentsCount <= 0 {
+		return ""
+	}
+	// Use raw ANSI foreground codes without reset to avoid breaking row background
+	// White foreground for count, green foreground for icon
+	white := "\x1b[97m" // Bright white
+	green := "\x1b[32m" // Green
+	return white + fmt.Sprintf("+%d ", n.Data.NewCommentsCount) + green + constants.CommentsIcon
 }
 
 func (n *Notification) renderUpdatedAt() string {
@@ -172,7 +222,8 @@ func (n *Notification) renderUpdatedAt() string {
 
 	updatedAtOutput := ""
 	if timeFormat == "" || timeFormat == "relative" {
-		updatedAtOutput = utils.TimeElapsed(n.Data.GetUpdatedAt())
+		// Use non-breaking space (U+00A0) to prevent wrap
+		updatedAtOutput = utils.TimeElapsed(n.Data.GetUpdatedAt()) + "\u00A0ago"
 	} else {
 		updatedAtOutput = n.Data.GetUpdatedAt().Format(timeFormat)
 	}
