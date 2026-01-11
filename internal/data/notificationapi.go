@@ -8,6 +8,30 @@ import (
 	gh "github.com/cli/go-gh/v2/pkg/api"
 )
 
+// Notification subject types from GitHub API
+const (
+	SubjectTypePullRequest = "PullRequest"
+	SubjectTypeIssue       = "Issue"
+	SubjectTypeDiscussion  = "Discussion"
+	SubjectTypeRelease     = "Release"
+	SubjectTypeCommit      = "Commit"
+	SubjectTypeCheckSuite  = "CheckSuite"
+)
+
+// Notification reasons from GitHub API
+const (
+	ReasonSubscribed      = "subscribed"
+	ReasonReviewRequested = "review_requested"
+	ReasonMention         = "mention"
+	ReasonAuthor          = "author"
+	ReasonComment         = "comment"
+	ReasonAssign          = "assign"
+	ReasonStateChange     = "state_change"
+	ReasonCIActivity      = "ci_activity"
+	ReasonTeamMention     = "team_mention"
+	ReasonSecurityAlert   = "security_alert"
+)
+
 var restClient *gh.RESTClient
 
 type NotificationSubject struct {

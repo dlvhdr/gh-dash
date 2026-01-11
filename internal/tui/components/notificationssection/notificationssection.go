@@ -112,9 +112,10 @@ const (
 
 type Model struct {
 	section.BaseModel
-	Notifications   []notificationrow.Data
-	SortOrder       SortOrder
-	lastSidebarOpen bool
+	Notifications     []notificationrow.Data
+	SortOrder         SortOrder
+	lastSidebarOpen   bool
+	sessionMarkedRead map[string]bool // IDs of notifications marked as read this session (kept visible until manual refresh)
 }
 
 func NewModel(
@@ -143,12 +144,12 @@ func NewModel(
 	)
 	// Set 3-line content height for notification rows
 	m.Table.SetContentHeight(3)
-	// Reset search to empty - notifications are global by default,
-	// not filtered by current repo
-	m.SearchValue = ""
-	m.SearchBar.SetValue("")
-	m.IsFilteredByCurrentRemote = false
+	// Respect smartFilteringAtLaunch - scope to current repo by default if enabled
+	m.IsFilteredByCurrentRemote = ctx.Config.SmartFilteringAtLaunch
+	m.SearchValue = m.GetSearchValue()
+	m.SearchBar.SetValue(m.SearchValue)
 	m.Notifications = []notificationrow.Data{}
+	m.sessionMarkedRead = make(map[string]bool)
 
 	return m
 }
@@ -271,6 +272,10 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		for i := range m.Notifications {
 			if m.Notifications[i].GetId() == msg.Id {
 				m.Notifications[i].Notification.Unread = msg.Unread
+				// Track notifications marked as read this session so they remain visible
+				if !msg.Unread {
+					m.sessionMarkedRead[msg.Id] = true
+				}
 				m.Table.SetRows(m.BuildRows())
 				break
 			}
@@ -323,6 +328,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		// Mark all notifications as read (update their state)
 		for i := range m.Notifications {
 			m.Notifications[i].Notification.Unread = false
+			// Track all as marked read this session so they remain visible
+			m.sessionMarkedRead[m.Notifications[i].GetId()] = true
 		}
 		m.Table.SetRows(m.BuildRows())
 	}
@@ -448,10 +455,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 
 	var cmds []tea.Cmd
 
-	// Parse filters from search value
-	// Use SearchValue directly to avoid auto-adding current repo filter
-	// (notifications are global, not repo-specific by default)
-	filters := parseNotificationFilters(m.SearchValue)
+	// Parse filters from search value (includes repo filter if smartFilteringAtLaunch is enabled)
+	filters := parseNotificationFilters(m.GetSearchValue())
 
 	// Handle is:done filter - these notifications cannot be retrieved
 	if filters.IsDone {
@@ -483,6 +488,10 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
 
+	// Capture session-marked-read IDs for the closure
+	sessionMarkedRead := m.sessionMarkedRead
+	hasSessionMarkedRead := len(sessionMarkedRead) > 0
+
 	fetchCmd := func() tea.Msg {
 		limit := 50 // Default limit for notifications
 
@@ -491,10 +500,10 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		bookmarkedIds := bookmarkStore.GetBookmarkedIds()
 		hasBookmarks := len(bookmarkedIds) > 0
 
-		// If we want to include bookmarks and have some, fetch all notifications
-		// so we can include read+bookmarked items
+		// If we want to include bookmarks/session-marked-read and have some, fetch all notifications
+		// so we can include read+bookmarked or read+session-marked items
 		readState := filters.ReadState
-		if filters.IncludeBookmarked && hasBookmarks {
+		if (filters.IncludeBookmarked && hasBookmarks) || hasSessionMarkedRead {
 			readState = data.NotificationStateAll
 		}
 
@@ -508,12 +517,15 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			}
 		}
 
-		// Filter notifications based on bookmark settings
+		// Filter notifications based on bookmark settings and session state
 		notifications := make([]notificationrow.Data, 0, len(res.Notifications))
 		for _, n := range res.Notifications {
 			include := false
 
-			if filters.IncludeBookmarked && hasBookmarks {
+			// Always include notifications marked as read this session (until manual refresh)
+			if sessionMarkedRead[n.Id] {
+				include = true
+			} else if filters.IncludeBookmarked && hasBookmarks {
 				// Default view: include if unread OR bookmarked
 				isBookmarked := bookmarkStore.IsBookmarked(n.Id)
 				include = n.Unread || isBookmarked
@@ -560,6 +572,8 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 
 func (m *Model) ResetRows() {
 	m.Notifications = nil
+	// Clear session-marked-read on manual refresh - user explicitly wants fresh data
+	m.sessionMarkedRead = make(map[string]bool)
 	m.BaseModel.ResetRows()
 }
 
@@ -571,17 +585,23 @@ func FetchNotifications(
 	return &sectionModel, fetchCmd
 }
 
+// SectionNotificationsFetchedMsg contains the result of fetching notifications from the GitHub API.
+// This message is sent when the initial fetch or a refresh completes.
 type SectionNotificationsFetchedMsg struct {
 	Notifications []notificationrow.Data
 	TotalCount    int
 	TaskId        string
 }
 
+// UpdateNotificationMsg signals that a notification's state has changed.
+// If IsRemoved is true, the notification should be removed from the list (marked as done).
 type UpdateNotificationMsg struct {
 	Id        string
 	IsRemoved bool
 }
 
+// UpdateNotificationCommentsMsg carries additional notification metadata fetched asynchronously.
+// This includes comment counts, PR/Issue state, draft status, and the actor who triggered the notification.
 type UpdateNotificationCommentsMsg struct {
 	Id               string
 	NewCommentsCount int

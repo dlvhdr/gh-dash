@@ -111,11 +111,13 @@ Title of the notification (bold if unread)
 
 (The 🔖 bookmark icon only appears if the notification is bookmarked)
 
-- **Line 1:** Repository name with issue/PR number, bookmark icon if bookmarked (SecondaryText color for unread, FaintText for read; bookmark icon in WarningText color)
+- **Line 1:** Repository name with issue/PR number, bookmark icon if bookmarked (SecondaryText color; bookmark icon in WarningText color)
 - **Line 2:** Notification title (PrimaryText, bold for unread notifications)
 - **Line 3:** Activity description (FaintText color, generated from reason, type, and actor)
 
 The three lines use distinct colors to create visual hierarchy: line 1 is secondary, line 2 is primary/bold, and line 3 is faint.
+
+**Unread indicator:** A blue dot is displayed below the notification type icon for unread notifications. This is the sole indicator of read/unread status—text is not dimmed for read notifications.
 
 Activity descriptions are generated based on the notification reason:
 - `comment`: "@username commented on this pull request/issue"
@@ -167,6 +169,11 @@ Notification state (read/unread, done) is tracked both:
 - Remotely via GitHub API calls for persistence
 
 The `UpdateNotificationMsg` and `UpdateNotificationReadStateMsg` types propagate state changes through the Bubble Tea update cycle.
+
+**Session persistence for read notifications:** When a notification is marked as read (via `m` key or by viewing it), its ID is tracked in `sessionMarkedRead`. These notifications remain visible in the inbox even during automatic refreshes (e.g., when the terminal regains focus). They are only removed when:
+- The user performs a manual refresh (Refresh key)
+- The user quits and restarts the application
+- The notification is explicitly marked as done
 
 ### Interface Compliance
 
@@ -225,9 +232,18 @@ notifications:
     - query: "default"  # Shows all notifications
 ```
 
+### Smart Filtering
+
+Notifications respect the global `smartFilteringAtLaunch` setting (enabled by default). When enabled and running from within a git repository, notifications are automatically scoped to that repository. The search bar displays `repo:owner/name` to indicate this filtering.
+
+Users can:
+- Press `t` to toggle filtering on/off for the current session
+- Set `smartFilteringAtLaunch: false` in config to disable this behavior globally
+
 ## Limitations
 
 - **Mark as Unread**: GitHub's REST API does not support marking notifications as unread, so this feature is not available. Bookmarks provide a workaround by keeping items visible in the inbox.
 - **Discussion/Release Content**: Only PR and Issue notifications can display detailed content in the sidebar; other types open directly in the browser.
 - **CheckSuite/CI Notifications**: GitHub's API returns `subject.url=null` for CheckSuite notifications, so we cannot link to the specific commit checks page. These notifications open the repository's /actions page instead.
 - **Bookmark Persistence**: Bookmarks are stored locally and are not synced across machines or with GitHub.
+- **Section Configuration**: Unlike PRs and Issues which support multiple user-defined sections with custom filters and titles, notifications currently use a single hardcoded section. User-configurable notification sections may be added in a future release.

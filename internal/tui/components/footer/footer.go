@@ -109,21 +109,49 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) renderViewButton(view config.ViewType) string {
-	if view == config.NotificationsView {
-		if m.ctx.View == view {
-			return m.ctx.Styles.ViewSwitcher.ActiveView.Render("")
+	isActive := m.ctx.View == view
+
+	// Define icons and labels for each view
+	var icon, label string
+	// Define icons - notifications has solid/outline variants
+	solidBell := ""
+	outlineBell := ""
+
+	switch view {
+	case config.NotificationsView:
+		if m.ctx.View == config.NotificationsView {
+			icon = solidBell
+		} else {
+			icon = outlineBell
 		}
-		return m.ctx.Styles.ViewSwitcher.InactiveView.Render("")
-	}
-	v := " PRs"
-	if view == config.IssuesView {
-		v = " Issues"
+		label = ""
+	case config.PRsView:
+		icon = ""
+		label = " PRs"
+	case config.IssuesView:
+		icon = ""
+		label = " Issues"
 	}
 
-	if m.ctx.View == view {
-		return m.ctx.Styles.ViewSwitcher.ActiveView.Render(v)
+	if isActive {
+		// Active: colored icon + prominent background
+		// Use gold for notifications bell, green for others
+		iconColor := m.ctx.Theme.SuccessText
+		if view == config.NotificationsView {
+			iconColor = lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"} // Gold
+		}
+		iconStyle := lipgloss.NewStyle().
+			Foreground(iconColor).
+			Background(m.ctx.Styles.ViewSwitcher.ActiveView.GetBackground())
+		textStyle := m.ctx.Styles.ViewSwitcher.ActiveView
+		if label != "" {
+			return iconStyle.Render(icon) + textStyle.Render(label)
+		}
+		return iconStyle.Render(icon)
 	}
-	return m.ctx.Styles.ViewSwitcher.InactiveView.Render(v)
+
+	// Inactive: faint styling
+	return m.ctx.Styles.ViewSwitcher.InactiveView.Render(icon + label)
 }
 
 func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {

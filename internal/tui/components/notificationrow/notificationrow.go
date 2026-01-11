@@ -31,86 +31,72 @@ func (n *Notification) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(n.Ctx)
 }
 
-// getReadAwareStyle returns a style that is dimmed/faint for read notifications
+// getReadAwareStyle returns the text style for notifications.
+// Read/unread status is indicated by the blue dot, not text color.
 func (n *Notification) getReadAwareStyle() lipgloss.Style {
-	style := n.getTextStyle()
-	if !n.Data.IsUnread() {
-		// Dim read notifications
-		style = style.Foreground(n.Ctx.Theme.FaintText)
-	}
-	return style
+	return n.getTextStyle()
 }
 
 func (n *Notification) renderType() string {
 	style := lipgloss.NewStyle()
-	isRead := !n.Data.IsUnread()
+	isUnread := n.Data.IsUnread()
 
-	// For read notifications, use faint styling for all icons
-	if isRead {
-		style = style.Foreground(n.Ctx.Theme.FaintText)
-	}
-
+	// Icons are always colored - only the blue dot indicates unread status
+	var icon string
 	switch n.Data.GetSubjectType() {
 	case "PullRequest":
 		// Use state-based icons/colors matching prrow.go
 		switch n.Data.SubjectState {
 		case "MERGED":
-			if !isRead {
-				style = style.Foreground(n.Ctx.Styles.Colors.MergedPR)
-			}
-			return style.Render(constants.MergedIcon)
+			style = style.Foreground(n.Ctx.Styles.Colors.MergedPR)
+			icon = constants.MergedIcon
 		case "CLOSED":
-			if !isRead {
-				style = style.Foreground(n.Ctx.Styles.Colors.ClosedPR)
-			}
-			return style.Render(constants.ClosedIcon)
+			style = style.Foreground(n.Ctx.Styles.Colors.ClosedPR)
+			icon = constants.ClosedIcon
 		default: // OPEN or unknown (not yet fetched)
 			if n.Data.IsDraft {
-				return style.Foreground(n.Ctx.Theme.FaintText).Render(constants.DraftIcon)
-			}
-			if !isRead {
+				style = style.Foreground(n.Ctx.Theme.FaintText)
+				icon = constants.DraftIcon
+			} else {
 				style = style.Foreground(n.Ctx.Styles.Colors.OpenPR)
+				icon = constants.OpenIcon
 			}
-			return style.Render(constants.OpenIcon)
 		}
 	case "Issue":
 		// Use state-based icons/colors matching issuerow.go
-		if n.Data.SubjectState == "CLOSED" || isRead {
-			return style.Render("")
+		icon = ""
+		if n.Data.SubjectState == "CLOSED" {
+			style = style.Foreground(n.Ctx.Styles.Colors.ClosedPR)
+		} else {
+			style = style.Foreground(n.Ctx.Styles.Colors.OpenIssue)
 		}
-		return style.Foreground(n.Ctx.Styles.Colors.OpenIssue).Render("")
 	case "Discussion":
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.SecondaryText)
-		}
-		return style.Render("")
+		icon = ""
+		style = style.Foreground(n.Ctx.Theme.SecondaryText)
 	case "Release":
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.SuccessText)
-		}
-		return style.Render("")
+		icon = ""
+		style = style.Foreground(n.Ctx.Theme.SuccessText)
 	case "Commit":
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.SecondaryText)
-		}
-		return style.Render("")
+		icon = ""
+		style = style.Foreground(n.Ctx.Theme.SecondaryText)
 	case "CheckSuite":
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.WarningText)
-		}
-		return style.Render(constants.WorkflowIcon)
+		icon = constants.WorkflowIcon
+		style = style.Foreground(n.Ctx.Theme.WarningText)
 	case "RepositoryVulnerabilityAlert":
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.ErrorText)
-		}
-		return style.Render(constants.SecurityIcon)
+		icon = constants.SecurityIcon
+		style = style.Foreground(n.Ctx.Theme.ErrorText)
 	default:
 		// Generic notification icon for unknown types
-		if !isRead {
-			style = style.Foreground(n.Ctx.Theme.SecondaryText)
-		}
-		return style.Render(constants.NotificationIcon)
+		icon = constants.NotificationIcon
+		style = style.Foreground(n.Ctx.Theme.SecondaryText)
 	}
+
+	// Add blue dot below icon for unread notifications (like GitHub's UI)
+	if isUnread {
+		dotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
+		return style.Render(icon) + "\n" + dotStyle.Render(constants.DotIcon)
+	}
+	return style.Render(icon)
 }
 
 // getStylePrefix extracts ANSI codes from a lipgloss style without the trailing reset.
@@ -132,11 +118,8 @@ func getStylePrefix(s lipgloss.Style) string {
 // Note: Uses raw ANSI codes without resets to preserve parent background colors
 func (n *Notification) renderTitleBlock() string {
 	// Line 1: repo #number (secondary color, no ANSI reset to preserve background)
+	// Read/unread status is indicated by the blue dot, not text color
 	repoStyle := lipgloss.NewStyle().Foreground(n.Ctx.Theme.SecondaryText)
-	if !n.Data.IsUnread() {
-		// Dim for read notifications
-		repoStyle = lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText)
-	}
 	repoPrefix := getStylePrefix(repoStyle)
 	repo := n.Data.GetRepoNameWithOwner()
 	number := n.Data.GetNumber()
