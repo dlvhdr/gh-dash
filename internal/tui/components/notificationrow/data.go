@@ -23,6 +23,7 @@ type Data struct {
 	IsDraft             bool   // Whether PR is a draft
 	Actor               string // Username of the user who triggered the notification
 	ActivityDescription string // Human-readable description of the activity (e.g., "@user commented on this PR")
+	ResolvedUrl         string // Async-resolved URL (e.g., for CheckSuite -> specific workflow run)
 }
 
 func (d Data) GetTitle() string {
@@ -71,10 +72,11 @@ func (d Data) GetUrl() string {
 		return fmt.Sprintf("https://github.com/%s/commits", repo)
 	case "CheckSuite":
 		// GitHub's API returns subject.url=null for CheckSuite notifications.
-		// The notification doesn't include the PR/branch info directly.
-		// To link to the specific check would require additional API calls
-		// to fetch the check run details and find associated PRs.
-		// For now, we link to the repository's actions page.
+		// ResolvedUrl is populated asynchronously with the specific workflow run URL.
+		// Until resolved, we fall back to the repository's actions page.
+		if d.ResolvedUrl != "" {
+			return d.ResolvedUrl
+		}
 		return fmt.Sprintf("https://github.com/%s/actions", repo)
 	default:
 		return fmt.Sprintf("https://github.com/%s", repo)
