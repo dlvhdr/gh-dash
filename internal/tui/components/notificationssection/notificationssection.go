@@ -302,6 +302,18 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 		}
 
+	case UpdateNotificationUrlMsg:
+		// Update the notification with async-resolved URL (e.g., for CheckSuite)
+		log.Debug("UpdateNotificationUrlMsg received", "id", msg.Id, "url", msg.ResolvedUrl)
+		for i := range m.Notifications {
+			if m.Notifications[i].GetId() == msg.Id {
+				m.Notifications[i].ResolvedUrl = msg.ResolvedUrl
+				m.Table.SetRows(m.BuildRows())
+				log.Debug("Updated notification URL", "id", msg.Id, "url", msg.ResolvedUrl)
+				break
+			}
+		}
+
 	case SectionNotificationsFetchedMsg:
 		if m.LastFetchTaskId == msg.TaskId {
 			m.Notifications = msg.Notifications
@@ -610,6 +622,13 @@ type UpdateNotificationCommentsMsg struct {
 	Actor            string // Username who triggered the notification
 }
 
+// UpdateNotificationUrlMsg carries a resolved URL for notifications where the URL
+// cannot be determined synchronously (e.g., CheckSuite notifications).
+type UpdateNotificationUrlMsg struct {
+	Id          string
+	ResolvedUrl string
+}
+
 func (m Model) GetItemSingularForm() string {
 	return "Notification"
 }
@@ -728,8 +747,30 @@ func (m *Model) fetchAllCommentCounts() []tea.Cmd {
 					Actor:            actor,
 				}
 			})
-			// Note: CheckSuite notifications have subject.url=null in GitHub's API,
-			// so we can't fetch commit SHA for a more specific link. Falls back to /actions.
+		case "CheckSuite":
+			// CheckSuite notifications have subject.url=null in GitHub's API.
+			// We fetch recent workflow runs and find the best match by timestamp.
+			id := notifId
+			repo := notif.Notification.Repository.FullName
+			updatedAt := notif.Notification.UpdatedAt
+			title := notif.Notification.Subject.Title
+			cmds = append(cmds, func() tea.Msg {
+				log.Debug("Fetching workflow run for CheckSuite", "id", id, "repo", repo)
+				url, err := data.FetchRecentWorkflowRun(repo, updatedAt, title)
+				if err != nil {
+					log.Error("Failed to fetch workflow run", "id", id, "err", err)
+					return nil
+				}
+				if url == "" {
+					log.Debug("No matching workflow run found", "id", id)
+					return nil
+				}
+				log.Debug("Found workflow run URL", "id", id, "url", url)
+				return UpdateNotificationUrlMsg{
+					Id:          id,
+					ResolvedUrl: url,
+				}
+			})
 		}
 	}
 

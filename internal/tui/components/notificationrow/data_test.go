@@ -251,7 +251,7 @@ func TestGetUrl(t *testing.T) {
 			expected: "https://github.com/owner/repo/commits",
 		},
 		{
-			name: "CheckSuite links to actions page (API doesn't expose commit SHA)",
+			name: "CheckSuite links to actions page when ResolvedUrl not set",
 			data: Data{
 				Notification: data.NotificationData{
 					Subject: data.NotificationSubject{
@@ -264,6 +264,22 @@ func TestGetUrl(t *testing.T) {
 				},
 			},
 			expected: "https://github.com/owner/repo/actions",
+		},
+		{
+			name: "CheckSuite uses ResolvedUrl when available",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "CheckSuite",
+						Url:  "", // GitHub API returns null for CheckSuite subject.url
+					},
+					Repository: data.NotificationRepository{
+						FullName: "owner/repo",
+					},
+				},
+				ResolvedUrl: "https://github.com/owner/repo/actions/runs/12345678",
+			},
+			expected: "https://github.com/owner/repo/actions/runs/12345678",
 		},
 		{
 			name: "unknown type falls back to repo URL",

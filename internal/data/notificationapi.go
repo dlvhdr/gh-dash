@@ -268,6 +268,22 @@ type CommentResponse struct {
 	} `json:"user"`
 }
 
+// WorkflowRun represents a GitHub Actions workflow run
+type WorkflowRun struct {
+	Id         int64     `json:"id"`
+	Name       string    `json:"name"`
+	HtmlUrl    string    `json:"html_url"`
+	HeadBranch string    `json:"head_branch"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Conclusion string    `json:"conclusion"` // success, failure, cancelled, etc.
+}
+
+// WorkflowRunsResponse represents the response from the workflow runs API
+type WorkflowRunsResponse struct {
+	TotalCount   int           `json:"total_count"`
+	WorkflowRuns []WorkflowRun `json:"workflow_runs"`
+}
+
 // FetchCommentAuthor fetches the author of a comment from its API URL
 // apiUrl is like: https://api.github.com/repos/owner/repo/issues/comments/123456
 func FetchCommentAuthor(apiUrl string) (string, error) {
@@ -295,4 +311,71 @@ func FetchCommentAuthor(apiUrl string) (string, error) {
 	}
 
 	return response.User.Login, nil
+}
+
+// FindBestWorkflowRunMatch finds the workflow run closest in time to the notification.
+// Returns nil if no suitable match is found within the time window.
+// Exported for testing.
+func FindBestWorkflowRunMatch(runs []WorkflowRun, notificationUpdatedAt time.Time) *WorkflowRun {
+	if len(runs) == 0 {
+		return nil
+	}
+
+	var bestMatch *WorkflowRun
+	var bestDiff time.Duration = time.Hour * 24 * 365 // Start with a large value
+
+	for i := range runs {
+		run := &runs[i]
+		diff := notificationUpdatedAt.Sub(run.UpdatedAt)
+		if diff < 0 {
+			diff = -diff
+		}
+
+		// Prefer runs that are close in time (within a reasonable window)
+		if diff < bestDiff && diff < time.Hour {
+			bestDiff = diff
+			bestMatch = run
+		}
+	}
+
+	// If no close match, just return the most recent run
+	if bestMatch == nil {
+		bestMatch = &runs[0]
+	}
+
+	return bestMatch
+}
+
+// FetchRecentWorkflowRun fetches recent workflow runs for a repo and finds the best match
+// based on the notification's updated_at timestamp. Returns the HTML URL of the matching run.
+// The title parameter is the notification subject title (e.g., "CI / build (push)")
+// which may help identify the correct workflow run.
+func FetchRecentWorkflowRun(repo string, notificationUpdatedAt time.Time, title string) (string, error) {
+	client, err := getRESTClient()
+	if err != nil {
+		return "", err
+	}
+
+	// Fetch recent workflow runs (limit to 20 for performance)
+	path := fmt.Sprintf("repos/%s/actions/runs?per_page=20", repo)
+	log.Debug("Fetching workflow runs", "repo", repo, "path", path)
+
+	var response WorkflowRunsResponse
+	err = client.Get(path, &response)
+	if err != nil {
+		log.Debug("Failed to fetch workflow runs", "repo", repo, "err", err)
+		return "", err
+	}
+
+	if len(response.WorkflowRuns) == 0 {
+		return "", nil
+	}
+
+	bestMatch := FindBestWorkflowRunMatch(response.WorkflowRuns, notificationUpdatedAt)
+	if bestMatch != nil {
+		log.Debug("Found matching workflow run", "id", bestMatch.Id, "name", bestMatch.Name, "url", bestMatch.HtmlUrl)
+		return bestMatch.HtmlUrl, nil
+	}
+
+	return "", nil
 }

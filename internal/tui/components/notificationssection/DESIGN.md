@@ -240,10 +240,20 @@ Users can:
 - Press `t` to toggle filtering on/off for the current session
 - Set `smartFilteringAtLaunch: false` in config to disable this behavior globally
 
+#### 11. CheckSuite URL Resolution
+
+GitHub's API returns `subject.url=null` for CheckSuite notifications, making it impossible to directly link to the specific workflow run. To work around this:
+
+1. Initially, CheckSuite notifications link to the repository's `/actions` page as a fallback
+2. Asynchronously, we fetch recent workflow runs from `/repos/{owner}/{repo}/actions/runs`
+3. We find the workflow run closest in time to the notification's `updated_at` timestamp
+4. Once resolved, the notification's URL is updated to point to the specific workflow run
+
+This async resolution uses the existing `UpdateNotificationUrlMsg` message type, following the same pattern as async comment count fetching for PRs and Issues.
+
 ## Limitations
 
 - **Mark as Unread**: GitHub's REST API does not support marking notifications as unread, so this feature is not available. Bookmarks provide a workaround by keeping items visible in the inbox.
 - **Discussion/Release Content**: Only PR and Issue notifications can display detailed content in the sidebar; other types open directly in the browser.
-- **CheckSuite/CI Notifications**: GitHub's API returns `subject.url=null` for CheckSuite notifications, so we cannot link to the specific commit checks page. These notifications open the repository's /actions page instead.
 - **Bookmark Persistence**: Bookmarks are stored locally and are not synced across machines or with GitHub.
 - **Section Configuration**: Unlike PRs and Issues which support multiple user-defined sections with custom filters and titles, notifications currently use a single hardcoded section. User-configurable notification sections may be added in a future release.
