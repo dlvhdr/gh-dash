@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	bookmarksFileName   = "bookmarks.json"
-	defaultXDGConfigDir = ".config"
-	dashDir             = "gh-dash"
+	bookmarksFileName  = "bookmarks.json"
+	defaultXDGStateDir = ".local/state"
+	dashDir            = "gh-dash"
 )
 
 // BookmarkStore manages locally stored notification bookmarks
@@ -34,52 +34,54 @@ func GetBookmarkStore() *BookmarkStore {
 			bookmarks: make(map[string]bool),
 		}
 		store.filePath = store.getBookmarksFilePath()
-		store.load()
+		if err := store.load(); err != nil {
+			log.Error("Failed to load bookmarks", "err", err)
+		}
 		bookmarkStore = store
 	})
 	return bookmarkStore
 }
 
 func (s *BookmarkStore) getBookmarksFilePath() string {
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
+	stateDir := os.Getenv("XDG_STATE_HOME")
+	if stateDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			log.Error("Failed to get home directory", "err", err)
 			return ""
 		}
-		configDir = filepath.Join(homeDir, defaultXDGConfigDir)
+		stateDir = filepath.Join(homeDir, defaultXDGStateDir)
 	}
-	return filepath.Join(configDir, dashDir, bookmarksFileName)
+	return filepath.Join(stateDir, dashDir, bookmarksFileName)
 }
 
 // load reads bookmarks from the JSON file
-func (s *BookmarkStore) load() {
+func (s *BookmarkStore) load() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.filePath == "" {
-		return
+		return nil
 	}
 
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Error("Failed to read bookmarks file", "err", err)
+		if os.IsNotExist(err) {
+			return nil // No bookmarks file yet, not an error
 		}
-		return
+		return err
 	}
 
 	var bookmarkList []string
 	if err := json.Unmarshal(data, &bookmarkList); err != nil {
-		log.Error("Failed to parse bookmarks file", "err", err)
-		return
+		return err
 	}
 
 	for _, id := range bookmarkList {
 		s.bookmarks[id] = true
 	}
 	log.Debug("Loaded bookmarks", "count", len(s.bookmarks))
+	return nil
 }
 
 // save writes bookmarks to the JSON file
@@ -125,16 +127,15 @@ func (s *BookmarkStore) IsBookmarked(notificationId string) bool {
 // Returns the new bookmark state
 func (s *BookmarkStore) ToggleBookmark(notificationId string) bool {
 	s.mu.Lock()
-	if s.bookmarks[notificationId] {
+	newState := !s.bookmarks[notificationId]
+	if newState {
+		s.bookmarks[notificationId] = true
+	} else {
 		delete(s.bookmarks, notificationId)
-		s.mu.Unlock()
-		s.save()
-		return false
 	}
-	s.bookmarks[notificationId] = true
 	s.mu.Unlock()
 	s.save()
-	return true
+	return newState
 }
 
 // AddBookmark adds a bookmark for a notification

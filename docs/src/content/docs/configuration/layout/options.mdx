@@ -4,8 +4,9 @@ title: Valid Options
 
 ## Valid Layout Options
 
-Any column can define the [`grow`], [`width`], and [`hidden`] options.
+Any column can define the [`align`], [`grow`], [`width`], and [`hidden`] options.
 
+[`align`]: #column-alignment
 [`hidden`]: #hide-column
 [`grow`]: #grow-column
 [`width`]: #column-width
@@ -42,4 +43,26 @@ font to be monospace, this is a reliable way to ensure a minimum width for reada
 | `hidden` | boolean | false   |
 
 Specify whether the column should be hidden from view. Set this value to `true` to hide the
-column or `true` to show it.
+column or `false` to show it.
+
+## Column Alignment
+
+| Property | Type   | Default |
+| :------- | :----- | :------ |
+| `align`  | string | `left`  |
+
+Specify the horizontal alignment of the column's content. Valid values are:
+
+- `left` — Align content to the left (default)
+- `right` — Align content to the right
+- `center` — Center the content
+
+This is useful for numeric columns like comment counts where right-alignment improves readability.
+
+```yaml
+prs:
+  layout:
+    numComments:
+      width: 5
+      align: right
+```

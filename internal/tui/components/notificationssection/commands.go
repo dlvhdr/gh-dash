@@ -123,9 +123,14 @@ func (m *Model) markAllAsRead() tea.Cmd {
 }
 
 type (
-	RefetchNotificationsMsg  struct{}
+	// RefetchNotificationsMsg signals that notifications should be refetched from the API
+	RefetchNotificationsMsg struct{}
+	// ClearAllNotificationsMsg signals that all notifications should be removed from the local list
+	// This is sent after successfully marking all notifications as done
 	ClearAllNotificationsMsg struct{}
-	MarkAllAsReadMsg         struct{}
+	// MarkAllAsReadMsg signals that all notifications should be updated to read state in the UI
+	// This is sent after successfully calling the mark-all-read API
+	MarkAllAsReadMsg struct{}
 )
 
 func (m *Model) markAsRead() tea.Cmd {

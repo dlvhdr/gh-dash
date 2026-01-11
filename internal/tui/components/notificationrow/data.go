@@ -9,6 +9,13 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
 
+// PR/Issue state constants from GitHub API
+const (
+	StateOpen   = "OPEN"
+	StateClosed = "CLOSED"
+	StateMerged = "MERGED"
+)
+
 type Data struct {
 	Notification        data.NotificationData
 	NewCommentsCount    int    // Number of new comments since last read
@@ -63,8 +70,11 @@ func (d Data) GetUrl() string {
 	case "Commit":
 		return fmt.Sprintf("https://github.com/%s/commits", repo)
 	case "CheckSuite":
-		// GitHub's API returns subject.url=null for CheckSuite notifications,
-		// so we can't link to the specific commit checks page
+		// GitHub's API returns subject.url=null for CheckSuite notifications.
+		// The notification doesn't include the PR/branch info directly.
+		// To link to the specific check would require additional API calls
+		// to fetch the check run details and find associated PRs.
+		// For now, we link to the repository's actions page.
 		return fmt.Sprintf("https://github.com/%s/actions", repo)
 	default:
 		return fmt.Sprintf("https://github.com/%s", repo)
