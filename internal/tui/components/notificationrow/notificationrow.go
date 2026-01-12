@@ -91,12 +91,19 @@ func (n *Notification) renderType() string {
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)
 	}
 
-	// Add blue dot below icon for unread notifications (like GitHub's UI)
+	// Use raw ANSI codes without reset to preserve parent background colors
+	iconPrefix := getStylePrefix(style)
+
+	// Always render 3 lines to match the Title column (repo, title, activity)
+	// This ensures proper background color when row is selected
+	// Line 1: icon
+	// Line 2: blue dot (unread) or empty
+	// Line 3: empty
 	if isUnread {
-		dotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("33"))
-		return style.Render(icon) + "\n" + dotStyle.Render(constants.DotIcon)
+		dotPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(lipgloss.Color("33")))
+		return iconPrefix + icon + "\n" + dotPrefix + constants.DotIcon + "\n"
 	}
-	return style.Render(icon)
+	return iconPrefix + icon + "\n\n"
 }
 
 // getStylePrefix extracts ANSI codes from a lipgloss style without the trailing reset.
@@ -189,17 +196,20 @@ func (n *Notification) getReasonDescription() string {
 }
 
 // renderActivity shows the new comments count with icon
+// Returns 3 lines to match Title column for proper background highlighting
 func (n *Notification) renderActivity() string {
 	if n.Data.NewCommentsCount <= 0 {
-		return ""
+		return "\n\n"
 	}
 	// Use raw ANSI foreground codes without reset to avoid breaking row background
 	// White foreground for count, green foreground for icon
 	white := "\x1b[97m" // Bright white
 	green := "\x1b[32m" // Green
-	return white + fmt.Sprintf("+%d ", n.Data.NewCommentsCount) + green + constants.CommentsIcon
+	return white + fmt.Sprintf("+%d ", n.Data.NewCommentsCount) + green + constants.CommentsIcon + "\n\n"
 }
 
+// renderUpdatedAt returns the time since last update
+// Returns 3 lines to match Title column for proper background highlighting
 func (n *Notification) renderUpdatedAt() string {
 	timeFormat := n.Ctx.Config.Defaults.DateFormat
 
@@ -211,5 +221,7 @@ func (n *Notification) renderUpdatedAt() string {
 		updatedAtOutput = n.Data.GetUpdatedAt().Format(timeFormat)
 	}
 
-	return n.getReadAwareStyle().Render(updatedAtOutput)
+	// Use raw ANSI codes without reset to preserve parent background colors
+	stylePrefix := getStylePrefix(n.getReadAwareStyle())
+	return stylePrefix + updatedAtOutput + "\n\n"
 }

@@ -523,7 +523,6 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	limit := m.Ctx.Config.Defaults.NotificationsLimit
 
 	fetchCmd := func() tea.Msg {
-
 		// Check if we need to include bookmarked items
 		bookmarkStore := data.GetBookmarkStore()
 		bookmarkedIds := bookmarkStore.GetBookmarkedIds()
