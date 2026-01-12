@@ -337,7 +337,7 @@ func FindBestWorkflowRunMatch(runs []WorkflowRun, notificationUpdatedAt time.Tim
 	}
 
 	var bestMatch *WorkflowRun
-	var bestDiff time.Duration = time.Hour * 24 * 365 // Start with a large value
+	bestDiff := time.Hour * 24 * 365 // Start with a large value
 
 	for i := range runs {
 		run := &runs[i]
