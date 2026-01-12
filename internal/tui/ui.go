@@ -798,6 +798,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.notifSubjectIssue = nil
 			m.notifSubjectId = msg.NotificationId
+			keys.SetNotificationSubject(keys.NotificationSubjectPR)
 			// Update sidebar with PR view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.prView.SetSectionId(0)
@@ -833,6 +834,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notifSubjectIssue = &msg.Issue
 			m.notifSubjectPR = nil
 			m.notifSubjectId = msg.NotificationId
+			keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 			// Update sidebar with Issue view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.issueSidebar.SetSectionId(0)
@@ -1229,7 +1231,7 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 		key    string
 		action string
 	}{
-		{"d", "mark as done"},
+		{"D", "mark as done"},
 		{"m", "mark as read"},
 		{"u", "unsubscribe"},
 		{"b", "toggle bookmark"},
@@ -1529,6 +1531,11 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 
 func (m *Model) switchSelectedView() config.ViewType {
 	repoFF := config.IsFeatureEnabled(config.FF_REPO_VIEW)
+
+	// Reset notification subject when leaving notifications view
+	if m.ctx.View == config.NotificationsView {
+		keys.SetNotificationSubject(keys.NotificationSubjectNone)
+	}
 
 	// View cycle: Notifications → PRs → Issues (→ Repo if enabled) → Notifications
 	if repoFF {
