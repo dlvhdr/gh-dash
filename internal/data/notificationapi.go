@@ -96,6 +96,7 @@ func (n NotificationData) GetCreatedAt() time.Time {
 type NotificationsResponse struct {
 	Notifications []NotificationData
 	TotalCount    int
+	PageInfo      PageInfo
 }
 
 func getRESTClient() (*gh.RESTClient, error) {
@@ -116,7 +117,7 @@ const (
 	NotificationStateAll    NotificationReadState = "all"    // Both read and unread
 )
 
-func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState) (NotificationsResponse, error) {
+func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo) (NotificationsResponse, error) {
 	client, err := getRESTClient()
 	if err != nil {
 		return NotificationsResponse{}, err
@@ -132,10 +133,16 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		allParam = "&all=true"
 	}
 
+	// Determine page number from PageInfo (EndCursor stores the current page as string)
+	page := 1
+	if pageInfo != nil && pageInfo.EndCursor != "" {
+		fmt.Sscanf(pageInfo.EndCursor, "%d", &page)
+	}
+
 	if len(repoFilters) == 0 {
 		// No repo filter, fetch all notifications
-		path := fmt.Sprintf("notifications?per_page=%d%s", limit, allParam)
-		log.Debug("Fetching notifications", "limit", limit, "readState", readState)
+		path := fmt.Sprintf("notifications?per_page=%d&page=%d%s", limit, page, allParam)
+		log.Debug("Fetching notifications", "limit", limit, "page", page, "readState", readState)
 		err = client.Get(path, &allNotifications)
 		if err != nil {
 			return NotificationsResponse{}, err
@@ -144,8 +151,8 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		// Fetch notifications for each repo and combine
 		for _, repo := range repoFilters {
 			var repoNotifications []NotificationData
-			path := fmt.Sprintf("repos/%s/notifications?per_page=%d%s", repo, limit, allParam)
-			log.Debug("Fetching notifications for repo", "repo", repo, "limit", limit, "readState", readState)
+			path := fmt.Sprintf("repos/%s/notifications?per_page=%d&page=%d%s", repo, limit, page, allParam)
+			log.Debug("Fetching notifications for repo", "repo", repo, "limit", limit, "page", page, "readState", readState)
 			err = client.Get(path, &repoNotifications)
 			if err != nil {
 				log.Warn("Failed to fetch notifications for repo", "repo", repo, "err", err)
@@ -179,11 +186,19 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		// Keep all, no filtering needed
 	}
 
-	log.Info("Successfully fetched notifications", "count", len(allNotifications), "readState", readState)
+	// Determine if there's a next page (if we got a full page, there might be more)
+	hasNextPage := len(allNotifications) >= limit
+	nextPage := fmt.Sprintf("%d", page+1)
+
+	log.Info("Successfully fetched notifications", "count", len(allNotifications), "page", page, "hasNextPage", hasNextPage, "readState", readState)
 
 	return NotificationsResponse{
 		Notifications: allNotifications,
 		TotalCount:    len(allNotifications),
+		PageInfo: PageInfo{
+			HasNextPage: hasNextPage,
+			EndCursor:   nextPage,
+		},
 	}, nil
 }
 

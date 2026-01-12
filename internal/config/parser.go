@@ -177,6 +177,7 @@ type Defaults struct {
 	PrsLimit               int           `yaml:"prsLimit"`
 	PrApproveComment       string        `yaml:"prApproveComment,omitempty"`
 	IssuesLimit            int           `yaml:"issuesLimit"`
+	NotificationsLimit     int           `yaml:"notificationsLimit"`
 	View                   ViewType      `yaml:"view"`
 	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
 	RefetchIntervalMinutes int           `yaml:"refetchIntervalMinutes,omitempty"`
@@ -336,6 +337,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			PrsLimit:               20,
 			PrApproveComment:       "LGTM",
 			IssuesLimit:            20,
+			NotificationsLimit:     20,
 			View:                   PRsView,
 			RefetchIntervalMinutes: 30,
 			Layout: LayoutConfig{

@@ -316,15 +316,22 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case SectionNotificationsFetchedMsg:
 		if m.LastFetchTaskId == msg.TaskId {
-			m.Notifications = msg.Notifications
-			m.TotalCount = msg.TotalCount
+			if m.PageInfo != nil {
+				// Append to existing notifications (pagination)
+				m.Notifications = append(m.Notifications, msg.Notifications...)
+			} else {
+				// First page, replace
+				m.Notifications = msg.Notifications
+			}
+			m.TotalCount = len(m.Notifications)
+			m.PageInfo = &msg.PageInfo
 			m.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
 			m.UpdateLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
 
-			// Start background fetches for comment counts
-			fetchCmds := m.fetchAllCommentCounts()
+			// Start background fetches for comment counts (only for new notifications)
+			fetchCmds := m.fetchCommentCountsForNotifications(msg.Notifications)
 			cmd = tea.Batch(fetchCmds...)
 		}
 
@@ -465,6 +472,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		return nil
 	}
 
+	// Check if there's a next page (skip if we already know there isn't)
+	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
+		return nil
+	}
+
 	var cmds []tea.Cmd
 
 	// Parse filters from search value (includes repo filter if smartFilteringAtLaunch is enabled)
@@ -504,8 +516,13 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	sessionMarkedRead := m.sessionMarkedRead
 	hasSessionMarkedRead := len(sessionMarkedRead) > 0
 
+	// Capture current page info for pagination
+	pageInfo := m.PageInfo
+
+	// Capture config limit for the closure
+	limit := m.Ctx.Config.Defaults.NotificationsLimit
+
 	fetchCmd := func() tea.Msg {
-		limit := 50 // Default limit for notifications
 
 		// Check if we need to include bookmarked items
 		bookmarkStore := data.GetBookmarkStore()
@@ -519,7 +536,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			readState = data.NotificationStateAll
 		}
 
-		res, err := data.FetchNotifications(limit, filters.RepoFilters, readState)
+		res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, pageInfo)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
@@ -570,6 +587,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Notifications: notifications,
 				TotalCount:    len(notifications),
 				TaskId:        taskId,
+				PageInfo:      res.PageInfo,
 			},
 		}
 	}
@@ -603,6 +621,7 @@ type SectionNotificationsFetchedMsg struct {
 	Notifications []notificationrow.Data
 	TotalCount    int
 	TaskId        string
+	PageInfo      data.PageInfo
 }
 
 // UpdateNotificationMsg signals that a notification's state has changed.
@@ -680,13 +699,13 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.BaseModel.UpdateProgramContext(ctx)
 }
 
-// fetchAllCommentCounts returns commands to fetch comment counts for all notifications
-func (m *Model) fetchAllCommentCounts() []tea.Cmd {
+// fetchCommentCountsForNotifications returns commands to fetch comment counts for the given notifications
+func (m *Model) fetchCommentCountsForNotifications(notifications []notificationrow.Data) []tea.Cmd {
 	var cmds []tea.Cmd
 
-	log.Debug("fetchAllCommentCounts called", "numNotifications", len(m.Notifications))
+	log.Debug("fetchCommentCountsForNotifications called", "numNotifications", len(notifications))
 
-	for _, notif := range m.Notifications {
+	for _, notif := range notifications {
 		// Copy values for closure capture
 		notifId := notif.GetId()
 		subjectType := notif.GetSubjectType()
@@ -774,7 +793,7 @@ func (m *Model) fetchAllCommentCounts() []tea.Cmd {
 		}
 	}
 
-	log.Debug("fetchAllCommentCounts returning", "numCmds", len(cmds))
+	log.Debug("fetchCommentCountsForNotifications returning", "numCmds", len(cmds))
 	return cmds
 }
 

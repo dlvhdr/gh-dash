@@ -19,6 +19,7 @@ defaults:
     width: 80
   prsLimit: 100
   issuesLimit: 100
+  notificationsLimit: 100
   view: prs
   layout:
     prs:

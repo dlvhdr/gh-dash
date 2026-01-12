@@ -232,6 +232,13 @@ notifications:
     - query: "default"  # Shows all notifications
 ```
 
+The initial fetch limit is controlled by `defaults.notificationsLimit` (default: 20, matching PRs and Issues). Additional notifications are fetched automatically as the user scrolls through the list.
+
+```yaml
+defaults:
+  notificationsLimit: 20
+```
+
 ### Smart Filtering
 
 Notifications respect the global `smartFilteringAtLaunch` setting (enabled by default). When enabled and running from within a git repository, notifications are automatically scoped to that repository. The search bar displays `repo:owner/name` to indicate this filtering.
