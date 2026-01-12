@@ -10,6 +10,7 @@ settings on a per-section basis.
 ```yaml
 defaults:
   issuesLimit: 20
+  notificationsLimit: 20
   prApproveComment: LGTM
   preview:
     open: true
@@ -22,7 +23,7 @@ defaults:
 By default, the dashboard is configured to:
 
 - Display the preview pane with a width of 50 columns for all work items.
-- Only fetch 20 PRs and issues at a time for each section.
+- Only fetch 20 PRs, issues, and notifications at a time for each section.
 - Display the PRs view when the dashboard loads.
 - Refetch PRs and issues for each section every 30 minutes.
 - Display dates using relative values.
@@ -107,6 +108,21 @@ This setting defines how many issues the dashboard should fetch for each section
 - You use the [refresh current section] or [refresh all sections] commands.
 
 [fetch interval]: #refetch-interval-in-minutes-refetchintervalminutes
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+
+### Notifications Fetch Limit (`notificationsLimit`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   20    |
+
+This setting defines how many notifications the dashboard should fetch when:
+
+- The dashboard first loads.
+- You navigate to the next notification in a table without another fetched notification to display.
+- You use the [refresh current section] or [refresh all sections] commands.
+
 [refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
 [refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
 

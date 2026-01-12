@@ -64,11 +64,16 @@ func renderEmptyState() string {
 }
 
 func (m *Model) renderComment(comment data.IssueComment, markdownRenderer glamour.TermRenderer) (string, error) {
-	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		m.ctx.Styles.Common.MainTextStyle.Render(comment.Author.Login),
-		" ",
-		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
-	)
+	width := m.getIndentedContentWidth() - 2
+	header := lipgloss.NewStyle().
+		Width(width).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(m.ctx.Theme.FaintBorder).Render(
+		lipgloss.JoinHorizontal(lipgloss.Top,
+			m.ctx.Styles.Common.MainTextStyle.Render(comment.Author.Login),
+			" ",
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+		))
 
 	body := lineCleanupRegex.ReplaceAllString(comment.Body, "")
 	body, err := markdownRenderer.Render(body)

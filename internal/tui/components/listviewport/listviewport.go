@@ -63,6 +63,10 @@ func (m *Model) SetTotalItems(total int) {
 	m.NumTotalItems = total
 }
 
+func (m *Model) SetItemHeight(height int) {
+	m.ListItemHeight = height
+}
+
 func (m *Model) SyncViewPort(content string) {
 	m.viewport.SetContent(content)
 }

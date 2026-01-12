@@ -73,6 +73,11 @@ const (
 
 	UnknownRoleIcon = "󰭙" // \udb82\udf59 nf-md-account_question
 
+	// Notification type icons
+	WorkflowIcon     = "" // \uf423 nf-oct-workflow (for CheckSuite/CI)
+	SecurityIcon     = "󰒃" // \udb80\udc83 nf-md-shield_alert (for security alerts)
+	NotificationIcon = "" // \ueaa2 nf-cod-bell (generic notification fallback)
+
 	Logo = `▜▔▚▐▔▌▚▔▐ ▌
 ▟▁▞▐▔▌▁▚▐▔▌`
 )

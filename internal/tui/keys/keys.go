@@ -10,6 +10,23 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
 
+// NotificationSubjectType indicates what type of content is being viewed in the notifications view
+type NotificationSubjectType int
+
+const (
+	NotificationSubjectNone NotificationSubjectType = iota
+	NotificationSubjectPR
+	NotificationSubjectIssue
+)
+
+// notificationSubject tracks the current notification subject type for help display
+var notificationSubject NotificationSubjectType
+
+// SetNotificationSubject sets the current notification subject type for help display
+func SetNotificationSubject(subjectType NotificationSubjectType) {
+	notificationSubject = subjectType
+}
+
 type KeyMap struct {
 	viewType      config.ViewType
 	Up            key.Binding
@@ -56,6 +73,17 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 	case config.RepoView:
 		additionalKeys = BranchFullHelp()
 		customKeys = append(customKeys, CustomBranchBindings...)
+	case config.NotificationsView:
+		additionalKeys = NotificationFullHelp()
+		// Include PR or Issue keys when viewing that subject type
+		switch notificationSubject {
+		case NotificationSubjectPR:
+			additionalKeys = append(additionalKeys, PRFullHelp()...)
+			customKeys = append(customKeys, CustomPRBindings...)
+		case NotificationSubjectIssue:
+			additionalKeys = append(additionalKeys, IssueFullHelp()...)
+			customKeys = append(customKeys, CustomIssueBindings...)
+		}
 	default:
 		additionalKeys = IssueFullHelp()
 		customKeys = append(customKeys, CustomIssueBindings...)
