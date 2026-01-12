@@ -29,6 +29,7 @@ defaults:
   prsLimit: 5
   prApproveComment: LGTM
   issuesLimit: 5
+  notificationsLimit: 20
   view: prs
   layout:
     prs:

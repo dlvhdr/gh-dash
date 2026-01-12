@@ -26,6 +26,7 @@ defaults:
         hidden: true
   prsLimit: 100
   issuesLimit: 100
+  notificationsLimit: 100
 
 theme:
   colors:
