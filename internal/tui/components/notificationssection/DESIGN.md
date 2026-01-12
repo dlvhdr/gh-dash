@@ -47,7 +47,7 @@ When a notification is selected but not yet viewed, a prompt is displayed in the
 
       Other Actions
 
-            [d]  mark as done
+            [D]  mark as done
             [m]  mark as read
             [u]  unsubscribe
             [b]  toggle bookmark
@@ -208,8 +208,8 @@ The table component was extended to support per-column alignment via an `Align` 
 
 | Key | Action |
 |-----|--------|
-| d | Mark as done (removes from inbox) |
-| D | Mark all as done |
+| D | Mark as done (removes from inbox) |
+| Alt+d | Mark all as done |
 | m | Mark as read |
 | M | Mark all as read |
 | u | Unsubscribe from thread |
@@ -220,6 +220,41 @@ The table component was extended to support per-column alignment via an `Align` 
 | S | Sort by repository |
 | o | Open in browser |
 | Enter | View notification (fetches content, marks as read) |
+
+### PR/Issue Keybindings in Notifications View
+
+When viewing a PR notification in the preview pane, all PR-specific keybindings become available:
+
+| Key | Action |
+|-----|--------|
+| v | Approve PR |
+| a | Assign |
+| A | Unassign |
+| c | Comment |
+| d | View diff |
+| C/Space | Checkout branch |
+| x | Close PR |
+| X | Reopen PR |
+| W | Mark ready for review |
+| m | Merge PR |
+| u | Update from base branch |
+| w | Watch checks |
+| [ | Previous sidebar tab |
+| ] | Next sidebar tab |
+| e | Expand description |
+
+Similarly, when viewing an Issue notification, Issue-specific keybindings are available:
+
+| Key | Action |
+|-----|--------|
+| L | Add/remove labels |
+| a | Assign |
+| A | Unassign |
+| c | Comment |
+| x | Close issue |
+| X | Reopen issue |
+
+The `?` help display dynamically updates to show the applicable keybindings based on what type of notification content is being viewed.
 
 ## Configuration
 

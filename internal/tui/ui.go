@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"reflect"
 	"runtime/debug"
 	"sort"
@@ -542,6 +544,148 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
 
+			// PR keybindings when viewing a PR notification
+			case m.notifSubjectPR != nil && (key.Matches(msg, keys.PRKeys.PrevSidebarTab) ||
+				key.Matches(msg, keys.PRKeys.NextSidebarTab)):
+				var scmds []tea.Cmd
+				var scmd tea.Cmd
+				m.prView, scmd = m.prView.Update(msg)
+				scmds = append(scmds, scmd)
+				m.syncSidebar()
+				return m, tea.Batch(scmds...)
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Approve):
+				m.prView.GoToFirstTab()
+				m.sidebar.IsOpen = true
+				cmd = m.prView.SetIsApproving(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Assign):
+				m.prView.GoToFirstTab()
+				m.sidebar.IsOpen = true
+				cmd = m.prView.SetIsAssigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Unassign):
+				m.prView.GoToFirstTab()
+				m.sidebar.IsOpen = true
+				cmd = m.prView.SetIsUnassigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Comment):
+				m.prView.GoToFirstTab()
+				m.sidebar.IsOpen = true
+				cmd = m.prView.SetIsCommenting(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Diff):
+				cmd = m.diffNotificationPR()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Checkout):
+				cmd, _ = m.checkoutNotificationPR()
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Close):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("close")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Ready):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("ready")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Reopen):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("reopen")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Merge):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("merge")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Update):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("update")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.SummaryViewMore):
+				m.prView.SetSummaryViewMore()
+				m.syncSidebar()
+				return m, nil
+
+			// Issue keybindings when viewing an Issue notification
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Label):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsLabeling(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Assign):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsAssigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Unassign):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsUnassigning(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Comment):
+				m.sidebar.IsOpen = true
+				cmd = m.issueSidebar.SetIsCommenting(true)
+				m.syncMainContentWidth()
+				m.syncSidebar()
+				m.sidebar.ScrollToBottom()
+				return m, cmd
+
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Close):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("close")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Reopen):
+				if currSection != nil {
+					currSection.SetPromptConfirmationAction("reopen")
+					cmd = currSection.SetIsPromptConfirmationShown(true)
+				}
+				return m, cmd
+
+			// Notification-specific keybindings
 			case key.Matches(msg, keys.NotificationKeys.View):
 				// View notification content and mark as read
 				cmds = append(cmds, m.viewNotification())
@@ -654,6 +798,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.notifSubjectIssue = nil
 			m.notifSubjectId = msg.NotificationId
+			keys.SetNotificationSubject(keys.NotificationSubjectPR)
 			// Update sidebar with PR view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.prView.SetSectionId(0)
@@ -689,6 +834,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notifSubjectIssue = &msg.Issue
 			m.notifSubjectPR = nil
 			m.notifSubjectId = msg.NotificationId
+			keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 			// Update sidebar with Issue view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.issueSidebar.SetSectionId(0)
@@ -1085,7 +1231,7 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 		key    string
 		action string
 	}{
-		{"d", "mark as done"},
+		{"D", "mark as done"},
 		{"m", "mark as read"},
 		{"u", "unsubscribe"},
 		{"b", "toggle bookmark"},
@@ -1204,6 +1350,73 @@ func (m *Model) viewNotificationAndOpenBrowser() tea.Cmd {
 	)
 }
 
+// diffNotificationPR opens a diff view for a PR notification
+func (m *Model) diffNotificationPR() tea.Cmd {
+	if m.notifSubjectPR == nil {
+		return nil
+	}
+	prNumber := m.notifSubjectPR.GetNumber()
+	repoName := m.notifSubjectPR.GetRepoNameWithOwner()
+
+	c := exec.Command(
+		"gh",
+		"pr",
+		"diff",
+		fmt.Sprint(prNumber),
+		"-R",
+		repoName,
+	)
+	c.Env = m.ctx.Config.GetFullScreenDiffPagerEnv()
+
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		if err != nil {
+			return constants.ErrMsg{Err: err}
+		}
+		return nil
+	})
+}
+
+// checkoutNotificationPR checks out a PR from a notification
+func (m *Model) checkoutNotificationPR() (tea.Cmd, error) {
+	if m.notifSubjectPR == nil {
+		return nil, errors.New("no PR notification selected")
+	}
+
+	repoName := m.notifSubjectPR.GetRepoNameWithOwner()
+	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
+
+	if !ok {
+		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
+	}
+
+	prNumber := m.notifSubjectPR.GetNumber()
+	taskId := fmt.Sprintf("checkout_%d", prNumber)
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Checking out PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("PR #%d has been checked out at %s", prNumber, repoPath),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		c := exec.Command(
+			"gh",
+			"pr",
+			"checkout",
+			fmt.Sprint(prNumber),
+		)
+		userHomeDir, _ := os.UserHomeDir()
+		if strings.HasPrefix(repoPath, "~") {
+			repoPath = strings.Replace(repoPath, "~", userHomeDir, 1)
+		}
+
+		c.Dir = repoPath
+		err := c.Run()
+		return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
+	}), nil
+}
+
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 	cmds = append(cmds, m.tabs.SetAllLoading()...)
@@ -1318,6 +1531,11 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 
 func (m *Model) switchSelectedView() config.ViewType {
 	repoFF := config.IsFeatureEnabled(config.FF_REPO_VIEW)
+
+	// Reset notification subject when leaving notifications view
+	if m.ctx.View == config.NotificationsView {
+		keys.SetNotificationSubject(keys.NotificationSubjectNone)
+	}
 
 	// View cycle: Notifications → PRs → Issues (→ Repo if enabled) → Notifications
 	if repoFF {

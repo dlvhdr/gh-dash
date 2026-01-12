@@ -24,12 +24,12 @@ var NotificationKeys = NotificationKeyMap{
 		key.WithHelp("enter", "view notification"),
 	),
 	MarkAsDone: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "mark as done"),
+		key.WithKeys("D"),
+		key.WithHelp("D", "mark as done"),
 	),
 	MarkAllAsDone: key.NewBinding(
-		key.WithKeys("D"),
-		key.WithHelp("D", "mark all as done"),
+		key.WithKeys("alt+d"),
+		key.WithHelp("Alt+d", "mark all as done"),
 	),
 	MarkAsRead: key.NewBinding(
 		key.WithKeys("m"),
