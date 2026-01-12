@@ -131,6 +131,134 @@ func TestParseNotificationFilters(t *testing.T) {
 	}
 }
 
+func TestParseReasonFilters(t *testing.T) {
+	tests := []struct {
+		name     string
+		search   string
+		expected []string
+	}{
+		{
+			name:     "no reason filter",
+			search:   "is:unread",
+			expected: []string{},
+		},
+		{
+			name:     "single reason filter",
+			search:   "reason:author",
+			expected: []string{data.ReasonAuthor},
+		},
+		{
+			name:     "multiple reason filters",
+			search:   "reason:author reason:mention",
+			expected: []string{data.ReasonAuthor, data.ReasonMention},
+		},
+		{
+			name:   "reason:participating expands to multiple reasons",
+			search: "reason:participating",
+			expected: []string{
+				data.ReasonAuthor,
+				data.ReasonComment,
+				data.ReasonMention,
+				data.ReasonReviewRequested,
+				data.ReasonAssign,
+				data.ReasonStateChange,
+			},
+		},
+		{
+			name:     "reason:review-requested normalizes to review_requested",
+			search:   "reason:review-requested",
+			expected: []string{data.ReasonReviewRequested},
+		},
+		{
+			name:     "reason:team-mention normalizes to team_mention",
+			search:   "reason:team-mention",
+			expected: []string{data.ReasonTeamMention},
+		},
+		{
+			name:     "reason:ci-activity normalizes to ci_activity",
+			search:   "reason:ci-activity",
+			expected: []string{data.ReasonCIActivity},
+		},
+		{
+			name:     "reason:security-alert normalizes to security_alert",
+			search:   "reason:security-alert",
+			expected: []string{data.ReasonSecurityAlert},
+		},
+		{
+			name:     "reason:state-change normalizes to state_change",
+			search:   "reason:state-change",
+			expected: []string{data.ReasonStateChange},
+		},
+		{
+			name:     "reason filter mixed with other text",
+			search:   "is:unread reason:author some text",
+			expected: []string{data.ReasonAuthor},
+		},
+		{
+			name:     "direct reason values pass through",
+			search:   "reason:subscribed reason:comment",
+			expected: []string{data.ReasonSubscribed, data.ReasonComment},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseReasonFilters(tt.search)
+
+			if len(result) != len(tt.expected) {
+				t.Errorf("parseReasonFilters(%q) returned %d items, want %d", tt.search, len(result), len(tt.expected))
+				t.Errorf("got: %v", result)
+				t.Errorf("want: %v", tt.expected)
+				return
+			}
+
+			for i, want := range tt.expected {
+				if result[i] != want {
+					t.Errorf("parseReasonFilters(%q)[%d] = %q, want %q", tt.search, i, result[i], want)
+				}
+			}
+		})
+	}
+}
+
+func TestParseNotificationFiltersWithReasons(t *testing.T) {
+	tests := []struct {
+		name            string
+		search          string
+		wantReasonCount int
+	}{
+		{
+			name:            "no reason filter",
+			search:          "",
+			wantReasonCount: 0,
+		},
+		{
+			name:            "single reason filter",
+			search:          "reason:author",
+			wantReasonCount: 1,
+		},
+		{
+			name:            "reason:participating expands to 6 reasons",
+			search:          "reason:participating",
+			wantReasonCount: 6,
+		},
+		{
+			name:            "combined with other filters",
+			search:          "is:unread repo:owner/repo reason:mention",
+			wantReasonCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filters := parseNotificationFilters(tt.search)
+			if len(filters.ReasonFilters) != tt.wantReasonCount {
+				t.Errorf("ReasonFilters count = %d, want %d", len(filters.ReasonFilters), tt.wantReasonCount)
+			}
+		})
+	}
+}
+
 func TestParseRepoFilters(t *testing.T) {
 	tests := []struct {
 		name     string

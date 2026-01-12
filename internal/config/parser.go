@@ -99,6 +99,12 @@ type IssuesSectionConfig struct {
 	Layout  IssuesLayoutConfig `yaml:"layout,omitempty"`
 }
 
+type NotificationsSectionConfig struct {
+	Title   string
+	Filters string
+	Limit   *int `yaml:"limit,omitempty"`
+}
+
 type PreviewConfig struct {
 	Open  bool
 	Width int
@@ -304,17 +310,18 @@ type ThemeConfig struct {
 }
 
 type Config struct {
-	PRSections             []PrsSectionConfig    `yaml:"prSections"`
-	IssuesSections         []IssuesSectionConfig `yaml:"issuesSections"`
-	Repo                   RepoConfig            `yaml:"repo,omitempty"`
-	Defaults               Defaults              `yaml:"defaults"`
-	Keybindings            Keybindings           `yaml:"keybindings"`
-	RepoPaths              map[string]string     `yaml:"repoPaths"`
-	Theme                  *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
-	Pager                  Pager                 `yaml:"pager"`
-	ConfirmQuit            bool                  `yaml:"confirmQuit"`
-	ShowAuthorIcons        bool                  `yaml:"showAuthorIcons,omitempty"`
-	SmartFilteringAtLaunch bool                  `yaml:"smartFilteringAtLaunch" default:"true"`
+	PRSections             []PrsSectionConfig           `yaml:"prSections"`
+	IssuesSections         []IssuesSectionConfig        `yaml:"issuesSections"`
+	NotificationsSections  []NotificationsSectionConfig `yaml:"notificationsSections"`
+	Repo                   RepoConfig                   `yaml:"repo,omitempty"`
+	Defaults               Defaults                     `yaml:"defaults"`
+	Keybindings            Keybindings                  `yaml:"keybindings"`
+	RepoPaths              map[string]string            `yaml:"repoPaths"`
+	Theme                  *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
+	Pager                  Pager                        `yaml:"pager"`
+	ConfirmQuit            bool                         `yaml:"confirmQuit"`
+	ShowAuthorIcons        bool                         `yaml:"showAuthorIcons,omitempty"`
+	SmartFilteringAtLaunch bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
 }
 
 type configError struct {
@@ -422,6 +429,40 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			{
 				Title:   "Involved",
 				Filters: "is:open involves:@me -author:@me",
+			},
+		},
+		NotificationsSections: []NotificationsSectionConfig{
+			{
+				Title:   "All",
+				Filters: "",
+			},
+			{
+				Title:   "Created",
+				Filters: "reason:author",
+			},
+			{
+				Title:   "Participating",
+				Filters: "reason:participating",
+			},
+			{
+				Title:   "Mentioned",
+				Filters: "reason:mention",
+			},
+			{
+				Title:   "Review Requested",
+				Filters: "reason:review-requested",
+			},
+			{
+				Title:   "Assigned",
+				Filters: "reason:assign",
+			},
+			{
+				Title:   "Subscribed",
+				Filters: "reason:subscribed",
+			},
+			{
+				Title:   "Team Mentioned",
+				Filters: "reason:team-mention",
 			},
 		},
 		Keybindings: Keybindings{
@@ -594,6 +635,7 @@ func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath strin
 		dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
 		dest["prSections"] = overridesCopy["prSections"]
 		dest["issuesSections"] = overridesCopy["issuesSections"]
+		dest["notificationsSections"] = overridesCopy["notificationsSections"]
 
 		return nil
 	})); err != nil {

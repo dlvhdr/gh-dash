@@ -57,7 +57,7 @@ type Model struct {
 	repo             section.Section
 	prs              []section.Section
 	issues           []section.Section
-	notifications    section.Section
+	notifications    []section.Section
 	tabs             tabs.Model
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
@@ -817,13 +817,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prView.GoToFirstTab()
 				m.sidebar.SetContent(m.prView.View())
 			}
-			// Update notification read state in the list
-			if m.notifications != nil {
-				readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
-					Id:     msg.NotificationId,
-					Unread: false,
+			// Update notification read state in all notification sections
+			readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
+				Id:     msg.NotificationId,
+				Unread: false,
+			}
+			for i := range m.notifications {
+				if m.notifications[i] != nil {
+					m.notifications[i], _ = m.notifications[i].Update(readStateMsg)
 				}
-				m.notifications, _ = m.notifications.Update(readStateMsg)
 			}
 		} else {
 			log.Error("failed fetching notification PR", "err", msg.Err)
@@ -845,30 +847,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.LatestCommentUrl != "" {
 				m.sidebar.ScrollToBottom()
 			}
-			// Update notification read state in the list
-			if m.notifications != nil {
-				readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
-					Id:     msg.NotificationId,
-					Unread: false,
+			// Update notification read state in all notification sections
+			readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
+				Id:     msg.NotificationId,
+				Unread: false,
+			}
+			for i := range m.notifications {
+				if m.notifications[i] != nil {
+					m.notifications[i], _ = m.notifications[i].Update(readStateMsg)
 				}
-				m.notifications, _ = m.notifications.Update(readStateMsg)
 			}
 		} else {
 			log.Error("failed fetching notification Issue", "err", msg.Err)
 		}
 
 	case notificationssection.UpdateNotificationReadStateMsg:
-		// Route to notifications section to update read state
-		if m.notifications != nil {
-			m.notifications, _ = m.notifications.Update(msg)
+		// Route to all notification sections to update read state
+		for i := range m.notifications {
+			if m.notifications[i] != nil {
+				m.notifications[i], _ = m.notifications[i].Update(msg)
+			}
 		}
 
 	case notificationssection.UpdateNotificationCommentsMsg:
-		// Route to notifications section
-		if m.notifications != nil {
-			var notifCmd tea.Cmd
-			m.notifications, notifCmd = m.notifications.Update(msg)
-			cmds = append(cmds, notifCmd)
+		// Route to all notification sections
+		for i := range m.notifications {
+			if m.notifications[i] != nil {
+				var notifCmd tea.Cmd
+				m.notifications[i], notifCmd = m.notifications[i].Update(msg)
+				cmds = append(cmds, notifCmd)
+			}
 		}
 
 	case spinner.TickMsg:
@@ -1075,8 +1083,8 @@ func (m *Model) updateSection(id int, sType string, msg tea.Msg) (cmd tea.Cmd) {
 		m.repo, cmd = m.repo.Update(msg)
 
 	case notificationssection.SectionType:
-		if m.notifications != nil {
-			m.notifications, cmd = m.notifications.Update(msg)
+		if id < len(m.notifications) && m.notifications[id] != nil {
+			m.notifications[id], cmd = m.notifications[id].Update(msg)
 		}
 
 	case prssection.SectionType:
@@ -1429,10 +1437,10 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 		m.repo = &s
 		return nil, tea.Batch(cmds...)
 	case config.NotificationsView:
-		s, notifCmd := notificationssection.FetchNotifications(m.ctx)
+		s, notifCmd := notificationssection.FetchAllSections(m.ctx, m.notifications)
 		cmds = append(cmds, notifCmd)
 		m.notifications = s
-		return []section.Section{s}, tea.Batch(cmds...)
+		return s, tea.Batch(cmds...)
 	case config.PRsView:
 		s, prcmds := prssection.FetchAllSections(m.ctx, m.prs)
 		cmds = append(cmds, prcmds)
@@ -1452,10 +1460,10 @@ func (m *Model) getCurrentViewSections() []section.Section {
 		}
 		return []section.Section{m.repo}
 	case config.NotificationsView:
-		if m.notifications == nil {
+		if len(m.notifications) == 0 {
 			return []section.Section{}
 		}
-		return []section.Section{m.notifications}
+		return m.notifications
 	case config.PRsView:
 		return m.prs
 	default:
@@ -1468,7 +1476,7 @@ func (m *Model) getCurrentViewDefaultSection() int {
 	case config.RepoView:
 		return 0
 	case config.NotificationsView:
-		return 0 // Single notification section, no search section
+		return 1 // First notification section after search section
 	case config.PRsView:
 		return 1
 	default:
@@ -1481,12 +1489,31 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		return
 	}
 
-	// Notifications view has a single section, no search
+	// Handle notifications view with search section like PRs/Issues
 	if m.ctx.View == config.NotificationsView {
-		if len(newSections) > 0 {
-			m.notifications = newSections[0]
+		missingSearchSection := len(newSections) == 0 || (len(newSections) > 0 && newSections[0].GetId() != 0)
+		s := make([]section.Section, 0)
+		if missingSearchSection {
+			// Check if we have an existing search section to preserve
+			if len(m.notifications) > 0 && m.notifications[0] != nil && m.notifications[0].GetId() == 0 {
+				// Preserve existing search section with its filter state
+				s = append(s, m.notifications[0])
+			} else {
+				// Create new search section only if none exists
+				search := notificationssection.NewModel(
+					0,
+					m.ctx,
+					config.NotificationsSectionConfig{
+						Title:   "",
+						Filters: "archived:false",
+					},
+					time.Now(),
+				)
+				s = append(s, &search)
+			}
 		}
-		m.tabs.SetSections(newSections)
+		m.notifications = append(s, newSections...)
+		m.tabs.SetSections(m.notifications)
 		return
 	}
 

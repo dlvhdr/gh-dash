@@ -258,14 +258,61 @@ The `?` help display dynamically updates to show the applicable keybindings base
 
 ## Configuration
 
-Notifications are enabled via `config.yml`:
+### Search Section
+
+Like PRs and Issues, the Notifications view includes a search section (indicated by a magnifying glass icon 🔍) as the first tab. This serves as a scratchpad for one-off searches without modifying your configured sections.
+
+- Default filter: `archived:false`
+- Respects `smartFilteringAtLaunch`: when enabled and running from a git repository, the search automatically scopes to that repo
+- Use the `/` key to focus the search bar and enter custom queries
+- Supports all notification filters: `is:unread`, `is:read`, `repo:owner/name`, `reason:*`
+
+### Notification Sections
+
+Notifications support multiple configurable sections, similar to PRs and Issues. Each section appears as a tab and filters notifications by reason:
 
 ```yaml
-notifications:
-  enabled: true
-  filters:
-    - query: "default"  # Shows all notifications
+notificationsSections:
+  - title: All
+    filters: ""
+  - title: Created
+    filters: "reason:author"
+  - title: Participating
+    filters: "reason:participating"
+  - title: Mentioned
+    filters: "reason:mention"
+  - title: Review Requested
+    filters: "reason:review-requested"
+  - title: Assigned
+    filters: "reason:assign"
+  - title: Subscribed
+    filters: "reason:subscribed"
+  - title: Team Mentioned
+    filters: "reason:team-mention"
 ```
+
+These are the default sections. Users can customize by defining their own `notificationsSections` in `config.yml`.
+
+#### Reason Filters
+
+The `reason:` filter matches GitHub's notification reason field:
+
+| Filter | Description |
+|--------|-------------|
+| `reason:author` | Activity on threads you created |
+| `reason:comment` | Someone commented on a thread you're subscribed to |
+| `reason:mention` | You were @mentioned |
+| `reason:review-requested` | Your review was requested on a PR |
+| `reason:assign` | You were assigned |
+| `reason:subscribed` | Activity on threads you're watching |
+| `reason:team-mention` | Your team was @mentioned |
+| `reason:state-change` | Thread state changed (merged, closed, etc.) |
+| `reason:ci-activity` | CI workflow activity |
+| `reason:participating` | Meta-filter: expands to author, comment, mention, review-requested, assign, state-change |
+
+Reason filters are applied client-side after fetching from GitHub's API.
+
+### Fetch Limit
 
 The initial fetch limit is controlled by `defaults.notificationsLimit` (default: 20, matching PRs and Issues). Additional notifications are fetched automatically as the user scrolls through the list.
 
@@ -298,4 +345,4 @@ This async resolution uses the existing `UpdateNotificationUrlMsg` message type,
 - **Mark as Unread**: GitHub's REST API does not support marking notifications as unread, so this feature is not available. Bookmarks provide a workaround by keeping items visible in the inbox.
 - **Discussion/Release Content**: Only PR and Issue notifications can display detailed content in the sidebar; other types open directly in the browser.
 - **Bookmark Persistence**: Bookmarks are stored locally and are not synced across machines or with GitHub.
-- **Section Configuration**: Unlike PRs and Issues which support multiple user-defined sections with custom filters and titles, notifications currently use a single hardcoded section. User-configurable notification sections may be added in a future release.
+- **Server-Side Reason Filtering**: GitHub's notification API does not support filtering by reason on the server side. Reason filters are applied client-side after fetching notifications, which means all notifications are fetched before filtering.

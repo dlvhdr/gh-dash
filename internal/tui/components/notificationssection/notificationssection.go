@@ -30,6 +30,9 @@ var repoFilterRegex = regexp.MustCompile(`repo:([^\s]+)`)
 // stateFilterRegex matches "is:unread", "is:read", "is:done", "is:all" patterns
 var stateFilterRegex = regexp.MustCompile(`is:(unread|read|done|all)`)
 
+// reasonFilterRegex matches "reason:value" patterns in search strings
+var reasonFilterRegex = regexp.MustCompile(`reason:([^\s]+)`)
+
 // parseRepoFilters extracts repo:owner/name patterns from a search string
 func parseRepoFilters(search string) []string {
 	matches := repoFilterRegex.FindAllStringSubmatch(search, -1)
@@ -45,16 +48,58 @@ func parseRepoFilters(search string) []string {
 // NotificationFilters holds parsed notification filters
 type NotificationFilters struct {
 	RepoFilters       []string
+	ReasonFilters     []string // Notification reasons to filter by (e.g., "author", "mention")
 	ReadState         data.NotificationReadState
 	IsDone            bool // If true, user asked for is:done which is not retrievable
 	ExplicitUnread    bool // If true, user explicitly typed "is:unread" (excludes bookmarked+read)
 	IncludeBookmarked bool // If true, include bookmarked items even if read (default view)
 }
 
+// parseReasonFilters extracts reason:value patterns from a search string
+// Handles "reason:participating" as a meta-filter and normalizes hyphenated names
+func parseReasonFilters(search string) []string {
+	matches := reasonFilterRegex.FindAllStringSubmatch(search, -1)
+	reasons := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if len(match) > 1 {
+			reason := match[1]
+			// Expand "participating" meta-filter to multiple reasons
+			if reason == "participating" {
+				reasons = append(reasons,
+					data.ReasonAuthor,
+					data.ReasonComment,
+					data.ReasonMention,
+					data.ReasonReviewRequested,
+					data.ReasonAssign,
+					data.ReasonStateChange,
+				)
+			} else {
+				// Normalize hyphenated names to match GitHub API values
+				switch reason {
+				case "review-requested":
+					reasons = append(reasons, data.ReasonReviewRequested)
+				case "team-mention":
+					reasons = append(reasons, data.ReasonTeamMention)
+				case "ci-activity":
+					reasons = append(reasons, data.ReasonCIActivity)
+				case "security-alert":
+					reasons = append(reasons, data.ReasonSecurityAlert)
+				case "state-change":
+					reasons = append(reasons, data.ReasonStateChange)
+				default:
+					reasons = append(reasons, reason)
+				}
+			}
+		}
+	}
+	return reasons
+}
+
 // parseNotificationFilters extracts all notification filters from search string
 func parseNotificationFilters(search string) NotificationFilters {
 	filters := NotificationFilters{
 		RepoFilters:       parseRepoFilters(search),
+		ReasonFilters:     parseReasonFilters(search),
 		ReadState:         data.NotificationStateUnread, // Default to unread
 		IsDone:            false,
 		ExplicitUnread:    false,
@@ -121,19 +166,17 @@ type Model struct {
 func NewModel(
 	id int,
 	ctx *context.ProgramContext,
+	cfg config.NotificationsSectionConfig,
 	lastUpdated time.Time,
 ) Model {
-	cfg := config.SectionConfig{
-		Title:   "  | Notifications",
-		Filters: "",
-	}
+	sectionCfg := cfg.ToSectionConfig()
 
 	m := Model{}
 	m.BaseModel = section.NewModel(
 		ctx,
 		section.NewSectionOptions{
 			Id:          id,
-			Config:      cfg,
+			Config:      sectionCfg,
 			Type:        SectionType,
 			Columns:     GetSectionColumns(ctx),
 			Singular:    m.GetItemSingularForm(),
@@ -522,6 +565,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	// Capture config limit for the closure
 	limit := m.Ctx.Config.Defaults.NotificationsLimit
 
+	// Capture reason filters for the closure
+	reasonFilters := filters.ReasonFilters
+
 	fetchCmd := func() tea.Msg {
 		// Check if we need to include bookmarked items
 		bookmarkStore := data.GetBookmarkStore()
@@ -569,6 +615,18 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				}
 			}
 
+			// Apply reason filter if specified
+			if include && len(reasonFilters) > 0 {
+				matchesReason := false
+				for _, reason := range reasonFilters {
+					if n.Reason == reason {
+						matchesReason = true
+						break
+					}
+				}
+				include = matchesReason
+			}
+
 			if include {
 				notifications = append(notifications, notificationrow.Data{
 					Notification: n,
@@ -606,12 +664,42 @@ func (m *Model) ResetRows() {
 	m.BaseModel.ResetRows()
 }
 
-func FetchNotifications(
+// FetchAllSections creates and fetches all notification sections based on config.
+// Returns sections and a batch command to fetch all data.
+func FetchAllSections(
 	ctx *context.ProgramContext,
-) (section.Section, tea.Cmd) {
-	sectionModel := NewModel(1, ctx, time.Now())
-	fetchCmd := tea.Batch(sectionModel.FetchNextPageSectionRows()...)
-	return &sectionModel, fetchCmd
+	existing []section.Section,
+) (sections []section.Section, fetchAllCmd tea.Cmd) {
+	sectionConfigs := ctx.Config.NotificationsSections
+	fetchCmds := make([]tea.Cmd, 0, len(sectionConfigs))
+	sections = make([]section.Section, 0, len(sectionConfigs))
+
+	for i, sectionConfig := range sectionConfigs {
+		sectionModel := NewModel(
+			i+1, // ID 0 is reserved for search section
+			ctx,
+			sectionConfig,
+			time.Now(),
+		)
+
+		// Preserve existing data and filter state if refreshing
+		if len(existing) > i+1 && existing[i+1] != nil {
+			if oldSection, ok := existing[i+1].(*Model); ok {
+				sectionModel.Notifications = oldSection.Notifications
+				sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
+				sectionModel.sessionMarkedRead = oldSection.sessionMarkedRead
+				// Preserve user's filter state - don't reset on refresh
+				sectionModel.IsFilteredByCurrentRemote = oldSection.IsFilteredByCurrentRemote
+				sectionModel.SearchValue = oldSection.SearchValue
+				sectionModel.SearchBar.SetValue(oldSection.SearchValue)
+			}
+		}
+
+		sections = append(sections, &sectionModel)
+		fetchCmds = append(fetchCmds, sectionModel.FetchNextPageSectionRows()...)
+	}
+
+	return sections, tea.Batch(fetchCmds...)
 }
 
 // SectionNotificationsFetchedMsg contains the result of fetching notifications from the GitHub API.

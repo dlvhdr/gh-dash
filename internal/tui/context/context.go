@@ -59,10 +59,9 @@ func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 			Type:    &t,
 		}.ToSectionConfig())
 	case config.NotificationsView:
-		configs = append(configs, config.SectionConfig{
-			Title:   "Notifications",
-			Filters: "",
-		})
+		for _, cfg := range ctx.Config.NotificationsSections {
+			configs = append(configs, cfg.ToSectionConfig())
+		}
 	case config.PRsView:
 		for _, cfg := range ctx.Config.PRSections {
 			configs = append(configs, cfg.ToSectionConfig())

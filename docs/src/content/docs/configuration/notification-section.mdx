@@ -1,0 +1,135 @@
+---
+title: Notification Sections
+---
+
+# Notification Section Options (`notificationsSections`)
+
+Defines sections in the dashboard's Notifications view.
+
+- Every section must define a [`title`] and [`filters`].
+- When you define [`limit`] for a section, that value overrides the
+  [`defaults.notificationsLimit`] setting.
+
+[`title`]: #notification-title-title
+[`filters`]: #notification-filters-filters
+[`limit`]: #notification-fetch-limit-limit
+[`defaults.notificationsLimit`]: /configuration/defaults/#notifications-fetch-limit-notificationslimit
+
+## Search Section
+
+The Notifications view includes a search section (indicated by a magnifying glass icon) as the first tab. This serves as a scratchpad for one-off searches without modifying your configured sections.
+
+- Default filter: `archived:false`
+- Respects `smartFilteringAtLaunch`: when enabled and running from a git repository, the search automatically scopes to that repo
+- Use the `/` key to focus the search bar and enter custom queries
+
+## Default Sections
+
+By default, the dashboard includes these notification sections:
+
+```yaml
+notificationsSections:
+  - title: All
+    filters: ""
+  - title: Created
+    filters: "reason:author"
+  - title: Participating
+    filters: "reason:participating"
+  - title: Mentioned
+    filters: "reason:mention"
+  - title: Review Requested
+    filters: "reason:review-requested"
+  - title: Assigned
+    filters: "reason:assign"
+  - title: Subscribed
+    filters: "reason:subscribed"
+  - title: Team Mentioned
+    filters: "reason:team-mention"
+```
+
+You can customize these by defining your own `notificationsSections` in your config file.
+
+## Notification Title (`title`)
+
+This setting defines the section's name. The dashboard displays this value in the tabs for
+the Notifications view.
+
+## Notification Filters (`filters`)
+
+This setting defines the filters for notifications in the section's table. Notification filters differ from PR and Issue filters because they use client-side filtering.
+
+### Available Filters
+
+#### Read State Filters
+
+| Filter | Description |
+|--------|-------------|
+| `is:unread` | Show only unread notifications |
+| `is:read` | Show only read notifications |
+| `is:all` | Show both read and unread notifications |
+| `is:done` | Show archived/done notifications |
+
+#### Reason Filters
+
+| Filter | Description |
+|--------|-------------|
+| `reason:author` | Activity on threads you created |
+| `reason:comment` | Someone commented on a thread you're subscribed to |
+| `reason:mention` | You were @mentioned |
+| `reason:review-requested` | Your review was requested on a PR |
+| `reason:assign` | You were assigned |
+| `reason:subscribed` | Activity on threads you're watching |
+| `reason:team-mention` | Your team was @mentioned |
+| `reason:state-change` | Thread state changed (merged, closed, etc.) |
+| `reason:ci-activity` | CI workflow activity |
+| `reason:participating` | Meta-filter that expands to: author, comment, mention, review-requested, assign, state-change |
+
+#### Repository Filters
+
+| Filter | Description |
+|--------|-------------|
+| `repo:owner/name` | Show notifications only from the specified repository |
+
+### Filter Examples
+
+```yaml
+# Show only notifications where you were mentioned
+- title: Mentioned
+  filters: "reason:mention"
+
+# Show unread notifications from a specific repo
+- title: My Project
+  filters: "is:unread repo:myorg/myproject"
+
+# Show notifications where you're actively participating
+- title: Participating
+  filters: "reason:participating"
+
+# Combine multiple reason filters
+- title: Review & Mentions
+  filters: "reason:review-requested reason:mention"
+```
+
+### Filter Behavior
+
+- **Default behavior**: With no filters or empty filters, the section shows unread notifications plus any bookmarked notifications
+- **Explicit `is:unread`**: Shows only unread notifications, excluding bookmarked read notifications
+- **Reason filters**: Applied client-side after fetching from GitHub's API
+
+## Notification Fetch Limit (`limit`)
+
+| Type    | Minimum | Default |
+| :------ | :-----: | :-----: |
+| Integer |    1    |   20    |
+
+This setting defines how many notifications the dashboard should fetch for the section when:
+
+- The dashboard first loads.
+- You navigate to the next notification in a table without another fetched notification to display.
+- You use the [refresh current section] or [refresh all sections] commands.
+
+This setting overrides the [`defaults.notificationsLimit`] setting.
+
+[refresh current section]: /getting-started/keybindings/global/#r---refresh-current-section
+[refresh all sections]: /getting-started/keybindings/global/#r---refresh-all-sections
+[`defaults.notificationsLimit`]: /configuration/defaults/#notifications-fetch-limit-notificationslimit

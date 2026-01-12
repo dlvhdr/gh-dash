@@ -77,6 +77,7 @@ const (
 	WorkflowIcon     = "" // \uf423 nf-oct-workflow (for CheckSuite/CI)
 	SecurityIcon     = "󰒃" // \udb80\udc83 nf-md-shield_alert (for security alerts)
 	NotificationIcon = "" // \ueaa2 nf-cod-bell (generic notification fallback)
+	SearchIcon       = "" // \uf002 nf-fa-search
 
 	Logo = `▜▔▚▐▔▌▚▔▐ ▌
 ▟▁▞▐▔▌▁▚▐▔▌`
