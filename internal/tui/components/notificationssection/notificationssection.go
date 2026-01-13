@@ -585,138 +585,163 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		// Bookmarked and session-marked-read items will be fetched separately by thread ID
 		readState := filters.ReadState
 
-		res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, pageInfo)
-		if err != nil {
-			return constants.TaskFinishedMsg{
-				SectionId:   m.Id,
-				SectionType: m.Type,
-				TaskId:      taskId,
-				Err:         err,
-			}
-		}
-
-		// Build a set of IDs we fetched from the API
-		fetchedIds := make(map[string]bool, len(res.Notifications))
-		for _, n := range res.Notifications {
-			fetchedIds[n.Id] = true
-		}
-
-		// On first page, fetch any bookmarked/session-marked-read notifications that are missing
-		// (they may have aged out of the default notifications list or been marked as read)
-		if pageInfo == nil {
-			// Fetch missing bookmarked notifications
-			if filters.IncludeBookmarked && hasBookmarks {
-				for _, bookmarkId := range bookmarkedIds {
-					if !fetchedIds[bookmarkId] {
-						notification, err := data.FetchNotificationByThreadId(bookmarkId)
-						if err != nil {
-							log.Debug("Failed to fetch bookmarked notification", "id", bookmarkId, "err", err)
-							continue
-						}
-						if notification == nil {
-							continue
-						}
-						// Apply repo filter if set
-						if len(filters.RepoFilters) > 0 {
-							matchesRepo := false
-							for _, repo := range filters.RepoFilters {
-								if notification.Repository.FullName == repo {
-									matchesRepo = true
-									break
-								}
-							}
-							if !matchesRepo {
-								continue
-							}
-						}
-						res.Notifications = append(res.Notifications, *notification)
-						fetchedIds[bookmarkId] = true
-					}
-				}
-			}
-
-			// Fetch missing session-marked-read notifications
-			if hasSessionMarkedRead {
-				for id := range sessionMarkedRead {
-					if !fetchedIds[id] {
-						notification, err := data.FetchNotificationByThreadId(id)
-						if err != nil {
-							log.Debug("Failed to fetch session-marked-read notification", "id", id, "err", err)
-							continue
-						}
-						if notification == nil {
-							continue
-						}
-						// Apply repo filter if set
-						if len(filters.RepoFilters) > 0 {
-							matchesRepo := false
-							for _, repo := range filters.RepoFilters {
-								if notification.Repository.FullName == repo {
-									matchesRepo = true
-									break
-								}
-							}
-							if !matchesRepo {
-								continue
-							}
-						}
-						res.Notifications = append(res.Notifications, *notification)
-						fetchedIds[id] = true
-					}
-				}
-			}
-		}
-
-		// Filter notifications based on bookmark settings and session state
+		// Initialize done store for filtering
 		doneStore := data.GetDoneStore()
-		notifications := make([]notificationrow.Data, 0, len(res.Notifications))
-		for _, n := range res.Notifications {
-			// Skip notifications marked as done (GitHub API still returns them with all=true)
-			// Check both persistent store and session state
-			if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
-				continue
-			}
 
-			include := false
-
-			// Always include notifications marked as read this session (until manual refresh)
-			if sessionMarkedRead[n.Id] {
-				include = true
-			} else if filters.IncludeBookmarked && hasBookmarks {
-				// Default view: include if unread OR bookmarked
-				isBookmarked := bookmarkStore.IsBookmarked(n.Id)
-				include = n.Unread || isBookmarked
-			} else {
-				// Explicit filter: follow the ReadState filter
-				switch filters.ReadState {
-				case data.NotificationStateUnread:
-					include = n.Unread
-				case data.NotificationStateRead:
-					include = !n.Unread
-				case data.NotificationStateAll:
-					include = true
+		// Track accumulated notifications across multiple pages.
+		// We may need to fetch additional pages if many notifications are filtered out
+		// (e.g., marked as done locally). The loop continues until we have enough
+		// notifications to display or run out of pages from the API.
+		notifications := make([]notificationrow.Data, 0, limit)
+		currentPageInfo := pageInfo
+		var lastPageInfo data.PageInfo
+		isFirstPage := pageInfo == nil
+		for {
+			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo)
+			if err != nil {
+				return constants.TaskFinishedMsg{
+					SectionId:   m.Id,
+					SectionType: m.Type,
+					TaskId:      taskId,
+					Err:         err,
 				}
 			}
+			lastPageInfo = res.PageInfo
 
-			// Apply reason filter if specified
-			if include && len(reasonFilters) > 0 {
-				matchesReason := false
-				for _, reason := range reasonFilters {
-					if n.Reason == reason {
-						matchesReason = true
-						break
+			// Build a set of IDs we fetched from the API
+			fetchedIds := make(map[string]bool, len(res.Notifications))
+			for _, n := range res.Notifications {
+				fetchedIds[n.Id] = true
+			}
+
+			// On first page, fetch any bookmarked/session-marked-read notifications that are missing
+			// (they may have aged out of the default notifications list or been marked as read)
+			if isFirstPage {
+				isFirstPage = false
+				// Fetch missing bookmarked notifications
+				if filters.IncludeBookmarked && hasBookmarks {
+					for _, bookmarkId := range bookmarkedIds {
+						if !fetchedIds[bookmarkId] {
+							notification, err := data.FetchNotificationByThreadId(bookmarkId)
+							if err != nil {
+								log.Debug("Failed to fetch bookmarked notification", "id", bookmarkId, "err", err)
+								continue
+							}
+							if notification == nil {
+								continue
+							}
+							// Apply repo filter if set
+							if len(filters.RepoFilters) > 0 {
+								matchesRepo := false
+								for _, repo := range filters.RepoFilters {
+									if notification.Repository.FullName == repo {
+										matchesRepo = true
+										break
+									}
+								}
+								if !matchesRepo {
+									continue
+								}
+							}
+							res.Notifications = append(res.Notifications, *notification)
+							fetchedIds[bookmarkId] = true
+						}
 					}
 				}
-				include = matchesReason
+
+				// Fetch missing session-marked-read notifications
+				if hasSessionMarkedRead {
+					for id := range sessionMarkedRead {
+						if !fetchedIds[id] {
+							notification, err := data.FetchNotificationByThreadId(id)
+							if err != nil {
+								log.Debug("Failed to fetch session-marked-read notification", "id", id, "err", err)
+								continue
+							}
+							if notification == nil {
+								continue
+							}
+							// Apply repo filter if set
+							if len(filters.RepoFilters) > 0 {
+								matchesRepo := false
+								for _, repo := range filters.RepoFilters {
+									if notification.Repository.FullName == repo {
+										matchesRepo = true
+										break
+									}
+								}
+								if !matchesRepo {
+									continue
+								}
+							}
+							res.Notifications = append(res.Notifications, *notification)
+							fetchedIds[id] = true
+						}
+					}
+				}
 			}
 
-			if include {
-				notifications = append(notifications, notificationrow.Data{
-					Notification: n,
-					// Generate initial activity description (will be updated with actor later)
-					ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
-				})
+			// Filter notifications based on bookmark settings and session state
+			for _, n := range res.Notifications {
+				// Skip notifications marked as done (GitHub API still returns them with all=true)
+				// Check both persistent store and session state
+				if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
+					continue
+				}
+
+				include := false
+
+				// Always include notifications marked as read this session (until manual refresh)
+				if sessionMarkedRead[n.Id] {
+					include = true
+				} else if filters.IncludeBookmarked && hasBookmarks {
+					// Default view: include if unread OR bookmarked
+					isBookmarked := bookmarkStore.IsBookmarked(n.Id)
+					include = n.Unread || isBookmarked
+				} else {
+					// Explicit filter: follow the ReadState filter
+					switch filters.ReadState {
+					case data.NotificationStateUnread:
+						include = n.Unread
+					case data.NotificationStateRead:
+						include = !n.Unread
+					case data.NotificationStateAll:
+						include = true
+					}
+				}
+
+				// Apply reason filter if specified
+				if include && len(reasonFilters) > 0 {
+					matchesReason := false
+					for _, reason := range reasonFilters {
+						if n.Reason == reason {
+							matchesReason = true
+							break
+						}
+					}
+					include = matchesReason
+				}
+
+				if include {
+					notifications = append(notifications, notificationrow.Data{
+						Notification: n,
+						// Generate initial activity description (will be updated with actor later)
+						ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
+					})
+				}
 			}
+
+			// Check if we have enough notifications or if we've run out of pages
+			if len(notifications) >= limit || !lastPageInfo.HasNextPage {
+				break
+			}
+
+			// Need more notifications - fetch the next page
+			currentPageInfo = &lastPageInfo
+			log.Debug("Fetching additional page due to done filtering",
+				"currentCount", len(notifications),
+				"targetLimit", limit,
+				"nextPage", lastPageInfo.EndCursor)
 		}
 
 		return constants.TaskFinishedMsg{
@@ -727,7 +752,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				Notifications: notifications,
 				TotalCount:    len(notifications),
 				TaskId:        taskId,
-				PageInfo:      res.PageInfo,
+				PageInfo:      lastPageInfo,
 			},
 		}
 	}

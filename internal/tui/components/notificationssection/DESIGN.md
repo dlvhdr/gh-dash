@@ -172,6 +172,8 @@ type NotificationIDStore struct {
 - Done notifications are filtered out during fetch, regardless of API response
 - Persists across sessions and application restarts
 
+**Pagination with local filtering**: Because done notifications are filtered out locally after fetching from the API, a single page of results may yield very few visible notifications. To handle this, the fetch logic automatically requests additional pages from the API until the requested limit is reached or all pages are exhausted. This ensures users see a full page of results even when many notifications have been marked as done.
+
 #### 9. Unsubscribe
 
 The unsubscribe feature allows users to stop receiving notifications for a thread:

@@ -162,6 +162,14 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		}
 	}
 
+	// Determine if there's a next page BEFORE filtering (based on raw API response count).
+	// If the API returned a full page, there are likely more notifications on the server.
+	// We must check this before filtering because the caller needs accurate pagination info
+	// to fetch additional pages when many notifications are filtered out locally.
+	rawCount := len(allNotifications)
+	hasNextPage := rawCount >= limit
+	nextPage := fmt.Sprintf("%d", page+1)
+
 	// Filter by read state if needed
 	switch readState {
 	case NotificationStateRead:
@@ -186,11 +194,7 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		// Keep all, no filtering needed
 	}
 
-	// Determine if there's a next page (if we got a full page, there might be more)
-	hasNextPage := len(allNotifications) >= limit
-	nextPage := fmt.Sprintf("%d", page+1)
-
-	log.Info("Successfully fetched notifications", "count", len(allNotifications), "page", page, "hasNextPage", hasNextPage, "readState", readState)
+	log.Info("Successfully fetched notifications", "rawCount", rawCount, "filteredCount", len(allNotifications), "page", page, "hasNextPage", hasNextPage, "readState", readState)
 
 	return NotificationsResponse{
 		Notifications: allNotifications,
