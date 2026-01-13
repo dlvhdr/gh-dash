@@ -10,39 +10,32 @@ import (
 )
 
 const (
-	bookmarksFileName  = "bookmarks.json"
 	defaultXDGStateDir = ".local/state"
 	dashDir            = "gh-dash"
 )
 
-// BookmarkStore manages locally stored notification bookmarks
-type BookmarkStore struct {
-	mu        sync.RWMutex
-	bookmarks map[string]bool // notification ID -> bookmarked
-	filePath  string
+// NotificationIDStore is a generic store for persisting sets of notification IDs.
+// Used for bookmarks, done notifications, and similar features.
+type NotificationIDStore struct {
+	mu       sync.RWMutex
+	ids      map[string]bool
+	filePath string
+	name     string // for logging
 }
 
-var (
-	bookmarkStore     *BookmarkStore
-	bookmarkStoreOnce sync.Once
-)
-
-// GetBookmarkStore returns the singleton bookmark store instance
-func GetBookmarkStore() *BookmarkStore {
-	bookmarkStoreOnce.Do(func() {
-		store := &BookmarkStore{
-			bookmarks: make(map[string]bool),
-		}
-		store.filePath = store.getBookmarksFilePath()
-		if err := store.load(); err != nil {
-			log.Error("Failed to load bookmarks", "err", err)
-		}
-		bookmarkStore = store
-	})
-	return bookmarkStore
+func newNotificationIDStore(filename, name string) *NotificationIDStore {
+	store := &NotificationIDStore{
+		ids:  make(map[string]bool),
+		name: name,
+	}
+	store.filePath = getStateFilePath(filename)
+	if err := store.load(); err != nil {
+		log.Error("Failed to load "+name, "err", err)
+	}
+	return store
 }
 
-func (s *BookmarkStore) getBookmarksFilePath() string {
+func getStateFilePath(filename string) string {
 	stateDir := os.Getenv("XDG_STATE_HOME")
 	if stateDir == "" {
 		homeDir, err := os.UserHomeDir()
@@ -52,11 +45,10 @@ func (s *BookmarkStore) getBookmarksFilePath() string {
 		}
 		stateDir = filepath.Join(homeDir, defaultXDGStateDir)
 	}
-	return filepath.Join(stateDir, dashDir, bookmarksFileName)
+	return filepath.Join(stateDir, dashDir, filename)
 }
 
-// load reads bookmarks from the JSON file
-func (s *BookmarkStore) load() error {
+func (s *NotificationIDStore) load() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -67,25 +59,24 @@ func (s *BookmarkStore) load() error {
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil // No bookmarks file yet, not an error
+			return nil
 		}
 		return err
 	}
 
-	var bookmarkList []string
-	if err := json.Unmarshal(data, &bookmarkList); err != nil {
+	var idList []string
+	if err := json.Unmarshal(data, &idList); err != nil {
 		return err
 	}
 
-	for _, id := range bookmarkList {
-		s.bookmarks[id] = true
+	for _, id := range idList {
+		s.ids[id] = true
 	}
-	log.Debug("Loaded bookmarks", "count", len(s.bookmarks))
+	log.Debug("Loaded "+s.name, "count", len(s.ids))
 	return nil
 }
 
-// save writes bookmarks to the JSON file
-func (s *BookmarkStore) save() error {
+func (s *NotificationIDStore) save() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -93,12 +84,12 @@ func (s *BookmarkStore) save() error {
 		return nil
 	}
 
-	bookmarkList := make([]string, 0, len(s.bookmarks))
-	for id := range s.bookmarks {
-		bookmarkList = append(bookmarkList, id)
+	idList := make([]string, 0, len(s.ids))
+	for id := range s.ids {
+		idList = append(idList, id)
 	}
 
-	data, err := json.MarshalIndent(bookmarkList, "", "  ")
+	data, err := json.MarshalIndent(idList, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -112,55 +103,108 @@ func (s *BookmarkStore) save() error {
 		return err
 	}
 
-	log.Debug("Saved bookmarks", "count", len(bookmarkList))
+	log.Debug("Saved "+s.name, "count", len(idList))
 	return nil
 }
 
-// IsBookmarked checks if a notification is bookmarked
-func (s *BookmarkStore) IsBookmarked(notificationId string) bool {
+// Has checks if an ID is in the store
+func (s *NotificationIDStore) Has(id string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.bookmarks[notificationId]
+	return s.ids[id]
 }
 
-// ToggleBookmark toggles the bookmark state for a notification
-// Returns the new bookmark state
-func (s *BookmarkStore) ToggleBookmark(notificationId string) bool {
+// Add adds an ID to the store
+func (s *NotificationIDStore) Add(id string) {
 	s.mu.Lock()
-	newState := !s.bookmarks[notificationId]
+	s.ids[id] = true
+	s.mu.Unlock()
+	s.save()
+}
+
+// Remove removes an ID from the store
+func (s *NotificationIDStore) Remove(id string) {
+	s.mu.Lock()
+	delete(s.ids, id)
+	s.mu.Unlock()
+	s.save()
+}
+
+// Toggle toggles an ID in the store, returns the new state
+func (s *NotificationIDStore) Toggle(id string) bool {
+	s.mu.Lock()
+	newState := !s.ids[id]
 	if newState {
-		s.bookmarks[notificationId] = true
+		s.ids[id] = true
 	} else {
-		delete(s.bookmarks, notificationId)
+		delete(s.ids, id)
 	}
 	s.mu.Unlock()
 	s.save()
 	return newState
 }
 
-// AddBookmark adds a bookmark for a notification
-func (s *BookmarkStore) AddBookmark(notificationId string) {
-	s.mu.Lock()
-	s.bookmarks[notificationId] = true
-	s.mu.Unlock()
-	s.save()
-}
-
-// RemoveBookmark removes a bookmark for a notification
-func (s *BookmarkStore) RemoveBookmark(notificationId string) {
-	s.mu.Lock()
-	delete(s.bookmarks, notificationId)
-	s.mu.Unlock()
-	s.save()
-}
-
-// GetBookmarkedIds returns all bookmarked notification IDs
-func (s *BookmarkStore) GetBookmarkedIds() []string {
+// GetAll returns all IDs in the store
+func (s *NotificationIDStore) GetAll() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	ids := make([]string, 0, len(s.bookmarks))
-	for id := range s.bookmarks {
+	ids := make([]string, 0, len(s.ids))
+	for id := range s.ids {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// Singletons for bookmark and done stores
+
+var (
+	bookmarkStore     *NotificationIDStore
+	bookmarkStoreOnce sync.Once
+	doneStore         *NotificationIDStore
+	doneStoreOnce     sync.Once
+)
+
+// GetBookmarkStore returns the singleton bookmark store
+func GetBookmarkStore() *NotificationIDStore {
+	bookmarkStoreOnce.Do(func() {
+		bookmarkStore = newNotificationIDStore("bookmarks.json", "bookmarks")
+	})
+	return bookmarkStore
+}
+
+// GetDoneStore returns the singleton done store
+func GetDoneStore() *NotificationIDStore {
+	doneStoreOnce.Do(func() {
+		doneStore = newNotificationIDStore("done.json", "done notifications")
+	})
+	return doneStore
+}
+
+// Convenience methods for BookmarkStore (maintains API compatibility)
+
+// IsBookmarked checks if a notification is bookmarked
+func (s *NotificationIDStore) IsBookmarked(id string) bool {
+	return s.Has(id)
+}
+
+// ToggleBookmark toggles the bookmark state
+func (s *NotificationIDStore) ToggleBookmark(id string) bool {
+	return s.Toggle(id)
+}
+
+// GetBookmarkedIds returns all bookmarked IDs
+func (s *NotificationIDStore) GetBookmarkedIds() []string {
+	return s.GetAll()
+}
+
+// Convenience methods for DoneStore
+
+// IsDone checks if a notification is marked as done
+func (s *NotificationIDStore) IsDone(id string) bool {
+	return s.Has(id)
+}
+
+// MarkDone marks a notification as done
+func (s *NotificationIDStore) MarkDone(id string) {
+	s.Add(id)
 }

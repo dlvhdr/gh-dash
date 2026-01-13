@@ -161,6 +161,7 @@ type Model struct {
 	SortOrder         SortOrder
 	lastSidebarOpen   bool
 	sessionMarkedRead map[string]bool // IDs of notifications marked as read this session (kept visible until manual refresh)
+	sessionMarkedDone map[string]bool // IDs of notifications marked as done this session (excluded until manual refresh)
 }
 
 func NewModel(
@@ -193,6 +194,7 @@ func NewModel(
 	m.SearchBar.SetValue(m.SearchValue)
 	m.Notifications = []notificationrow.Data{}
 	m.sessionMarkedRead = make(map[string]bool)
+	m.sessionMarkedDone = make(map[string]bool)
 
 	return m
 }
@@ -304,6 +306,10 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					break
 				}
 			}
+			// Track as done so it doesn't reappear on refresh (GitHub API still returns it with all=true)
+			m.sessionMarkedDone[msg.Id] = true
+			// Also remove from sessionMarkedRead
+			delete(m.sessionMarkedRead, msg.Id)
 			m.TotalCount = len(m.Notifications)
 			m.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
@@ -555,9 +561,10 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	startCmd := m.Ctx.StartTask(task)
 	cmds = append(cmds, startCmd)
 
-	// Capture session-marked-read IDs for the closure
+	// Capture session state for the closure
 	sessionMarkedRead := m.sessionMarkedRead
 	hasSessionMarkedRead := len(sessionMarkedRead) > 0
+	sessionMarkedDone := m.sessionMarkedDone
 
 	// Capture current page info for pagination
 	pageInfo := m.PageInfo
@@ -661,8 +668,15 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		}
 
 		// Filter notifications based on bookmark settings and session state
+		doneStore := data.GetDoneStore()
 		notifications := make([]notificationrow.Data, 0, len(res.Notifications))
 		for _, n := range res.Notifications {
+			// Skip notifications marked as done (GitHub API still returns them with all=true)
+			// Check both persistent store and session state
+			if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
+				continue
+			}
+
 			include := false
 
 			// Always include notifications marked as read this session (until manual refresh)
@@ -728,8 +742,9 @@ func (m *Model) UpdateLastUpdated(t time.Time) {
 
 func (m *Model) ResetRows() {
 	m.Notifications = nil
-	// Clear session-marked-read on manual refresh - user explicitly wants fresh data
+	// Clear session state on manual refresh - user explicitly wants fresh data
 	m.sessionMarkedRead = make(map[string]bool)
+	m.sessionMarkedDone = make(map[string]bool)
 	m.BaseModel.ResetRows()
 }
 
@@ -757,6 +772,7 @@ func FetchAllSections(
 				sectionModel.Notifications = oldSection.Notifications
 				sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
 				sectionModel.sessionMarkedRead = oldSection.sessionMarkedRead
+				sectionModel.sessionMarkedDone = oldSection.sessionMarkedDone
 				// Preserve user's filter state - don't reset on refresh
 				sectionModel.IsFilteredByCurrentRemote = oldSection.IsFilteredByCurrentRemote
 				sectionModel.SearchValue = oldSection.SearchValue

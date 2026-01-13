@@ -144,15 +144,33 @@ To preserve parent background colors, row content uses raw ANSI escape codes for
 
 Title truncation is handled dynamically by the table component based on actual column width, with ellipsis added when content is truncated. This allows titles to adjust when the sidebar is shown/hidden.
 
-#### 8. Bookmark System
+#### 8. Bookmark and Done Systems
 
-Bookmarks allow users to keep notifications visible even after marking them as read. Since GitHub's API doesn't support bookmarks, this is implemented locally:
+Both bookmarks and "done" status are tracked locally because GitHub's API doesn't provide these features. They share a common `NotificationIDStore` implementation in `data/bookmarks.go`:
 
-- Bookmarks are stored in `~/.config/gh-dash/bookmarks.json`
-- `BookmarkStore` singleton manages bookmark state with thread-safe operations
+```go
+type NotificationIDStore struct {
+    ids      map[string]bool
+    filePath string
+    // ... mutex, name for logging
+}
+```
+
+**Bookmarks** allow users to keep notifications visible even after marking them as read:
+
+- Stored in `~/.local/state/gh-dash/bookmarks.json`
+- Accessed via `data.GetBookmarkStore()` singleton
 - Bookmarked notifications appear in the default inbox view even when read
 - Bookmarked notifications are styled as read (faint text) but show a bookmark indicator
 - When user explicitly searches `is:unread`, bookmarked+read items are excluded
+
+**Done tracking** is necessary because GitHub's "mark as done" API (`DELETE /notifications/threads/{id}`) doesn't actually delete notifications — they still appear in API responses with `all=true`. Without local tracking, done notifications would reappear when filtering to `is:read` or `is:all`:
+
+- Stored in `~/.local/state/gh-dash/done.json`
+- Accessed via `data.GetDoneStore()` singleton
+- When marking a notification as done, its ID is persisted to the store
+- Done notifications are filtered out during fetch, regardless of API response
+- Persists across sessions and application restarts
 
 #### 9. Unsubscribe
 
@@ -344,5 +362,6 @@ This async resolution uses the existing `UpdateNotificationUrlMsg` message type,
 
 - **Mark as Unread**: GitHub's REST API does not support marking notifications as unread, so this feature is not available. Bookmarks provide a workaround by keeping items visible in the inbox.
 - **Discussion/Release Content**: Only PR and Issue notifications can display detailed content in the sidebar; other types open directly in the browser.
-- **Bookmark Persistence**: Bookmarks are stored locally and are not synced across machines or with GitHub.
+- **Local State Persistence**: Bookmarks and done status are stored locally (`~/.local/state/gh-dash/`) and are not synced across machines or with GitHub.
+- **Done Notifications in API**: GitHub's "mark as done" doesn't delete notifications — they still appear in API responses with `all=true`. We track done IDs locally to filter them out.
 - **Server-Side Reason Filtering**: GitHub's notification API does not support filtering by reason on the server side. Reason filters are applied client-side after fetching notifications, which means all notifications are fetched before filtering.
