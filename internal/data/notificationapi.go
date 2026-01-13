@@ -202,6 +202,27 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 	}, nil
 }
 
+// FetchNotificationByThreadId fetches a single notification by its thread ID.
+// This is useful for fetching bookmarked or session-marked-read notifications
+// that may not appear in the regular notifications list.
+func FetchNotificationByThreadId(threadId string) (*NotificationData, error) {
+	client, err := getRESTClient()
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("notifications/threads/%s", threadId)
+	log.Debug("Fetching notification by thread ID", "threadId", threadId)
+
+	var notification NotificationData
+	err = client.Get(path, &notification)
+	if err != nil {
+		return nil, err
+	}
+
+	return &notification, nil
+}
+
 func MarkNotificationDone(threadId string) error {
 	client, err := getRESTClient()
 	if err != nil {

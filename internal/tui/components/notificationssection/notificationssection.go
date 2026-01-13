@@ -574,12 +574,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		bookmarkedIds := bookmarkStore.GetBookmarkedIds()
 		hasBookmarks := len(bookmarkedIds) > 0
 
-		// If we want to include bookmarks/session-marked-read and have some, fetch all notifications
-		// so we can include read+bookmarked or read+session-marked items
+		// Use the filter's read state directly - don't switch to "all" just for bookmarks/session items
+		// Bookmarked and session-marked-read items will be fetched separately by thread ID
 		readState := filters.ReadState
-		if (filters.IncludeBookmarked && hasBookmarks) || hasSessionMarkedRead {
-			readState = data.NotificationStateAll
-		}
 
 		res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, pageInfo)
 		if err != nil {
@@ -588,6 +585,78 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				SectionType: m.Type,
 				TaskId:      taskId,
 				Err:         err,
+			}
+		}
+
+		// Build a set of IDs we fetched from the API
+		fetchedIds := make(map[string]bool, len(res.Notifications))
+		for _, n := range res.Notifications {
+			fetchedIds[n.Id] = true
+		}
+
+		// On first page, fetch any bookmarked/session-marked-read notifications that are missing
+		// (they may have aged out of the default notifications list or been marked as read)
+		if pageInfo == nil {
+			// Fetch missing bookmarked notifications
+			if filters.IncludeBookmarked && hasBookmarks {
+				for _, bookmarkId := range bookmarkedIds {
+					if !fetchedIds[bookmarkId] {
+						notification, err := data.FetchNotificationByThreadId(bookmarkId)
+						if err != nil {
+							log.Debug("Failed to fetch bookmarked notification", "id", bookmarkId, "err", err)
+							continue
+						}
+						if notification == nil {
+							continue
+						}
+						// Apply repo filter if set
+						if len(filters.RepoFilters) > 0 {
+							matchesRepo := false
+							for _, repo := range filters.RepoFilters {
+								if notification.Repository.FullName == repo {
+									matchesRepo = true
+									break
+								}
+							}
+							if !matchesRepo {
+								continue
+							}
+						}
+						res.Notifications = append(res.Notifications, *notification)
+						fetchedIds[bookmarkId] = true
+					}
+				}
+			}
+
+			// Fetch missing session-marked-read notifications
+			if hasSessionMarkedRead {
+				for id := range sessionMarkedRead {
+					if !fetchedIds[id] {
+						notification, err := data.FetchNotificationByThreadId(id)
+						if err != nil {
+							log.Debug("Failed to fetch session-marked-read notification", "id", id, "err", err)
+							continue
+						}
+						if notification == nil {
+							continue
+						}
+						// Apply repo filter if set
+						if len(filters.RepoFilters) > 0 {
+							matchesRepo := false
+							for _, repo := range filters.RepoFilters {
+								if notification.Repository.FullName == repo {
+									matchesRepo = true
+									break
+								}
+							}
+							if !matchesRepo {
+								continue
+							}
+						}
+						res.Notifications = append(res.Notifications, *notification)
+						fetchedIds[id] = true
+					}
+				}
 			}
 		}
 
