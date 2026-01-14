@@ -64,18 +64,19 @@ func (n *Notification) renderType() string {
 		}
 	case "Issue":
 		// Use state-based icons/colors matching issuerow.go
-		icon = ""
 		if n.Data.SubjectState == "CLOSED" {
+			icon = ""
 			style = style.Foreground(n.Ctx.Styles.Colors.ClosedPR)
 		} else {
+			icon = ""
 			style = style.Foreground(n.Ctx.Styles.Colors.OpenIssue)
 		}
 	case "Discussion":
-		icon = ""
-		style = style.Foreground(n.Ctx.Theme.SecondaryText)
+		icon = ""
+		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"})
 	case "Release":
-		icon = ""
-		style = style.Foreground(n.Ctx.Theme.SuccessText)
+		icon = ""
+		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#0969da", Dark: "#58a6ff"})
 	case "Commit":
 		icon = ""
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)
@@ -92,7 +93,7 @@ func (n *Notification) renderType() string {
 	}
 
 	// Use raw ANSI codes without reset to preserve parent background colors
-	iconPrefix := getStylePrefix(style)
+	iconPrefix := utils.GetStylePrefix(style)
 
 	// Always render 3 lines to match the Title column (repo, title, activity)
 	// This ensures proper background color when row is selected
@@ -100,21 +101,10 @@ func (n *Notification) renderType() string {
 	// Line 2: blue dot (unread) or empty
 	// Line 3: empty
 	if isUnread {
-		dotPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(lipgloss.Color("33")))
+		dotPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(lipgloss.Color("33")))
 		return iconPrefix + icon + "\n" + dotPrefix + constants.DotIcon + "\n"
 	}
 	return iconPrefix + icon + "\n\n"
-}
-
-// getStylePrefix extracts ANSI codes from a lipgloss style without the trailing reset.
-// This allows styled text to be concatenated without breaking parent background colors.
-func getStylePrefix(s lipgloss.Style) string {
-	rendered := s.Render("")
-	// Strip trailing reset sequence if present
-	if len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m" {
-		return rendered[:len(rendered)-4]
-	}
-	return rendered
 }
 
 // renderTitleBlock returns a 3-line block:
@@ -127,7 +117,7 @@ func (n *Notification) renderTitleBlock() string {
 	// Line 1: repo #number (secondary color, no ANSI reset to preserve background)
 	// Read/unread status is indicated by the blue dot, not text color
 	repoStyle := lipgloss.NewStyle().Foreground(n.Ctx.Theme.SecondaryText)
-	repoPrefix := getStylePrefix(repoStyle)
+	repoPrefix := utils.GetStylePrefix(repoStyle)
 	repo := n.Data.GetRepoNameWithOwner()
 	number := n.Data.GetNumber()
 	line1 := repo
@@ -136,7 +126,7 @@ func (n *Notification) renderTitleBlock() string {
 	}
 	// Add bookmark icon if bookmarked (using raw ANSI for warning color)
 	if data.GetBookmarkStore().IsBookmarked(n.Data.GetId()) {
-		bookmarkPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText))
+		bookmarkPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText))
 		line1 = line1 + " " + bookmarkPrefix + ""
 	}
 	line1Rendered := repoPrefix + line1
@@ -146,12 +136,12 @@ func (n *Notification) renderTitleBlock() string {
 	if n.Data.IsUnread() {
 		titleStyle = titleStyle.Bold(true)
 	}
-	titlePrefix := getStylePrefix(titleStyle)
+	titlePrefix := utils.GetStylePrefix(titleStyle)
 	title := n.Data.GetTitle()
 	line2Rendered := titlePrefix + title
 
 	// Line 3: Activity description (no ANSI reset)
-	activityPrefix := getStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
+	activityPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
 	line3 := n.Data.ActivityDescription
 	if line3 == "" {
 		// Fallback to reason-based description
@@ -222,6 +212,6 @@ func (n *Notification) renderUpdatedAt() string {
 	}
 
 	// Use raw ANSI codes without reset to preserve parent background colors
-	stylePrefix := getStylePrefix(n.getReadAwareStyle())
+	stylePrefix := utils.GetStylePrefix(n.getReadAwareStyle())
 	return stylePrefix + updatedAtOutput + "\n\n"
 }

@@ -45,21 +45,25 @@ func (m *Model) markAsDone() tea.Cmd {
 	})
 }
 
+// markAllAsDone marks all currently visible notifications in this section as done.
+// "All" refers to the notifications currently loaded in m.Notifications, not all
+// notifications on GitHub.
 func (m *Model) markAllAsDone() tea.Cmd {
 	if len(m.Notifications) == 0 {
 		return nil
 	}
 
+	count := len(m.Notifications)
 	taskId := "notification_done_all"
 	task := context.Task{
 		Id:           taskId,
-		StartText:    "Marking all notifications as done",
-		FinishedText: "All notifications marked as done",
+		StartText:    fmt.Sprintf("Marking %d notifications as done", count),
+		FinishedText: fmt.Sprintf("%d notifications marked as done", count),
 		State:        context.TaskStart,
 		Error:        nil,
 	}
 
-	notificationIds := make([]string, 0, len(m.Notifications))
+	notificationIds := make([]string, 0, count)
 	for _, n := range m.Notifications {
 		notificationIds = append(notificationIds, n.GetId())
 	}

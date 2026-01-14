@@ -258,6 +258,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		case key.Matches(msg, keys.NotificationKeys.MarkAsRead):
 			if m.GetCurrRow() != nil {
 				cmd = m.markAsRead()
+				m.NextRow()
 			}
 			return m, cmd
 

@@ -140,7 +140,7 @@ Notification titles from GitHub's API may contain control characters (e.g., trai
 
 The table component applies cell styling to each line individually in multi-line content. This ensures the background color (for selected rows) extends properly across the entire cell.
 
-To preserve parent background colors, row content uses raw ANSI escape codes for foreground styling without trailing reset sequences. The `getStylePrefix()` helper extracts ANSI codes from lipgloss styles while stripping the reset, preventing internal resets from breaking the cell's background color.
+To preserve parent background colors, row content uses raw ANSI escape codes for foreground styling without trailing reset sequences. The `utils.GetStylePrefix()` helper extracts ANSI codes from lipgloss styles while stripping the reset, preventing internal resets from breaking the cell's background color.
 
 Title truncation is handled dynamically by the table component based on actual column width, with ellipsis added when content is truncated. This allows titles to adjust when the sidebar is shown/hidden.
 

@@ -17,6 +17,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
+const viewSeparator = " │ "
+
 type Model struct {
 	ctx             *context.ProgramContext
 	leftSection     *string
@@ -115,7 +117,7 @@ func (m *Model) renderViewButton(view config.ViewType) string {
 	var icon, label string
 	// Define icons - notifications has solid/outline variants
 	solidBell := ""
-	outlineBell := ""
+	outlineBell := ""
 
 	switch view {
 	case config.NotificationsView:
@@ -140,14 +142,14 @@ func (m *Model) renderViewButton(view config.ViewType) string {
 		if view == config.NotificationsView {
 			iconColor = lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"} // Gold
 		}
-		iconStyle := lipgloss.NewStyle().
+		activeStyle := lipgloss.NewStyle().
 			Foreground(iconColor).
-			Background(m.ctx.Styles.ViewSwitcher.ActiveView.GetBackground())
-		textStyle := m.ctx.Styles.ViewSwitcher.ActiveView
+			Background(m.ctx.Styles.ViewSwitcher.ActiveView.GetBackground()).
+			Bold(true)
 		if label != "" {
-			return iconStyle.Render(icon) + textStyle.Render(label)
+			return activeStyle.Render(icon) + activeStyle.Render(label)
 		}
-		return iconStyle.Render(icon)
+		return activeStyle.Render(icon)
 	}
 
 	// Inactive: faint styling
@@ -172,9 +174,9 @@ func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 	view := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.NotificationsView)),
-		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(viewSeparator),
 		m.renderViewButton(config.PRsView),
-		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(" │ "),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(viewSeparator),
 		m.renderViewButton(config.IssuesView),
 		lipgloss.NewStyle().Background(ctx.Styles.Common.FooterStyle.GetBackground()).Foreground(
 			ctx.Styles.ViewSwitcher.ViewsSeparator.GetBackground()).Render(" "),

@@ -28,24 +28,27 @@ func newNotificationIDStore(filename, name string) *NotificationIDStore {
 		ids:  make(map[string]bool),
 		name: name,
 	}
-	store.filePath = getStateFilePath(filename)
+	filePath, err := getStateFilePath(filename)
+	if err != nil {
+		log.Error("Failed to get state file path for "+name, "err", err)
+	}
+	store.filePath = filePath
 	if err := store.load(); err != nil {
 		log.Error("Failed to load "+name, "err", err)
 	}
 	return store
 }
 
-func getStateFilePath(filename string) string {
+func getStateFilePath(filename string) (string, error) {
 	stateDir := os.Getenv("XDG_STATE_HOME")
 	if stateDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			log.Error("Failed to get home directory", "err", err)
-			return ""
+			return "", err
 		}
 		stateDir = filepath.Join(homeDir, defaultXDGStateDir)
 	}
-	return filepath.Join(stateDir, dashDir, filename)
+	return filepath.Join(stateDir, dashDir, filename), nil
 }
 
 func (s *NotificationIDStore) load() error {
