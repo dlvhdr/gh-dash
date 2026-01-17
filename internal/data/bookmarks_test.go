@@ -168,4 +168,151 @@ func TestNotificationIDStore(t *testing.T) {
 			t.Error("IsDone should return true after MarkDone")
 		}
 	})
+
+	t.Run("load from non-existent file", func(t *testing.T) {
+		nonExistentFile := filepath.Join(tempDir, "non-existent.json")
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: nonExistentFile,
+			name:     "test",
+		}
+
+		// load should not error for non-existent file, just return empty store
+		err := store.load()
+		if err != nil {
+			t.Errorf("load() from non-existent file should not error, got: %v", err)
+		}
+		if len(store.GetAll()) != 0 {
+			t.Error("store should be empty after loading from non-existent file")
+		}
+	})
+
+	t.Run("load from empty file", func(t *testing.T) {
+		emptyFile := filepath.Join(tempDir, "empty.json")
+		if err := os.WriteFile(emptyFile, []byte(""), 0o644); err != nil {
+			t.Fatalf("Failed to create empty file: %v", err)
+		}
+
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: emptyFile,
+			name:     "test",
+		}
+
+		err := store.load()
+		// Empty file should either be handled gracefully or return an error
+		// The important thing is it doesn't panic
+		if err != nil {
+			// This is acceptable - empty file is not valid JSON
+			t.Logf("load() from empty file returned error (expected): %v", err)
+		}
+	})
+
+	t.Run("load from corrupted JSON", func(t *testing.T) {
+		corruptedFile := filepath.Join(tempDir, "corrupted.json")
+		if err := os.WriteFile(corruptedFile, []byte("{invalid json"), 0o644); err != nil {
+			t.Fatalf("Failed to create corrupted file: %v", err)
+		}
+
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: corruptedFile,
+			name:     "test",
+		}
+
+		err := store.load()
+		if err == nil {
+			t.Error("load() from corrupted JSON should return error")
+		}
+	})
+
+	t.Run("Add same ID multiple times", func(t *testing.T) {
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: testFile,
+			name:     "test",
+		}
+
+		store.Add("id1")
+		store.Add("id1")
+		store.Add("id1")
+
+		// Should still only have one ID
+		all := store.GetAll()
+		if len(all) != 1 {
+			t.Errorf("Adding same ID multiple times should result in 1 entry, got %d", len(all))
+		}
+	})
+
+	t.Run("Remove non-existent ID", func(t *testing.T) {
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: testFile,
+			name:     "test",
+		}
+
+		// Should not panic or error
+		store.Remove("non-existent")
+		if store.Has("non-existent") {
+			t.Error("Has should return false for non-existent ID")
+		}
+	})
+
+	t.Run("empty string ID", func(t *testing.T) {
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: testFile,
+			name:     "test",
+		}
+
+		store.Add("")
+		// Empty string should be handled (though it's an edge case)
+		if !store.Has("") {
+			t.Error("Store should have empty string ID after Add")
+		}
+	})
+
+	t.Run("special characters in ID", func(t *testing.T) {
+		store := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: filepath.Join(tempDir, "special-chars.json"),
+			name:     "test",
+		}
+
+		specialIds := []string{
+			"id-with-dash",
+			"id_with_underscore",
+			"id.with.dots",
+			"id:with:colons",
+			"id/with/slashes",
+			"12345678901234567890", // long numeric ID
+		}
+
+		for _, id := range specialIds {
+			store.Add(id)
+		}
+
+		// Verify all were added
+		for _, id := range specialIds {
+			if !store.Has(id) {
+				t.Errorf("Store should have ID %q", id)
+			}
+		}
+
+		// Test persistence with special characters
+		store2 := &NotificationIDStore{
+			ids:      make(map[string]bool),
+			filePath: filepath.Join(tempDir, "special-chars.json"),
+			name:     "test",
+		}
+		if err := store2.load(); err != nil {
+			t.Fatalf("Failed to load: %v", err)
+		}
+
+		for _, id := range specialIds {
+			if !store2.Has(id) {
+				t.Errorf("Loaded store should have ID %q", id)
+			}
+		}
+	})
 }

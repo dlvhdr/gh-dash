@@ -20,7 +20,8 @@ internal/
 │       ├── notificationrow/
 │       │   ├── data.go          # Data model implementing RowData interface
 │       │   ├── data_test.go     # Tests for data accessors
-│       │   └── notificationrow.go # Row rendering for the table
+│       │   ├── notificationrow.go # Row rendering for the table
+│       │   └── notificationrow_test.go # Tests for rendering logic
 │       ├── notificationssection/
 │       │   ├── notificationssection.go # Main section component
 │       │   ├── commands.go      # Tea commands (mark done, mark read, diff, checkout, etc.)
