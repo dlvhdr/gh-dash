@@ -188,13 +188,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.prView.IsTextInputBoxFocused() {
-			m.prView, cmd = m.prView.Update(msg)
+			m.prView, cmd, _ = m.prView.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
 
 		if m.issueSidebar.IsTextInputBoxFocused() {
-			m.issueSidebar, cmd = m.issueSidebar.Update(msg)
+			m.issueSidebar, cmd, _ = m.issueSidebar.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
@@ -369,7 +369,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				var scmds []tea.Cmd
 				var scmd tea.Cmd
-				m.prView, scmd = m.prView.Update(msg)
+				m.prView, scmd, _ = m.prView.Update(msg)
 				scmds = append(scmds, scmd)
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
@@ -540,145 +540,164 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			// PR keybindings when viewing a PR notification
-			case m.notificationView.GetSubjectPR() != nil && (key.Matches(msg, keys.PRKeys.PrevSidebarTab) ||
-				key.Matches(msg, keys.PRKeys.NextSidebarTab)):
-				var scmds []tea.Cmd
-				var scmd tea.Cmd
-				m.prView, scmd = m.prView.Update(msg)
-				scmds = append(scmds, scmd)
-				m.syncSidebar()
-				return m, tea.Batch(scmds...)
+			case m.notificationView.GetSubjectPR() != nil:
+				var prCmd tea.Cmd
+				var action *prview.PRAction
+				m.prView, prCmd, action = m.prView.Update(msg)
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Approve):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsApproving(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				if action != nil {
+					switch action.Type {
+					case prview.PRActionApprove:
+						m.prView.GoToFirstTab()
+						m.sidebar.IsOpen = true
+						cmd = m.prView.SetIsApproving(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Assign):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsAssigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+					case prview.PRActionAssign:
+						m.prView.GoToFirstTab()
+						m.sidebar.IsOpen = true
+						cmd = m.prView.SetIsAssigning(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Unassign):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsUnassigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+					case prview.PRActionUnassign:
+						m.prView.GoToFirstTab()
+						m.sidebar.IsOpen = true
+						cmd = m.prView.SetIsUnassigning(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Comment):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsCommenting(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+					case prview.PRActionComment:
+						m.prView.GoToFirstTab()
+						m.sidebar.IsOpen = true
+						cmd = m.prView.SetIsCommenting(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Diff):
-				cmd = m.diffNotificationPR()
-				return m, cmd
+					case prview.PRActionDiff:
+						cmd = m.diffNotificationPR()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Checkout):
-				cmd, _ = m.checkoutNotificationPR()
-				return m, cmd
+					case prview.PRActionCheckout:
+						cmd, _ = m.checkoutNotificationPR()
+						return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Close):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("close")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+					case prview.PRActionClose:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("close")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case prview.PRActionReady:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("ready")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case prview.PRActionReopen:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("reopen")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case prview.PRActionMerge:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("merge")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case prview.PRActionUpdate:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("update")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case prview.PRActionSummaryViewMore:
+						m.prView.SetSummaryViewMore()
+						m.syncSidebar()
+						return m, nil
+					}
 				}
-				return m, cmd
 
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Ready):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("ready")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if prCmd != nil {
+					m.syncSidebar()
+					return m, prCmd
 				}
-				return m, cmd
-
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Reopen):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("reopen")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
-				}
-				return m, cmd
-
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Merge):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("merge")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
-				}
-				return m, cmd
-
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Update):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("update")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
-				}
-				return m, cmd
-
-			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.SummaryViewMore):
-				m.prView.SetSummaryViewMore()
-				m.syncSidebar()
-				return m, nil
 
 			// Issue keybindings when viewing an Issue notification
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Label):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsLabeling(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+			case m.notificationView.GetSubjectIssue() != nil:
+				var issueCmd tea.Cmd
+				var action *issueview.IssueAction
+				m.issueSidebar, issueCmd, action = m.issueSidebar.Update(msg)
 
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Assign):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsAssigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				if action != nil {
+					switch action.Type {
+					case issueview.IssueActionLabel:
+						m.sidebar.IsOpen = true
+						cmd = m.issueSidebar.SetIsLabeling(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Unassign):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsUnassigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+					case issueview.IssueActionAssign:
+						m.sidebar.IsOpen = true
+						cmd = m.issueSidebar.SetIsAssigning(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Comment):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsCommenting(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+					case issueview.IssueActionUnassign:
+						m.sidebar.IsOpen = true
+						cmd = m.issueSidebar.SetIsUnassigning(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
 
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Close):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("close")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+					case issueview.IssueActionComment:
+						m.sidebar.IsOpen = true
+						cmd = m.issueSidebar.SetIsCommenting(true)
+						m.syncMainContentWidth()
+						m.syncSidebar()
+						m.sidebar.ScrollToBottom()
+						return m, cmd
+
+					case issueview.IssueActionClose:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("close")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+
+					case issueview.IssueActionReopen:
+						if currSection != nil {
+							currSection.SetPromptConfirmationAction("reopen")
+							cmd = currSection.SetIsPromptConfirmationShown(true)
+						}
+						return m, cmd
+					}
 				}
-				return m, cmd
 
-			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Reopen):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("reopen")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if issueCmd != nil {
+					m.syncSidebar()
+					return m, issueCmd
 				}
-				return m, cmd
 
 			// Notification-specific keybindings
 			case key.Matches(msg, keys.NotificationKeys.View):
@@ -931,12 +950,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 
 	if m.prView.IsTextInputBoxFocused() {
-		m.prView, prViewCmd = m.prView.Update(msg)
+		m.prView, prViewCmd, _ = m.prView.Update(msg)
 		m.syncSidebar()
 	}
 
 	if m.issueSidebar.IsTextInputBoxFocused() {
-		m.issueSidebar, issueSidebarCmd = m.issueSidebar.Update(msg)
+		m.issueSidebar, issueSidebarCmd, _ = m.issueSidebar.Update(msg)
 		m.syncSidebar()
 	}
 

@@ -17,6 +17,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
@@ -78,7 +79,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 	var (
 		cmds  []tea.Cmd
 		cmd   tea.Cmd
@@ -97,11 +98,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			existingLabels := allLabels(m.inputBox.Value())
 			m.ac.Show(currentLabel, existingLabels)
 		}
-		return m, clearCmd
+		return m, clearCmd, nil
 
 	case RepoLabelsFetchFailedMsg:
 		clearCmd := m.ac.SetFetchError(msg.Err)
-		return m, clearCmd
+		return m, clearCmd, nil
 
 	case autocomplete.FetchSuggestionsRequestedMsg:
 		// Only fetch when we're in labeling mode (where labels are relevant)
@@ -115,9 +116,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 			}
 			cmd := m.fetchLabels()
-			return m, cmd
+			return m, cmd, nil
 		}
-		return m, nil
+		return m, nil, nil
 
 	case tea.KeyMsg:
 		if m.isCommenting {
@@ -128,7 +129,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				if !m.ShowConfirmCancel {
@@ -137,13 +138,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			default:
 				if msg.String() == "Y" || msg.String() == "y" {
 					if m.shouldCancelComment() {
-						return m, nil
+						return m, nil, nil
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
 					m.inputBox.SetPrompt(commentPrompt)
 					m.ShowConfirmCancel = false
-					return m, nil
+					return m, nil, nil
 				}
 				m.inputBox.SetPrompt(commentPrompt)
 				m.ShowConfirmCancel = false
@@ -161,13 +162,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.inputBox.Blur()
 				m.isLabeling = false
 				m.ac.Hide()
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isLabeling = false
 				m.ac.Hide()
-				return m, nil
+				return m, nil, nil
 			}
 
 			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
@@ -202,12 +203,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isAssigning = false
-				return m, nil
+				return m, nil, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -221,18 +222,32 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isUnassigning = false
-				return m, nil
+				return m, nil, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else {
-			return m, nil
+			switch {
+			case key.Matches(msg, keys.IssueKeys.Label):
+				return m, nil, &IssueAction{Type: IssueActionLabel}
+			case key.Matches(msg, keys.IssueKeys.Assign):
+				return m, nil, &IssueAction{Type: IssueActionAssign}
+			case key.Matches(msg, keys.IssueKeys.Unassign):
+				return m, nil, &IssueAction{Type: IssueActionUnassign}
+			case key.Matches(msg, keys.IssueKeys.Comment):
+				return m, nil, &IssueAction{Type: IssueActionComment}
+			case key.Matches(msg, keys.IssueKeys.Close):
+				return m, nil, &IssueAction{Type: IssueActionClose}
+			case key.Matches(msg, keys.IssueKeys.Reopen):
+				return m, nil, &IssueAction{Type: IssueActionReopen}
+			}
+			return m, nil, nil
 		}
 	}
 
@@ -243,7 +258,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, acCmd)
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, tea.Batch(cmds...), nil
 }
 
 func (m Model) View() string {

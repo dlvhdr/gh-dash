@@ -72,7 +72,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *PRAction) {
 	var (
 		cmds  []tea.Cmd
 		cmd   tea.Cmd
@@ -89,7 +89,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				if !m.ShowConfirmCancel {
@@ -99,13 +99,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			default:
 				if msg.String() == "Y" || msg.String() == "y" {
 					if m.shouldCancelComment() {
-						return m, nil
+						return m, nil, nil
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
 					m.inputBox.SetPrompt(commentPrompt)
 					m.ShowConfirmCancel = false
-					return m, nil
+					return m, nil, nil
 				}
 				m.inputBox.SetPrompt(commentPrompt)
 				m.ShowConfirmCancel = false
@@ -123,11 +123,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				cmd = m.approve(comment)
 				m.inputBox.Blur()
 				m.isApproving = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				if m.shouldCancelComment() {
-					return m, nil
+					return m, nil, nil
 				}
 			default:
 				m.inputBox.SetPrompt(approvalPrompt)
@@ -145,12 +145,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isAssigning = false
-				return m, nil
+				return m, nil, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -164,12 +164,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
-				return m, cmd
+				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isUnassigning = false
-				return m, nil
+				return m, nil, nil
 			}
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
@@ -178,16 +178,40 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, keys.PRKeys.PrevSidebarTab):
 				m.carousel.MoveLeft()
-				return m, nil
+				return m, nil, nil
 			case key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				m.carousel.MoveRight()
-				return m, nil
+				return m, nil, nil
+			case key.Matches(msg, keys.PRKeys.Approve):
+				return m, nil, &PRAction{Type: PRActionApprove}
+			case key.Matches(msg, keys.PRKeys.Assign):
+				return m, nil, &PRAction{Type: PRActionAssign}
+			case key.Matches(msg, keys.PRKeys.Unassign):
+				return m, nil, &PRAction{Type: PRActionUnassign}
+			case key.Matches(msg, keys.PRKeys.Comment):
+				return m, nil, &PRAction{Type: PRActionComment}
+			case key.Matches(msg, keys.PRKeys.Diff):
+				return m, nil, &PRAction{Type: PRActionDiff}
+			case key.Matches(msg, keys.PRKeys.Checkout):
+				return m, nil, &PRAction{Type: PRActionCheckout}
+			case key.Matches(msg, keys.PRKeys.Close):
+				return m, nil, &PRAction{Type: PRActionClose}
+			case key.Matches(msg, keys.PRKeys.Ready):
+				return m, nil, &PRAction{Type: PRActionReady}
+			case key.Matches(msg, keys.PRKeys.Reopen):
+				return m, nil, &PRAction{Type: PRActionReopen}
+			case key.Matches(msg, keys.PRKeys.Merge):
+				return m, nil, &PRAction{Type: PRActionMerge}
+			case key.Matches(msg, keys.PRKeys.Update):
+				return m, nil, &PRAction{Type: PRActionUpdate}
+			case key.Matches(msg, keys.PRKeys.SummaryViewMore):
+				return m, nil, &PRAction{Type: PRActionSummaryViewMore}
 			}
-			return m, nil
+			return m, nil, nil
 		}
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, tea.Batch(cmds...), nil
 }
 
 func (m Model) View() string {
