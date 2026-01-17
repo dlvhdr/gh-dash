@@ -2,6 +2,7 @@ package notificationrow
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 
@@ -81,8 +82,25 @@ func (n *Notification) renderType() string {
 		icon = ""
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)
 	case "CheckSuite":
-		icon = constants.WorkflowIcon
-		style = style.Foreground(n.Ctx.Theme.WarningText)
+		// Parse title to determine workflow status (similar to gitify approach)
+		title := strings.ToLower(n.Data.GetTitle())
+		switch {
+		case strings.Contains(title, "failed"):
+			icon = constants.FailureIcon
+			style = style.Foreground(n.Ctx.Theme.ErrorText)
+		case strings.Contains(title, "succeeded"):
+			icon = constants.SuccessIcon
+			style = style.Foreground(n.Ctx.Theme.SuccessText)
+		case strings.Contains(title, "cancelled"), strings.Contains(title, "canceled"):
+			icon = constants.WorkflowRunIcon
+			style = style.Foreground(n.Ctx.Theme.FaintText)
+		case strings.Contains(title, "skipped"):
+			icon = constants.WorkflowRunIcon
+			style = style.Foreground(n.Ctx.Theme.FaintText)
+		default:
+			icon = constants.WorkflowRunIcon
+			style = style.Foreground(n.Ctx.Theme.WarningText)
+		}
 	case "RepositoryVulnerabilityAlert":
 		icon = constants.SecurityIcon
 		style = style.Foreground(n.Ctx.Theme.ErrorText)
