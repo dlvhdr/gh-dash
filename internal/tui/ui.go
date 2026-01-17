@@ -61,12 +61,7 @@ type Model struct {
 	tabs             tabs.Model
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
-	tasks            map[string]context.Task
-
-	// Cached notification subject data for sidebar display
-	notifSubjectPR    *prrow.Data
-	notifSubjectIssue *data.IssueData
-	notifSubjectId    string // ID of the notification whose subject is cached
+	tasks map[string]context.Task
 }
 
 func NewModel(location config.Location) Model {
@@ -545,7 +540,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			// PR keybindings when viewing a PR notification
-			case m.notifSubjectPR != nil && (key.Matches(msg, keys.PRKeys.PrevSidebarTab) ||
+			case m.notificationView.GetSubjectPR() != nil && (key.Matches(msg, keys.PRKeys.PrevSidebarTab) ||
 				key.Matches(msg, keys.PRKeys.NextSidebarTab)):
 				var scmds []tea.Cmd
 				var scmd tea.Cmd
@@ -554,7 +549,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Approve):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Approve):
 				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prView.SetIsApproving(true)
@@ -563,7 +558,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Assign):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Assign):
 				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prView.SetIsAssigning(true)
@@ -572,7 +567,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Unassign):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Unassign):
 				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prView.SetIsUnassigning(true)
@@ -581,7 +576,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Comment):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Comment):
 				m.prView.GoToFirstTab()
 				m.sidebar.IsOpen = true
 				cmd = m.prView.SetIsCommenting(true)
@@ -590,56 +585,56 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Diff):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Diff):
 				cmd = m.diffNotificationPR()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Checkout):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Checkout):
 				cmd, _ = m.checkoutNotificationPR()
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Close):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Close):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("close")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Ready):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Ready):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("ready")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Reopen):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Reopen):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("reopen")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Merge):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Merge):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("merge")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.Update):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.Update):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("update")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectPR != nil && key.Matches(msg, keys.PRKeys.SummaryViewMore):
+			case m.notificationView.GetSubjectPR() != nil && key.Matches(msg, keys.PRKeys.SummaryViewMore):
 				m.prView.SetSummaryViewMore()
 				m.syncSidebar()
 				return m, nil
 
 			// Issue keybindings when viewing an Issue notification
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Label):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Label):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsLabeling(true)
 				m.syncMainContentWidth()
@@ -647,7 +642,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Assign):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Assign):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsAssigning(true)
 				m.syncMainContentWidth()
@@ -655,7 +650,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Unassign):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Unassign):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsUnassigning(true)
 				m.syncMainContentWidth()
@@ -663,7 +658,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Comment):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Comment):
 				m.sidebar.IsOpen = true
 				cmd = m.issueSidebar.SetIsCommenting(true)
 				m.syncMainContentWidth()
@@ -671,14 +666,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sidebar.ScrollToBottom()
 				return m, cmd
 
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Close):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Close):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("close")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
 				}
 				return m, cmd
 
-			case m.notifSubjectIssue != nil && key.Matches(msg, keys.IssueKeys.Reopen):
+			case m.notificationView.GetSubjectIssue() != nil && key.Matches(msg, keys.IssueKeys.Reopen):
 				if currSection != nil {
 					currSection.SetPromptConfirmationAction("reopen")
 					cmd = currSection.SetIsPromptConfirmationShown(true)
@@ -791,18 +786,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Err == nil {
 			// Convert enriched PR to prrow.Data for display
 			prData := msg.PR.ToPullRequestData()
-			m.notifSubjectPR = &prrow.Data{
+			m.notificationView.SetSubjectPR(&prrow.Data{
 				Primary:    &prData,
 				Enriched:   msg.PR,
 				IsEnriched: true,
-			}
-			m.notifSubjectIssue = nil
-			m.notifSubjectId = msg.NotificationId
+			}, msg.NotificationId)
 			keys.SetNotificationSubject(keys.NotificationSubjectPR)
 			// Update sidebar with PR view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.prView.SetSectionId(0)
-			m.prView.SetRow(m.notifSubjectPR)
+			m.prView.SetRow(m.notificationView.GetSubjectPR())
 			m.prView.SetWidth(width)
 			m.prView.SetEnrichedPR(msg.PR)
 			// Switch to Activity tab and scroll to bottom if there's a latest comment
@@ -833,14 +826,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case notificationIssueFetchedMsg:
 		if msg.Err == nil {
-			m.notifSubjectIssue = &msg.Issue
-			m.notifSubjectPR = nil
-			m.notifSubjectId = msg.NotificationId
+			m.notificationView.SetSubjectIssue(&msg.Issue, msg.NotificationId)
 			keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 			// Update sidebar with Issue view
 			width := m.sidebar.GetSidebarContentWidth()
 			m.issueSidebar.SetSectionId(0)
-			m.issueSidebar.SetRow(m.notifSubjectIssue)
+			m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 			m.issueSidebar.SetWidth(width)
 			m.sidebar.SetContent(m.issueSidebar.View())
 			// Scroll to bottom if there's a latest comment (indicates new activity)
@@ -1154,16 +1145,16 @@ func (m *Model) syncSidebar() tea.Cmd {
 		notifId := row.GetId()
 
 		// Check if we already have cached data for this notification (user already viewed it)
-		if m.notifSubjectId == notifId {
+		if m.notificationView.GetSubjectId() == notifId {
 			// Use cached data
-			if m.notifSubjectPR != nil {
+			if m.notificationView.GetSubjectPR() != nil {
 				m.prView.SetSectionId(0)
-				m.prView.SetRow(m.notifSubjectPR)
+				m.prView.SetRow(m.notificationView.GetSubjectPR())
 				m.prView.SetWidth(width)
 				m.sidebar.SetContent(m.prView.View())
-			} else if m.notifSubjectIssue != nil {
+			} else if m.notificationView.GetSubjectIssue() != nil {
 				m.issueSidebar.SetSectionId(0)
-				m.issueSidebar.SetRow(m.notifSubjectIssue)
+				m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 				m.issueSidebar.SetWidth(width)
 				m.sidebar.SetContent(m.issueSidebar.View())
 			}
@@ -1360,11 +1351,11 @@ func (m *Model) viewNotificationAndOpenBrowser() tea.Cmd {
 
 // diffNotificationPR opens a diff view for a PR notification
 func (m *Model) diffNotificationPR() tea.Cmd {
-	if m.notifSubjectPR == nil {
+	if m.notificationView.GetSubjectPR() == nil {
 		return nil
 	}
-	prNumber := m.notifSubjectPR.GetNumber()
-	repoName := m.notifSubjectPR.GetRepoNameWithOwner()
+	prNumber := m.notificationView.GetSubjectPR().GetNumber()
+	repoName := m.notificationView.GetSubjectPR().GetRepoNameWithOwner()
 
 	c := exec.Command(
 		"gh",
@@ -1386,18 +1377,18 @@ func (m *Model) diffNotificationPR() tea.Cmd {
 
 // checkoutNotificationPR checks out a PR from a notification
 func (m *Model) checkoutNotificationPR() (tea.Cmd, error) {
-	if m.notifSubjectPR == nil {
+	if m.notificationView.GetSubjectPR() == nil {
 		return nil, errors.New("no PR notification selected")
 	}
 
-	repoName := m.notifSubjectPR.GetRepoNameWithOwner()
+	repoName := m.notificationView.GetSubjectPR().GetRepoNameWithOwner()
 	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
 
 	if !ok {
 		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
 	}
 
-	prNumber := m.notifSubjectPR.GetNumber()
+	prNumber := m.notificationView.GetSubjectPR().GetNumber()
 	taskId := fmt.Sprintf("checkout_%d", prNumber)
 	task := context.Task{
 		Id:           taskId,

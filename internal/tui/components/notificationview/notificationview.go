@@ -6,8 +6,10 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -15,6 +17,11 @@ type Model struct {
 	ctx   *context.ProgramContext
 	row   *notificationrow.Data
 	width int
+
+	// Cached notification subject data for sidebar display
+	subjectPR    *prrow.Data
+	subjectIssue *data.IssueData
+	subjectId    string // ID of the notification whose subject is cached
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -29,6 +36,30 @@ func (m *Model) SetRow(row *notificationrow.Data) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
+}
+
+func (m *Model) SetSubjectPR(pr *prrow.Data, notificationId string) {
+	m.subjectPR = pr
+	m.subjectIssue = nil
+	m.subjectId = notificationId
+}
+
+func (m *Model) SetSubjectIssue(issue *data.IssueData, notificationId string) {
+	m.subjectIssue = issue
+	m.subjectPR = nil
+	m.subjectId = notificationId
+}
+
+func (m *Model) GetSubjectPR() *prrow.Data {
+	return m.subjectPR
+}
+
+func (m *Model) GetSubjectIssue() *data.IssueData {
+	return m.subjectIssue
+}
+
+func (m *Model) GetSubjectId() string {
+	return m.subjectId
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
