@@ -1292,33 +1292,43 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 
 	switch subjectType {
 	case "PullRequest":
-		return func() tea.Msg {
-			// Mark as read first
-			_ = data.MarkNotificationRead(notifId)
-
-			// Fetch PR data
-			pr, err := data.FetchPullRequest(subjectUrl)
-			return notificationPRFetchedMsg{
-				NotificationId:   notifId,
-				PR:               pr,
-				LatestCommentUrl: latestCommentUrl,
-				Err:              err,
-			}
-		}
+		return tea.Batch(
+			func() tea.Msg {
+				_ = data.MarkNotificationRead(notifId)
+				return notificationssection.UpdateNotificationReadStateMsg{
+					Id:     notifId,
+					Unread: false,
+				}
+			},
+			func() tea.Msg {
+				pr, err := data.FetchPullRequest(subjectUrl)
+				return notificationPRFetchedMsg{
+					NotificationId:   notifId,
+					PR:               pr,
+					LatestCommentUrl: latestCommentUrl,
+					Err:              err,
+				}
+			},
+		)
 	case "Issue":
-		return func() tea.Msg {
-			// Mark as read first
-			_ = data.MarkNotificationRead(notifId)
-
-			// Fetch Issue data
-			issue, err := data.FetchIssue(subjectUrl)
-			return notificationIssueFetchedMsg{
-				NotificationId:   notifId,
-				Issue:            issue,
-				LatestCommentUrl: latestCommentUrl,
-				Err:              err,
-			}
-		}
+		return tea.Batch(
+			func() tea.Msg {
+				_ = data.MarkNotificationRead(notifId)
+				return notificationssection.UpdateNotificationReadStateMsg{
+					Id:     notifId,
+					Unread: false,
+				}
+			},
+			func() tea.Msg {
+				issue, err := data.FetchIssue(subjectUrl)
+				return notificationIssueFetchedMsg{
+					NotificationId:   notifId,
+					Issue:            issue,
+					LatestCommentUrl: latestCommentUrl,
+					Err:              err,
+				}
+			},
+		)
 	default:
 		// For discussions, releases, etc. - mark as read and open in browser
 		// since we can't show rich content for these types
