@@ -702,7 +702,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Notification-specific keybindings
 			case key.Matches(msg, keys.NotificationKeys.View):
 				// View notification content and mark as read
-				cmds = append(cmds, m.viewNotification())
+				cmds = append(cmds, m.loadNotificationContent())
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
 				// Already handled in the section's Update method
@@ -718,7 +718,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case key.Matches(msg, keys.NotificationKeys.Open):
 				// Open in browser and mark as read
-				cmds = append(cmds, m.viewNotificationAndOpenBrowser())
+				cmds = append(cmds, m.openNotificationInBrowser())
 
 			case key.Matches(msg, keys.NotificationKeys.SortByRepo):
 				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
@@ -829,16 +829,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prView.GoToFirstTab()
 				m.sidebar.SetContent(m.prView.View())
 			}
-			// Update notification read state in all notification sections
-			readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
-				Id:     msg.NotificationId,
-				Unread: false,
-			}
-			for i := range m.notifications {
-				if m.notifications[i] != nil {
-					m.notifications[i], _ = m.notifications[i].Update(readStateMsg)
-				}
-			}
+			m.markNotificationAsRead(msg.NotificationId)
 		} else {
 			log.Error("failed fetching notification PR", "err", msg.Err)
 		}
@@ -857,37 +848,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.LatestCommentUrl != "" {
 				m.sidebar.ScrollToBottom()
 			}
-			// Update notification read state in all notification sections
-			readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
-				Id:     msg.NotificationId,
-				Unread: false,
-			}
-			for i := range m.notifications {
-				if m.notifications[i] != nil {
-					m.notifications[i], _ = m.notifications[i].Update(readStateMsg)
-				}
-			}
+			m.markNotificationAsRead(msg.NotificationId)
 		} else {
 			log.Error("failed fetching notification Issue", "err", msg.Err)
 		}
 
 	case notificationssection.UpdateNotificationReadStateMsg:
-		// Route to all notification sections to update read state
-		for i := range m.notifications {
-			if m.notifications[i] != nil {
-				m.notifications[i], _ = m.notifications[i].Update(msg)
-			}
-		}
+		m.updateNotificationSections(msg)
 
 	case notificationssection.UpdateNotificationCommentsMsg:
-		// Route to all notification sections
-		for i := range m.notifications {
-			if m.notifications[i] != nil {
-				var notifCmd tea.Cmd
-				m.notifications[i], notifCmd = m.notifications[i].Update(msg)
-				cmds = append(cmds, notifCmd)
-			}
-		}
+		cmds = append(cmds, m.updateNotificationSections(msg))
 
 	case spinner.TickMsg:
 		if len(m.tasks) > 0 {
@@ -1049,6 +1019,26 @@ type notificationIssueFetchedMsg struct {
 func (m *Model) setCurrSectionId(newSectionId int) {
 	m.currSectionId = newSectionId
 	m.tabs.SetCurrSectionId(newSectionId)
+}
+
+func (m *Model) updateNotificationSections(msg tea.Msg) tea.Cmd {
+	var cmds []tea.Cmd
+	for i := range m.notifications {
+		if m.notifications[i] != nil {
+			var cmd tea.Cmd
+			m.notifications[i], cmd = m.notifications[i].Update(msg)
+			cmds = append(cmds, cmd)
+		}
+	}
+	return tea.Batch(cmds...)
+}
+
+func (m *Model) markNotificationAsRead(notificationId string) {
+	readStateMsg := notificationssection.UpdateNotificationReadStateMsg{
+		Id:     notificationId,
+		Unread: false,
+	}
+	m.updateNotificationSections(readStateMsg)
 }
 
 func (m *Model) onViewedRowChanged() tea.Cmd {
@@ -1281,8 +1271,8 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 	return content.String()
 }
 
-// viewNotification fetches and displays notification content, marking it as read
-func (m *Model) viewNotification() tea.Cmd {
+// loadNotificationContent fetches and displays notification content, marking it as read
+func (m *Model) loadNotificationContent() tea.Cmd {
 	currRowData := m.getCurrRowData()
 	row, ok := currRowData.(*notificationrow.Data)
 	if !ok || row == nil {
@@ -1345,8 +1335,8 @@ func (m *Model) viewNotification() tea.Cmd {
 	}
 }
 
-// viewNotificationAndOpenBrowser marks notification as read and opens in browser
-func (m *Model) viewNotificationAndOpenBrowser() tea.Cmd {
+// openNotificationInBrowser marks notification as read and opens in browser
+func (m *Model) openNotificationInBrowser() tea.Cmd {
 	currRowData := m.getCurrRowData()
 	row, ok := currRowData.(*notificationrow.Data)
 	if !ok || row == nil {
