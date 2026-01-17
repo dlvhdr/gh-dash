@@ -252,27 +252,6 @@ func (m *Model) openInBrowser() tea.Cmd {
 	)
 }
 
-// DiffPR opens a diff view for a PR. This is a standalone function that can be called
-// from ui.go with the PR details from the notification view.
-func DiffPR(ctx *context.ProgramContext, prNumber int, repoName string) tea.Cmd {
-	c := exec.Command(
-		"gh",
-		"pr",
-		"diff",
-		fmt.Sprint(prNumber),
-		"-R",
-		repoName,
-	)
-	c.Env = ctx.Config.GetFullScreenDiffPagerEnv()
-
-	return tea.ExecProcess(c, func(err error) tea.Msg {
-		if err != nil {
-			return constants.ErrMsg{Err: err}
-		}
-		return nil
-	})
-}
-
 // CheckoutPR checks out a PR. This is a standalone function that can be called
 // from ui.go with the PR details from the notification view.
 func CheckoutPR(ctx *context.ProgramContext, prNumber int, repoName string) (tea.Cmd, error) {

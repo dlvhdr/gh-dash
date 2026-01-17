@@ -14,51 +14,6 @@ func noopStartTask(task context.Task) tea.Cmd {
 	return nil
 }
 
-func TestDiffPR(t *testing.T) {
-	tests := []struct {
-		name     string
-		prNumber int
-		repoName string
-		wantNil  bool
-	}{
-		{
-			name:     "returns command for valid PR",
-			prNumber: 123,
-			repoName: "owner/repo",
-			wantNil:  false,
-		},
-		{
-			name:     "returns command for PR number 0",
-			prNumber: 0,
-			repoName: "owner/repo",
-			wantNil:  false,
-		},
-		{
-			name:     "returns command with hyphenated repo name",
-			prNumber: 456,
-			repoName: "my-org/my-repo",
-			wantNil:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := &context.ProgramContext{
-				Config: &config.Config{},
-			}
-
-			cmd := DiffPR(ctx, tt.prNumber, tt.repoName)
-
-			if tt.wantNil && cmd != nil {
-				t.Errorf("DiffPR() returned non-nil, want nil")
-			}
-			if !tt.wantNil && cmd == nil {
-				t.Errorf("DiffPR() returned nil, want non-nil")
-			}
-		})
-	}
-}
-
 func TestCheckoutPR(t *testing.T) {
 	tests := []struct {
 		name      string

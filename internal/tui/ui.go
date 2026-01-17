@@ -59,7 +59,7 @@ type Model struct {
 	tabs             tabs.Model
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
-	tasks map[string]context.Task
+	tasks            map[string]context.Task
 }
 
 func NewModel(location config.Location) Model {
@@ -583,7 +583,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					case prview.PRActionDiff:
 						if pr := m.notificationView.GetSubjectPR(); pr != nil {
-							cmd = notificationssection.DiffPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+							cmd = common.DiffPR(pr.GetNumber(), pr.GetRepoNameWithOwner(), m.ctx.Config.GetFullScreenDiffPagerEnv())
 						}
 						return m, cmd
 
