@@ -1,10 +1,8 @@
 package tui
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"reflect"
 	"runtime/debug"
 	"sort"
@@ -584,11 +582,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, cmd
 
 					case prview.PRActionDiff:
-						cmd = m.diffNotificationPR()
+						if pr := m.notificationView.GetSubjectPR(); pr != nil {
+							cmd = notificationssection.DiffPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+						}
 						return m, cmd
 
 					case prview.PRActionCheckout:
-						cmd, _ = m.checkoutNotificationPR()
+						if pr := m.notificationView.GetSubjectPR(); pr != nil {
+							cmd, _ = notificationssection.CheckoutPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+						}
 						return m, cmd
 
 					case prview.PRActionClose:
@@ -717,8 +719,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.NotificationKeys.Open):
-				// Open in browser and mark as read
-				cmds = append(cmds, m.openNotificationInBrowser())
+				// Handled in the section's Update method
+				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
+				return m, cmd
 
 			case key.Matches(msg, keys.NotificationKeys.SortByRepo):
 				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
@@ -1343,96 +1346,6 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 			m.openBrowser(),
 		)
 	}
-}
-
-// openNotificationInBrowser marks notification as read and opens in browser
-func (m *Model) openNotificationInBrowser() tea.Cmd {
-	currRowData := m.getCurrRowData()
-	row, ok := currRowData.(*notificationrow.Data)
-	if !ok || row == nil {
-		return m.openBrowser()
-	}
-
-	notifId := row.GetId()
-
-	// Mark as read and open browser
-	return tea.Batch(
-		func() tea.Msg {
-			_ = data.MarkNotificationRead(notifId)
-			return notificationssection.UpdateNotificationReadStateMsg{
-				Id:     notifId,
-				Unread: false,
-			}
-		},
-		m.openBrowser(),
-	)
-}
-
-// diffNotificationPR opens a diff view for a PR notification
-func (m *Model) diffNotificationPR() tea.Cmd {
-	if m.notificationView.GetSubjectPR() == nil {
-		return nil
-	}
-	prNumber := m.notificationView.GetSubjectPR().GetNumber()
-	repoName := m.notificationView.GetSubjectPR().GetRepoNameWithOwner()
-
-	c := exec.Command(
-		"gh",
-		"pr",
-		"diff",
-		fmt.Sprint(prNumber),
-		"-R",
-		repoName,
-	)
-	c.Env = m.ctx.Config.GetFullScreenDiffPagerEnv()
-
-	return tea.ExecProcess(c, func(err error) tea.Msg {
-		if err != nil {
-			return constants.ErrMsg{Err: err}
-		}
-		return nil
-	})
-}
-
-// checkoutNotificationPR checks out a PR from a notification
-func (m *Model) checkoutNotificationPR() (tea.Cmd, error) {
-	if m.notificationView.GetSubjectPR() == nil {
-		return nil, errors.New("no PR notification selected")
-	}
-
-	repoName := m.notificationView.GetSubjectPR().GetRepoNameWithOwner()
-	repoPath, ok := common.GetRepoLocalPath(repoName, m.ctx.Config.RepoPaths)
-
-	if !ok {
-		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
-	}
-
-	prNumber := m.notificationView.GetSubjectPR().GetNumber()
-	taskId := fmt.Sprintf("checkout_%d", prNumber)
-	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf("Checking out PR #%d", prNumber),
-		FinishedText: fmt.Sprintf("PR #%d has been checked out at %s", prNumber, repoPath),
-		State:        context.TaskStart,
-		Error:        nil,
-	}
-	startCmd := m.ctx.StartTask(task)
-	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"pr",
-			"checkout",
-			fmt.Sprint(prNumber),
-		)
-		userHomeDir, _ := os.UserHomeDir()
-		if strings.HasPrefix(repoPath, "~") {
-			repoPath = strings.Replace(repoPath, "~", userHomeDir, 1)
-		}
-
-		c.Dir = repoPath
-		err := c.Run()
-		return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
-	}), nil
 }
 
 func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {

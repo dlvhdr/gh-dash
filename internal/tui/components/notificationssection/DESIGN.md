@@ -23,7 +23,8 @@ internal/
 │       │   └── notificationrow.go # Row rendering for the table
 │       ├── notificationssection/
 │       │   ├── notificationssection.go # Main section component
-│       │   ├── commands.go      # Tea commands (mark done, mark read, etc.)
+│       │   ├── commands.go      # Tea commands (mark done, mark read, diff, checkout, etc.)
+│       │   ├── commands_test.go # Tests for command functions
 │       │   └── filters_test.go  # Tests for filter parsing
 │       └── notificationview/
 │           └── notificationview.go # Detail view in sidebar
@@ -194,6 +195,28 @@ The `UpdateNotificationMsg` and `UpdateNotificationReadStateMsg` types propagate
 - The user performs a manual refresh (Refresh key)
 - The user quits and restarts the application
 - The notification is explicitly marked as done
+
+#### 12. Command Architecture
+
+Notification commands are organized in `commands.go`, following the pattern established by `prssection` (which has `checkout.go`, `diff.go`). Commands fall into two categories:
+
+**Section methods** — Commands that operate on section state and are invoked via key handling in the section's `Update` method:
+- `markAsDone()` — Marks the current notification as done
+- `markAllAsDone()` — Marks all visible notifications as done
+- `markAsRead()` — Marks the current notification as read
+- `markAllAsRead()` — Marks all notifications as read
+- `unsubscribe()` — Unsubscribes from the current thread
+- `openInBrowser()` — Marks as read and opens in browser
+
+**Standalone functions** — Commands that require data from outside the section (e.g., the PR shown in the sidebar). These are called from `ui.go` with the necessary parameters:
+- `DiffPR(ctx, prNumber, repoName)` — Opens a diff view for a PR
+- `CheckoutPR(ctx, prNumber, repoName)` — Checks out a PR branch locally
+
+This split exists because diff and checkout operate on the PR/Issue content shown in the `notificationView` sidebar, not the notification row itself. When viewing a PR notification, the sidebar displays the full PR details, and diff/checkout actions use that data. The section doesn't have access to this enriched data, so `ui.go` extracts the PR details from `notificationView` and passes them to the standalone functions.
+
+Key events are routed through `ui.go`, which either:
+1. Passes them to the section via `updateSection()` for section methods
+2. Handles them directly and calls standalone functions with the required data
 
 ### Interface Compliance
 

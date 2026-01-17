@@ -272,6 +272,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 			return m, cmd
 
+		case key.Matches(msg, keys.NotificationKeys.Open):
+			if m.GetCurrRow() != nil {
+				cmd = m.openInBrowser()
+			}
+			return m, cmd
+
 		case key.Matches(msg, keys.NotificationKeys.ToggleBookmark):
 			if notification := m.GetCurrNotification(); notification != nil {
 				data.GetBookmarkStore().ToggleBookmark(notification.GetId())
