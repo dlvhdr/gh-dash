@@ -122,7 +122,7 @@ func (s *NotificationIDStore) Add(id string) {
 	s.mu.Lock()
 	s.ids[id] = true
 	s.mu.Unlock()
-	s.save()
+	go s.save() // Async save to avoid blocking UI
 }
 
 // Remove removes an ID from the store
@@ -130,7 +130,7 @@ func (s *NotificationIDStore) Remove(id string) {
 	s.mu.Lock()
 	delete(s.ids, id)
 	s.mu.Unlock()
-	s.save()
+	go s.save() // Async save to avoid blocking UI
 }
 
 // Toggle toggles an ID in the store, returns the new state
@@ -143,7 +143,7 @@ func (s *NotificationIDStore) Toggle(id string) bool {
 		delete(s.ids, id)
 	}
 	s.mu.Unlock()
-	s.save()
+	go s.save() // Async save to avoid blocking UI
 	return newState
 }
 
@@ -156,6 +156,11 @@ func (s *NotificationIDStore) GetAll() []string {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// Flush forces an immediate synchronous save. Useful for testing.
+func (s *NotificationIDStore) Flush() error {
+	return s.save()
 }
 
 // Singletons for bookmark and done stores

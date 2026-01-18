@@ -116,7 +116,7 @@ func TestNotificationIDStore(t *testing.T) {
 	t.Run("persistence", func(t *testing.T) {
 		persistFile := filepath.Join(tempDir, "persist-test.json")
 
-		// Create store, add IDs, let it save
+		// Create store, add IDs, flush to ensure save completes
 		store1 := &NotificationIDStore{
 			ids:      make(map[string]bool),
 			filePath: persistFile,
@@ -124,6 +124,9 @@ func TestNotificationIDStore(t *testing.T) {
 		}
 		store1.Add("persist1")
 		store1.Add("persist2")
+		if err := store1.Flush(); err != nil {
+			t.Fatalf("Failed to flush: %v", err)
+		}
 
 		// Create new store, load from same file
 		store2 := &NotificationIDStore{
@@ -297,6 +300,11 @@ func TestNotificationIDStore(t *testing.T) {
 			if !store.Has(id) {
 				t.Errorf("Store should have ID %q", id)
 			}
+		}
+
+		// Flush to ensure async save completes before testing persistence
+		if err := store.Flush(); err != nil {
+			t.Fatalf("Failed to flush: %v", err)
 		}
 
 		// Test persistence with special characters

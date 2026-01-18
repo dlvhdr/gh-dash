@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -579,14 +580,22 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	// Capture config limit for the closure
 	limit := m.Ctx.Config.Defaults.NotificationsLimit
 
-	// Capture reason filters for the closure
-	reasonFilters := filters.ReasonFilters
+	// Build reason filter map for O(1) lookup
+	reasonFilterMap := make(map[string]bool, len(filters.ReasonFilters))
+	for _, reason := range filters.ReasonFilters {
+		reasonFilterMap[reason] = true
+	}
 
 	fetchCmd := func() tea.Msg {
 		// Check if we need to include bookmarked items
+		// Build a map for O(1) lookups in the filter loop
 		bookmarkStore := data.GetBookmarkStore()
 		bookmarkedIds := bookmarkStore.GetBookmarkedIds()
 		hasBookmarks := len(bookmarkedIds) > 0
+		bookmarkedIdMap := make(map[string]bool, len(bookmarkedIds))
+		for _, id := range bookmarkedIds {
+			bookmarkedIdMap[id] = true
+		}
 
 		// Use the filter's read state directly - don't switch to "all" just for bookmarks/session items
 		// Bookmarked and session-marked-read items will be fetched separately by thread ID
@@ -625,65 +634,70 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			// (they may have aged out of the default notifications list or been marked as read)
 			if isFirstPage {
 				isFirstPage = false
-				// Fetch missing bookmarked notifications
+
+				// Collect all missing IDs that need to be fetched
+				missingIds := make([]string, 0)
 				if filters.IncludeBookmarked && hasBookmarks {
 					for _, bookmarkId := range bookmarkedIds {
 						if !fetchedIds[bookmarkId] {
-							notification, err := data.FetchNotificationByThreadId(bookmarkId)
-							if err != nil {
-								log.Debug("Failed to fetch bookmarked notification", "id", bookmarkId, "err", err)
-								continue
-							}
-							if notification == nil {
-								continue
-							}
-							// Apply repo filter if set
-							if len(filters.RepoFilters) > 0 {
-								matchesRepo := false
-								for _, repo := range filters.RepoFilters {
-									if notification.Repository.FullName == repo {
-										matchesRepo = true
-										break
-									}
-								}
-								if !matchesRepo {
-									continue
-								}
-							}
-							res.Notifications = append(res.Notifications, *notification)
-							fetchedIds[bookmarkId] = true
+							missingIds = append(missingIds, bookmarkId)
+							fetchedIds[bookmarkId] = true // Mark as fetched to avoid duplicates
+						}
+					}
+				}
+				if hasSessionMarkedRead {
+					for id := range sessionMarkedRead {
+						if !fetchedIds[id] {
+							missingIds = append(missingIds, id)
+							fetchedIds[id] = true
 						}
 					}
 				}
 
-				// Fetch missing session-marked-read notifications
-				if hasSessionMarkedRead {
-					for id := range sessionMarkedRead {
-						if !fetchedIds[id] {
-							notification, err := data.FetchNotificationByThreadId(id)
-							if err != nil {
-								log.Debug("Failed to fetch session-marked-read notification", "id", id, "err", err)
-								continue
-							}
-							if notification == nil {
-								continue
-							}
-							// Apply repo filter if set
-							if len(filters.RepoFilters) > 0 {
-								matchesRepo := false
-								for _, repo := range filters.RepoFilters {
-									if notification.Repository.FullName == repo {
-										matchesRepo = true
-										break
-									}
-								}
-								if !matchesRepo {
-									continue
-								}
-							}
-							res.Notifications = append(res.Notifications, *notification)
-							fetchedIds[id] = true
+				// Fetch all missing notifications in parallel
+				if len(missingIds) > 0 {
+					// Build repo filter map for O(1) lookup
+					repoFilterMap := make(map[string]bool, len(filters.RepoFilters))
+					for _, repo := range filters.RepoFilters {
+						repoFilterMap[repo] = true
+					}
+
+					type fetchResult struct {
+						notification *data.NotificationData
+						err          error
+					}
+					results := make(chan fetchResult, len(missingIds))
+
+					var wg sync.WaitGroup
+					for _, id := range missingIds {
+						wg.Add(1)
+						go func(threadId string) {
+							defer wg.Done()
+							notification, err := data.FetchNotificationByThreadId(threadId)
+							results <- fetchResult{notification: notification, err: err}
+						}(id)
+					}
+
+					// Close results channel when all goroutines complete
+					go func() {
+						wg.Wait()
+						close(results)
+					}()
+
+					// Collect results
+					for result := range results {
+						if result.err != nil {
+							log.Debug("Failed to fetch missing notification", "err", result.err)
+							continue
 						}
+						if result.notification == nil {
+							continue
+						}
+						// Apply repo filter if set
+						if len(repoFilterMap) > 0 && !repoFilterMap[result.notification.Repository.FullName] {
+							continue
+						}
+						res.Notifications = append(res.Notifications, *result.notification)
 					}
 				}
 			}
@@ -702,9 +716,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 				if sessionMarkedRead[n.Id] {
 					include = true
 				} else if filters.IncludeBookmarked && hasBookmarks {
-					// Default view: include if unread OR bookmarked
-					isBookmarked := bookmarkStore.IsBookmarked(n.Id)
-					include = n.Unread || isBookmarked
+					// Default view: include if unread OR bookmarked (O(1) map lookup)
+					include = n.Unread || bookmarkedIdMap[n.Id]
 				} else {
 					// Explicit filter: follow the ReadState filter
 					switch filters.ReadState {
@@ -717,16 +730,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 					}
 				}
 
-				// Apply reason filter if specified
-				if include && len(reasonFilters) > 0 {
-					matchesReason := false
-					for _, reason := range reasonFilters {
-						if n.Reason == reason {
-							matchesReason = true
-							break
-						}
-					}
-					include = matchesReason
+				// Apply reason filter if specified (O(1) map lookup)
+				if include && len(reasonFilterMap) > 0 {
+					include = reasonFilterMap[n.Reason]
 				}
 
 				if include {
