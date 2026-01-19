@@ -102,7 +102,24 @@ func (s *NotificationIDStore) save() error {
 		return err
 	}
 
-	if err := os.WriteFile(s.filePath, data, 0o644); err != nil {
+	// Use atomic write: write to temp file, then rename.
+	// This prevents races when multiple async saves run concurrently.
+	tmpFile, err := os.CreateTemp(dir, ".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmpFile.Name()
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		os.Remove(tmpPath)
+		return err
+	}
+	if err := os.Rename(tmpPath, s.filePath); err != nil {
+		os.Remove(tmpPath)
 		return err
 	}
 
