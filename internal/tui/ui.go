@@ -186,7 +186,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.prView.IsTextInputBoxFocused() {
-			m.prView, cmd, _ = m.prView.Update(msg)
+			m.prView, cmd = m.prView.Update(msg)
 			m.syncSidebar()
 			return m, cmd
 		}
@@ -367,7 +367,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				var scmds []tea.Cmd
 				var scmd tea.Cmd
-				m.prView, scmd, _ = m.prView.Update(msg)
+				m.prView, scmd = m.prView.Update(msg)
 				scmds = append(scmds, scmd)
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
@@ -540,11 +540,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
 				var prCmd tea.Cmd
-				var action *prview.PRAction
-				m.prView, prCmd, action = m.prView.Update(msg)
+				m.prView, prCmd = m.prView.Update(msg)
 
-				if action != nil {
-					switch action.Type {
+				if !m.prView.IsTextInputBoxFocused() {
+					action := prview.MsgToAction(msg)
+					if action != nil {
+						switch action.Type {
 					case prview.PRActionApprove:
 						m.prView.GoToFirstTab()
 						m.sidebar.IsOpen = true
@@ -633,6 +634,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.syncSidebar()
 						return m, nil
 					}
+				}
 				}
 
 				if prCmd != nil {
@@ -923,7 +925,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.sidebar, sidebarCmd = m.sidebar.Update(msg)
 
 	if m.prView.IsTextInputBoxFocused() {
-		m.prView, prViewCmd, _ = m.prView.Update(msg)
+		m.prView, prViewCmd = m.prView.Update(msg)
 		m.syncSidebar()
 	}
 

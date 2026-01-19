@@ -41,7 +41,7 @@ func newTestModelForAction(t *testing.T) Model {
 	return m
 }
 
-func TestUpdateReturnsCorrectActions(t *testing.T) {
+func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 	testCases := []struct {
 		name           string
 		keyBinding     string
@@ -64,10 +64,9 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			m := newTestModelForAction(t)
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tc.keyBinding)}
 
-			_, _, action := m.Update(msg)
+			action := MsgToAction(msg)
 
 			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
 			require.Equal(t, tc.expectedAction, action.Type,
@@ -76,53 +75,40 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 	}
 }
 
-func TestUpdateReturnsNilActionForUnknownKeys(t *testing.T) {
-	m := newTestModelForAction(t)
+func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")}
 
-	_, _, action := m.Update(msg)
+	action := MsgToAction(msg)
 
 	require.Nil(t, action, "expected nil action for unknown key")
 }
 
-func TestUpdateReturnsNilActionWhenCommenting(t *testing.T) {
+func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isCommenting = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("v")} // approve key
 
-	_, _, action := m.Update(msg)
-
-	require.Nil(t, action, "expected nil action when in commenting mode")
+	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in commenting mode")
 }
 
-func TestUpdateReturnsNilActionWhenApproving(t *testing.T) {
+func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isApproving = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")} // comment key
 
-	_, _, action := m.Update(msg)
-
-	require.Nil(t, action, "expected nil action when in approving mode")
+	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in approving mode")
 }
 
-func TestUpdateReturnsNilActionWhenAssigning(t *testing.T) {
+func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isAssigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")} // diff key
 
-	_, _, action := m.Update(msg)
-
-	require.Nil(t, action, "expected nil action when in assigning mode")
+	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in assigning mode")
 }
 
-func TestUpdateReturnsNilActionWhenUnassigning(t *testing.T) {
+func TestIsTextInputBoxFocusedWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isUnassigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("m")} // merge key
 
-	_, _, action := m.Update(msg)
-
-	require.Nil(t, action, "expected nil action when in unassigning mode")
+	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in unassigning mode")
 }
 
 func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
@@ -133,9 +119,8 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		initialTab := m.carousel.SelectedItem()
 
 		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("[")}
-		m, _, action := m.Update(msg)
+		m, _ = m.Update(msg)
 
-		require.Nil(t, action, "sidebar tab navigation should not return an action")
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
 			"carousel should have moved to previous tab")
 	})
@@ -145,9 +130,8 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		initialTab := m.carousel.SelectedItem()
 
 		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("]")}
-		m, _, action := m.Update(msg)
+		m, _ = m.Update(msg)
 
-		require.Nil(t, action, "sidebar tab navigation should not return an action")
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
 			"carousel should have moved to next tab")
 	})
@@ -181,7 +165,7 @@ func TestPRActionTypes(t *testing.T) {
 	require.Equal(t, PRActionType(0), PRActionNone, "PRActionNone should be zero value")
 }
 
-func TestUpdateWithReboundKeys(t *testing.T) {
+func TestMsgToActionWithReboundKeys(t *testing.T) {
 	// Save original key bindings
 	originalApproveKeys := keys.PRKeys.Approve.Keys()
 
@@ -192,10 +176,9 @@ func TestUpdateWithReboundKeys(t *testing.T) {
 		keys.PRKeys.Approve.SetKeys(originalApproveKeys...)
 	}()
 
-	m := newTestModelForAction(t)
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("V")}
 
-	_, _, action := m.Update(msg)
+	action := MsgToAction(msg)
 
 	require.NotNil(t, action, "expected action for rebound key")
 	require.Equal(t, PRActionApprove, action.Type, "expected approve action for rebound key")
