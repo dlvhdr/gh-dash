@@ -49,7 +49,7 @@ func RenderIssueTitle(
 		prNumber = strings.ReplaceAll(prNumber, "\x1b[0m", "")
 	}
 
-	rTitle := GetIssueTextStyle(ctx).Render(title)
+	rTitle := GetIssueTextStyle(ctx).Bold(true).Render(title)
 
 	res := fmt.Sprintf("%s%s", prNumber, rTitle)
 	return res

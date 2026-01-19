@@ -185,7 +185,7 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	author := baseStyle.Render(fmt.Sprintf("@%s",
+	author := baseStyle.Bold(true).Foreground(pr.Ctx.Theme.FaintText).Render(fmt.Sprintf("@%s",
 		pr.Data.Primary.GetAuthor(pr.Ctx.Theme, pr.ShowAuthorIcon)))
 	top := lipgloss.JoinHorizontal(lipgloss.Top, pr.Data.Primary.Repository.NameWithOwner,
 		fmt.Sprintf(" #%d by %s", pr.Data.Primary.Number, author))
@@ -203,7 +203,8 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	}
 	width := titleColumn.ComputedWidth - 2
 	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
-	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(title)
+	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Bold(true).Width(width).MaxWidth(
+		width).Height(1).MaxHeight(1).Render(title)
 
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }
