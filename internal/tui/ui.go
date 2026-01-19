@@ -376,73 +376,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			case key.Matches(msg, keys.PRKeys.Approve):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsApproving(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForPRInput(m.prView.SetIsApproving)
 
 			case key.Matches(msg, keys.PRKeys.Assign):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsAssigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForPRInput(m.prView.SetIsAssigning)
 
 			case key.Matches(msg, keys.PRKeys.Unassign):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsUnassigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
 
 			case key.Matches(msg, keys.PRKeys.Comment):
-				m.prView.GoToFirstTab()
-				m.sidebar.IsOpen = true
-				cmd = m.prView.SetIsCommenting(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
 
 			case key.Matches(msg, keys.PRKeys.Close):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("close")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "close")
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Ready):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("ready")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "ready")
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Reopen):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("reopen")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "reopen")
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Merge):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("merge")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "merge")
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.Update):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("update")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "update")
 				}
 				return m, cmd
 
@@ -472,48 +443,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 
 			case key.Matches(msg, keys.IssueKeys.Label):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsLabeling(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForInput(m.issueSidebar.SetIsLabeling)
 
 			case key.Matches(msg, keys.IssueKeys.Assign):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsAssigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForInput(m.issueSidebar.SetIsAssigning)
 
 			case key.Matches(msg, keys.IssueKeys.Unassign):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsUnassigning(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForInput(m.issueSidebar.SetIsUnassigning)
 
 			case key.Matches(msg, keys.IssueKeys.Comment):
-				m.sidebar.IsOpen = true
-				cmd = m.issueSidebar.SetIsCommenting(true)
-				m.syncMainContentWidth()
-				m.syncSidebar()
-				m.sidebar.ScrollToBottom()
-				return m, cmd
+				return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
 			case key.Matches(msg, keys.IssueKeys.Close):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("close")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "close")
 				}
 				return m, cmd
 
 			case key.Matches(msg, keys.IssueKeys.Reopen):
-				if currRowData != nil && currSection != nil {
-					currSection.SetPromptConfirmationAction("reopen")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "reopen")
 				}
 				return m, cmd
 
@@ -546,95 +495,51 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					action := prview.MsgToAction(msg)
 					if action != nil {
 						switch action.Type {
-					case prview.PRActionApprove:
-						m.prView.GoToFirstTab()
-						m.sidebar.IsOpen = true
-						cmd = m.prView.SetIsApproving(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						case prview.PRActionApprove:
+							return m, m.openSidebarForPRInput(m.prView.SetIsApproving)
 
-					case prview.PRActionAssign:
-						m.prView.GoToFirstTab()
-						m.sidebar.IsOpen = true
-						cmd = m.prView.SetIsAssigning(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						case prview.PRActionAssign:
+							return m, m.openSidebarForPRInput(m.prView.SetIsAssigning)
 
-					case prview.PRActionUnassign:
-						m.prView.GoToFirstTab()
-						m.sidebar.IsOpen = true
-						cmd = m.prView.SetIsUnassigning(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						case prview.PRActionUnassign:
+							return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
 
-					case prview.PRActionComment:
-						m.prView.GoToFirstTab()
-						m.sidebar.IsOpen = true
-						cmd = m.prView.SetIsCommenting(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						case prview.PRActionComment:
+							return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
 
-					case prview.PRActionDiff:
-						if pr := m.notificationView.GetSubjectPR(); pr != nil {
-							cmd = common.DiffPR(pr.GetNumber(), pr.GetRepoNameWithOwner(), m.ctx.Config.GetFullScreenDiffPagerEnv())
+						case prview.PRActionDiff:
+							if pr := m.notificationView.GetSubjectPR(); pr != nil {
+								cmd = common.DiffPR(pr.GetNumber(), pr.GetRepoNameWithOwner(), m.ctx.Config.GetFullScreenDiffPagerEnv())
+							}
+							return m, cmd
+
+						case prview.PRActionCheckout:
+							if pr := m.notificationView.GetSubjectPR(); pr != nil {
+								cmd, _ = notificationssection.CheckoutPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+							}
+							return m, cmd
+
+						case prview.PRActionClose:
+							return m, m.promptConfirmation(currSection, "close")
+
+						case prview.PRActionReady:
+							return m, m.promptConfirmation(currSection, "ready")
+
+						case prview.PRActionReopen:
+							return m, m.promptConfirmation(currSection, "reopen")
+
+						case prview.PRActionMerge:
+							return m, m.promptConfirmation(currSection, "merge")
+
+						case prview.PRActionUpdate:
+							return m, m.promptConfirmation(currSection, "update")
+
+						case prview.PRActionSummaryViewMore:
+							m.prView.SetSummaryViewMore()
+							m.syncSidebar()
+							return m, nil
 						}
-						return m, cmd
-
-					case prview.PRActionCheckout:
-						if pr := m.notificationView.GetSubjectPR(); pr != nil {
-							cmd, _ = notificationssection.CheckoutPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
-						}
-						return m, cmd
-
-					case prview.PRActionClose:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("close")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
-
-					case prview.PRActionReady:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("ready")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
-
-					case prview.PRActionReopen:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("reopen")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
-
-					case prview.PRActionMerge:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("merge")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
-
-					case prview.PRActionUpdate:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("update")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
-
-					case prview.PRActionSummaryViewMore:
-						m.prView.SetSummaryViewMore()
-						m.syncSidebar()
-						return m, nil
 					}
-				}
 				}
 
 				if prCmd != nil {
@@ -651,50 +556,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if action != nil {
 					switch action.Type {
 					case issueview.IssueActionLabel:
-						m.sidebar.IsOpen = true
-						cmd = m.issueSidebar.SetIsLabeling(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						return m, m.openSidebarForInput(m.issueSidebar.SetIsLabeling)
 
 					case issueview.IssueActionAssign:
-						m.sidebar.IsOpen = true
-						cmd = m.issueSidebar.SetIsAssigning(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						return m, m.openSidebarForInput(m.issueSidebar.SetIsAssigning)
 
 					case issueview.IssueActionUnassign:
-						m.sidebar.IsOpen = true
-						cmd = m.issueSidebar.SetIsUnassigning(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						return m, m.openSidebarForInput(m.issueSidebar.SetIsUnassigning)
 
 					case issueview.IssueActionComment:
-						m.sidebar.IsOpen = true
-						cmd = m.issueSidebar.SetIsCommenting(true)
-						m.syncMainContentWidth()
-						m.syncSidebar()
-						m.sidebar.ScrollToBottom()
-						return m, cmd
+						return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
 					case issueview.IssueActionClose:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("close")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
+						return m, m.promptConfirmation(currSection, "close")
 
 					case issueview.IssueActionReopen:
-						if currSection != nil {
-							currSection.SetPromptConfirmationAction("reopen")
-							cmd = currSection.SetIsPromptConfirmationShown(true)
-						}
-						return m, cmd
+						return m, m.promptConfirmation(currSection, "reopen")
 					}
 				}
 
@@ -1129,6 +1006,28 @@ func (m *Model) syncMainContentWidth() {
 	}
 	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
 	m.ctx.SidebarOpen = m.sidebar.IsOpen
+}
+
+func (m *Model) openSidebarForPRInput(setFunc func(bool) tea.Cmd) tea.Cmd {
+	m.prView.GoToFirstTab()
+	return m.openSidebarForInput(setFunc)
+}
+
+func (m *Model) openSidebarForInput(setFunc func(bool) tea.Cmd) tea.Cmd {
+	m.sidebar.IsOpen = true
+	cmd := setFunc(true)
+	m.syncMainContentWidth()
+	m.syncSidebar()
+	m.sidebar.ScrollToBottom()
+	return cmd
+}
+
+func (m *Model) promptConfirmation(currSection section.Section, action string) tea.Cmd {
+	if currSection != nil {
+		currSection.SetPromptConfirmationAction(action)
+		return currSection.SetIsPromptConfirmationShown(true)
+	}
+	return nil
 }
 
 func (m *Model) syncSidebar() tea.Cmd {

@@ -155,3 +155,10 @@ func TestGetCurrentViewSections_RepoViewWithNilRepo(t *testing.T) {
 	require.NotNil(t, sections, "sections should not be nil")
 	require.Empty(t, sections, "sections should be empty when repo is nil")
 }
+
+func TestPromptConfirmation_NilSection(t *testing.T) {
+	// promptConfirmation should return nil when currSection is nil
+	m := Model{}
+	cmd := m.promptConfirmation(nil, "close")
+	require.Nil(t, cmd, "promptConfirmation should return nil when section is nil")
+}
