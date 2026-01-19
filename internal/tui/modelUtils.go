@@ -168,6 +168,7 @@ func (m *Model) runCustomPRCommand(commandTemplate string, prData *prrow.Data) t
 			"PrNumber":    prData.Primary.Number,
 			"HeadRefName": prData.Primary.HeadRefName,
 			"BaseRefName": prData.Primary.BaseRefName,
+			"Author":      prData.Primary.Author.Login,
 		})
 }
 
@@ -194,6 +195,7 @@ func (m *Model) runCustomBranchCommand(commandTemplate string, branchData *prrow
 				"PrNumber":    branchData.Primary.Number,
 				"HeadRefName": branchData.Primary.HeadRefName,
 				"BaseRefName": branchData.Primary.BaseRefName,
+				"Author":      branchData.Primary.Author.Login,
 			})
 	}
 	return m.runCustomCommand(commandTemplate, &input)
