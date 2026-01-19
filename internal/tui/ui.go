@@ -542,10 +542,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-				if prCmd != nil {
-					m.syncSidebar()
-					return m, prCmd
-				}
+				// Always sync and return after updating prView - needed for tab navigation
+				// which updates carousel state but doesn't return a command
+				m.syncSidebar()
+				return m, prCmd
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:

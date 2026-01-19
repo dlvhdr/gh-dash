@@ -19,8 +19,13 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/testutils"
 )
 
@@ -161,4 +166,56 @@ func TestPromptConfirmation_NilSection(t *testing.T) {
 	m := Model{}
 	cmd := m.promptConfirmation(nil, "close")
 	require.Nil(t, cmd, "promptConfirmation should return nil when section is nil")
+}
+
+func TestNotificationView_PRViewTabNavigation(t *testing.T) {
+	// This test verifies that tab navigation works in notification view when viewing a PR.
+	// Previously, the code only returned when prCmd != nil, but tab navigation
+	// (carousel.MoveLeft/MoveRight) doesn't return a command - it just updates state.
+	// The fix ensures we always sync sidebar and return after prView.Update().
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prView:  prview.NewModel(ctx),
+		sidebar: sidebarModel,
+	}
+
+	// Set up a PR notification subject so GetSubjectPR() returns non-nil
+	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-id")
+
+	// Get initial tab
+	initialTab := m.prView.SelectedTab()
+
+	// Send "next tab" key message
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("]")}
+	newModel, _ := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify tab changed
+	require.NotEqual(t, initialTab, m.prView.SelectedTab(),
+		"prView tab should have changed after pressing next tab key")
+
+	// Now test going back
+	currentTab := m.prView.SelectedTab()
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("[")}
+	newModel, _ = m.Update(msg)
+	m = newModel.(Model)
+
+	require.NotEqual(t, currentTab, m.prView.SelectedTab(),
+		"prView tab should have changed after pressing prev tab key")
 }

@@ -735,6 +735,10 @@ func (m *Model) GoToActivityTab() {
 	m.carousel.SetCursor(1) // Activity is the second tab (index 1)
 }
 
+func (m Model) SelectedTab() string {
+	return m.carousel.SelectedItem()
+}
+
 func (m *Model) SetSummaryViewMore() {
 	m.summaryViewMore = true
 }
