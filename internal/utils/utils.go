@@ -4,6 +4,8 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -93,4 +95,15 @@ func ShortNumber(n int) string {
 	}
 
 	return strconv.Itoa(n/1000000) + "m"
+}
+
+// GetStylePrefix extracts ANSI codes from a lipgloss style without the trailing reset.
+// This allows styled text to be concatenated without breaking parent background colors.
+func GetStylePrefix(s lipgloss.Style) string {
+	rendered := s.Render("")
+	// Strip trailing reset sequence if present
+	if len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m" {
+		return rendered[:len(rendered)-4]
+	}
+	return rendered
 }

@@ -74,6 +74,7 @@ export default defineConfig({
             "configuration/searching",
             "configuration/pr-section",
             "configuration/issue-section",
+            "configuration/notification-section",
             "configuration/repo-paths",
             "configuration/keybindings",
             "configuration/theme",

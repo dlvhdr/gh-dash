@@ -57,6 +57,8 @@ func (a *ViewType) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	switch strings.ToLower(s) {
+	case "notifications":
+		*a = NotificationsView
 	case "prs":
 		*a = PRsView
 	case "issues":
@@ -69,9 +71,10 @@ func (a *ViewType) UnmarshalJSON(b []byte) error {
 }
 
 const (
-	PRsView    ViewType = "prs"
-	IssuesView ViewType = "issues"
-	RepoView   ViewType = "repo"
+	NotificationsView ViewType = "notifications"
+	PRsView           ViewType = "prs"
+	IssuesView        ViewType = "issues"
+	RepoView          ViewType = "repo"
 )
 
 type SectionConfig struct {
@@ -94,6 +97,12 @@ type IssuesSectionConfig struct {
 	Filters string
 	Limit   *int               `yaml:"limit,omitempty"`
 	Layout  IssuesLayoutConfig `yaml:"layout,omitempty"`
+}
+
+type NotificationsSectionConfig struct {
+	Title   string
+	Filters string
+	Limit   *int `yaml:"limit,omitempty"`
 }
 
 type PreviewConfig struct {
@@ -174,6 +183,7 @@ type Defaults struct {
 	PrsLimit               int           `yaml:"prsLimit"`
 	PrApproveComment       string        `yaml:"prApproveComment,omitempty"`
 	IssuesLimit            int           `yaml:"issuesLimit"`
+	NotificationsLimit     int           `yaml:"notificationsLimit"`
 	View                   ViewType      `yaml:"view"`
 	Layout                 LayoutConfig  `yaml:"layout,omitempty"`
 	RefetchIntervalMinutes int           `yaml:"refetchIntervalMinutes,omitempty"`
@@ -246,6 +256,7 @@ type ColorThemeText struct {
 	Warning   HexColor `yaml:"warning"   validate:"omitempty,hexcolor"`
 	Success   HexColor `yaml:"success"   validate:"omitempty,hexcolor"`
 	Error     HexColor `yaml:"error"     validate:"omitempty,hexcolor"`
+	Actor     HexColor `yaml:"actor"     validate:"omitempty,hexcolor"`
 }
 
 type ColorThemeBorder struct {
@@ -299,17 +310,18 @@ type ThemeConfig struct {
 }
 
 type Config struct {
-	PRSections             []PrsSectionConfig    `yaml:"prSections"`
-	IssuesSections         []IssuesSectionConfig `yaml:"issuesSections"`
-	Repo                   RepoConfig            `yaml:"repo,omitempty"`
-	Defaults               Defaults              `yaml:"defaults"`
-	Keybindings            Keybindings           `yaml:"keybindings"`
-	RepoPaths              map[string]string     `yaml:"repoPaths"`
-	Theme                  *ThemeConfig          `yaml:"theme,omitempty" validate:"omitempty"`
-	Pager                  Pager                 `yaml:"pager"`
-	ConfirmQuit            bool                  `yaml:"confirmQuit"`
-	ShowAuthorIcons        bool                  `yaml:"showAuthorIcons,omitempty"`
-	SmartFilteringAtLaunch bool                  `yaml:"smartFilteringAtLaunch" default:"true"`
+	PRSections             []PrsSectionConfig           `yaml:"prSections"`
+	IssuesSections         []IssuesSectionConfig        `yaml:"issuesSections"`
+	NotificationsSections  []NotificationsSectionConfig `yaml:"notificationsSections"`
+	Repo                   RepoConfig                   `yaml:"repo,omitempty"`
+	Defaults               Defaults                     `yaml:"defaults"`
+	Keybindings            Keybindings                  `yaml:"keybindings"`
+	RepoPaths              map[string]string            `yaml:"repoPaths"`
+	Theme                  *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
+	Pager                  Pager                        `yaml:"pager"`
+	ConfirmQuit            bool                         `yaml:"confirmQuit"`
+	ShowAuthorIcons        bool                         `yaml:"showAuthorIcons,omitempty"`
+	SmartFilteringAtLaunch bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
 }
 
 type configError struct {
@@ -332,6 +344,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			PrsLimit:               20,
 			PrApproveComment:       "LGTM",
 			IssuesLimit:            20,
+			NotificationsLimit:     20,
 			View:                   PRsView,
 			RefetchIntervalMinutes: 30,
 			Layout: LayoutConfig{
@@ -416,6 +429,40 @@ func (parser ConfigParser) getDefaultConfig() Config {
 			{
 				Title:   "Involved",
 				Filters: "is:open involves:@me -author:@me",
+			},
+		},
+		NotificationsSections: []NotificationsSectionConfig{
+			{
+				Title:   "All",
+				Filters: "",
+			},
+			{
+				Title:   "Created",
+				Filters: "reason:author",
+			},
+			{
+				Title:   "Participating",
+				Filters: "reason:participating",
+			},
+			{
+				Title:   "Mentioned",
+				Filters: "reason:mention",
+			},
+			{
+				Title:   "Review Requested",
+				Filters: "reason:review-requested",
+			},
+			{
+				Title:   "Assigned",
+				Filters: "reason:assign",
+			},
+			{
+				Title:   "Subscribed",
+				Filters: "reason:subscribed",
+			},
+			{
+				Title:   "Team Mentioned",
+				Filters: "reason:team-mention",
 			},
 		},
 		Keybindings: Keybindings{
@@ -588,6 +635,7 @@ func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath strin
 		dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
 		dest["prSections"] = overridesCopy["prSections"]
 		dest["issuesSections"] = overridesCopy["issuesSections"]
+		dest["notificationsSections"] = overridesCopy["notificationsSections"]
 
 		return nil
 	})); err != nil {

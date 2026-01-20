@@ -178,12 +178,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, keys.PRKeys.PrevSidebarTab):
 				m.carousel.MoveLeft()
-				return m, nil
 			case key.Matches(msg, keys.PRKeys.NextSidebarTab):
 				m.carousel.MoveRight()
-				return m, nil
 			}
-			return m, nil
 		}
 	}
 
@@ -259,22 +256,12 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return lipgloss.NewStyle().
-		PaddingLeft(1).
-		Width(m.width).
-		Background(m.ctx.Theme.SelectedBackground).
-		Foreground(m.ctx.Theme.SecondaryText).
-		Render(fmt.Sprintf("%s · #%d", m.pr.Data.Primary.GetRepoNameWithOwner(), m.pr.Data.Primary.GetNumber()))
+	return common.RenderPreviewHeader(m.ctx.Theme, m.width,
+		fmt.Sprintf("%s · #%d", m.pr.Data.Primary.GetRepoNameWithOwner(), m.pr.Data.Primary.GetNumber()))
 }
 
 func (m *Model) renderTitle() string {
-	return lipgloss.NewStyle().Height(3).Width(m.width).Background(
-		m.ctx.Theme.SelectedBackground).PaddingLeft(1).Render(
-		lipgloss.PlaceVertical(3, lipgloss.Center, m.ctx.Styles.Common.MainTextStyle.
-			Background(m.ctx.Theme.SelectedBackground).
-			Render(m.pr.Data.Primary.Title),
-		),
-	)
+	return common.RenderPreviewTitle(m.ctx.Theme, m.ctx.Styles.Common, m.width, m.pr.Data.Primary.Title)
 }
 
 func (m *Model) renderBranches() string {
@@ -742,6 +729,14 @@ func (m *Model) prAssignees() []string {
 
 func (m *Model) GoToFirstTab() {
 	m.carousel.SetCursor(0)
+}
+
+func (m *Model) GoToActivityTab() {
+	m.carousel.SetCursor(1) // Activity is the second tab (index 1)
+}
+
+func (m Model) SelectedTab() string {
+	return m.carousel.SelectedItem()
 }
 
 func (m *Model) SetSummaryViewMore() {

@@ -82,3 +82,25 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		Render(constants.MergedIcon)
 	return s
 }
+
+// RenderPreviewHeader renders the repo/number line at the top of preview panes
+// (e.g., "owner/repo · #123" or "#123 · owner/repo")
+func RenderPreviewHeader(theme theme.Theme, width int, text string) string {
+	return lipgloss.NewStyle().
+		PaddingLeft(1).
+		Width(width).
+		Background(theme.SelectedBackground).
+		Foreground(theme.SecondaryText).
+		Render(text)
+}
+
+// RenderPreviewTitle renders the title block with background highlight
+func RenderPreviewTitle(theme theme.Theme, styles CommonStyles, width int, title string) string {
+	return lipgloss.NewStyle().Height(3).Width(width).Background(
+		theme.SelectedBackground).PaddingLeft(1).Render(
+		lipgloss.PlaceVertical(3, lipgloss.Center, styles.MainTextStyle.
+			Background(theme.SelectedBackground).
+			Render(title),
+		),
+	)
+}

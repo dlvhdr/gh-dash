@@ -19,6 +19,7 @@ type Theme struct {
 	SuccessText             lipgloss.AdaptiveColor // config.Theme.Colors.Text.Success
 	WarningText             lipgloss.AdaptiveColor // config.Theme.Colors.Text.Warning
 	ErrorText               lipgloss.AdaptiveColor // config.Theme.Colors.Text.Error
+	ActorText               lipgloss.AdaptiveColor // config.Theme.Colors.Text.Actor
 	NewContributorIconColor lipgloss.AdaptiveColor // config.Theme.Colors.Icon.NewContributor
 	ContributorIconColor    lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Contributor
 	CollaboratorIconColor   lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Collaborator
@@ -45,6 +46,7 @@ var DefaultTheme = &Theme{
 	SuccessText:             lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
 	WarningText:             lipgloss.AdaptiveColor{Light: "003", Dark: "003"},
 	ErrorText:               lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
+	ActorText:               lipgloss.AdaptiveColor{Light: "244", Dark: "251"}, // Same as SecondaryText
 	NewContributorIconColor: lipgloss.AdaptiveColor{Light: "077", Dark: "077"},
 	ContributorIconColor:    lipgloss.AdaptiveColor{Light: "075", Dark: "075"},
 	CollaboratorIconColor:   lipgloss.AdaptiveColor{Light: "178", Dark: "178"},
@@ -117,6 +119,10 @@ func ParseTheme(cfg *config.Config) Theme {
 		DefaultTheme.ErrorText = _shimHex(
 			cfg.Theme.Colors.Inline.Text.Error,
 			DefaultTheme.ErrorText,
+		)
+		DefaultTheme.ActorText = _shimHex(
+			cfg.Theme.Colors.Inline.Text.Actor,
+			DefaultTheme.ActorText,
 		)
 		DefaultTheme.NewContributorIconColor = _shimHex(
 			cfg.Theme.Colors.Inline.Icon.NewContributor,

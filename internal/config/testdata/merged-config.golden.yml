@@ -9,6 +9,23 @@ prSections:
 issuesSections:
   - title: Open
     filters: author:@me -author:@me sort:reactions
+notificationsSections:
+  - title: All
+    filters: ""
+  - title: Created
+    filters: "reason:author"
+  - title: Participating
+    filters: "reason:participating"
+  - title: Mentioned
+    filters: "reason:mention"
+  - title: Review Requested
+    filters: "reason:review-requested"
+  - title: Assigned
+    filters: "reason:assign"
+  - title: Subscribed
+    filters: "reason:subscribed"
+  - title: Team Mentioned
+    filters: "reason:team-mention"
 repo:
   branchesRefetchIntervalSeconds: 30
   prsRefetchIntervalSeconds: 60
@@ -19,6 +36,7 @@ defaults:
     width: 80
   prsLimit: 100
   issuesLimit: 100
+  notificationsLimit: 100
   view: prs
   layout:
     prs:
