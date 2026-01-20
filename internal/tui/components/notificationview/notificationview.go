@@ -38,6 +38,12 @@ func (m *Model) SetWidth(width int) {
 	m.width = width
 }
 
+func (m *Model) ResetSubject() {
+	m.subjectPR = nil
+	m.subjectIssue = nil
+	m.subjectId = ""
+}
+
 func (m *Model) SetSubjectPR(pr *prrow.Data, notificationId string) {
 	m.subjectPR = pr
 	m.subjectIssue = nil

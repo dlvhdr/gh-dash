@@ -222,7 +222,8 @@ func (m *BaseModel) GetSearchValue() string {
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if !strings.HasPrefix(token, currentCloneFilter) {
-			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
+			searchValueWithoutCurrentCloneFilter =
+				append(searchValueWithoutCurrentCloneFilter, token)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {
@@ -438,6 +439,8 @@ func (m *BaseModel) GetPromptConfirmation() string {
 	if m.IsPromptConfirmationShown {
 		var prompt string
 		switch {
+
+		// TODO: fix prompt not showing when on a PR notification
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.PRsView:
 			prompt = "Are you sure you want to close this PR? (Y/n) "
 
