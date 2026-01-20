@@ -25,8 +25,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/testutils"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 func TestFullOutput(t *testing.T) {
