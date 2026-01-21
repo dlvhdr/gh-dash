@@ -174,7 +174,8 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 	// (carousel.MoveLeft/MoveRight) doesn't return a command - it just updates state.
 	// The fix ensures we always sync sidebar and return after prView.Update().
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../config/testdata/test-config.yml",
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	require.NoError(t, err)
 

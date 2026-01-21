@@ -731,8 +731,9 @@ func initParser() ConfigParser {
 }
 
 type Location struct {
-	RepoPath   string // path if inside a git repo
-	ConfigFlag string // Config passed with explicit --config flag
+	RepoPath         string // path if inside a git repo
+	ConfigFlag       string // Config passed with explicit --config flag
+	SkipGlobalConfig bool   // Skip loading global config (for testing)
 }
 
 func ParseConfig(location Location) (Config, error) {
@@ -741,12 +742,22 @@ func ParseConfig(location Location) (Config, error) {
 	var config Config
 	var err error
 
+	userProvidedCfgPath := parser.getProvidedConfigPath(location)
+
+	// For testing: skip global config and load only the provided config
+	if location.SkipGlobalConfig && userProvidedCfgPath != "" {
+		if err := parser.k.Load(file.Provider(userProvidedCfgPath), yaml.Parser()); err != nil {
+			return Config{}, parsingError{path: userProvidedCfgPath, err: err}
+		}
+		log.Info("Loaded user provided config (skipping global)", "path", userProvidedCfgPath)
+		return parser.unmarshalConfigWithDefaults()
+	}
+
 	globalCfgPath, err := parser.getGlobalConfigPathOrCreateIfMissing()
 	if err != nil {
 		return config, parsingError{path: globalCfgPath, err: err}
 	}
 
-	userProvidedCfgPath := parser.getProvidedConfigPath(location)
 	if userProvidedCfgPath != "" {
 		mergedCfg, err := parser.mergeConfigs(globalCfgPath, userProvidedCfgPath)
 		if err != nil {

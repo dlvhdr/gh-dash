@@ -17,7 +17,8 @@ import (
 func newTestModelForAction(t *testing.T) Model {
 	t.Helper()
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../../../config/testdata/test-config.yml",
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	if err != nil {
 		t.Fatal(err)
