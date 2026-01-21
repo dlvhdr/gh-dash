@@ -271,6 +271,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.Refresh):
+			data.ClearEnrichmentCache()
 			currSection.ResetFilters()
 			currSection.ResetRows()
 			m.syncSidebar()
@@ -278,6 +279,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 		case key.Matches(msg, m.keys.RefreshAll):
+			data.ClearEnrichmentCache()
 			newSections, fetchSectionsCmds := m.fetchAllViewSections()
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
