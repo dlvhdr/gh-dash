@@ -300,6 +300,22 @@ Similarly, when viewing an Issue notification, Issue-specific keybindings are av
 
 The `?` help display dynamically updates to show the applicable keybindings based on what type of notification content is being viewed.
 
+#### Confirmation Prompts for Destructive Actions
+
+When viewing a PR or Issue notification, destructive actions (close, reopen, merge, etc.) require confirmation before execution. This uses a footer-based confirmation mechanism separate from the section-level confirmation used in PR/Issue views:
+
+1. User presses action key (e.g., `x` for close)
+2. Footer displays: "Are you sure you want to close PR #123? (y/N)"
+3. User presses `y`, `Y`, or `Enter` to confirm, any other key cancels
+4. Action executes via the `tasks` package (same as PR/Issue views)
+
+This design is necessary because:
+- The notification section doesn't understand PR/Issue-specific actions
+- PR/Issue data is stored in `notificationView`, not in the section
+- Actions operate on the notification's subject PR/Issue, not the notification itself
+
+The `pendingNotificationAction` field in the Model tracks the pending action (e.g., "pr_close", "issue_reopen") until confirmed or cancelled.
+
 ## Configuration
 
 ### Search Section
