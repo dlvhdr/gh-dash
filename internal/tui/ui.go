@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"reflect"
 	"runtime/debug"
 	"sort"
@@ -37,6 +38,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -60,6 +62,12 @@ type Model struct {
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
 	tasks            map[string]context.Task
+
+	// Pending confirmation action for notification PR/Issue (close, merge, etc.)
+	// This is separate from section confirmation because PR/Issue actions in
+	// notification view need to be executed on the notification's subject PR/Issue,
+	// not on the notification section itself.
+	pendingNotificationAction string // "pr_close", "pr_merge", "issue_close", etc.
 }
 
 func NewModel(location config.Location) Model {
@@ -202,6 +210,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if m.footer.ShowConfirmQuit {
 			m.footer.SetShowConfirmQuit(false)
 			return m, nil
+		}
+
+		// Handle notification PR/Issue action confirmation
+		if m.pendingNotificationAction != "" {
+			if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
+				cmd = m.executeNotificationAction()
+			}
+			// Any other key cancels the confirmation
+			m.pendingNotificationAction = ""
+			m.footer.SetLeftSection("")
+			return m, cmd
 		}
 
 		switch {
@@ -396,7 +415,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
-			// TODO: fix conflict with mark as read
 			case key.Matches(msg, keys.PRKeys.Merge):
 				if currRowData != nil {
 					cmd = m.promptConfirmation(currSection, "merge")
@@ -456,14 +474,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
-				var prCmd tea.Cmd
-				m.prView, prCmd = m.prView.Update(msg)
-				cmds = append(cmds, prCmd)
-
-				// Always sync and append cmd after updating prView - needed for tab navigation
-				// which updates carousel state but doesn't return a command
-				m.syncSidebar()
-
+				// Check for PR actions first (before updating prView)
 				if !m.prView.IsTextInputBoxFocused() {
 					action := prview.MsgToAction(msg)
 					if action != nil {
@@ -495,19 +506,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							return m, cmd
 
 						case prview.PRActionClose:
-							return m, m.promptConfirmation(currSection, "close")
+							cmd = m.promptConfirmationForNotificationPR("close")
+							return m, cmd
 
 						case prview.PRActionReady:
-							return m, m.promptConfirmation(currSection, "ready")
+							cmd = m.promptConfirmationForNotificationPR("ready")
+							return m, cmd
 
 						case prview.PRActionReopen:
-							return m, m.promptConfirmation(currSection, "reopen")
+							cmd = m.promptConfirmationForNotificationPR("reopen")
+							return m, cmd
 
 						case prview.PRActionMerge:
-							return m, m.promptConfirmation(currSection, "merge")
+							cmd = m.promptConfirmationForNotificationPR("merge")
+							return m, cmd
 
 						case prview.PRActionUpdate:
-							return m, m.promptConfirmation(currSection, "update")
+							cmd = m.promptConfirmationForNotificationPR("update")
+							return m, cmd
 
 						case prview.PRActionSummaryViewMore:
 							m.prView.SetSummaryViewMore()
@@ -522,17 +538,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.switchSelectedView())
 				}
 
-				// Handle tab navigation keys - these don't return a command but should return
-				if key.Matches(msg, keys.PRKeys.PrevSidebarTab) || key.Matches(msg, keys.PRKeys.NextSidebarTab) {
-					m.syncSidebar()
-					return m, prCmd
-				}
-
-				// For other keys, only return if prView returned a command
-				if prCmd != nil {
-					m.syncSidebar()
-					return m, prCmd
-				}
+				// No action matched - update prView for navigation (tab switching, scrolling)
+				var prCmd tea.Cmd
+				m.prView, prCmd = m.prView.Update(msg)
+				m.syncSidebar()
+				return m, prCmd
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:
@@ -555,10 +565,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
 					case issueview.IssueActionClose:
-						return m, m.promptConfirmation(currSection, "close")
+						cmd = m.promptConfirmationForNotificationIssue("close")
+						return m, cmd
 
 					case issueview.IssueActionReopen:
-						return m, m.promptConfirmation(currSection, "reopen")
+						cmd = m.promptConfirmationForNotificationIssue("reopen")
+						return m, cmd
 					}
 				}
 
@@ -567,33 +579,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.switchSelectedView())
 				}
 
-				if issueCmd != nil {
-					m.syncSidebar()
-					cmds = append(cmds, issueCmd)
-				}
+				// Sync sidebar and return issueCmd for navigation
+				m.syncSidebar()
+				return m, issueCmd
 
-			// Notification-specific keybindings
+			// Notification-specific keybindings (when not viewing PR/Issue content)
 			case key.Matches(msg, keys.NotificationKeys.View):
-				// View notification content and mark as read
 				cmds = append(cmds, m.loadNotificationContent())
 
-			case key.Matches(msg, keys.NotificationKeys.MarkAsRead):
-				cmds = append(cmds, m.onViewedRowChanged())
-
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
-				// Already handled in the section's Update method
 				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 				return m, cmd
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAllAsDone):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("done_all")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
-				}
+				cmd = m.promptConfirmation(currSection, "done_all")
 				return m, cmd
 
 			case key.Matches(msg, keys.NotificationKeys.Open):
-				// Handled in the section's Update method
 				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 				return m, cmd
 
@@ -1007,7 +1009,6 @@ func (m *Model) openSidebarForInput(setFunc func(bool) tea.Cmd) tea.Cmd {
 }
 
 func (m *Model) promptConfirmation(currSection section.Section, action string) tea.Cmd {
-	log.Debug("prompting for confirmation", "action", action)
 	if currSection != nil {
 		currSection.SetPromptConfirmationAction(action)
 		return currSection.SetIsPromptConfirmationShown(true)
@@ -1555,4 +1556,155 @@ func (m *Model) doUpdateFooterAtInterval() tea.Cmd {
 			return updateFooterMsg{}
 		},
 	)
+}
+
+// promptConfirmationForNotificationPR shows a confirmation prompt for PR actions
+// when viewing a PR from a notification. This is separate from section-based
+// confirmation because the notification section doesn't know about PR actions.
+func (m *Model) promptConfirmationForNotificationPR(action string) tea.Cmd {
+	pr := m.notificationView.GetSubjectPR()
+	if pr == nil {
+		return nil
+	}
+
+	m.pendingNotificationAction = "pr_" + action
+
+	// Show confirmation in footer
+	actionDisplay := action
+	if action == "ready" {
+		actionDisplay = "mark as ready"
+	}
+	prompt := fmt.Sprintf("Are you sure you want to %s PR #%d? (y/N)", actionDisplay, pr.GetNumber())
+	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
+
+	return nil
+}
+
+// promptConfirmationForNotificationIssue shows a confirmation prompt for Issue actions
+// when viewing an Issue from a notification.
+func (m *Model) promptConfirmationForNotificationIssue(action string) tea.Cmd {
+	issue := m.notificationView.GetSubjectIssue()
+	if issue == nil {
+		return nil
+	}
+
+	m.pendingNotificationAction = "issue_" + action
+
+	// Show confirmation in footer
+	prompt := fmt.Sprintf("Are you sure you want to %s Issue #%d? (y/N)", action, issue.Number)
+	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
+
+	return nil
+}
+
+// executeNotificationAction executes the pending PR/Issue action after user confirmation
+func (m *Model) executeNotificationAction() tea.Cmd {
+	action := m.pendingNotificationAction
+	if action == "" {
+		return nil
+	}
+
+	// Create a section identifier for the notification section
+	currSection := m.getCurrSection()
+	sid := tasks.SectionIdentifier{Id: 0, Type: notificationssection.SectionType}
+	if currSection != nil {
+		sid.Id = currSection.GetId()
+	}
+
+	switch action {
+	case "pr_close":
+		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+			return tasks.ClosePR(m.ctx, sid, pr)
+		}
+	case "pr_reopen":
+		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+			return tasks.ReopenPR(m.ctx, sid, pr)
+		}
+	case "pr_ready":
+		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+			return tasks.PRReady(m.ctx, sid, pr)
+		}
+	case "pr_merge":
+		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+			return tasks.MergePR(m.ctx, sid, pr)
+		}
+	case "pr_update":
+		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+			return tasks.UpdatePR(m.ctx, sid, pr)
+		}
+	case "issue_close":
+		if issue := m.notificationView.GetSubjectIssue(); issue != nil {
+			return m.closeIssue(sid, issue)
+		}
+	case "issue_reopen":
+		if issue := m.notificationView.GetSubjectIssue(); issue != nil {
+			return m.reopenIssue(sid, issue)
+		}
+	}
+
+	return nil
+}
+
+// closeIssue executes the close action for an Issue using gh CLI
+func (m *Model) closeIssue(sid tasks.SectionIdentifier, issue *data.IssueData) tea.Cmd {
+	issueNumber := issue.Number
+	repoName := issue.GetRepoNameWithOwner()
+	taskId := fmt.Sprintf("issue_close_%d", issueNumber)
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Closing Issue #%d", issueNumber),
+		FinishedText: fmt.Sprintf("Issue #%d has been closed", issueNumber),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		c := exec.Command(
+			"gh",
+			"issue",
+			"close",
+			fmt.Sprint(issueNumber),
+			"-R",
+			repoName,
+		)
+		err := c.Run()
+		return constants.TaskFinishedMsg{
+			TaskId:      taskId,
+			SectionId:   sid.Id,
+			SectionType: sid.Type,
+			Err:         err,
+		}
+	})
+}
+
+// reopenIssue executes the reopen action for an Issue using gh CLI
+func (m *Model) reopenIssue(sid tasks.SectionIdentifier, issue *data.IssueData) tea.Cmd {
+	issueNumber := issue.Number
+	repoName := issue.GetRepoNameWithOwner()
+	taskId := fmt.Sprintf("issue_reopen_%d", issueNumber)
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Reopening Issue #%d", issueNumber),
+		FinishedText: fmt.Sprintf("Issue #%d has been reopened", issueNumber),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := m.ctx.StartTask(task)
+	return tea.Batch(startCmd, func() tea.Msg {
+		c := exec.Command(
+			"gh",
+			"issue",
+			"reopen",
+			fmt.Sprint(issueNumber),
+			"-R",
+			repoName,
+		)
+		err := c.Run()
+		return constants.TaskFinishedMsg{
+			TaskId:      taskId,
+			SectionId:   sid.Id,
+			SectionType: sid.Type,
+			Err:         err,
+		}
+	})
 }

@@ -21,6 +21,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
@@ -469,3 +470,122 @@ func TestCommandTemplateMissingVariable(t *testing.T) {
 	_, err := executeCommandTemplate(t, "gh pr view --author {{.Author}}", input)
 	require.Error(t, err, "template with missing variable should return an error")
 }
+
+func TestPromptConfirmationForNotificationPR(t *testing.T) {
+	// Test that promptConfirmationForNotificationPR sets the pending action
+	// and displays the confirmation prompt in the footer.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:    ctx,
+		keys:   keys.Keys,
+		footer: footer.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 123,
+		},
+	}, "test-notification-id")
+
+	// Call promptConfirmationForNotificationPR
+	m.promptConfirmationForNotificationPR("close")
+
+	// Verify pending action is set
+	require.Equal(t, "pr_close", m.pendingNotificationAction,
+		"pendingNotificationAction should be set to pr_close")
+}
+
+func TestPromptConfirmationForNotificationPR_NilSubject(t *testing.T) {
+	// Test that promptConfirmationForNotificationPR returns nil when no PR subject
+	m := Model{}
+
+	cmd := m.promptConfirmationForNotificationPR("close")
+
+	require.Nil(t, cmd, "should return nil when no PR subject")
+	require.Empty(t, m.pendingNotificationAction, "should not set pending action when no PR subject")
+}
+
+func TestPromptConfirmationForNotificationIssue(t *testing.T) {
+	// Test that promptConfirmationForNotificationIssue sets the pending action
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:    ctx,
+		keys:   keys.Keys,
+		footer: footer.NewModel(ctx),
+	}
+
+	// Set up an Issue notification subject
+	m.notificationView.SetSubjectIssue(&data.IssueData{
+		Number: 456,
+	}, "test-notification-id")
+
+	// Call promptConfirmationForNotificationIssue
+	m.promptConfirmationForNotificationIssue("close")
+
+	// Verify pending action is set
+	require.Equal(t, "issue_close", m.pendingNotificationAction,
+		"pendingNotificationAction should be set to issue_close")
+}
+
+func TestNotificationConfirmation_CancelOnOtherKey(t *testing.T) {
+	// Test that pressing any key other than y/Y/Enter cancels the confirmation
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:                       ctx,
+		keys:                      keys.Keys,
+		footer:                    footer.NewModel(ctx),
+		pendingNotificationAction: "pr_close", // Simulate pending action
+	}
+
+	// Set up a PR notification subject
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 123,
+		},
+	}, "test-notification-id")
+
+	// Press 'n' to cancel
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared
+	require.Empty(t, m.pendingNotificationAction,
+		"pendingNotificationAction should be cleared after cancellation")
+	require.Nil(t, cmd, "should return nil command when cancelled")
+}
+
