@@ -108,6 +108,13 @@ func getRESTClient() (*gh.RESTClient, error) {
 	return restClient, err
 }
 
+func getRESTClientForHost(host string) (*gh.RESTClient, error) {
+	if host == "" {
+		return getRESTClient()
+	}
+	return gh.NewRESTClient(gh.ClientOptions{Host: host})
+}
+
 // NotificationReadState represents the read state filter for notifications
 type NotificationReadState string
 
@@ -117,8 +124,8 @@ const (
 	NotificationStateAll    NotificationReadState = "all"    // Both read and unread
 )
 
-func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo) (NotificationsResponse, error) {
-	client, err := getRESTClient()
+func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo, host string) (NotificationsResponse, error) {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return NotificationsResponse{}, err
 	}
