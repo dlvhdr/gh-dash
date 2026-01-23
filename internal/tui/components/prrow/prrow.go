@@ -75,6 +75,9 @@ func (pr *PullRequest) renderState() string {
 
 	switch pr.Data.Primary.State {
 	case "OPEN":
+		if pr.Data.Primary.IsInMergeQueue {
+			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).Render(constants.MergeQueueIcon)
+		}
 		if pr.Data.Primary.IsDraft {
 			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
 		} else {
@@ -288,6 +291,9 @@ func (pr *PullRequest) renderBaseName() string {
 func (pr *PullRequest) RenderState() string {
 	switch pr.Data.Primary.State {
 	case "OPEN":
+		if pr.Data.Primary.IsInMergeQueue {
+			return constants.MergeQueueIcon + " Queued"
+		}
 		if pr.Data.Primary.IsDraft {
 			return constants.DraftIcon + " Draft"
 		} else {
