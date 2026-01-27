@@ -21,7 +21,9 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/branchsidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issueview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
@@ -767,10 +769,16 @@ func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
 	)
 
 	m := Model{
-		ctx:     ctx,
-		keys:    keys.Keys,
-		prs:     []section.Section{&prSection},
-		sidebar: sidebar.NewModel(),
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
 	}
 
 	// Simulate having a populated cache by ensuring it's NOT cleared
@@ -821,10 +829,16 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	)
 
 	m := Model{
-		ctx:     ctx,
-		keys:    keys.Keys,
-		prs:     []section.Section{&prSection},
-		sidebar: sidebar.NewModel(),
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
 	}
 
 	// Reset to known state
