@@ -156,3 +156,102 @@ func TestUpdateWithReboundKeys(t *testing.T) {
 	require.NotNil(t, action, "expected action for rebound key")
 	require.Equal(t, IssueActionLabel, action.Type, "expected label action for rebound key")
 }
+
+// TestAutocompleteStateResetWhenSwitchingModes verifies that autocomplete
+// suggestions from labeling mode don't leak into commenting mode.
+// This is a regression test for https://github.com/dlvhdr/gh-dash/issues/751
+func TestAutocompleteStateResetWhenSwitchingModes(t *testing.T) {
+	m := newTestModelForAction(t)
+
+	// Simulate what happens when entering labeling mode:
+	// 1. Autocomplete gets populated with label suggestions
+	m.ac.SetSuggestions([]string{"bug", "feature", "documentation", "enhancement"})
+
+	// 2. User types something and autocomplete filters/shows suggestions
+	// This populates the internal 'filtered' slice
+	m.ac.Show("fea", nil) // Would match "feature"
+
+	// Verify autocomplete has suggestions (the bug condition)
+	require.True(t, m.ac.HasSuggestions(),
+		"autocomplete should have suggestions after Show()")
+
+	// 3. User exits labeling mode (Escape) - in the bug, this only hid but didn't reset
+	m.ac.Hide()
+
+	// In the buggy code, HasSuggestions() would still return true here
+	// because Hide() only sets visible=false but doesn't clear filtered
+
+	// 4. User enters commenting mode
+	m.SetIsCommenting(true)
+
+	// 5. After the fix, autocomplete state should be fully reset
+	require.False(t, m.ac.HasSuggestions(),
+		"autocomplete should have no suggestions after entering comment mode")
+	require.False(t, m.ac.IsVisible(),
+		"autocomplete should not be visible after entering comment mode")
+}
+
+// TestAutocompleteResetOnAssignMode verifies autocomplete is reset when entering assign mode
+func TestAutocompleteResetOnAssignMode(t *testing.T) {
+	m := newTestModelForAction(t)
+
+	// Set up autocomplete with label suggestions
+	m.ac.SetSuggestions([]string{"bug", "feature"})
+	m.ac.Show("bug", nil)
+	require.True(t, m.ac.HasSuggestions(), "precondition: autocomplete should have suggestions")
+
+	// Enter assign mode
+	m.SetIsAssigning(true)
+
+	// Autocomplete should be reset
+	require.False(t, m.ac.HasSuggestions(),
+		"autocomplete should have no suggestions after entering assign mode")
+}
+
+// TestAutocompleteResetOnUnassignMode verifies autocomplete is reset when entering unassign mode
+func TestAutocompleteResetOnUnassignMode(t *testing.T) {
+	m := newTestModelForAction(t)
+
+	// Set up autocomplete with label suggestions
+	m.ac.SetSuggestions([]string{"bug", "feature"})
+	m.ac.Show("bug", nil)
+	require.True(t, m.ac.HasSuggestions(), "precondition: autocomplete should have suggestions")
+
+	// Enter unassign mode
+	m.SetIsUnassigning(true)
+
+	// Autocomplete should be reset
+	require.False(t, m.ac.HasSuggestions(),
+		"autocomplete should have no suggestions after entering unassign mode")
+}
+
+// TestInputBoxTextNotReplacedByStaleAutocomplete is an end-to-end test that
+// verifies the full bug scenario: typing in comment box after exiting label mode
+// should not autocomplete with label names.
+func TestInputBoxTextNotReplacedByStaleAutocomplete(t *testing.T) {
+	m := newTestModelForAction(t)
+
+	// Step 1: Simulate labeling mode with suggestions
+	m.ac.SetSuggestions([]string{"bug", "feature", "documentation"})
+	m.isLabeling = true
+	m.ac.Show("fea", nil) // User typed "fea", matches "feature"
+
+	// Step 2: Exit labeling mode (simulates pressing Escape)
+	m.isLabeling = false
+	m.ac.Hide()
+
+	// Step 3: Enter commenting mode
+	m.SetIsCommenting(true)
+
+	// Step 4: Set some text in the input box (simulates user typing)
+	m.inputBox.SetValue("This is my comment about fea")
+
+	// Step 5: Verify that Tab key does NOT trigger autocomplete selection
+	// because autocomplete was reset when entering comment mode
+	tabMsg := tea.KeyMsg{Type: tea.KeyTab}
+	m.inputBox.Update(tabMsg)
+
+	// The text should remain unchanged (not replaced with "feature")
+	require.Equal(t, "This is my comment about fea", m.inputBox.Value(),
+		"input text should not be modified by Tab when autocomplete is reset")
+}

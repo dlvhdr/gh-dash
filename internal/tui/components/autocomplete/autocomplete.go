@@ -180,6 +180,16 @@ func (m *Model) Hide() {
 	m.visible = false
 }
 
+// Reset clears all autocomplete state including filtered suggestions, selection,
+// and visibility flags. Use this when switching between different input modes
+// (e.g., from labeling to commenting) to prevent stale suggestions from leaking.
+func (m *Model) Reset() {
+	m.filtered = nil
+	m.selected = 0
+	m.visible = false
+	m.hiddenByUser = false
+}
+
 // Suppress hides the popup immediately and prevents it from being shown again
 // automatically until `Unsuppress()` is called. The underlying filtered results
 // are still updated while suppressed so navigation and selection keys will
