@@ -747,8 +747,9 @@ func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := &context.ProgramContext{
-		Config: &cfg,
-		View:   config.PRsView,
+		Config:    &cfg,
+		View:      config.PRsView,
+		StartTask: func(task context.Task) tea.Cmd { return nil },
 	}
 	ctx.Theme = theme.ParseTheme(ctx.Config)
 	ctx.Styles = context.InitStyles(ctx.Theme)
@@ -800,8 +801,9 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := &context.ProgramContext{
-		Config: &cfg,
-		View:   config.PRsView,
+		Config:    &cfg,
+		View:      config.PRsView,
+		StartTask: func(task context.Task) tea.Cmd { return nil },
 	}
 	ctx.Theme = theme.ParseTheme(ctx.Config)
 	ctx.Styles = context.InitStyles(ctx.Theme)
