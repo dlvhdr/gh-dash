@@ -79,7 +79,7 @@ func (m *Model) SetContent(data string) {
 }
 
 func (m *Model) GetSidebarContentWidth() int {
-	if m.ctx.Config == nil {
+	if m.ctx == nil || m.ctx.Config == nil {
 		return 0
 	}
 	return m.ctx.Config.Defaults.Preview.Width - m.ctx.Styles.Sidebar.BorderWidth
