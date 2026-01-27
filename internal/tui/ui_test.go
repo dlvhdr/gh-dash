@@ -22,6 +22,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
@@ -503,18 +504,21 @@ func TestPromptConfirmationForNotificationPR(t *testing.T) {
 	m.promptConfirmationForNotificationPR("close")
 
 	// Verify pending action is set
-	require.Equal(t, "pr_close", m.pendingNotificationAction,
+	require.Equal(t, "pr_close", m.notificationView.GetPendingAction(),
 		"pendingNotificationAction should be set to pr_close")
 }
 
 func TestPromptConfirmationForNotificationPR_NilSubject(t *testing.T) {
 	// Test that promptConfirmationForNotificationPR returns nil when no PR subject
-	m := Model{}
+	ctx := &context.ProgramContext{}
+	m := Model{
+		notificationView: notificationview.NewModel(ctx),
+	}
 
 	cmd := m.promptConfirmationForNotificationPR("close")
 
 	require.Nil(t, cmd, "should return nil when no PR subject")
-	require.Empty(t, m.pendingNotificationAction, "should not set pending action when no PR subject")
+	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no PR subject")
 }
 
 func TestPromptConfirmationForNotificationIssue(t *testing.T) {
@@ -546,7 +550,7 @@ func TestPromptConfirmationForNotificationIssue(t *testing.T) {
 	m.promptConfirmationForNotificationIssue("close")
 
 	// Verify pending action is set
-	require.Equal(t, "issue_close", m.pendingNotificationAction,
+	require.Equal(t, "issue_close", m.notificationView.GetPendingAction(),
 		"pendingNotificationAction should be set to issue_close")
 }
 
@@ -565,18 +569,19 @@ func TestNotificationConfirmation_CancelOnOtherKey(t *testing.T) {
 	ctx.Styles = context.InitStyles(ctx.Theme)
 
 	m := Model{
-		ctx:                       ctx,
-		keys:                      keys.Keys,
-		footer:                    footer.NewModel(ctx),
-		pendingNotificationAction: "pr_close", // Simulate pending action
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
 	}
 
-	// Set up a PR notification subject
+	// Set up a PR notification subject and pending action
 	m.notificationView.SetSubjectPR(&prrow.Data{
 		Primary: &data.PullRequestData{
 			Number: 123,
 		},
 	}, "test-notification-id")
+	m.notificationView.SetPendingPRAction("close") // Simulate pending action
 
 	// Press 'n' to cancel
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
@@ -584,9 +589,153 @@ func TestNotificationConfirmation_CancelOnOtherKey(t *testing.T) {
 	m = newModel.(Model)
 
 	// Verify pending action is cleared
-	require.Empty(t, m.pendingNotificationAction,
+	require.Empty(t, m.notificationView.GetPendingAction(),
 		"pendingNotificationAction should be cleared after cancellation")
 	require.Nil(t, cmd, "should return nil command when cancelled")
+}
+
+func TestNotificationConfirmation_AcceptWithY(t *testing.T) {
+	// Test that pressing 'y' confirms and executes the action
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil // No-op for testing
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject and pending action
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 123,
+		},
+	}, "test-notification-id")
+	m.notificationView.SetPendingPRAction("close")
+
+	// Press 'y' to confirm
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared and command is returned
+	require.Empty(t, m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be cleared after confirmation")
+	require.NotNil(t, cmd, "should return a command to execute the action")
+}
+
+func TestNotificationConfirmation_AcceptWithUpperY(t *testing.T) {
+	// Test that pressing 'Y' (uppercase) also confirms
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil // No-op for testing
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject and pending action
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 123,
+		},
+	}, "test-notification-id")
+	m.notificationView.SetPendingPRAction("merge")
+
+	// Press 'Y' to confirm
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared and command is returned
+	require.Empty(t, m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be cleared after confirmation")
+	require.NotNil(t, cmd, "should return a command to execute the action")
+}
+
+func TestNotificationConfirmation_AcceptWithEnter(t *testing.T) {
+	// Test that pressing Enter also confirms
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil // No-op for testing
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Set up an Issue notification subject and pending action
+	m.notificationView.SetSubjectIssue(&data.IssueData{
+		Number: 456,
+		Url:    "https://github.com/test/repo/issues/456",
+		Repository: data.Repository{
+			NameWithOwner: "test/repo",
+		},
+	}, "test-notification-id")
+	m.notificationView.SetPendingIssueAction("reopen")
+
+	// Press Enter to confirm
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared and command is returned
+	require.Empty(t, m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be cleared after confirmation")
+	require.NotNil(t, cmd, "should return a command to execute the action")
+}
+
+func TestPromptConfirmationForNotificationIssue_NilSubject(t *testing.T) {
+	// Test that promptConfirmationForNotificationIssue returns nil when no Issue subject
+	ctx := &context.ProgramContext{}
+	m := Model{
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	cmd := m.promptConfirmationForNotificationIssue("close")
+
+	require.Nil(t, cmd, "should return nil when no Issue subject")
+	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no Issue subject")
 }
 
 func TestRefresh_ClearsEnrichmentCache(t *testing.T) {

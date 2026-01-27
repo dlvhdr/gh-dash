@@ -62,12 +62,6 @@ type Model struct {
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
 	tasks            map[string]context.Task
-
-	// Pending confirmation action for notification PR/Issue (close, merge, etc.)
-	// This is separate from section confirmation because PR/Issue actions in
-	// notification view need to be executed on the notification's subject PR/Issue,
-	// not on the notification section itself.
-	pendingNotificationAction string // "pr_close", "pr_merge", "issue_close", etc.
 }
 
 func NewModel(location config.Location) Model {
@@ -213,12 +207,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Handle notification PR/Issue action confirmation
-		if m.pendingNotificationAction != "" {
+		if m.notificationView.HasPendingAction() {
 			if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
 				cmd = m.executeNotificationAction()
 			}
 			// Any other key cancels the confirmation
-			m.pendingNotificationAction = ""
+			m.notificationView.ClearPendingAction()
 			m.footer.SetLeftSection("")
 			return m, cmd
 		}
@@ -1562,44 +1556,28 @@ func (m *Model) doUpdateFooterAtInterval() tea.Cmd {
 // when viewing a PR from a notification. This is separate from section-based
 // confirmation because the notification section doesn't know about PR actions.
 func (m *Model) promptConfirmationForNotificationPR(action string) tea.Cmd {
-	pr := m.notificationView.GetSubjectPR()
-	if pr == nil {
+	prompt := m.notificationView.SetPendingPRAction(action)
+	if prompt == "" {
 		return nil
 	}
-
-	m.pendingNotificationAction = "pr_" + action
-
-	// Show confirmation in footer
-	actionDisplay := action
-	if action == "ready" {
-		actionDisplay = "mark as ready"
-	}
-	prompt := fmt.Sprintf("Are you sure you want to %s PR #%d? (y/N)", actionDisplay, pr.GetNumber())
 	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
-
 	return nil
 }
 
 // promptConfirmationForNotificationIssue shows a confirmation prompt for Issue actions
 // when viewing an Issue from a notification.
 func (m *Model) promptConfirmationForNotificationIssue(action string) tea.Cmd {
-	issue := m.notificationView.GetSubjectIssue()
-	if issue == nil {
+	prompt := m.notificationView.SetPendingIssueAction(action)
+	if prompt == "" {
 		return nil
 	}
-
-	m.pendingNotificationAction = "issue_" + action
-
-	// Show confirmation in footer
-	prompt := fmt.Sprintf("Are you sure you want to %s Issue #%d? (y/N)", action, issue.Number)
 	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
-
 	return nil
 }
 
 // executeNotificationAction executes the pending PR/Issue action after user confirmation
 func (m *Model) executeNotificationAction() tea.Cmd {
-	action := m.pendingNotificationAction
+	action := m.notificationView.GetPendingAction()
 	if action == "" {
 		return nil
 	}
