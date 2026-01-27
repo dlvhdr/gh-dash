@@ -766,9 +766,10 @@ func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
 	)
 
 	m := Model{
-		ctx:  ctx,
-		keys: keys.Keys,
-		prs:  []section.Section{&prSection},
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prs:     []section.Section{&prSection},
+		sidebar: sidebar.NewModel(),
 	}
 
 	// Simulate having a populated cache by ensuring it's NOT cleared
@@ -818,9 +819,10 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	)
 
 	m := Model{
-		ctx:  ctx,
-		keys: keys.Keys,
-		prs:  []section.Section{&prSection},
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prs:     []section.Section{&prSection},
+		sidebar: sidebar.NewModel(),
 	}
 
 	// Reset to known state
