@@ -542,10 +542,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-				// Always sync and return after updating prView - needed for tab navigation
-				// which updates carousel state but doesn't return a command
-				m.syncSidebar()
-				return m, prCmd
+				// Handle 's' key to switch views
+				if key.Matches(msg, keys.PRKeys.ViewIssues) {
+					m.ctx.View = m.switchSelectedView()
+					m.syncMainContentWidth()
+					m.setCurrSectionId(m.getCurrentViewDefaultSection())
+
+					currSections := m.getCurrentViewSections()
+					if len(currSections) == 0 {
+						newSections, fetchSectionsCmds := m.fetchAllViewSections()
+						currSections = newSections
+						cmds = append(cmds, m.tabs.SetAllLoading()...)
+						cmd = fetchSectionsCmds
+					}
+					m.setCurrentViewSections(currSections)
+					cmds = append(cmds, m.onViewedRowChanged())
+				}
+
+				// Handle tab navigation keys - these don't return a command but should return
+				if key.Matches(msg, keys.PRKeys.PrevSidebarTab) || key.Matches(msg, keys.PRKeys.NextSidebarTab) {
+					m.syncSidebar()
+					return m, prCmd
+				}
+
+				// For other keys, only return if prView returned a command
+				if prCmd != nil {
+					m.syncSidebar()
+					return m, prCmd
+				}
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:
@@ -573,6 +597,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case issueview.IssueActionReopen:
 						return m, m.promptConfirmation(currSection, "reopen")
 					}
+				}
+
+				// Handle 's' key to switch views
+				if key.Matches(msg, keys.IssueKeys.ViewPRs) {
+					m.ctx.View = m.switchSelectedView()
+					m.syncMainContentWidth()
+					m.setCurrSectionId(m.getCurrentViewDefaultSection())
+
+					currSections := m.getCurrentViewSections()
+					if len(currSections) == 0 {
+						newSections, fetchSectionsCmds := m.fetchAllViewSections()
+						currSections = newSections
+						cmds = append(cmds, m.tabs.SetAllLoading()...)
+						cmd = fetchSectionsCmds
+					}
+					m.setCurrentViewSections(currSections)
+					cmds = append(cmds, m.onViewedRowChanged())
 				}
 
 				if issueCmd != nil {
@@ -1386,6 +1427,7 @@ func (m *Model) switchSelectedView() config.ViewType {
 	// Reset notification subject when leaving notifications view
 	if m.ctx.View == config.NotificationsView {
 		keys.SetNotificationSubject(keys.NotificationSubjectNone)
+		m.notificationView.ClearSubject()
 	}
 
 	// View cycle: Notifications → PRs → Issues (→ Repo if enabled) → Notifications
