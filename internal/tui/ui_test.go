@@ -31,7 +31,7 @@ import (
 
 func TestFullOutput(t *testing.T) {
 	setupTest(t)
-	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"}, false)
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
 
 	testutils.WaitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
@@ -45,7 +45,7 @@ func TestFullOutput(t *testing.T) {
 
 func TestIssues(t *testing.T) {
 	setupTest(t)
-	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"}, false)
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
 
 	// wait for first tab of PRs
