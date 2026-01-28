@@ -1578,34 +1578,36 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	}
 
 	sid := tasks.SectionIdentifier{Id: m.currSectionId, Type: notificationssection.SectionType}
+	pr := m.notificationView.GetSubjectPR()
+	issue := m.notificationView.GetSubjectIssue()
 
 	switch action {
 	case "pr_close":
-		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		if pr != nil {
 			return tasks.ClosePR(m.ctx, sid, pr)
 		}
 	case "pr_reopen":
-		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		if pr != nil {
 			return tasks.ReopenPR(m.ctx, sid, pr)
 		}
 	case "pr_ready":
-		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		if pr != nil {
 			return tasks.PRReady(m.ctx, sid, pr)
 		}
 	case "pr_merge":
-		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		if pr != nil {
 			return tasks.MergePR(m.ctx, sid, pr)
 		}
 	case "pr_update":
-		if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		if pr != nil {
 			return tasks.UpdatePR(m.ctx, sid, pr)
 		}
 	case "issue_close":
-		if issue := m.notificationView.GetSubjectIssue(); issue != nil {
+		if issue != nil {
 			return m.closeIssue(sid, issue)
 		}
 	case "issue_reopen":
-		if issue := m.notificationView.GetSubjectIssue(); issue != nil {
+		if issue != nil {
 			return m.reopenIssue(sid, issue)
 		}
 	}
