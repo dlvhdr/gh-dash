@@ -420,6 +420,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 	if !m.isCommenting && isCommenting {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isCommenting = isCommenting
 	m.inputBox.SetPrompt("Leave a comment...")
@@ -441,6 +442,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 
 	if !m.isAssigning && isAssigning {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isAssigning = isAssigning
 	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
@@ -532,6 +534,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 
 	if !m.isUnassigning && isUnassigning {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isUnassigning = isUnassigning
 	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
