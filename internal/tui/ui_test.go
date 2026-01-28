@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -219,4 +221,120 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 
 	require.NotEqual(t, currentTab, m.prView.SelectedTab(),
 		"prView tab should have changed after pressing prev tab key")
+}
+
+// executeCommandTemplate mimics the template execution logic from runCustomCommand
+// to allow testing template variable substitution without executing shell commands.
+func executeCommandTemplate(t *testing.T, commandTemplate string, input map[string]any) (string, error) {
+	t.Helper()
+	cmd, err := template.New("test_command").Parse(commandTemplate)
+	if err != nil {
+		return "", err
+	}
+	cmd = cmd.Option("missingkey=error")
+
+	var buff bytes.Buffer
+	err = cmd.Execute(&buff, input)
+	if err != nil {
+		return "", err
+	}
+	return buff.String(), nil
+}
+
+func TestPRCommandTemplateVariables(t *testing.T) {
+	// Test that PR command templates correctly substitute all available variables,
+	// matching the behavior of runCustomPRCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"PrNumber":    123,
+		"HeadRefName": "feature-branch",
+		"BaseRefName": "main",
+		"Author":      "testuser",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Author variable",
+			template: "gh pr view --author {{.Author}}",
+			expected: "gh pr view --author testuser",
+		},
+		{
+			name:     "PrNumber variable",
+			template: "gh pr checkout {{.PrNumber}}",
+			expected: "gh pr checkout 123",
+		},
+		{
+			name:     "HeadRefName variable",
+			template: "git checkout {{.HeadRefName}}",
+			expected: "git checkout feature-branch",
+		},
+		{
+			name:     "Multiple variables",
+			template: "echo PR #{{.PrNumber}} by {{.Author}} in {{.RepoName}}: {{.HeadRefName}} -> {{.BaseRefName}}",
+			expected: "echo PR #123 by testuser in owner/repo: feature-branch -> main",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestIssueCommandTemplateVariables(t *testing.T) {
+	// Test that Issue command templates correctly substitute all available variables,
+	// matching the behavior of runCustomIssueCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 456,
+		"Author":      "issueauthor",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Author variable",
+			template: "gh issue view --author {{.Author}}",
+			expected: "gh issue view --author issueauthor",
+		},
+		{
+			name:     "IssueNumber variable",
+			template: "gh issue view {{.IssueNumber}}",
+			expected: "gh issue view 456",
+		},
+		{
+			name:     "Multiple variables",
+			template: "echo Issue #{{.IssueNumber}} by {{.Author}} in {{.RepoName}}",
+			expected: "echo Issue #456 by issueauthor in owner/repo",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestCommandTemplateMissingVariable(t *testing.T) {
+	// Test that templates with missing variables return an error,
+	// matching the missingkey=error behavior in runCustomCommand
+	input := map[string]any{
+		"RepoName": "owner/repo",
+	}
+
+	_, err := executeCommandTemplate(t, "gh pr view --author {{.Author}}", input)
+	require.Error(t, err, "template with missing variable should return an error")
 }
