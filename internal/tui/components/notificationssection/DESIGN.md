@@ -262,6 +262,7 @@ The table component was extended to support per-column alignment via an `Align` 
 | y | Copy PR/Issue number |
 | Y | Copy URL |
 | S | Sort by repository |
+| s | Switch to PRs view |
 | o | Open in browser |
 | Enter | View notification (fetches content, marks as read) |
 
@@ -314,7 +315,13 @@ This design is necessary because:
 - PR/Issue data is stored in `notificationView`, not in the section
 - Actions operate on the notification's subject PR/Issue, not the notification itself
 
-The `pendingNotificationAction` field in the Model tracks the pending action (e.g., "pr_close", "issue_reopen") until confirmed or cancelled.
+The confirmation state is managed by `notificationView.Model`:
+- `pendingAction` field tracks the pending action (e.g., "pr_close", "issue_reopen")
+- `SetPendingPRAction()` / `SetPendingIssueAction()` set the pending action and return the confirmation prompt text
+- `Update()` method handles confirmation key presses (y/Y/Enter to confirm, any other key cancels)
+- `onConfirmAction` callback is invoked when confirmed, which `ui.go` sets to `executeNotificationAction()`
+
+This encapsulation keeps confirmation logic close to the view that displays it, while `ui.go` coordinates between the footer prompt and action execution.
 
 ## Configuration
 
