@@ -449,9 +449,13 @@ func SetClient(c *gh.GraphQLClient) {
 	cachedClient = c
 }
 
-func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
+func FetchPullRequests(query string, limit int, pageInfo *PageInfo, host string) (PullRequestsResponse, error) {
 	var err error
-	if client == nil {
+	var c *gh.GraphQLClient
+
+	if host != "" {
+		c, err = gh.NewGraphQLClient(gh.ClientOptions{Host: host})
+	} else if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
 			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -459,6 +463,9 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		} else {
 			client, err = gh.DefaultGraphQLClient()
 		}
+		c = client
+	} else {
+		c = client
 	}
 
 	if err != nil {
@@ -484,7 +491,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		"endCursor": (*graphql.String)(endCursor),
 	}
 	log.Debug("Fetching PRs", "query", query, "limit", limit, "endCursor", endCursor)
-	err = client.Query("SearchPullRequests", &queryResult, variables)
+	err = c.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}

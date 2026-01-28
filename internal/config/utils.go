@@ -32,6 +32,7 @@ func (cfg PrsSectionConfig) ToSectionConfig() SectionConfig {
 	return SectionConfig{
 		Title:   cfg.Title,
 		Filters: cfg.Filters,
+		Host:    cfg.Host,
 		Limit:   cfg.Limit,
 		Type:    cfg.Type,
 	}
@@ -41,6 +42,7 @@ func (cfg IssuesSectionConfig) ToSectionConfig() SectionConfig {
 	return SectionConfig{
 		Title:   cfg.Title,
 		Filters: cfg.Filters,
+		Host:    cfg.Host,
 		Limit:   cfg.Limit,
 	}
 }
@@ -49,6 +51,7 @@ func (cfg NotificationsSectionConfig) ToSectionConfig() SectionConfig {
 	return SectionConfig{
 		Title:   cfg.Title,
 		Filters: cfg.Filters,
+		Host:    cfg.Host,
 		Limit:   cfg.Limit,
 	}
 }

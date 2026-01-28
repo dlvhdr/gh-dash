@@ -94,10 +94,17 @@ func makeIssuesQuery(query string) string {
 	return fmt.Sprintf("is:issue %s sort:updated", query)
 }
 
-func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
+func FetchIssues(query string, limit int, pageInfo *PageInfo, host string) (IssuesResponse, error) {
 	var err error
-	if client == nil {
+	var c *gh.GraphQLClient
+
+	if host != "" {
+		c, err = gh.NewGraphQLClient(gh.ClientOptions{Host: host})
+	} else if client == nil {
 		client, err = gh.DefaultGraphQLClient()
+		c = client
+	} else {
+		c = client
 	}
 
 	if err != nil {
@@ -123,7 +130,7 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 		"endCursor": (*graphql.String)(endCursor),
 	}
 	log.Debug("Fetching issues", "query", query, "limit", limit, "endCursor", endCursor)
-	err = client.Query("SearchIssues", &queryResult, variables)
+	err = c.Query("SearchIssues", &queryResult, variables)
 	if err != nil {
 		return IssuesResponse{}, err
 	}
