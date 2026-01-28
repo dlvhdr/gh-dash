@@ -1577,12 +1577,7 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 		return nil
 	}
 
-	// Create a section identifier for the notification section
-	currSection := m.getCurrSection()
-	sid := tasks.SectionIdentifier{Id: 0, Type: notificationssection.SectionType}
-	if currSection != nil {
-		sid.Id = currSection.GetId()
-	}
+	sid := tasks.SectionIdentifier{Id: m.currSectionId, Type: notificationssection.SectionType}
 
 	switch action {
 	case "pr_close":
