@@ -533,7 +533,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				var prCmd tea.Cmd
 				m.prView, prCmd = m.prView.Update(msg)
 				m.syncSidebar()
-				return m, prCmd
+				cmds = append(cmds, prCmd)
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:
@@ -572,7 +572,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// Sync sidebar and return issueCmd for navigation
 				m.syncSidebar()
-				return m, issueCmd
+				cmds = append(cmds, issueCmd)
 
 			// Notification-specific keybindings (when not viewing PR/Issue content)
 			case key.Matches(msg, keys.NotificationKeys.View):
