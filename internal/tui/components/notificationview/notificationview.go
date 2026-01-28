@@ -62,6 +62,12 @@ func (m *Model) GetSubjectId() string {
 	return m.subjectId
 }
 
+func (m *Model) ClearSubject() {
+	m.subjectPR = nil
+	m.subjectIssue = nil
+	m.subjectId = ""
+}
+
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 }
