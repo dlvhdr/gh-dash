@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -25,6 +26,9 @@ type Model struct {
 
 	// Pending confirmation action for PR/Issue (e.g., "pr_close", "issue_reopen")
 	pendingAction string
+
+	// Callback invoked when a pending action is confirmed
+	onConfirmAction func(action string) tea.Cmd
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -122,6 +126,33 @@ func (m *Model) GetPendingAction() string {
 // ClearPendingAction clears any pending action.
 func (m *Model) ClearPendingAction() {
 	m.pendingAction = ""
+}
+
+// SetOnConfirmAction sets the callback that is invoked when a pending action is confirmed.
+func (m *Model) SetOnConfirmAction(callback func(action string) tea.Cmd) {
+	m.onConfirmAction = callback
+}
+
+// Update handles key messages for confirmation dialogs.
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	if !m.HasPendingAction() {
+		return m, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
+			action := m.pendingAction
+			m.pendingAction = ""
+			if m.onConfirmAction != nil {
+				return m, m.onConfirmAction(action)
+			}
+		}
+		// Any other key cancels the confirmation
+		m.pendingAction = ""
+	}
+
+	return m, nil
 }
 
 func (m Model) View() string {

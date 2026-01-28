@@ -100,6 +100,7 @@ func NewModel(location config.Location) Model {
 	m.issueSidebar = issueview.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.notificationView = notificationview.NewModel(m.ctx)
+	m.notificationView.SetOnConfirmAction(m.executeNotificationAction)
 	m.tabs = tabs.NewModel(m.ctx)
 
 	return m
@@ -208,11 +209,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Handle notification PR/Issue action confirmation
 		if m.notificationView.HasPendingAction() {
-			if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
-				cmd = m.executeNotificationAction()
-			}
-			// Any other key cancels the confirmation
-			m.notificationView.ClearPendingAction()
+			m.notificationView, cmd = m.notificationView.Update(msg)
 			m.footer.SetLeftSection("")
 			return m, cmd
 		}
@@ -1575,9 +1572,8 @@ func (m *Model) promptConfirmationForNotificationIssue(action string) tea.Cmd {
 	return nil
 }
 
-// executeNotificationAction executes the pending PR/Issue action after user confirmation
-func (m *Model) executeNotificationAction() tea.Cmd {
-	action := m.notificationView.GetPendingAction()
+// executeNotificationAction executes a PR/Issue action after user confirmation
+func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	if action == "" {
 		return nil
 	}

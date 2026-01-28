@@ -619,6 +619,7 @@ func TestNotificationConfirmation_AcceptWithY(t *testing.T) {
 		footer:           footer.NewModel(ctx),
 		notificationView: notificationview.NewModel(ctx),
 	}
+	m.notificationView.SetOnConfirmAction(m.executeNotificationAction)
 
 	// Set up a PR notification subject and pending action
 	m.notificationView.SetSubjectPR(&prrow.Data{
@@ -662,6 +663,7 @@ func TestNotificationConfirmation_AcceptWithUpperY(t *testing.T) {
 		footer:           footer.NewModel(ctx),
 		notificationView: notificationview.NewModel(ctx),
 	}
+	m.notificationView.SetOnConfirmAction(m.executeNotificationAction)
 
 	// Set up a PR notification subject and pending action
 	m.notificationView.SetSubjectPR(&prrow.Data{
@@ -705,6 +707,7 @@ func TestNotificationConfirmation_AcceptWithEnter(t *testing.T) {
 		footer:           footer.NewModel(ctx),
 		notificationView: notificationview.NewModel(ctx),
 	}
+	m.notificationView.SetOnConfirmAction(m.executeNotificationAction)
 
 	// Set up an Issue notification subject and pending action
 	m.notificationView.SetSubjectIssue(&data.IssueData{
