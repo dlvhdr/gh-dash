@@ -16,3 +16,17 @@ Press <kbd>y</kbd> to copy the selected item's issue or PR number without the `#
 ## `Y` - Copy URL
 
 Press <kbd>Y</kbd> to copy the URL to the selected item on GitHub.
+
+## Clipboard Support
+
+`gh-dash` automatically detects and uses the best available clipboard method:
+
+- **OSC52** - When supported by your terminal, uses OSC52 escape sequences for clipboard operations. This works in:
+  - SSH sessions
+  - Tmux/screen sessions
+  - Modern terminals (iTerm2, Kitty, WezTerm, Alacritty, and many others)
+  - Any terminal that responds to DA1 device attributes query
+
+- **System Clipboard** - Falls back to the native clipboard API on macOS, Windows, and Linux (X11/Wayland) when OSC52 is not available
+
+The detection is automatic and transparent - no configuration is needed. If your terminal supports OSC52, it will be used; otherwise, the system clipboard will be used instead.

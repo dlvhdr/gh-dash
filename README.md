@@ -35,6 +35,7 @@
 - Custom actions to perform your specific workflow needs
 - Everything you can do on GitHub - diff, comment, checkout, push, update etc.
 - Control every setting with a YAML config file
+- Automatic OSC52 clipboard support for SSH sessions and modern terminals
 
 ## 📃 Docs
 

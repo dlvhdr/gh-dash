@@ -29,6 +29,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
+var osc52Supported bool
+
 var (
 	Version = "dev"
 	Commit  = ""
@@ -112,7 +114,10 @@ func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 		log.SetLevel(log.FatalLevel)
 	}
 
-	return tui.NewModel(location), loggerFile
+	osc52Supported = tui.QueryDA1()
+	log.Info("OSC52 support", "supported", osc52Supported)
+
+	return tui.NewModel(location, osc52Supported), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/aymanbagabas/go-osc52/v2"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -60,9 +61,10 @@ type Model struct {
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
 	tasks            map[string]context.Task
+	osc52Supported   *bool
 }
 
-func NewModel(location config.Location) Model {
+func NewModel(location config.Location, osc52Supported bool) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:        keys.Keys,
@@ -99,6 +101,9 @@ func NewModel(location config.Location) Model {
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.notificationView = notificationview.NewModel(m.ctx)
 	m.tabs = tabs.NewModel(m.ctx)
+
+	supported := osc52Supported
+	m.osc52Supported = &supported
 
 	return m
 }
@@ -291,7 +296,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 			number := fmt.Sprint(currRowData.GetNumber())
-			err := clipboard.WriteAll(number)
+			err := m.copyToClipboard(number)
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {
@@ -306,7 +311,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 			url := currRowData.GetUrl()
-			err := clipboard.WriteAll(url)
+			err := m.copyToClipboard(url)
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {
@@ -1509,6 +1514,19 @@ func (m *Model) renderRunningTask() string {
 		Height(1).
 		Background(m.ctx.Theme.SelectedBackground).
 		Render(strings.TrimSpace(lipgloss.JoinHorizontal(lipgloss.Top, stats, currTaskStatus)))
+}
+
+func (m *Model) copyToClipboard(text string) error {
+	if *m.osc52Supported {
+		_, err := osc52.New(text).WriteTo(os.Stderr)
+		if err != nil {
+			log.Debug("OSC52 clipboard failed, falling back to system clipboard", "err", err)
+			return clipboard.WriteAll(text)
+		}
+		return nil
+	}
+
+	return clipboard.WriteAll(text)
 }
 
 type userFetchedMsg struct {

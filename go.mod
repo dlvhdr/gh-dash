@@ -68,7 +68,7 @@ require (
 require (
 	github.com/alecthomas/chroma/v2 v2.19.0 // indirect
 	github.com/aymanbagabas/git-module v1.8.4-0.20231101154130-8d27204ac6d2
-	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/x/ansi v0.10.1
 	github.com/cli/browser v1.3.0 // indirect
