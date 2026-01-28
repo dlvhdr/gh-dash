@@ -262,6 +262,7 @@ The table component was extended to support per-column alignment via an `Align` 
 | y | Copy PR/Issue number |
 | Y | Copy URL |
 | S | Sort by repository |
+| s | Switch to PRs view |
 | o | Open in browser |
 | Enter | View notification (fetches content, marks as read) |
 
@@ -299,6 +300,28 @@ Similarly, when viewing an Issue notification, Issue-specific keybindings are av
 | X | Reopen issue |
 
 The `?` help display dynamically updates to show the applicable keybindings based on what type of notification content is being viewed.
+
+#### Confirmation Prompts for Destructive Actions
+
+When viewing a PR or Issue notification, destructive actions (close, reopen, merge, etc.) require confirmation before execution. This uses a footer-based confirmation mechanism separate from the section-level confirmation used in PR/Issue views:
+
+1. User presses action key (e.g., `x` for close)
+2. Footer displays: "Are you sure you want to close PR #123? (y/N)"
+3. User presses `y`, `Y`, or `Enter` to confirm, any other key cancels
+4. Action executes via the `tasks` package (same as PR/Issue views)
+
+This design is necessary because:
+- The notification section doesn't understand PR/Issue-specific actions
+- PR/Issue data is stored in `notificationView`, not in the section
+- Actions operate on the notification's subject PR/Issue, not the notification itself
+
+The confirmation state is managed by `notificationView.Model`:
+- `pendingAction` field tracks the pending action (e.g., "pr_close", "issue_reopen")
+- `SetPendingPRAction()` / `SetPendingIssueAction()` set the pending action and return the confirmation prompt text
+- `Update()` method handles confirmation key presses (y/Y/Enter to confirm, any other key cancels)
+- `onConfirmAction` callback is invoked when confirmed, which `ui.go` sets to `executeNotificationAction()`
+
+This encapsulation keeps confirmation logic close to the view that displays it, while `ui.go` coordinates between the footer prompt and action execution.
 
 ## Configuration
 
