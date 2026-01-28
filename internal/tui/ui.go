@@ -579,8 +579,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.loadNotificationContent())
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
-				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
-				return m, cmd
+				cmds = append(cmds, m.updateSection(currSection.GetId(), currSection.GetType(), msg))
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAllAsDone):
 				cmd = m.promptConfirmation(currSection, "done_all")
