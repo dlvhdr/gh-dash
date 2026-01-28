@@ -430,7 +430,7 @@ func (e EnrichedPullRequestData) ToPullRequestData() PullRequestData {
 }
 
 func makePullRequestsQuery(query string) string {
-	return fmt.Sprintf("is:pr %s sort:updated", query)
+	return fmt.Sprintf("is:pr archived:false %s sort:updated", query)
 }
 
 type PullRequestsResponse struct {
@@ -492,9 +492,6 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
-		if node.PullRequest.Repository.IsArchived {
-			continue
-		}
 		prs = append(prs, node.PullRequest)
 	}
 
