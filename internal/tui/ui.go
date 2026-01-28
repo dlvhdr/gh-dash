@@ -1633,4 +1633,3 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 
 	return nil
 }
-
