@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"reflect"
 	"runtime/debug"
 	"sort"
@@ -1604,77 +1603,14 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 		}
 	case "issue_close":
 		if issue != nil {
-			return m.closeIssue(sid, issue)
+			return tasks.CloseIssue(m.ctx, sid, issue)
 		}
 	case "issue_reopen":
 		if issue != nil {
-			return m.reopenIssue(sid, issue)
+			return tasks.ReopenIssue(m.ctx, sid, issue)
 		}
 	}
 
 	return nil
 }
 
-// closeIssue executes the close action for an Issue using gh CLI
-func (m *Model) closeIssue(sid tasks.SectionIdentifier, issue *data.IssueData) tea.Cmd {
-	issueNumber := issue.Number
-	repoName := issue.GetRepoNameWithOwner()
-	taskId := fmt.Sprintf("issue_close_%d", issueNumber)
-	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf("Closing Issue #%d", issueNumber),
-		FinishedText: fmt.Sprintf("Issue #%d has been closed", issueNumber),
-		State:        context.TaskStart,
-		Error:        nil,
-	}
-	startCmd := m.ctx.StartTask(task)
-	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"issue",
-			"close",
-			fmt.Sprint(issueNumber),
-			"-R",
-			repoName,
-		)
-		err := c.Run()
-		return constants.TaskFinishedMsg{
-			TaskId:      taskId,
-			SectionId:   sid.Id,
-			SectionType: sid.Type,
-			Err:         err,
-		}
-	})
-}
-
-// reopenIssue executes the reopen action for an Issue using gh CLI
-func (m *Model) reopenIssue(sid tasks.SectionIdentifier, issue *data.IssueData) tea.Cmd {
-	issueNumber := issue.Number
-	repoName := issue.GetRepoNameWithOwner()
-	taskId := fmt.Sprintf("issue_reopen_%d", issueNumber)
-	task := context.Task{
-		Id:           taskId,
-		StartText:    fmt.Sprintf("Reopening Issue #%d", issueNumber),
-		FinishedText: fmt.Sprintf("Issue #%d has been reopened", issueNumber),
-		State:        context.TaskStart,
-		Error:        nil,
-	}
-	startCmd := m.ctx.StartTask(task)
-	return tea.Batch(startCmd, func() tea.Msg {
-		c := exec.Command(
-			"gh",
-			"issue",
-			"reopen",
-			fmt.Sprint(issueNumber),
-			"-R",
-			repoName,
-		)
-		err := c.Run()
-		return constants.TaskFinishedMsg{
-			TaskId:      taskId,
-			SectionId:   sid.Id,
-			SectionType: sid.Type,
-			Err:         err,
-		}
-	})
-}
