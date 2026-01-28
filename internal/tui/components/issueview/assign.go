@@ -8,6 +8,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -50,7 +51,7 @@ func (m *Model) assign(usernames []string) tea.Cmd {
 			SectionType: issuessection.SectionType,
 			TaskId:      taskId,
 			Err:         err,
-			Msg: issuessection.UpdateIssueMsg{
+			Msg: tasks.UpdateIssueMsg{
 				IssueNumber:    issueNumber,
 				AddedAssignees: &returnedAssignees,
 			},

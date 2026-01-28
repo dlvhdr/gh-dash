@@ -13,6 +13,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -86,11 +87,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				if input == "Y" || input == "y" {
+					issue := m.GetCurrRow()
+					sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
 					switch action {
 					case "close":
-						cmd = m.close()
+						cmd = tasks.CloseIssue(m.Ctx, sid, issue)
 					case "reopen":
-						cmd = m.reopen()
+						cmd = tasks.ReopenIssue(m.Ctx, sid, issue)
 					}
 				}
 
@@ -117,7 +120,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			}
 		}
 
-	case UpdateIssueMsg:
+	case tasks.UpdateIssueMsg:
 		for i, currIssue := range m.Issues {
 			if currIssue.Number == msg.IssueNumber {
 				if msg.IsClosed != nil {
@@ -385,15 +388,6 @@ type SectionIssuesFetchedMsg struct {
 	TotalCount int
 	PageInfo   data.PageInfo
 	TaskId     string
-}
-
-type UpdateIssueMsg struct {
-	IssueNumber      int
-	Labels           *data.IssueLabels
-	NewComment       *data.IssueComment
-	IsClosed         *bool
-	AddedAssignees   *data.Assignees
-	RemovedAssignees *data.Assignees
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
