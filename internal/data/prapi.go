@@ -449,6 +449,18 @@ func SetClient(c *gh.GraphQLClient) {
 	cachedClient = c
 }
 
+// ClearEnrichmentCache clears the cached GraphQL client used for fetching
+// enriched PR/Issue data. Call this when refreshing to ensure fresh data.
+func ClearEnrichmentCache() {
+	cachedClient = nil
+}
+
+// IsEnrichmentCacheCleared returns true if the enrichment cache is cleared.
+// This is primarily for testing purposes.
+func IsEnrichmentCacheCleared() bool {
+	return cachedClient == nil
+}
+
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
 	if client == nil {
