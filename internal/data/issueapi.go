@@ -91,7 +91,7 @@ func (data IssueData) GetCreatedAt() time.Time {
 }
 
 func makeIssuesQuery(query string) string {
-	return fmt.Sprintf("is:issue %s sort:updated", query)
+	return fmt.Sprintf("is:issue archived:false %s sort:updated", query)
 }
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
@@ -131,9 +131,6 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
-		if node.Issue.Repository.IsArchived {
-			continue
-		}
 		issues = append(issues, node.Issue)
 	}
 
