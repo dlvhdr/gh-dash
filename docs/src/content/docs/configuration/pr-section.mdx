@@ -7,6 +7,7 @@ title: PR Sections
 Defines a section in the dashboard's PRs view.
 
 - Every section must define a [`title`] and [`filters`].
+- When you define [`host`] for a section, that section fetches data from that GitHub host.
 - When you define [`limit`] for a section, that value overrides the
   [`defaults.prsLimit`] setting.
 - When you define [`layout`] for a section, that value overrides the
@@ -14,6 +15,7 @@ Defines a section in the dashboard's PRs view.
 
 [`title`]: #pr-title-title
 [`filters`]: #pr-filters-filters
+[`host`]: #github-host-host
 [`limit`]: #pr-fetch-limit-limit
 [`layout`]: #pr-section-layout-layout
 [`defaults.prsLimit`]: /configuration/defaults/#pr-fetch-limit
@@ -49,6 +51,30 @@ For example:
 For more information about writing filters for searching GitHub, see [Searching].
 
 [Searching]: /configuration/searching
+
+## GitHub Host (`host`)
+
+| Type   | Default |
+| :----- | :------ |
+| String | (empty) |
+
+This setting specifies the GitHub host for this section. Use this when you need to fetch
+PRs from a GitHub Enterprise instance or a different GitHub host.
+
+When not specified or empty, the section uses the default GitHub host (github.com or the
+host configured in your `gh` CLI).
+
+### Example
+
+```yaml
+prSections:
+  - title: Enterprise PRs
+    filters: is:open author:@me
+    host: github.enterprise.com
+  - title: GitHub.com PRs
+    filters: is:open author:@me
+    # no host = default (github.com)
+```
 
 ## PR Section Layout (`layout`)
 
