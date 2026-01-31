@@ -17,6 +17,14 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
+type AutoMergeRequest struct {
+	EnabledAt   time.Time `graphql:"enabledAt"`
+	MergeMethod string    `graphql:"mergeMethod"`
+	EnabledBy   struct {
+		Login string `graphql:"login"`
+	} `graphql:"enabledBy"`
+}
+
 type SuggestedReviewer struct {
 	IsAuthor    bool
 	IsCommenter bool
@@ -64,6 +72,7 @@ type EnrichedPullRequestData struct {
 }
 
 type PullRequestData struct {
+	ID     string
 	Number int
 	Title  string
 	Body   string
@@ -96,6 +105,8 @@ type PullRequestData struct {
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
 	IsInMergeQueue   bool
+	AutoMergeEnabled bool // Set locally when auto-merge is enabled via the UI; AutoMergeRequest holds the real API data when populated from a fetch.
+	AutoMergeRequest *AutoMergeRequest
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
