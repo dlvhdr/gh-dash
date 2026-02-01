@@ -219,6 +219,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.ShowConfirmCancel = false
 			}
 
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.pr != nil {
+					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
+					data.ClearRepoUserCache(repoName)
+				}
+				cmds = append(cmds, m.fetchUsers())
+			}
+
 			// Track @-mention context before and after the keystroke
 			previousCursorPos := m.inputBox.CursorPosition()
 			previousValue := m.inputBox.Value()
@@ -263,6 +271,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.ShowConfirmCancel = false
 			}
 
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.pr != nil {
+					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
+					data.ClearRepoUserCache(repoName)
+				}
+				cmds = append(cmds, m.fetchUsers())
+			}
+
 			// Track current user context before and after the keystroke
 			previousCursorPos := m.inputBox.CursorPosition()
 			previousValue := m.inputBox.Value()
@@ -298,6 +314,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isAssigning = false
 				m.ac.Hide()
 				return m, nil
+			}
+
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.pr != nil {
+					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+				cmds = append(cmds, m.fetchLabels())
 			}
 
 			// Track current word context before and after the keystroke
@@ -354,6 +378,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isLabeling = false
 				m.ac.Hide()
 				return m, nil
+			}
+
+			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
+				if m.pr != nil {
+					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
+					data.ClearRepoLabelCache(repoName)
+				}
+				cmds = append(cmds, m.fetchLabels())
 			}
 
 			// Track label context before and after the keystroke
