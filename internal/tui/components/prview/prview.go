@@ -26,8 +26,6 @@ import (
 var (
 	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt    = "Leave a comment..."
-	approvalPrompt   = "Approve with comment..."
 	foldBodyHeight   = 8
 )
 
@@ -103,11 +101,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(commentPrompt)
+					m.inputBox.SetPrompt(constants.CommentPrompt)
 					m.ShowConfirmCancel = false
 					return m, nil
 				}
-				m.inputBox.SetPrompt(commentPrompt)
+				m.inputBox.SetPrompt(constants.CommentPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -130,7 +128,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					return m, nil
 				}
 			default:
-				m.inputBox.SetPrompt(approvalPrompt)
+				m.inputBox.SetPrompt(constants.ApprovalPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -630,7 +628,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt(commentPrompt)
+	m.inputBox.SetPrompt(constants.CommentPrompt)
 
 	if isCommenting {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -655,7 +653,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isApproving = isApproving
-	m.inputBox.SetPrompt(approvalPrompt)
+	m.inputBox.SetPrompt(constants.ApprovalPrompt)
 	m.inputBox.SetValue(m.ctx.Config.Defaults.PrApproveComment)
 
 	if isApproving {
@@ -677,7 +675,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.AssignPrompt)
 	if !m.userAssignedToPr(m.ctx.User) {
 		m.inputBox.SetValue(m.ctx.User)
 	}
@@ -710,7 +708,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.UnassignPrompt)
 	m.inputBox.SetValue(strings.Join(m.prAssignees(), "\n"))
 
 	if isUnassigning {

@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -25,7 +26,6 @@ import (
 var (
 	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt    = "Leave a comment..."
 )
 
 type RepoLabelsFetchedMsg struct {
@@ -142,11 +142,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(commentPrompt)
+					m.inputBox.SetPrompt(constants.CommentPrompt)
 					m.ShowConfirmCancel = false
 					return m, nil, nil
 				}
-				m.inputBox.SetPrompt(commentPrompt)
+				m.inputBox.SetPrompt(constants.CommentPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -423,7 +423,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt("Leave a comment...")
+	m.inputBox.SetPrompt(constants.CommentPrompt)
 
 	if isCommenting {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -445,7 +445,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.AssignPrompt)
 	if !m.userAssignedToIssue(m.ctx.User) {
 		m.inputBox.SetValue(m.ctx.User)
 	}
@@ -465,7 +465,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isLabeling = isLabeling
-	m.inputBox.SetPrompt("Add/remove labels (comma-separated)...")
+	m.inputBox.SetPrompt(constants.LabelPrompt)
 
 	labels := make([]string, 0)
 	for _, label := range m.issue.Data.Labels.Nodes {
@@ -537,7 +537,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.UnassignPrompt)
 	m.inputBox.SetValue(strings.Join(m.issueAssignees(), "\n"))
 
 	if isUnassigning {
