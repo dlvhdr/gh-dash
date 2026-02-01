@@ -127,8 +127,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		clearCmd := m.ac.SetFetchSuccess()
 		m.repoLabels = msg.Labels
 		labelNames := data.LabelNames(msg.Labels)
-		m.ac.SetSuggestions(labelNames)
+		// Only set suggestions and show if we're actually in labeling mode
 		if m.isLabeling {
+			m.ac.SetSuggestions(labelNames)
 			cursorPos := m.inputBox.CursorPosition()
 			currentLabel, _, _ := autocomplete.LabelContextExtractor(m.inputBox.Value(), cursorPos)
 			existingLabels := autocomplete.LabelItemsToExclude(m.inputBox.Value(), cursorPos)
@@ -143,18 +144,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case RepoUsersFetchedMsg:
 		clearCmd := m.ac.SetFetchSuccess()
 		m.repoUsers = msg.Users
-		m.ac.SetSuggestions(data.UserLogins(msg.Users))
-		if m.isCommenting {
-			cursorPos := m.inputBox.CursorPosition()
-			mention, _, _ := autocomplete.UserMentionContextExtractor(m.inputBox.Value(), cursorPos)
-			if mention != "" {
-				m.ac.Show(mention, nil)
+		// Only set suggestions if we're in a mode that uses user suggestions
+		if m.isCommenting || m.isApproving || m.isAssigning {
+			m.ac.SetSuggestions(data.UserLogins(msg.Users))
+			if m.isCommenting {
+				cursorPos := m.inputBox.CursorPosition()
+				mention, _, _ := autocomplete.UserMentionContextExtractor(m.inputBox.Value(), cursorPos)
+				if mention != "" {
+					m.ac.Show(mention, nil)
+				}
+			} else if m.isApproving || m.isAssigning {
+				cursorPos := m.inputBox.CursorPosition()
+				word, _, _ := autocomplete.WhitespaceContextExtractor(m.inputBox.Value(), cursorPos)
+				existingWords := autocomplete.WhitespaceItemsToExclude(m.inputBox.Value(), cursorPos)
+				m.ac.Show(word, existingWords)
 			}
-		} else if m.isApproving || m.isAssigning {
-			cursorPos := m.inputBox.CursorPosition()
-			word, _, _ := autocomplete.WhitespaceContextExtractor(m.inputBox.Value(), cursorPos)
-			existingWords := autocomplete.WhitespaceItemsToExclude(m.inputBox.Value(), cursorPos)
-			m.ac.Show(word, existingWords)
 		}
 		return m, clearCmd
 
