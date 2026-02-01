@@ -185,9 +185,11 @@ func TestAutocompleteStateResetWhenSwitchingModes(t *testing.T) {
 	// 4. User enters commenting mode
 	m.SetIsCommenting(true)
 
-	// 5. After the fix, autocomplete state should be fully reset
+	// 5. After the fix, autocomplete filtered state should be fully reset
+	// Note: In real usage, user suggestions would be loaded asynchronously, but
+	// in this test there are no cached users so no suggestions are populated yet.
 	require.False(t, m.ac.HasSuggestions(),
-		"autocomplete should have no suggestions after entering comment mode")
+		"autocomplete should have no filtered suggestions after entering comment mode (user suggestions load async)")
 	require.False(t, m.ac.IsVisible(),
 		"autocomplete should not be visible after entering comment mode")
 }

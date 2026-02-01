@@ -15,6 +15,7 @@ type PRKeyMap struct {
 	Approve              key.Binding
 	Assign               key.Binding
 	Unassign             key.Binding
+	Label                key.Binding
 	Comment              key.Binding
 	Diff                 key.Binding
 	Checkout             key.Binding
@@ -49,6 +50,10 @@ var PRKeys = PRKeyMap{
 	Unassign: key.NewBinding(
 		key.WithKeys("A"),
 		key.WithHelp("A", "unassign"),
+	),
+	Label: key.NewBinding(
+		key.WithKeys("L"),
+		key.WithHelp("L", "label"),
 	),
 	Comment: key.NewBinding(
 		key.WithKeys("c"),
@@ -107,6 +112,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Approve,
 		PRKeys.Assign,
 		PRKeys.Unassign,
+		PRKeys.Label,
 		PRKeys.Comment,
 		PRKeys.Diff,
 		PRKeys.Checkout,
@@ -158,6 +164,8 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			key = &PRKeys.Assign
 		case "unassign":
 			key = &PRKeys.Unassign
+		case "label":
+			key = &PRKeys.Label
 		case "comment":
 			key = &PRKeys.Comment
 		case "diff":

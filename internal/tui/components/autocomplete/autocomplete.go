@@ -116,7 +116,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 		excludeMap[strings.ToLower(strings.TrimSpace(item))] = true
 	}
 
-	// Filter excluded labels first
+	// Filter excluded items first
 	var filteredSuggestions []string
 	for _, suggestion := range m.suggestions {
 		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion))] {
@@ -126,9 +126,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 
 	if currentItem == "" || len(filteredSuggestions) == 0 {
 		m.filtered = filteredSuggestions
-		if len(m.filtered) > m.maxVisible {
-			m.filtered = m.filtered[:m.maxVisible]
-		}
+		m.filtered = m.filtered[:m.maxVisible]
 		m.selected = 0
 		// respect suppression: don't auto-show if suppressed
 		m.UpdateVisible()
@@ -146,6 +144,10 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 			break
 		}
 		m.filtered = append(m.filtered, match.Str)
+	}
+
+	for len(m.filtered) < m.maxVisible {
+		m.filtered = append(m.filtered, "")
 	}
 
 	m.selected = 0

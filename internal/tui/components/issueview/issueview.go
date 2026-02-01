@@ -36,6 +36,14 @@ type RepoLabelsFetchFailedMsg struct {
 	Err error
 }
 
+type RepoUsersFetchedMsg struct {
+	Users []data.User
+}
+
+type RepoUsersFetchFailedMsg struct {
+	Err error
+}
+
 type Model struct {
 	ctx       *context.ProgramContext
 	issue     *issuerow.Issue
@@ -51,16 +59,11 @@ type Model struct {
 	inputBox   inputbox.Model
 	ac         *autocomplete.Model
 	repoLabels []data.Label
+	repoUsers  []data.User
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
 	inputBox := inputbox.NewModel(ctx)
-	linesToAdjust := 5
-	inputBox.SetHeight(common.InputBoxHeight - linesToAdjust)
-
-	inputBox.OnSuggestionSelected = handleLabelSelection
-	inputBox.CurrentContext = labelAtCursor
-	inputBox.SuggestionsToExclude = allLabels
 
 	ac := autocomplete.NewModel(ctx)
 	inputBox.SetAutocomplete(&ac)
@@ -76,6 +79,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 		inputBox:   inputBox,
 		ac:         &ac,
 		repoLabels: nil,
+		repoUsers:  nil,
 	}
 }
 
@@ -90,12 +94,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 	case RepoLabelsFetchedMsg:
 		clearCmd := m.ac.SetFetchSuccess()
 		m.repoLabels = msg.Labels
-		labelNames := data.GetLabelNames(msg.Labels)
+		labelNames := data.LabelNames(msg.Labels)
 		m.ac.SetSuggestions(labelNames)
 		if m.isLabeling {
-			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
-			existingLabels := allLabels(m.inputBox.Value())
+			cursorPos := m.inputBox.CursorPosition()
+			currentLabel, _, _ := autocomplete.LabelContextExtractor(m.inputBox.Value(), cursorPos)
+			existingLabels := autocomplete.LabelItemsToExclude(m.inputBox.Value(), cursorPos)
 			m.ac.Show(currentLabel, existingLabels)
 		}
 		return m, clearCmd, nil
@@ -104,10 +108,32 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 		clearCmd := m.ac.SetFetchError(msg.Err)
 		return m, clearCmd, nil
 
+	case RepoUsersFetchedMsg:
+		clearCmd := m.ac.SetFetchSuccess()
+		m.repoUsers = msg.Users
+		userLogins := data.UserLogins(msg.Users)
+		m.ac.SetSuggestions(userLogins)
+		if m.isCommenting {
+			cursorPos := m.inputBox.CursorPosition()
+			mention, _, _ := autocomplete.UserMentionContextExtractor(m.inputBox.Value(), cursorPos)
+			if mention != "" {
+				m.ac.Show(mention, nil)
+			}
+		} else if m.isAssigning {
+			cursorPos := m.inputBox.CursorPosition()
+			word, _, _ := autocomplete.WhitespaceContextExtractor(m.inputBox.Value(), cursorPos)
+			existingWords := autocomplete.WhitespaceItemsToExclude(m.inputBox.Value(), cursorPos)
+			m.ac.Show(word, existingWords)
+		}
+		return m, clearCmd, nil
+
+	case RepoUsersFetchFailedMsg:
+		clearCmd := m.ac.SetFetchError(msg.Err)
+		return m, clearCmd, nil
+
 	case autocomplete.FetchSuggestionsRequestedMsg:
-		// Only fetch when we're in labeling mode (where labels are relevant)
 		if m.isLabeling {
-			// If this is a forced refresh (e.g., via Ctrl+F), clear the cached labels
+			// If this is a forced refresh (e.g., via Ctrl+f), clear the cached labels
 			// for this repo so FetchRepoLabels will actually call the gh CLI.
 			if msg.Force {
 				if m.issue != nil {
@@ -116,6 +142,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				}
 			}
 			cmd := m.fetchLabels()
+			return m, cmd, nil
+		} else if m.isCommenting {
+			// If this is a forced refresh (e.g., via Ctrl+f), clear the cached users
+			// for this repo so FetchRepoCollaborators will actually call the gh CLI.
+			if msg.Force {
+				if m.issue != nil {
+					repoName := m.issue.Data.GetRepoNameWithOwner()
+					data.ClearRepoUserCache(repoName)
+				}
+			}
+			cmd := m.fetchUsers()
 			return m, cmd, nil
 		}
 		return m, nil, nil
@@ -142,20 +179,41 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(commentPrompt)
+					m.inputBox.SetPrompt(constants.CommentPrompt)
 					m.ShowConfirmCancel = false
 					return m, nil, nil
 				}
-				m.inputBox.SetPrompt(commentPrompt)
+				m.inputBox.SetPrompt(constants.CommentPrompt)
 				m.ShowConfirmCancel = false
 			}
 
+			// Track @-mention context before and after the keystroke
+			previousCursorPos := m.inputBox.CursorPosition()
+			previousValue := m.inputBox.Value()
+			previousMention, _, _ := autocomplete.UserMentionContextExtractor(previousValue, previousCursorPos)
+
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
+
+			// Check for @-mention context change after the keystroke
+			currentCursorPos := m.inputBox.CursorPosition()
+			currentValue := m.inputBox.Value()
+			currentMention, _, _ := autocomplete.UserMentionContextExtractor(currentValue, currentCursorPos)
+
+			if currentMention != previousMention {
+				if currentMention != "" {
+					// User is typing an @-mention, show autocomplete
+					existingUsers := autocomplete.UserMentionItemsToExclude(currentValue, currentCursorPos)
+					m.ac.Show(currentMention, existingUsers)
+				} else {
+					// No longer in an @-mention context
+					m.ac.Hide()
+				}
+			}
 		} else if m.isLabeling {
 			switch msg.Type {
 			case tea.KeyCtrlD:
-				labels := allLabels(m.inputBox.Value())
+				labels := autocomplete.CurrentLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					cmd = m.label(labels)
 				}
@@ -179,20 +237,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				cmds = append(cmds, m.fetchLabels())
 			}
 
-			previousCursorPos := m.inputBox.GetCursorPosition()
+			previousCursorPos := m.inputBox.CursorPosition()
 			previousValue := m.inputBox.Value()
-			previousLabel := labelAtCursor(previousCursorPos, previousValue)
+			previousLabel, _, _ := autocomplete.LabelContextExtractor(previousValue, previousCursorPos)
 
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 
-			currentCursorPos := m.inputBox.GetCursorPosition()
+			currentCursorPos := m.inputBox.CursorPosition()
 			currentValue := m.inputBox.Value()
-			currentLabel := labelAtCursor(currentCursorPos, currentValue)
+			currentLabel, _, _ := autocomplete.LabelContextExtractor(currentValue, currentCursorPos)
 
 			if currentLabel != previousLabel {
-				existingLabels := allLabels(currentValue)
-				m.ac.Show(currentLabel, existingLabels)
+				labelsToExclude := autocomplete.LabelItemsToExclude(currentValue, currentCursorPos)
+				m.ac.Show(currentLabel, labelsToExclude)
 			}
 		} else if m.isAssigning {
 			switch msg.Type {
@@ -203,16 +261,34 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
+				m.ac.Hide()
 				return m, cmd, nil
 
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.inputBox.Blur()
 				m.isAssigning = false
+				m.ac.Hide()
 				return m, nil, nil
 			}
 
+			// Track current word context before and after the keystroke
+			previousCursorPos := m.inputBox.CursorPosition()
+			previousValue := m.inputBox.Value()
+			previousWord, _, _ := autocomplete.WhitespaceContextExtractor(previousValue, previousCursorPos)
+
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
+
+			// Check for word context change after the keystroke
+			currentCursorPos := m.inputBox.CursorPosition()
+			currentValue := m.inputBox.Value()
+			currentWord, _, _ := autocomplete.WhitespaceContextExtractor(currentValue, currentCursorPos)
+
+			if currentWord != previousWord {
+				// Always show autocomplete for assign mode (even with empty word)
+				existingWords := autocomplete.WhitespaceItemsToExclude(currentValue, currentCursorPos)
+				m.ac.Show(currentWord, existingWords)
+			}
 		} else if m.isUnassigning {
 			switch msg.Type {
 			case tea.KeyCtrlD:
@@ -284,10 +360,10 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning {
-		s.WriteString(m.inputBox.View())
-	} else if m.isLabeling {
+	if m.isCommenting || m.isLabeling {
 		s.WriteString(m.inputBox.ViewWithAutocomplete())
+	} else if m.isAssigning || m.isUnassigning {
+		s.WriteString(m.inputBox.View())
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
@@ -421,12 +497,29 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	if !m.isCommenting && isCommenting {
 		m.inputBox.Reset()
 		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
+
+		// Set up user mention autocomplete for commenting
+		m.inputBox.ContextExtractor = autocomplete.UserMentionContextExtractor
+		m.inputBox.SuggestionInserter = autocomplete.UserMentionSuggestionInserter
+		m.inputBox.ItemsToExclude = autocomplete.UserMentionItemsToExclude
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt("Leave a comment...")
+	m.inputBox.SetPrompt(constants.CommentPrompt)
 
 	if isCommenting {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+		// Set up user suggestions if already cached
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		if users, ok := data.CachedRepoUsers(repoName); ok {
+			m.repoUsers = users
+			m.ac.SetSuggestions(data.UserLogins(users))
+			cursorPos := m.inputBox.CursorPosition()
+			mention, _, _ := autocomplete.UserMentionContextExtractor(m.inputBox.Value(), cursorPos)
+			if mention != "" {
+				m.ac.Show(mention, nil)
+			}
+			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+		}
+		return tea.Sequence(m.fetchUsersSilent(), textarea.Blink, m.inputBox.Focus())
 	}
 	return nil
 }
@@ -443,6 +536,11 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 	if !m.isAssigning && isAssigning {
 		m.inputBox.Reset()
 		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
+
+		// Set up whitespace-based autocomplete for assigning (users are whitespace-separated)
+		m.inputBox.ContextExtractor = autocomplete.WhitespaceContextExtractor
+		m.inputBox.SuggestionInserter = autocomplete.WhitespaceSuggestionInserter
+		m.inputBox.ItemsToExclude = autocomplete.WhitespaceItemsToExclude
 	}
 	m.isAssigning = isAssigning
 	m.inputBox.SetPrompt(constants.AssignPrompt)
@@ -450,8 +548,21 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		m.inputBox.SetValue(m.ctx.User)
 	}
 
+	m.ac.Hide()
+	m.ac.SetSuggestions(nil)
+
 	if isAssigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		if users, ok := data.CachedRepoUsers(repoName); ok {
+			m.repoUsers = users
+			m.ac.SetSuggestions(data.UserLogins(users))
+			// Show autocomplete immediately for current word at cursor
+			cursorPos := m.inputBox.CursorPosition()
+			currentWord, _, _ := autocomplete.WhitespaceContextExtractor(m.inputBox.Value(), cursorPos)
+			existingWords := autocomplete.WhitespaceItemsToExclude(m.inputBox.Value(), cursorPos)
+			m.ac.Show(currentWord, existingWords)
+			return tea.Sequence(m.fetchUsers(), textarea.Blink, m.inputBox.Focus())
+		}
 	}
 	return nil
 }
@@ -463,10 +574,16 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 
 	if !m.isLabeling && isLabeling {
 		m.inputBox.Reset()
+
+		// Set up label autocomplete for labeling
+		m.inputBox.ContextExtractor = autocomplete.LabelContextExtractor
+		m.inputBox.SuggestionInserter = autocomplete.LabelSuggestionInserter
+		m.inputBox.ItemsToExclude = autocomplete.LabelItemsToExclude
 	}
 	m.isLabeling = isLabeling
 	m.inputBox.SetPrompt(constants.LabelPrompt)
 
+	// Pre-populate with current labels
 	labels := make([]string, 0)
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
@@ -481,13 +598,13 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	// Trigger label fetching for autocomplete
 	if isLabeling {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
-		if labels, ok := data.GetCachedRepoLabels(repoName); ok {
+		if labels, ok := data.CachedRepoLabels(repoName); ok {
 			// Use cached labels
 			m.repoLabels = labels
-			m.ac.SetSuggestions(data.GetLabelNames(labels))
-			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
-			existingLabels := allLabels(m.inputBox.Value())
+			m.ac.SetSuggestions(data.LabelNames(labels))
+			cursorPos := m.inputBox.CursorPosition()
+			currentLabel, _, _ := autocomplete.LabelContextExtractor(m.inputBox.Value(), cursorPos)
+			existingLabels := autocomplete.LabelItemsToExclude(m.inputBox.Value(), cursorPos)
 			m.ac.Show(currentLabel, existingLabels)
 			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
 		} else {
@@ -512,6 +629,34 @@ func (m *Model) fetchLabels() tea.Cmd {
 	}
 
 	return tea.Batch(spinnerTickCmd, fetchCmd)
+}
+
+// fetchUsers returns a command to fetch repository users for @-mention autocomplete
+func (m *Model) fetchUsers() tea.Cmd {
+	spinnerTickCmd := m.ac.SetFetchLoading()
+
+	fetchCmd := func() tea.Msg {
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		users, err := data.FetchRepoUsers(repoName)
+		if err != nil {
+			return RepoUsersFetchFailedMsg{Err: err}
+		}
+		return RepoUsersFetchedMsg{Users: users}
+	}
+
+	return tea.Batch(spinnerTickCmd, fetchCmd)
+}
+
+// fetchUsersSilent returns a command to fetch repository users without showing loading UI
+func (m *Model) fetchUsersSilent() tea.Cmd {
+	return func() tea.Msg {
+		repoName := m.issue.Data.GetRepoNameWithOwner()
+		users, err := data.FetchRepoUsers(repoName)
+		if err != nil {
+			return RepoUsersFetchFailedMsg{Err: err}
+		}
+		return RepoUsersFetchedMsg{Users: users}
+	}
 }
 
 func (m *Model) userAssignedToIssue(login string) bool {

@@ -15,6 +15,7 @@ const (
 	PRActionApprove
 	PRActionAssign
 	PRActionUnassign
+	PRActionLabel
 	PRActionComment
 	PRActionDiff
 	PRActionCheckout
@@ -45,6 +46,8 @@ func MsgToAction(msg tea.Msg) *PRAction {
 		return &PRAction{Type: PRActionAssign}
 	case key.Matches(keyMsg, keys.PRKeys.Unassign):
 		return &PRAction{Type: PRActionUnassign}
+	case key.Matches(keyMsg, keys.PRKeys.Label):
+		return &PRAction{Type: PRActionLabel}
 	case key.Matches(keyMsg, keys.PRKeys.Comment):
 		return &PRAction{Type: PRActionComment}
 	case key.Matches(keyMsg, keys.PRKeys.Diff):

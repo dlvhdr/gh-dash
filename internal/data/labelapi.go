@@ -14,7 +14,7 @@ var (
 	execCommand = exec.Command
 )
 
-func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
+func CachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
 	labelCacheMu.RLock()
 	defer labelCacheMu.RUnlock()
 	labels, ok := repoLabelCache[repoNameWithOwner]
@@ -23,7 +23,7 @@ func GetCachedRepoLabels(repoNameWithOwner string) ([]Label, bool) {
 
 func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	// Check cache first
-	if cachedLabels, ok := GetCachedRepoLabels(repoNameWithOwner); ok {
+	if cachedLabels, ok := CachedRepoLabels(repoNameWithOwner); ok {
 		return cachedLabels, nil
 	}
 
@@ -68,7 +68,7 @@ func ClearRepoLabelCache(repoNameWithOwner string) {
 	delete(repoLabelCache, repoNameWithOwner)
 }
 
-func GetLabelNames(labels []Label) []string {
+func LabelNames(labels []Label) []string {
 	names := make([]string, len(labels))
 	for i, label := range labels {
 		names[i] = label.Name

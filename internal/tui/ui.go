@@ -384,6 +384,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.PRKeys.Unassign):
 				return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
 
+			case key.Matches(msg, keys.PRKeys.Label):
+				return m, m.openSidebarForPRInput(m.prView.SetIsLabeling)
+
 			case key.Matches(msg, keys.PRKeys.Comment):
 				return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
 
@@ -503,6 +506,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionUnassign:
 							return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
+
+						case prview.PRActionLabel:
+							return m, m.openSidebarForPRInput(m.prView.SetIsLabeling)
 
 						case prview.PRActionComment:
 							return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
@@ -1049,11 +1055,19 @@ func (m *Model) syncSidebar() tea.Cmd {
 		m.prView.SetRow(row)
 		m.prView.SetWidth(width)
 		m.sidebar.SetContent(m.prView.View())
+		// Scroll to bottom if in input mode to keep inputbox visible
+		if m.prView.IsTextInputBoxFocused() {
+			m.sidebar.ScrollToBottom()
+		}
 	case *data.IssueData:
 		m.issueSidebar.SetSectionId(m.currSectionId)
 		m.issueSidebar.SetRow(row)
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
+		// Scroll to bottom if in input mode to keep inputbox visible
+		if m.issueSidebar.IsTextInputBoxFocused() {
+			m.sidebar.ScrollToBottom()
+		}
 	case *notificationrow.Data:
 		notifId := row.GetId()
 
@@ -1065,11 +1079,19 @@ func (m *Model) syncSidebar() tea.Cmd {
 				m.prView.SetRow(m.notificationView.GetSubjectPR())
 				m.prView.SetWidth(width)
 				m.sidebar.SetContent(m.prView.View())
+				// Scroll to bottom if in input mode to keep inputbox visible
+				if m.prView.IsTextInputBoxFocused() {
+					m.sidebar.ScrollToBottom()
+				}
 			} else if m.notificationView.GetSubjectIssue() != nil {
 				m.issueSidebar.SetSectionId(0)
 				m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 				m.issueSidebar.SetWidth(width)
 				m.sidebar.SetContent(m.issueSidebar.View())
+				// Scroll to bottom if in input mode to keep inputbox visible
+				if m.issueSidebar.IsTextInputBoxFocused() {
+					m.sidebar.ScrollToBottom()
+				}
 			}
 			return nil
 		}
