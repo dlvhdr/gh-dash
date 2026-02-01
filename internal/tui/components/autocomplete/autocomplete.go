@@ -126,7 +126,9 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 
 	if currentItem == "" || len(filteredSuggestions) == 0 {
 		m.filtered = filteredSuggestions
-		m.filtered = m.filtered[:m.maxVisible]
+		if len(m.filtered) > m.maxVisible {
+			m.filtered = m.filtered[:m.maxVisible]
+		}
 		m.selected = 0
 		// respect suppression: don't auto-show if suppressed
 		m.UpdateVisible()
