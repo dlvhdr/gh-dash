@@ -169,6 +169,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionApprove,
 		PRActionAssign,
 		PRActionUnassign,
+		PRActionLabel,
 		PRActionComment,
 		PRActionDiff,
 		PRActionCheckout,
@@ -208,4 +209,33 @@ func TestMsgToActionWithReboundKeys(t *testing.T) {
 
 	require.NotNil(t, action, "expected action for rebound key")
 	require.Equal(t, PRActionApprove, action.Type, "expected approve action for rebound key")
+}
+
+func TestIsTextInputBoxFocusedWhenLabeling(t *testing.T) {
+	m := newTestModelForAction(t)
+	m.isLabeling = true
+
+	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in labeling mode")
+}
+
+func TestGetIsLabeling(t *testing.T) {
+	t.Run("returns false initially", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		require.False(t, m.GetIsLabeling(), "expected GetIsLabeling to return false initially")
+	})
+
+	t.Run("returns true when labeling", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		m.isLabeling = true
+		require.True(t, m.GetIsLabeling(), "expected GetIsLabeling to return true when labeling")
+	})
+}
+
+func TestSetIsLabelingWithNilPR(t *testing.T) {
+	m := newTestModelForAction(t)
+	m.pr = nil
+
+	cmd := m.SetIsLabeling(true)
+
+	require.Nil(t, cmd, "expected nil command when PR is nil")
 }
