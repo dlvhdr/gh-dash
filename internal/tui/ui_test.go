@@ -20,8 +20,11 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -190,15 +193,18 @@ func TestNotificationView_SwitchViewWithSKey(t *testing.T) {
 		keys:    keys.Keys,
 		prView:  prview.NewModel(ctx),
 		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
 	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
 
 	// Verify we start in NotificationsView
 	require.Equal(t, config.NotificationsView, m.ctx.View, "should start in NotificationsView")
 
 	// Test that switchSelectedView returns PRsView when in NotificationsView
-	newView := m.switchSelectedView()
-	require.Equal(t, config.PRsView, newView,
-		"switchSelectedView should return PRsView when in NotificationsView")
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
 }
 
 func TestNotificationView_SwitchViewWithSKey_WhileViewingPR(t *testing.T) {
@@ -223,7 +229,10 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingPR(t *testing.T) {
 		keys:    keys.Keys,
 		prView:  prview.NewModel(ctx),
 		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
 	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
 
 	// Set up a PR notification subject (simulating viewing a PR notification)
 	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-id")
@@ -235,9 +244,9 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingPR(t *testing.T) {
 	require.NotNil(t, m.notificationView.GetSubjectPR(), "subject PR should be set")
 
 	// Test that switchSelectedView returns PRsView
-	newView := m.switchSelectedView()
-	require.Equal(t, config.PRsView, newView,
-		"switchSelectedView should return PRsView when in NotificationsView")
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
 
 	// Verify subject was cleared after switch
 	require.Nil(t, m.notificationView.GetSubjectPR(),
@@ -266,7 +275,10 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingIssue(t *testing.T) {
 		keys:    keys.Keys,
 		prView:  prview.NewModel(ctx),
 		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
 	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
 
 	// Set up an Issue notification subject (simulating viewing an Issue notification)
 	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-id")
@@ -278,9 +290,9 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingIssue(t *testing.T) {
 	require.NotNil(t, m.notificationView.GetSubjectIssue(), "subject Issue should be set")
 
 	// Test that switchSelectedView returns PRsView
-	newView := m.switchSelectedView()
-	require.Equal(t, config.PRsView, newView,
-		"switchSelectedView should return PRsView when in NotificationsView")
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
 
 	// Verify subject was cleared after switch
 	require.Nil(t, m.notificationView.GetSubjectIssue(),
