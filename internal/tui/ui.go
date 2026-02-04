@@ -461,6 +461,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
+				return m, tea.Batch(cmds...)
 
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
