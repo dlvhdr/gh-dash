@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -83,7 +84,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch msg.Type {
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					cmd = m.comment(m.inputBox.Value())
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
@@ -118,7 +120,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					comment = m.inputBox.Value()
 				}
-				cmd = m.approve(comment)
+				sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
 				m.inputBox.Blur()
 				m.isApproving = false
 				return m, cmd
@@ -139,7 +142,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.assign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
@@ -158,7 +162,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.unassign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
