@@ -1,0 +1,33 @@
+---
+const { class: className } = Astro.props;
+---
+
+<style>
+  [aria-label="DIFFNAV ASCII Logo"] {
+    position: relative;
+    background-image: var(--hdr-green-red-gradient);
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+    background-repeat: repeat;
+    border: none;
+    padding: 0;
+  }
+</style>
+
+<div class="inline-flex flex-col">
+  <pre
+    aria-label="DIFFNAV ASCII Logo"
+    class:list={[
+      "w-fit text-xl leading-none lg:text-2xl",
+      className,
+    ]}>
+▜▔▚ ▌▐▔▔▐▔▔▐▚ ▌▐▔▌▐ ▞
+▟▁▞ ▌▐▔ ▐▔ ▐ ▚▌▐▔▌▐▞ </pre>
+  <p class="mt-4 ml-1 p-0 text-sm text-[var(--sl-color-white)]">
+    A git diff pager based on delta but with a file tree, à la GitHub.
+  </p>
+</div>
