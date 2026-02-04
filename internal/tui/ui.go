@@ -85,8 +85,6 @@ func NewModel(location config.Location) Model {
 			log.Info("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
 			m.tasks[task.Id] = task
-			rTask := m.renderRunningTask()
-			m.footer.SetRightSection(rTask)
 			return m.taskSpinner.Tick
 		},
 	}
@@ -99,7 +97,6 @@ func NewModel(location config.Location) Model {
 	m.issueSidebar = issueview.NewModel(m.ctx)
 	m.branchSidebar = branchsidebar.NewModel(m.ctx)
 	m.notificationView = notificationview.NewModel(m.ctx)
-	m.notificationView.SetOnConfirmAction(m.executeNotificationAction)
 	m.tabs = tabs.NewModel(m.ctx)
 
 	return m
@@ -208,9 +205,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Handle notification PR/Issue action confirmation
 		if m.notificationView.HasPendingAction() {
-			m.notificationView, cmd = m.notificationView.Update(msg)
+			var action string
+			m.notificationView, action = m.notificationView.Update(msg)
 			m.footer.SetLeftSection("")
-			return m, cmd
+			if action != "" {
+				return m, m.executeNotificationAction(action)
+			}
+			return m, nil
 		}
 
 		switch {

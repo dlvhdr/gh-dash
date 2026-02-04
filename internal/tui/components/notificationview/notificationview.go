@@ -26,9 +26,6 @@ type Model struct {
 
 	// Pending confirmation action for PR/Issue (e.g., "pr_close", "issue_reopen")
 	pendingAction string
-
-	// Callback invoked when a pending action is confirmed
-	onConfirmAction func(action string) tea.Cmd
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -128,15 +125,11 @@ func (m *Model) ClearPendingAction() {
 	m.pendingAction = ""
 }
 
-// SetOnConfirmAction sets the callback that is invoked when a pending action is confirmed.
-func (m *Model) SetOnConfirmAction(callback func(action string) tea.Cmd) {
-	m.onConfirmAction = callback
-}
-
 // Update handles key messages for confirmation dialogs.
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+// Returns the confirmed action string (empty if not confirmed or cancelled).
+func (m Model) Update(msg tea.Msg) (Model, string) {
 	if !m.HasPendingAction() {
-		return m, nil
+		return m, ""
 	}
 
 	switch msg := msg.(type) {
@@ -144,15 +137,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
 			action := m.pendingAction
 			m.pendingAction = ""
-			if m.onConfirmAction != nil {
-				return m, m.onConfirmAction(action)
-			}
+			return m, action
 		}
 		// Any other key cancels the confirmation
 		m.pendingAction = ""
 	}
 
-	return m, nil
+	return m, ""
 }
 
 func (m Model) View() string {

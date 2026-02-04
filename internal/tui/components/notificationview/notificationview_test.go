@@ -165,19 +165,13 @@ func TestHasPendingAction(t *testing.T) {
 // Update method tests
 
 func TestUpdate_NoPendingAction(t *testing.T) {
-	// When there's no pending action, Update should return early with no command
+	// When there's no pending action, Update should return early with no action
 	m := NewModel(&context.ProgramContext{})
-	callbackCalled := false
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		callbackCalled = true
-		return nil
-	})
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.False(t, callbackCalled, "callback should not be called when no pending action")
-	require.Nil(t, cmd, "should return nil command")
+	require.Empty(t, action, "should return empty action when no pending action")
 	require.False(t, newModel.HasPendingAction())
 }
 
@@ -188,17 +182,10 @@ func TestUpdate_ConfirmWithLowercaseY(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	var receivedAction string
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		receivedAction = action
-		return func() tea.Msg { return "test-cmd" }
-	})
-
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.Equal(t, "pr_close", receivedAction, "callback should receive the action")
-	require.NotNil(t, cmd, "should return a command")
+	require.Equal(t, "pr_close", action, "should return the confirmed action")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -209,17 +196,10 @@ func TestUpdate_ConfirmWithUppercaseY(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("merge")
 
-	var receivedAction string
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		receivedAction = action
-		return func() tea.Msg { return "test-cmd" }
-	})
-
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.Equal(t, "pr_merge", receivedAction, "callback should receive the action")
-	require.NotNil(t, cmd, "should return a command")
+	require.Equal(t, "pr_merge", action, "should return the confirmed action")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -228,17 +208,10 @@ func TestUpdate_ConfirmWithEnter(t *testing.T) {
 	m.SetSubjectIssue(&data.IssueData{Number: 789}, "notif-id")
 	m.SetPendingIssueAction("reopen")
 
-	var receivedAction string
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		receivedAction = action
-		return func() tea.Msg { return "test-cmd" }
-	})
-
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.Equal(t, "issue_reopen", receivedAction, "callback should receive the action")
-	require.NotNil(t, cmd, "should return a command")
+	require.Equal(t, "issue_reopen", action, "should return the confirmed action")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -249,17 +222,10 @@ func TestUpdate_CancelWithN(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	callbackCalled := false
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		callbackCalled = true
-		return nil
-	})
-
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.False(t, callbackCalled, "callback should not be called on cancel")
-	require.Nil(t, cmd, "should return nil command on cancel")
+	require.Empty(t, action, "should return empty action on cancel")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -270,17 +236,10 @@ func TestUpdate_CancelWithEscape(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("ready")
 
-	callbackCalled := false
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		callbackCalled = true
-		return nil
-	})
-
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.False(t, callbackCalled, "callback should not be called on escape")
-	require.Nil(t, cmd, "should return nil command on escape")
+	require.Empty(t, action, "should return empty action on escape")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -291,34 +250,26 @@ func TestUpdate_CancelWithRandomKey(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("update")
 
-	callbackCalled := false
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		callbackCalled = true
-		return nil
-	})
-
 	// Press a random key like 'x'
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.False(t, callbackCalled, "callback should not be called on random key")
-	require.Nil(t, cmd, "should return nil command on random key")
+	require.Empty(t, action, "should return empty action on random key")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
-func TestUpdate_NilCallback(t *testing.T) {
-	// When callback is nil, confirming should not panic
+func TestUpdate_ConfirmReturnsAction(t *testing.T) {
+	// Confirming should return the action string
 	m := NewModel(&context.ProgramContext{})
 	m.SetSubjectPR(&prrow.Data{
 		Primary: &data.PullRequestData{Number: 123},
 	}, "notif-id")
 	m.SetPendingPRAction("close")
-	// Don't set callback - leave it nil
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.Nil(t, cmd, "should return nil command when callback is nil")
+	require.Equal(t, "pr_close", action, "should return the confirmed action")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -330,18 +281,11 @@ func TestUpdate_NonKeyMsg(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	callbackCalled := false
-	m.SetOnConfirmAction(func(action string) tea.Cmd {
-		callbackCalled = true
-		return nil
-	})
-
 	// Send a non-key message (e.g., WindowSizeMsg)
 	msg := tea.WindowSizeMsg{Width: 100, Height: 50}
-	newModel, cmd := m.Update(msg)
+	newModel, action := m.Update(msg)
 
-	require.False(t, callbackCalled, "callback should not be called for non-key messages")
-	require.Nil(t, cmd, "should return nil command for non-key messages")
+	require.Empty(t, action, "should return empty action for non-key messages")
 	require.True(t, newModel.HasPendingAction(), "pending action should remain for non-key messages")
 }
 
@@ -357,17 +301,10 @@ func TestUpdate_AllPRActions(t *testing.T) {
 			}, "notif-id")
 			m.SetPendingPRAction(action)
 
-			var receivedAction string
-			m.SetOnConfirmAction(func(a string) tea.Cmd {
-				receivedAction = a
-				return func() tea.Msg { return "test" }
-			})
-
 			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
-			newModel, cmd := m.Update(msg)
+			newModel, confirmedAction := m.Update(msg)
 
-			require.Equal(t, "pr_"+action, receivedAction)
-			require.NotNil(t, cmd)
+			require.Equal(t, "pr_"+action, confirmedAction)
 			require.False(t, newModel.HasPendingAction())
 		})
 	}
@@ -383,39 +320,24 @@ func TestUpdate_AllIssueActions(t *testing.T) {
 			m.SetSubjectIssue(&data.IssueData{Number: 456}, "notif-id")
 			m.SetPendingIssueAction(action)
 
-			var receivedAction string
-			m.SetOnConfirmAction(func(a string) tea.Cmd {
-				receivedAction = a
-				return func() tea.Msg { return "test" }
-			})
-
 			msg := tea.KeyMsg{Type: tea.KeyEnter}
-			newModel, cmd := m.Update(msg)
+			newModel, confirmedAction := m.Update(msg)
 
-			require.Equal(t, "issue_"+action, receivedAction)
-			require.NotNil(t, cmd)
+			require.Equal(t, "issue_"+action, confirmedAction)
 			require.False(t, newModel.HasPendingAction())
 		})
 	}
 }
 
-func TestSetOnConfirmAction(t *testing.T) {
+func TestUpdate_ReturnsActionOnConfirm(t *testing.T) {
 	m := NewModel(&context.ProgramContext{})
-
-	called := false
-	callback := func(action string) tea.Cmd {
-		called = true
-		return nil
-	}
-
-	m.SetOnConfirmAction(callback)
 	m.SetSubjectPR(&prrow.Data{
 		Primary: &data.PullRequestData{Number: 123},
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
-	m.Update(msg)
+	_, action := m.Update(msg)
 
-	require.True(t, called, "callback should be invoked after setting and confirming")
+	require.Equal(t, "pr_close", action, "should return the action on confirm")
 }
