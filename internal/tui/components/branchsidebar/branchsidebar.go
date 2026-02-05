@@ -58,7 +58,7 @@ func (m Model) View() string {
 
 	s.WriteString("\n\n")
 	s.WriteString(lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder).Render(
-		strings.Repeat(lipgloss.NormalBorder().Bottom, m.ctx.Config.Defaults.Preview.Width-5)),
+		strings.Repeat(lipgloss.NormalBorder().Bottom, max(m.ctx.DynamicPreviewWidth-5, 0))),
 	)
 	s.WriteString("\n\n")
 
