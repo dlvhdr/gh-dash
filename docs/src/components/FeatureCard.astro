@@ -1,0 +1,68 @@
+---
+import FeatureSponsorshipGoal from "./FeatureSponsorshipGoal.astro";
+
+const PROJECTS = {
+  dash: {
+    url: "/",
+    colorClass: "text-[var(--sl-color-accent-high)]",
+  },
+  enhance: {
+    url: "/enhance",
+    colorClass: "text-[#38E796]",
+  },
+} as const;
+
+interface Props {
+  project: keyof typeof PROJECTS;
+  feature: string;
+  description: string;
+  variant?: "mini" | "full";
+  future?: boolean;
+}
+
+const {
+  feature,
+  future = false,
+  description,
+  project,
+  variant = "full",
+} = Astro.props;
+---
+
+<div class="w-full">
+  <form action={`${PROJECTS[project].url}`}>
+    <button
+      type="submit"
+      class="w-full border-none bg-transparent text-left hover:no-underline!"
+    >
+      <div
+        class="flex w-full flex-row items-center gap-8 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)]"
+      >
+        <div class="p-2">
+          {
+            variant === "mini" ? null : (
+              <div
+                class={`${PROJECTS[project].colorClass} inline w-auto rounded bg-[var(--sl-color-gray-5)] p-1 text-sm tracking-wide`}
+              >
+                <span class="uppercase">{project}</span> FEATURE
+              </div>
+            )
+          }
+          <FeatureSponsorshipGoal
+            server:defer
+            variant="mini"
+            feature={feature}
+            description={description}
+            future={future}
+          >
+            <div
+              slot="fallback"
+              class="h-9 w-full animate-pulse rounded bg-[var(--sl-color-gray-6)]"
+            >
+            </div>
+          </FeatureSponsorshipGoal>
+        </div>
+      </div>
+    </button>
+  </form>
+</div>
