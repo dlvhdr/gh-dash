@@ -107,7 +107,7 @@ type NotificationsSectionConfig struct {
 
 type PreviewConfig struct {
 	Open  bool
-	Width int
+	Width float64
 }
 
 type NullableBool struct {
