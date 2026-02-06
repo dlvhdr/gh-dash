@@ -116,7 +116,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 		excludeMap[strings.ToLower(strings.TrimSpace(item))] = true
 	}
 
-	// Filter excluded labels first
+	// Filter excluded items first
 	var filteredSuggestions []string
 	for _, suggestion := range m.suggestions {
 		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion))] {
@@ -146,6 +146,10 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 			break
 		}
 		m.filtered = append(m.filtered, match.Str)
+	}
+
+	for len(m.filtered) < m.maxVisible {
+		m.filtered = append(m.filtered, "")
 	}
 
 	m.selected = 0
@@ -294,17 +298,17 @@ func (m *Model) SetFetchLoading() tea.Cmd {
 func (m *Model) SetFetchSuccess() tea.Cmd {
 	m.fetchState = FetchStateSuccess
 	m.fetchError = nil
-	return m.clearFetchStatusAfterDelay()
+	return m.clearFetchStatus()
 }
 
 func (m *Model) SetFetchError(err error) tea.Cmd {
 	m.fetchState = FetchStateError
 	m.fetchError = err
-	return m.clearFetchStatusAfterDelay()
+	return m.clearFetchStatus()
 }
 
-// clearFetchStatusAfterDelay returns a command that will send a ClearFetchStatusMsg after 2 seconds
-func (m *Model) clearFetchStatusAfterDelay() tea.Cmd {
+// clearFetchStatus returns a command that will send a ClearFetchStatusMsg after 2 seconds
+func (m *Model) clearFetchStatus() tea.Cmd {
 	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 		return ClearFetchStatusMsg{}
 	})

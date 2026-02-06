@@ -20,18 +20,21 @@ type Model struct {
 	prompt       string
 	autocomplete *autocomplete.Model
 
-	// OnSuggestionSelected is called when a user selects an autocomplete suggestion.
-	// It receives the selected suggestion, current cursor position, and current value in inputbox.
-	// It should return the new value for the inputbox and new cursor position after insertion.
-	OnSuggestionSelected func(selected string, cursorPos int, currentValue string) (newValue string, newCursorPos int)
+	// ContextExtractor extracts the "current context" (e.g., partial label being typed, @mention)
+	// at the given cursor position in the input.
+	// Returns: context string, start position (rune index), end position (rune index)
+	// Used for filtering autocomplete suggestions.
+	ContextExtractor func(input string, cursorPos int) (context string, start int, end int)
 
-	// CurrentContext extracts the "current context" (e.g., partial label being typed)
-	// at the given cursor position, used for filtering autocomplete suggestions.
-	CurrentContext func(cursorPos int, currentValue string) string
+	// SuggestionInserter handles inserting a selected autocomplete suggestion into the input.
+	// Receives: current input, selected suggestion, context start position, context end position
+	// Returns: new input string, new cursor position (rune index)
+	SuggestionInserter func(input string, suggestion string, contextStart int, contextEnd int) (newInput string, newCursorPos int)
 
-	// SuggestionsToExclude parses the current value in the inputbox and returns all complete items,
-	// used to exclude already-entered items from autocomplete suggestions.
-	SuggestionsToExclude func(currentValue string) []string
+	// ItemsToExclude returns items to exclude from autocomplete suggestions based on current input.
+	// Receives: current input, context start position, context end position
+	// Returns: list of items to exclude from suggestions
+	ItemsToExclude func(input string, cursorPos int) []string
 }
 
 var inputKeys = []key.Binding{
@@ -84,16 +87,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			m.autocomplete.Unsuppress()
 			currentValue := m.textArea.Value()
-			cursorPos := m.GetCursorPosition()
-			var currentLabel string
-			var existingLabels []string
-			if m.CurrentContext != nil {
-				currentLabel = m.CurrentContext(cursorPos, currentValue)
+			cursorPos := m.CursorPosition()
+			var currentContext string
+			var excludedItems []string
+			if m.ContextExtractor != nil {
+				currentContext, _, _ = m.ContextExtractor(currentValue, cursorPos)
 			}
-			if m.SuggestionsToExclude != nil {
-				existingLabels = m.SuggestionsToExclude(currentValue)
+			if m.ItemsToExclude != nil {
+				excludedItems = m.ItemsToExclude(currentValue, cursorPos)
 			}
-			m.autocomplete.Show(currentLabel, existingLabels)
+			m.autocomplete.Show(currentContext, excludedItems)
 			return m, nil
 		}
 
@@ -108,14 +111,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			case key.Matches(msg, autocomplete.SelectKey):
 				selected := m.autocomplete.Selected()
-				if selected != "" && m.OnSuggestionSelected != nil {
+				if selected != "" && m.ContextExtractor != nil && m.SuggestionInserter != nil {
 					currentValue := m.textArea.Value()
-					cursorPos := m.GetCursorPosition()
-					newValue, newCursorPos := m.OnSuggestionSelected(selected, cursorPos, currentValue)
+					cursorPos := m.CursorPosition()
+					_, contextStart, contextEnd := m.ContextExtractor(currentValue, cursorPos)
+					newValue, newCursorPos := m.SuggestionInserter(currentValue, selected, contextStart, contextEnd)
 					m.textArea.SetValue(newValue)
 					m.textArea.SetCursor(newCursorPos)
+					// Refresh autocomplete to exclude the newly-added item
+					if m.ItemsToExclude != nil {
+						newCursorPos := m.CursorPosition()
+						newContext, _, _ := m.ContextExtractor(newValue, newCursorPos)
+						excludedItems := m.ItemsToExclude(newValue, newCursorPos)
+						m.autocomplete.Show(newContext, excludedItems)
+					}
 				}
-				m.autocomplete.Hide()
 				return m, nil
 			}
 		}
@@ -145,7 +155,7 @@ func (m Model) View() string {
 
 func (m Model) ViewWithAutocomplete() string {
 	autocompleteView := ""
-	if m.autocomplete != nil {
+	if m.autocomplete != nil && m.autocomplete.IsVisible() {
 		autocompleteView = m.autocomplete.View()
 	}
 
@@ -204,13 +214,13 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
 
-// GetCursorPosition returns the cursor position within the current logical line
+// CursorPosition returns the cursor position within the current logical line
 // in runes. This correctly handles multi-byte Unicode characters since the
 // textarea internally uses rune-based positioning via [][]rune.
 //
 // Use this for single-line input contexts like comma-separated labels.
 // For multi-line contexts (e.g., @mentions in comments), use GetAbsoluteCursorPosition.
-func (m *Model) GetCursorPosition() int {
+func (m *Model) CursorPosition() int {
 	lineInfo := m.textArea.LineInfo()
 	return lineInfo.StartColumn + lineInfo.ColumnOffset
 }
