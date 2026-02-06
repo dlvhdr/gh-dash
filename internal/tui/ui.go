@@ -348,18 +348,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.BranchKeys.ViewPRs):
-				m.ctx.View = m.switchSelectedView()
-				m.syncMainContentWidth()
-				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-
-				currSections := m.getCurrentViewSections()
-				if len(currSections) == 0 {
-					newSections, fetchSectionsCmds := m.fetchAllViewSections()
-					currSections = newSections
-					cmd = fetchSectionsCmds
-				}
-				m.setCurrentViewSections(currSections)
-				cmds = append(cmds, m.onViewedRowChanged())
+				cmds = append(cmds, m.switchSelectedView())
 			}
 		case m.ctx.View == config.PRsView:
 			switch {
@@ -418,19 +407,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
-				m.ctx.View = m.switchSelectedView()
-				m.syncMainContentWidth()
-				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-
-				currSections := m.getCurrentViewSections()
-				if len(currSections) == 0 {
-					newSections, fetchSectionsCmds := m.fetchAllViewSections()
-					currSections = newSections
-					cmds = append(cmds, m.tabs.SetAllLoading()...)
-					cmd = fetchSectionsCmds
-				}
-				m.setCurrentViewSections(currSections)
-				cmds = append(cmds, m.onViewedRowChanged())
+				cmds = append(cmds, m.switchSelectedView())
 
 			case key.Matches(msg, keys.PRKeys.SummaryViewMore):
 				m.prView.SetSummaryViewMore()
@@ -467,19 +444,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.IssueKeys.ViewPRs):
-				m.ctx.View = m.switchSelectedView()
-				m.syncMainContentWidth()
-				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-
-				currSections := m.getCurrentViewSections()
-				if len(currSections) == 0 {
-					newSections, fetchSectionsCmds := m.fetchAllViewSections()
-					currSections = newSections
-					cmds = append(cmds, m.tabs.SetAllLoading()...)
-					cmd = fetchSectionsCmds
-				}
-				m.setCurrentViewSections(currSections)
-				cmds = append(cmds, m.onViewedRowChanged())
+				cmds = append(cmds, m.switchSelectedView())
 			}
 		case m.ctx.View == config.NotificationsView:
 			switch {
@@ -542,10 +507,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-				// Always sync and return after updating prView - needed for tab navigation
-				// which updates carousel state but doesn't return a command
-				m.syncSidebar()
-				return m, prCmd
+				// Handle 's' key to switch views
+				if key.Matches(msg, keys.PRKeys.ViewIssues) {
+					cmds = append(cmds, m.switchSelectedView())
+				}
+
+				// Handle tab navigation keys - these don't return a command but should return
+				if key.Matches(msg, keys.PRKeys.PrevSidebarTab) || key.Matches(msg, keys.PRKeys.NextSidebarTab) {
+					m.syncSidebar()
+					return m, prCmd
+				}
+
+				// For other keys, only return if prView returned a command
+				if prCmd != nil {
+					m.syncSidebar()
+					return m, prCmd
+				}
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:
@@ -573,6 +550,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case issueview.IssueActionReopen:
 						return m, m.promptConfirmation(currSection, "reopen")
 					}
+				}
+
+				// Handle 's' key to switch views
+				if key.Matches(msg, keys.IssueKeys.ViewPRs) {
+					cmds = append(cmds, m.switchSelectedView())
 				}
 
 				if issueCmd != nil {
@@ -607,19 +589,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
-				m.ctx.View = m.switchSelectedView()
-				m.syncMainContentWidth()
-				m.setCurrSectionId(m.getCurrentViewDefaultSection())
-
-				currSections := m.getCurrentViewSections()
-				if len(currSections) == 0 {
-					newSections, fetchSectionsCmds := m.fetchAllViewSections()
-					currSections = newSections
-					cmds = append(cmds, m.tabs.SetAllLoading()...)
-					cmd = fetchSectionsCmds
-				}
-				m.setCurrentViewSections(currSections)
-				cmds = append(cmds, m.onViewedRowChanged())
+				cmds = append(cmds, m.switchSelectedView())
 			}
 		}
 
@@ -1380,36 +1350,53 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 	m.tabs.SetSections(newSections)
 }
 
-func (m *Model) switchSelectedView() config.ViewType {
+func (m *Model) switchSelectedView() tea.Cmd {
 	repoFF := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 
 	// Reset notification subject when leaving notifications view
 	if m.ctx.View == config.NotificationsView {
 		keys.SetNotificationSubject(keys.NotificationSubjectNone)
+		m.notificationView.ClearSubject()
 	}
 
 	// View cycle: Notifications → PRs → Issues (→ Repo if enabled) → Notifications
 	if repoFF {
 		switch m.ctx.View {
 		case config.NotificationsView:
-			return config.PRsView
+			m.ctx.View = config.PRsView
 		case config.PRsView:
-			return config.IssuesView
+			m.ctx.View = config.IssuesView
 		case config.IssuesView:
-			return config.RepoView
+			m.ctx.View = config.RepoView
 		case config.RepoView:
-			return config.NotificationsView
+			m.ctx.View = config.NotificationsView
+		}
+	} else {
+		switch m.ctx.View {
+		case config.NotificationsView:
+			m.ctx.View = config.PRsView
+		case config.PRsView:
+			m.ctx.View = config.IssuesView
+		default:
+			m.ctx.View = config.NotificationsView
 		}
 	}
 
-	switch m.ctx.View {
-	case config.NotificationsView:
-		return config.PRsView
-	case config.PRsView:
-		return config.IssuesView
-	default:
-		return config.NotificationsView
+	m.syncMainContentWidth()
+	m.setCurrSectionId(m.getCurrentViewDefaultSection())
+
+	var cmds []tea.Cmd
+	currSections := m.getCurrentViewSections()
+	if len(currSections) == 0 {
+		newSections, fetchSectionsCmds := m.fetchAllViewSections()
+		currSections = newSections
+		cmds = append(cmds, m.tabs.SetAllLoading()...)
+		cmds = append(cmds, fetchSectionsCmds)
 	}
+	m.setCurrentViewSections(currSections)
+	cmds = append(cmds, m.onViewedRowChanged())
+
+	return tea.Batch(cmds...)
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {

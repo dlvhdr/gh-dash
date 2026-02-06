@@ -22,8 +22,11 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prview"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -168,6 +171,134 @@ func TestPromptConfirmation_NilSection(t *testing.T) {
 	m := Model{}
 	cmd := m.promptConfirmation(nil, "close")
 	require.Nil(t, cmd, "promptConfirmation should return nil when section is nil")
+}
+
+func TestNotificationView_SwitchViewWithSKey(t *testing.T) {
+	// Test that pressing 's' in Notifications view switches to PRs view
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prView:  prview.NewModel(ctx),
+		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
+	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
+
+	// Verify we start in NotificationsView
+	require.Equal(t, config.NotificationsView, m.ctx.View, "should start in NotificationsView")
+
+	// Test that switchSelectedView returns PRsView when in NotificationsView
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
+}
+
+func TestNotificationView_SwitchViewWithSKey_WhileViewingPR(t *testing.T) {
+	// Test that pressing 's' when viewing a PR notification switches views
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prView:  prview.NewModel(ctx),
+		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
+	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
+
+	// Set up a PR notification subject (simulating viewing a PR notification)
+	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-id")
+
+	// Verify we start in NotificationsView
+	require.Equal(t, config.NotificationsView, m.ctx.View, "should start in NotificationsView")
+
+	// Verify GetSubjectPR returns non-nil
+	require.NotNil(t, m.notificationView.GetSubjectPR(), "subject PR should be set")
+
+	// Test that switchSelectedView returns PRsView
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
+
+	// Verify subject was cleared after switch
+	require.Nil(t, m.notificationView.GetSubjectPR(),
+		"subject PR should be cleared after switching views")
+}
+
+func TestNotificationView_SwitchViewWithSKey_WhileViewingIssue(t *testing.T) {
+	// Test that pressing 's' when viewing an Issue notification switches views
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:     ctx,
+		keys:    keys.Keys,
+		prView:  prview.NewModel(ctx),
+		sidebar: sidebarModel,
+		tabs:    tabs.NewModel(ctx),
+	}
+	prSec := prssection.NewModel(0, ctx, config.PrsSectionConfig{}, time.Now(), time.Now())
+	m.prs = []section.Section{&prSec}
+
+	// Set up an Issue notification subject (simulating viewing an Issue notification)
+	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-id")
+
+	// Verify we start in NotificationsView
+	require.Equal(t, config.NotificationsView, m.ctx.View, "should start in NotificationsView")
+
+	// Verify GetSubjectIssue returns non-nil
+	require.NotNil(t, m.notificationView.GetSubjectIssue(), "subject Issue should be set")
+
+	// Test that switchSelectedView returns PRsView
+	m.switchSelectedView()
+	require.Equal(t, config.PRsView, m.ctx.View,
+		"switchSelectedView should set view to PRsView when in NotificationsView")
+
+	// Verify subject was cleared after switch
+	require.Nil(t, m.notificationView.GetSubjectIssue(),
+		"subject Issue should be cleared after switching views")
 }
 
 func TestNotificationView_PRViewTabNavigation(t *testing.T) {
