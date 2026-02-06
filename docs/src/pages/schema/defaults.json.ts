@@ -63,9 +63,9 @@ export function GET() {
             width: {
               title: "Preview Pane Width",
               description:
-                "Specifies the width of the preview pane in columns.",
-              type: "integer",
-              minimum: 1,
+                "Specifies the width of the preview pane. Numbers between 0 and 1 represent size relative to overall tewminal window size(eg 0.4 is 40%), numbers >=1 represent size in columns.",
+              type: "number",
+              minimum: 0,
               default: 50,
             },
           },
