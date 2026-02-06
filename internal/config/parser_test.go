@@ -173,3 +173,57 @@ func setupConfigEnvVar(t *testing.T) func() {
 		os.Unsetenv("GH_DASH_CONFIG")
 	}
 }
+
+func TestHostFieldParsing(t *testing.T) {
+	t.Run("Should parse host field in section configs", func(t *testing.T) {
+		clearEnv := setXDGConfigHomeEnvVar(t, "testdata")
+		defer clearEnv()
+
+		cwd := Testwd(t)
+		parsed, err := ParseConfig(Location{
+			ConfigFlag: path.Join(cwd, "./testdata/host-config.yml"),
+		})
+		testutils.AssertNoError(t, err)
+
+		// Check PR sections
+		require.Len(t, parsed.PRSections, 2)
+		assert.Equal(t, "github.enterprise.com", parsed.PRSections[0].Host)
+		assert.Equal(t, "", parsed.PRSections[1].Host) // no host = empty string
+
+		// Check Issues sections
+		require.Len(t, parsed.IssuesSections, 2)
+		assert.Equal(t, "github.enterprise.com", parsed.IssuesSections[0].Host)
+		assert.Equal(t, "", parsed.IssuesSections[1].Host)
+
+		// Check Notifications sections
+		require.Len(t, parsed.NotificationsSections, 2)
+		assert.Equal(t, "github.enterprise.com", parsed.NotificationsSections[0].Host)
+		assert.Equal(t, "", parsed.NotificationsSections[1].Host)
+	})
+
+	t.Run("ToSectionConfig should include host field", func(t *testing.T) {
+		prCfg := PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+			Host:    "github.enterprise.com",
+		}
+		sectionCfg := prCfg.ToSectionConfig()
+		assert.Equal(t, "github.enterprise.com", sectionCfg.Host)
+
+		issuesCfg := IssuesSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+			Host:    "github.enterprise.com",
+		}
+		sectionCfg = issuesCfg.ToSectionConfig()
+		assert.Equal(t, "github.enterprise.com", sectionCfg.Host)
+
+		notifCfg := NotificationsSectionConfig{
+			Title:   "Test",
+			Filters: "",
+			Host:    "github.enterprise.com",
+		}
+		sectionCfg = notifCfg.ToSectionConfig()
+		assert.Equal(t, "github.enterprise.com", sectionCfg.Host)
+	})
+}

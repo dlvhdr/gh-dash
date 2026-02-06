@@ -7,11 +7,13 @@ title: Notification Sections
 Defines sections in the dashboard's Notifications view.
 
 - Every section must define a [`title`] and [`filters`].
+- When you define [`host`] for a section, that section fetches data from that GitHub host.
 - When you define [`limit`] for a section, that value overrides the
   [`defaults.notificationsLimit`] setting.
 
 [`title`]: #notification-title-title
 [`filters`]: #notification-filters-filters
+[`host`]: #github-host-host
 [`limit`]: #notification-fetch-limit-limit
 [`defaults.notificationsLimit`]: /configuration/defaults/#notifications-fetch-limit-notificationslimit
 
@@ -115,6 +117,30 @@ This setting defines the filters for notifications in the section's table. Notif
 - **Default behavior**: With no filters or empty filters, the section shows unread notifications plus any bookmarked notifications
 - **Explicit `is:unread`**: Shows only unread notifications, excluding bookmarked read notifications
 - **Reason filters**: Applied client-side after fetching from GitHub's API
+
+## GitHub Host (`host`)
+
+| Type   | Default |
+| :----- | :------ |
+| String | (empty) |
+
+This setting specifies the GitHub host for this section. Use this when you need to fetch
+notifications from a GitHub Enterprise instance or a different GitHub host.
+
+When not specified or empty, the section uses the default GitHub host (github.com or the
+host configured in your `gh` CLI).
+
+### Example
+
+```yaml
+notificationsSections:
+  - title: Enterprise Notifications
+    filters: ""
+    host: github.enterprise.com
+  - title: GitHub.com Notifications
+    filters: ""
+    # no host = default (github.com)
+```
 
 ## Notification Fetch Limit (`limit`)
 

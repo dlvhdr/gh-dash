@@ -1,0 +1,22 @@
+# Test config for per-section host field
+prSections:
+  - title: Enterprise PRs
+    filters: is:open author:@me
+    host: github.enterprise.com
+  - title: GitHub.com PRs
+    filters: is:open author:@me
+    # no host = default
+
+issuesSections:
+  - title: Enterprise Issues
+    filters: is:open author:@me
+    host: github.enterprise.com
+  - title: GitHub.com Issues
+    filters: is:open author:@me
+
+notificationsSections:
+  - title: Enterprise Notifications
+    filters: ""
+    host: github.enterprise.com
+  - title: GitHub.com Notifications
+    filters: ""

@@ -580,6 +580,9 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	// Capture config limit for the closure
 	limit := m.Ctx.Config.Defaults.NotificationsLimit
 
+	// Capture host for the closure
+	host := m.Config.Host
+
 	// Build reason filter map for O(1) lookup
 	reasonFilterMap := make(map[string]bool, len(filters.ReasonFilters))
 	for _, reason := range filters.ReasonFilters {
@@ -613,7 +616,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		var lastPageInfo data.PageInfo
 		isFirstPage := pageInfo == nil
 		for {
-			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo)
+			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo, host)
 			if err != nil {
 				return constants.TaskFinishedMsg{
 					SectionId:   m.Id,
