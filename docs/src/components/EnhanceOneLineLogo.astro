@@ -1,0 +1,31 @@
+---
+const { class: className } = Astro.props;
+---
+
+<style>
+  [aria-label="ENHANCE ASCII Logo"] {
+    position: relative;
+    background-image: var(--hdr-green-gradient);
+    background-size: 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -moz-text-fill-color: transparent;
+    background-repeat: repeat;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+</style>
+
+<div>
+  <pre
+    aria-label="ENHANCE ASCII Logo"
+    class:list={[
+      "text-xs leading-none",
+      className,
+    ]}>
+▐▔▔▐▚ ▌▐ ▌▐▔▌▐▚ ▌▐▔▔▐▔▔
+▐▛▁▐ ▚▌▐▔▌▐▔▌▐ ▚▌▐▁▁▐▛▁</pre>
+</div>

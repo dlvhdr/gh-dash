@@ -449,6 +449,18 @@ func SetClient(c *gh.GraphQLClient) {
 	cachedClient = c
 }
 
+// ClearEnrichmentCache clears the cached GraphQL client used for fetching
+// enriched PR/Issue data. Call this when refreshing to ensure fresh data.
+func ClearEnrichmentCache() {
+	cachedClient = nil
+}
+
+// IsEnrichmentCacheCleared returns true if the enrichment cache is cleared.
+// This is primarily for testing purposes.
+func IsEnrichmentCacheCleared() bool {
+	return cachedClient == nil
+}
+
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
 	if client == nil {
@@ -504,8 +516,8 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
-	if cachedClient == nil {
-		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+	if client == nil {
+		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
 			return EnrichedPullRequestData{}, err
 		}
@@ -524,7 +536,7 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching PR", "url", prUrl)
-	err = cachedClient.Query("FetchPullRequest", &queryResult, variables)
+	err = client.Query("FetchPullRequest", &queryResult, variables)
 	if err != nil {
 		return EnrichedPullRequestData{}, err
 	}

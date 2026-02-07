@@ -46,7 +46,7 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 		expectedAction IssueActionType
 	}{
 		{"label key", "L", IssueActionLabel},
-		// Note: IssueKeys.Assign has no default binding in issueKeys.go
+		{"assign key", "a", IssueActionAssign},
 		{"unassign key", "A", IssueActionUnassign},
 		{"comment key", "c", IssueActionComment},
 		{"close key", "x", IssueActionClose},

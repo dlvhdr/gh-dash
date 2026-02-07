@@ -71,6 +71,16 @@ h6 {
     oklch(80% 0.3 230)
   );
 
+  --hdr-green-red-gradient: linear-gradient(
+    90deg,
+    hsl(123deg 100% 47%) 1%,
+    hsl(80deg 100% 41%) 49%,
+    hsl(56deg 100% 37%) 51%,
+    hsl(37deg 100% 43%) 49%,
+    hsl(22deg 100% 47%) 51%,
+    hsl(356deg 100% 47%) 99%
+  );
+
   --hdr-green-gradient: linear-gradient(
     to right in oklab,
     oklch(0.8512 0.1937 154.97) 37% 17%,
@@ -124,6 +134,16 @@ h6 {
     to right in oklab,
     oklch(35% 0.5 145),
     oklch(64% 0.5 178)
+  );
+
+  --hdr-green-red-gradient: linear-gradient(
+    90deg,
+    hsl(123deg 100% 47%) 1%,
+    hsl(80deg 100% 41%) 49%,
+    hsl(56deg 100% 37%) 51%,
+    hsl(37deg 100% 43%) 49%,
+    hsl(22deg 100% 47%) 51%,
+    hsl(356deg 100% 47%) 99%
   );
 
   --hdr-red-gradient: linear-gradient(

@@ -150,8 +150,8 @@ type IssuesResponse struct {
 // FetchIssue fetches a single issue by its GitHub URL
 func FetchIssue(issueUrl string) (IssueData, error) {
 	var err error
-	if cachedClient == nil {
-		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+	if client == nil {
+		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
 			return IssueData{}, err
 		}
@@ -170,7 +170,7 @@ func FetchIssue(issueUrl string) (IssueData, error) {
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching Issue", "url", issueUrl)
-	err = cachedClient.Query("FetchIssue", &queryResult, variables)
+	err = client.Query("FetchIssue", &queryResult, variables)
 	if err != nil {
 		return IssueData{}, err
 	}

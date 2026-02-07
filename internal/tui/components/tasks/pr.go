@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
@@ -251,6 +252,124 @@ func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 			return UpdatePRMsg{
 				PrNumber: prNumber,
 				IsClosed: utils.BoolPtr(true),
+			}
+		},
+	})
+}
+
+func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+	prNumber := pr.GetNumber()
+	args := []string{
+		"pr",
+		"edit",
+		fmt.Sprint(prNumber),
+		"-R",
+		pr.GetRepoNameWithOwner(),
+	}
+	for _, assignee := range usernames {
+		args = append(args, "--add-assignee", assignee)
+	}
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_assign", prNumber),
+		Args:         args,
+		Section:      section,
+		StartText:    fmt.Sprintf("Assigning pr #%d to %s", prNumber, usernames),
+		FinishedText: fmt.Sprintf("pr #%d has been assigned to %s", prNumber, usernames),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
+			for _, assignee := range usernames {
+				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+			}
+			return UpdatePRMsg{
+				PrNumber:       prNumber,
+				AddedAssignees: &returnedAssignees,
+			}
+		},
+	})
+}
+
+func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+	prNumber := pr.GetNumber()
+	args := []string{
+		"pr",
+		"edit",
+		fmt.Sprint(prNumber),
+		"-R",
+		pr.GetRepoNameWithOwner(),
+	}
+	for _, assignee := range usernames {
+		args = append(args, "--remove-assignee", assignee)
+	}
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_unassign", prNumber),
+		Args:         args,
+		Section:      section,
+		StartText:    fmt.Sprintf("Unassigning %s from pr #%d", usernames, prNumber),
+		FinishedText: fmt.Sprintf("%s unassigned from pr #%d", usernames, prNumber),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
+			for _, assignee := range usernames {
+				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+			}
+			return UpdatePRMsg{
+				PrNumber:         prNumber,
+				RemovedAssignees: &returnedAssignees,
+			}
+		},
+	})
+}
+
+func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, body string) tea.Cmd {
+	prNumber := pr.GetNumber()
+	return fireTask(ctx, GitHubTask{
+		Id: buildTaskId("pr_comment", prNumber),
+		Args: []string{
+			"pr",
+			"comment",
+			fmt.Sprint(prNumber),
+			"-R",
+			pr.GetRepoNameWithOwner(),
+			"-b",
+			body,
+		},
+		Section:      section,
+		StartText:    fmt.Sprintf("Commenting on PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("Commented on PR #%d", prNumber),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			return UpdatePRMsg{
+				PrNumber: prNumber,
+				NewComment: &data.Comment{
+					Author:    struct{ Login string }{Login: ctx.User},
+					Body:      body,
+					UpdatedAt: time.Now(),
+				},
+			}
+		},
+	})
+}
+
+func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, comment string) tea.Cmd {
+	prNumber := pr.GetNumber()
+	args := []string{
+		"pr",
+		"review",
+		"-R",
+		pr.GetRepoNameWithOwner(),
+		fmt.Sprint(prNumber),
+		"--approve",
+	}
+	if comment != "" {
+		args = append(args, "--body", comment)
+	}
+	return fireTask(ctx, GitHubTask{
+		Id:           buildTaskId("pr_approve", prNumber),
+		Args:         args,
+		Section:      section,
+		StartText:    fmt.Sprintf("Approving pr #%d", prNumber),
+		FinishedText: fmt.Sprintf("pr #%d has been approved", prNumber),
+		Msg: func(c *exec.Cmd, err error) tea.Msg {
+			return UpdatePRMsg{
+				PrNumber: prNumber,
 			}
 		},
 	})

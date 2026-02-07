@@ -15,6 +15,8 @@ import draculaSrc from "../assets/enhance-dracula.png";
 import gruvboxSrc from "../assets/enhance-gruvbox_dark.png";
 import nordSrc from "../assets/enhance-nord.png";
 import { Icon } from "@astrojs/starlight/components";
+import FeatureCard from "../components/FeatureCard.astro";
+import FeatureSponsorshipGoal from "../components/FeatureSponsorshipGoal.astro";
 ---
 
 <StarlightPage frontmatter={{ title: "ENHANCE", template: "splash" }}>
@@ -30,19 +32,24 @@ import { Icon } from "@astrojs/starlight/components";
     id="main-buttons"
     class="flex flex-col items-center gap-4 pb-8 md:flex-row"
   >
-    <form action="/insiders/">
+    <form action="/companions/enhance/getting-started">
       <button
-        class="bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
-        >Download Now</button
-      >
+        class="flex items-center justify-center bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
+        >Get Started <Icon class="inline" name="right-arrow" size="20px" />
+      </button>
     </form>
-    <form class="m-0" action="/insiders/enhance/getting-started">
-      <button class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
-        >View Docs</button
-      >
+    <form
+      class="m-0"
+      action="https://github.com/dlvhdr/gh-enhance"
+      target="_blank"
+    >
+      <button
+        class="flex items-center justify-center gap-1 bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
+        >View on GitHub <Icon class="inline" name="external" size="20px" />
+      </button>
     </form>
   </div>
-  <SponsorshipGoal server:defer />
+
   <div id="hero" class="relative mt-8 md:mt-10">
     <Terminal title="gh enhance">
       <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
