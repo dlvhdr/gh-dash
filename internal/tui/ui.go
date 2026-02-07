@@ -464,6 +464,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, m.openBrowser())
 				return m, tea.Batch(cmds...)
 
+			// Handle Enter to (re)load notification content - check before subject handlers
+			// so Enter always works, even after viewing a notification
+			case key.Matches(msg, keys.NotificationKeys.View):
+				cmds = append(cmds, m.loadNotificationContent())
+
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
 				// Check for PR actions first (before updating prView)
@@ -574,10 +579,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Sync sidebar and return issueCmd for navigation
 				m.syncSidebar()
 				cmds = append(cmds, issueCmd)
-
-			// Notification-specific keybindings (when not viewing PR/Issue content)
-			case key.Matches(msg, keys.NotificationKeys.View):
-				cmds = append(cmds, m.loadNotificationContent())
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
 				cmds = append(cmds, m.updateSection(currSection.GetId(), currSection.GetType(), msg))
@@ -1051,6 +1052,9 @@ func (m *Model) syncSidebar() tea.Cmd {
 			return nil
 		}
 
+		// Clear cached subject when navigating to a different notification
+		// so key dispatch doesn't route keys to the wrong subject's handler.
+		m.notificationView.ClearSubject()
 		// Show prompt to view notification (don't auto-fetch)
 		// User must press Enter to view content and mark as read
 		m.sidebar.SetContent(m.renderNotificationPrompt(row, width))
