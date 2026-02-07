@@ -24,6 +24,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/branchsidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/footer"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issueview"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationrow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationview"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
@@ -356,6 +358,138 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 
 	require.NotEqual(t, currentTab, m.prView.SelectedTab(),
 		"prView tab should have changed after pressing prev tab key")
+}
+
+func TestNotificationView_EnterKeyWorksAfterViewingPR(t *testing.T) {
+	// Test that pressing Enter still works after a PR notification has been viewed.
+	// Previously, once a PR subject was set, Enter would be absorbed by the PR handler
+	// instead of triggering loadNotificationContent().
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	// Create a notification section with a PR notification
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-1",
+				Subject: data.NotificationSubject{
+					Title: "Test PR",
+					Url:   "https://api.github.com/repos/owner/repo/pulls/123",
+					Type:  "PullRequest",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+				Unread: true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	// Set up a PR notification subject (simulating that Enter was already pressed once)
+	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-1")
+
+	// Verify GetSubjectPR returns non-nil
+	require.NotNil(t, m.notificationView.GetSubjectPR(), "subject PR should be set")
+
+	// Send Enter key
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	_, cmd := m.Update(msg)
+
+	// The fix ensures Enter triggers loadNotificationContent() even when a subject is set.
+	// loadNotificationContent() returns a batch command for PR notifications.
+	// Before the fix, Enter would be absorbed by the PR handler and cmd would be nil.
+	require.NotNil(t, cmd, "Enter key should trigger loadNotificationContent and return a command")
+}
+
+func TestNotificationView_EnterKeyWorksAfterViewingIssue(t *testing.T) {
+	// Test that pressing Enter still works after an Issue notification has been viewed.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	// Create a notification section with an Issue notification
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-2",
+				Subject: data.NotificationSubject{
+					Title: "Test Issue",
+					Url:   "https://api.github.com/repos/owner/repo/issues/456",
+					Type:  "Issue",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+				Unread: true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	// Set up an Issue notification subject (simulating that Enter was already pressed once)
+	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-2")
+
+	// Verify GetSubjectIssue returns non-nil
+	require.NotNil(t, m.notificationView.GetSubjectIssue(), "subject Issue should be set")
+
+	// Send Enter key
+	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	_, cmd := m.Update(msg)
+
+	// The fix ensures Enter triggers loadNotificationContent() even when a subject is set.
+	require.NotNil(t, cmd, "Enter key should trigger loadNotificationContent and return a command")
 }
 
 // executeCommandTemplate mimics the template execution logic from runCustomCommand
