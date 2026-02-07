@@ -107,19 +107,7 @@ type NotificationsSectionConfig struct {
 
 type PreviewConfig struct {
 	Open  bool
-<<<<<<< Updated upstream
-	Width float64
-||||||| Stash base
-	Width int
-=======
-<<<<<<< Updated upstream
-	Width int
-||||||| Stash base
-	Width float64
-=======
 	Width float64 `yaml:"width" validate:"gt=0"`
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 }
 
 type NullableBool struct {
