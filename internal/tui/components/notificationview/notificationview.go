@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -22,6 +23,9 @@ type Model struct {
 	subjectPR    *prrow.Data
 	subjectIssue *data.IssueData
 	subjectId    string // ID of the notification whose subject is cached
+
+	// Pending confirmation action for PR/Issue (e.g., "pr_close", "issue_reopen")
+	pendingAction string
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -36,6 +40,12 @@ func (m *Model) SetRow(row *notificationrow.Data) {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
+}
+
+func (m *Model) ResetSubject() {
+	m.subjectPR = nil
+	m.subjectIssue = nil
+	m.subjectId = ""
 }
 
 func (m *Model) SetSubjectPR(pr *prrow.Data, notificationId string) {
@@ -70,6 +80,70 @@ func (m *Model) ClearSubject() {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
+}
+
+// SetPendingPRAction sets a pending PR action and returns the confirmation prompt.
+// action is one of: "close", "reopen", "ready", "merge", "update"
+// Returns empty string if no subject PR is set.
+func (m *Model) SetPendingPRAction(action string) string {
+	if m.subjectPR == nil {
+		return ""
+	}
+	m.pendingAction = "pr_" + action
+
+	actionDisplay := action
+	if action == "ready" {
+		actionDisplay = "mark as ready"
+	}
+	return fmt.Sprintf("Are you sure you want to %s PR #%d? (y/N)", actionDisplay, m.subjectPR.GetNumber())
+}
+
+// SetPendingIssueAction sets a pending Issue action and returns the confirmation prompt.
+// action is one of: "close", "reopen"
+// Returns empty string if no subject Issue is set.
+func (m *Model) SetPendingIssueAction(action string) string {
+	if m.subjectIssue == nil {
+		return ""
+	}
+	m.pendingAction = "issue_" + action
+
+	return fmt.Sprintf("Are you sure you want to %s Issue #%d? (y/N)", action, m.subjectIssue.Number)
+}
+
+// HasPendingAction returns true if there is a pending action awaiting confirmation.
+func (m *Model) HasPendingAction() bool {
+	return m.pendingAction != ""
+}
+
+// GetPendingAction returns the current pending action.
+func (m *Model) GetPendingAction() string {
+	return m.pendingAction
+}
+
+// ClearPendingAction clears any pending action.
+func (m *Model) ClearPendingAction() {
+	m.pendingAction = ""
+}
+
+// Update handles key messages for confirmation dialogs.
+// Returns the confirmed action string (empty if not confirmed or cancelled).
+func (m Model) Update(msg tea.Msg) (Model, string) {
+	if !m.HasPendingAction() {
+		return m, ""
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
+			action := m.pendingAction
+			m.pendingAction = ""
+			return m, action
+		}
+		// Any other key cancels the confirmation
+		m.pendingAction = ""
+	}
+
+	return m, ""
 }
 
 func (m Model) View() string {

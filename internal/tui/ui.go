@@ -37,6 +37,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -84,8 +85,6 @@ func NewModel(location config.Location) Model {
 			log.Info("Starting task", "id", task.Id)
 			task.StartTime = time.Now()
 			m.tasks[task.Id] = task
-			rTask := m.renderRunningTask()
-			m.footer.SetRightSection(rTask)
 			return m.taskSpinner.Tick
 		},
 	}
@@ -204,6 +203,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		// Handle notification PR/Issue action confirmation
+		if m.notificationView.HasPendingAction() {
+			var action string
+			m.notificationView, action = m.notificationView.Update(msg)
+			m.footer.SetLeftSection("")
+			if action != "" {
+				return m, m.executeNotificationAction(action)
+			}
+			return m, nil
+		}
+
 		switch {
 		case m.isUserDefinedKeybinding(msg):
 			cmd = m.executeKeybinding(msg.String())
@@ -252,7 +262,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.Refresh):
-			data.ClearLabelCache()
+			data.ClearEnrichmentCache()
 			currSection.ResetFilters()
 			currSection.ResetRows()
 			m.syncSidebar()
@@ -260,7 +270,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 
 		case key.Matches(msg, m.keys.RefreshAll):
-			data.ClearLabelCache()
+			data.ClearEnrichmentCache()
 			newSections, fetchSectionsCmds := m.fetchAllViewSections()
 			m.setCurrentViewSections(newSections)
 			cmds = append(cmds, fetchSectionsCmds)
@@ -452,12 +462,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
+				return m, tea.Batch(cmds...)
 
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
-				var prCmd tea.Cmd
-				m.prView, prCmd = m.prView.Update(msg)
-
+				// Check for PR actions first (before updating prView)
 				if !m.prView.IsTextInputBoxFocused() {
 					action := prview.MsgToAction(msg)
 					if action != nil {
@@ -476,30 +485,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionDiff:
 							if pr := m.notificationView.GetSubjectPR(); pr != nil {
-								cmd = common.DiffPR(pr.GetNumber(), pr.GetRepoNameWithOwner(), m.ctx.Config.GetFullScreenDiffPagerEnv())
+								cmd = common.DiffPR(pr.GetNumber(), pr.GetRepoNameWithOwner(),
+									m.ctx.Config.GetFullScreenDiffPagerEnv())
 							}
 							return m, cmd
 
 						case prview.PRActionCheckout:
 							if pr := m.notificationView.GetSubjectPR(); pr != nil {
-								cmd, _ = notificationssection.CheckoutPR(m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+								cmd, _ = notificationssection.CheckoutPR(
+									m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
 							}
 							return m, cmd
 
 						case prview.PRActionClose:
-							return m, m.promptConfirmation(currSection, "close")
+							cmd = m.promptConfirmationForNotificationPR("close")
+							return m, cmd
 
 						case prview.PRActionReady:
-							return m, m.promptConfirmation(currSection, "ready")
+							cmd = m.promptConfirmationForNotificationPR("ready")
+							return m, cmd
 
 						case prview.PRActionReopen:
-							return m, m.promptConfirmation(currSection, "reopen")
+							cmd = m.promptConfirmationForNotificationPR("reopen")
+							return m, cmd
 
 						case prview.PRActionMerge:
-							return m, m.promptConfirmation(currSection, "merge")
+							cmd = m.promptConfirmationForNotificationPR("merge")
+							return m, cmd
 
 						case prview.PRActionUpdate:
-							return m, m.promptConfirmation(currSection, "update")
+							cmd = m.promptConfirmationForNotificationPR("update")
+							return m, cmd
 
 						case prview.PRActionSummaryViewMore:
 							m.prView.SetSummaryViewMore()
@@ -514,17 +530,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.switchSelectedView())
 				}
 
-				// Handle tab navigation keys - these don't return a command but should return
-				if key.Matches(msg, keys.PRKeys.PrevSidebarTab) || key.Matches(msg, keys.PRKeys.NextSidebarTab) {
-					m.syncSidebar()
-					return m, prCmd
-				}
-
-				// For other keys, only return if prView returned a command
-				if prCmd != nil {
-					m.syncSidebar()
-					return m, prCmd
-				}
+				// No action matched - update prView for navigation (tab switching, scrolling)
+				var prCmd tea.Cmd
+				m.prView, prCmd = m.prView.Update(msg)
+				m.syncSidebar()
+				cmds = append(cmds, prCmd)
 
 			// Issue keybindings when viewing an Issue notification
 			case m.notificationView.GetSubjectIssue() != nil:
@@ -547,10 +557,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
 					case issueview.IssueActionClose:
-						return m, m.promptConfirmation(currSection, "close")
+						cmd = m.promptConfirmationForNotificationIssue("close")
+						return m, cmd
 
 					case issueview.IssueActionReopen:
-						return m, m.promptConfirmation(currSection, "reopen")
+						cmd = m.promptConfirmationForNotificationIssue("reopen")
+						return m, cmd
 					}
 				}
 
@@ -559,30 +571,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, m.switchSelectedView())
 				}
 
-				if issueCmd != nil {
-					m.syncSidebar()
-					return m, issueCmd
-				}
+				// Sync sidebar and return issueCmd for navigation
+				m.syncSidebar()
+				cmds = append(cmds, issueCmd)
 
-			// Notification-specific keybindings
+			// Notification-specific keybindings (when not viewing PR/Issue content)
 			case key.Matches(msg, keys.NotificationKeys.View):
-				// View notification content and mark as read
 				cmds = append(cmds, m.loadNotificationContent())
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
-				// Already handled in the section's Update method
-				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
-				return m, cmd
+				cmds = append(cmds, m.updateSection(currSection.GetId(), currSection.GetType(), msg))
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAllAsDone):
-				if currSection != nil {
-					currSection.SetPromptConfirmationAction("done_all")
-					cmd = currSection.SetIsPromptConfirmationShown(true)
-				}
+				cmd = m.promptConfirmation(currSection, "done_all")
 				return m, cmd
 
 			case key.Matches(msg, keys.NotificationKeys.Open):
-				// Handled in the section's Update method
 				cmd = m.updateSection(currSection.GetId(), currSection.GetType(), msg)
 				return m, cmd
 
@@ -901,6 +905,7 @@ func (m *Model) onViewedRowChanged() tea.Cmd {
 	sidebarCmd := m.syncSidebar()
 	enrichCmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
+	m.notificationView.ResetSubject()
 	return tea.Batch(sidebarCmd, enrichCmd)
 }
 
@@ -1287,7 +1292,8 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 
 	// Handle notifications view with search section like PRs/Issues
 	if m.ctx.View == config.NotificationsView {
-		missingSearchSection := len(newSections) == 0 || (len(newSections) > 0 && newSections[0].GetId() != 0)
+		missingSearchSection := len(newSections) == 0 ||
+			(len(newSections) > 0 && newSections[0].GetId() != 0)
 		s := make([]section.Section, 0)
 		if missingSearchSection {
 			// Check if we have an existing search section to preserve
@@ -1541,4 +1547,71 @@ func (m *Model) doUpdateFooterAtInterval() tea.Cmd {
 			return updateFooterMsg{}
 		},
 	)
+}
+
+// promptConfirmationForNotificationPR shows a confirmation prompt for PR actions
+// when viewing a PR from a notification. This is separate from section-based
+// confirmation because the notification section doesn't know about PR actions.
+func (m *Model) promptConfirmationForNotificationPR(action string) tea.Cmd {
+	prompt := m.notificationView.SetPendingPRAction(action)
+	if prompt == "" {
+		return nil
+	}
+	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
+	return nil
+}
+
+// promptConfirmationForNotificationIssue shows a confirmation prompt for Issue actions
+// when viewing an Issue from a notification.
+func (m *Model) promptConfirmationForNotificationIssue(action string) tea.Cmd {
+	prompt := m.notificationView.SetPendingIssueAction(action)
+	if prompt == "" {
+		return nil
+	}
+	m.footer.SetLeftSection(m.ctx.Styles.ListViewPort.PagerStyle.Render(prompt))
+	return nil
+}
+
+// executeNotificationAction executes a PR/Issue action after user confirmation
+func (m *Model) executeNotificationAction(action string) tea.Cmd {
+	if action == "" {
+		return nil
+	}
+
+	sid := tasks.SectionIdentifier{Id: m.currSectionId, Type: notificationssection.SectionType}
+	pr := m.notificationView.GetSubjectPR()
+	issue := m.notificationView.GetSubjectIssue()
+
+	switch action {
+	case "pr_close":
+		if pr != nil {
+			return tasks.ClosePR(m.ctx, sid, pr)
+		}
+	case "pr_reopen":
+		if pr != nil {
+			return tasks.ReopenPR(m.ctx, sid, pr)
+		}
+	case "pr_ready":
+		if pr != nil {
+			return tasks.PRReady(m.ctx, sid, pr)
+		}
+	case "pr_merge":
+		if pr != nil {
+			return tasks.MergePR(m.ctx, sid, pr)
+		}
+	case "pr_update":
+		if pr != nil {
+			return tasks.UpdatePR(m.ctx, sid, pr)
+		}
+	case "issue_close":
+		if issue != nil {
+			return tasks.CloseIssue(m.ctx, sid, issue)
+		}
+	case "issue_reopen":
+		if issue != nil {
+			return tasks.ReopenIssue(m.ctx, sid, issue)
+		}
+	}
+
+	return nil
 }
