@@ -9,7 +9,7 @@ export function GET() {
       default: {
         preview: {
           open: true,
-          width: 50,
+          width: 0.5,
         },
         prsLimit: 20,
         prApproveComment: "LGTM",
@@ -66,7 +66,7 @@ export function GET() {
                 "Specifies the width of the preview pane. Numbers between 0 and 1 represent size relative to overall terminal window size (e.g 0.4 is 40%), numbers >=1 represent size in columns.",
               type: "number",
               minimum: 0,
-              default: 50,
+              default: 0.5,
             },
           },
         },
