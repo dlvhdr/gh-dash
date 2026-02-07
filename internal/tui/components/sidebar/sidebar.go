@@ -56,8 +56,8 @@ func (m Model) View() string {
 	height := m.ctx.MainContentHeight
 	style := m.ctx.Styles.Sidebar.Root.
 		Height(height).
-		Width(m.ctx.Config.Defaults.Preview.Width).
-		MaxWidth(m.ctx.Config.Defaults.Preview.Width)
+		Width(m.ctx.DynamicPreviewWidth).
+		MaxWidth(m.ctx.DynamicPreviewWidth)
 
 	if m.data == "" {
 		return style.Align(lipgloss.Center).Render(
@@ -82,7 +82,7 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx == nil || m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.Config.Defaults.Preview.Width - m.ctx.Styles.Sidebar.BorderWidth
+	return m.ctx.DynamicPreviewWidth - m.ctx.Styles.Sidebar.BorderWidth
 }
 
 func (m *Model) ScrollToTop() {
