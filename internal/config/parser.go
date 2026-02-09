@@ -339,7 +339,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 		Defaults: Defaults{
 			Preview: PreviewConfig{
 				Open:  true,
-				Width: 0.5,
+				Width: 0.45,
 			},
 			PrsLimit:               20,
 			PrApproveComment:       "LGTM",
