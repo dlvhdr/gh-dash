@@ -708,6 +708,8 @@ func TestSyncMainContentWidth(t *testing.T) {
 				"SidebarOpen mismatch")
 		})
 	}
+}
+
 func TestPromptConfirmationForNotificationPR(t *testing.T) {
 	// Test that promptConfirmationForNotificationPR sets the pending action
 	// and displays the confirmation prompt in the footer.
