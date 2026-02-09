@@ -125,6 +125,25 @@ type StatusContext struct {
 	}
 }
 
+type CheckSuiteNode struct {
+	Status     graphql.String
+	Conclusion graphql.String
+	App        struct {
+		Name graphql.String
+		Slug graphql.String
+	}
+	WorkflowRun struct {
+		Workflow struct {
+			Name graphql.String
+		}
+	}
+}
+
+type CheckSuites struct {
+	TotalCount graphql.Int
+	Nodes      []CheckSuiteNode
+}
+
 type StatusCheckRollupStats struct {
 	State    checks.CommitState
 	Contexts struct {
@@ -178,6 +197,7 @@ type LastCommitWithStatusChecks struct {
 					}
 				} `graphql:"contexts(last: 100)"`
 			}
+			CheckSuites CheckSuites `graphql:"checkSuites(last: 20)"`
 		}
 	}
 	TotalCount int

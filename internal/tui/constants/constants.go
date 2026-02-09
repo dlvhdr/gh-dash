@@ -39,6 +39,7 @@ const (
 	SuccessIcon          = ""
 	TeamIcon             = ""
 	WaitingIcon          = ""
+	ActionRequiredIcon   = "󰒃" // nf-md-shield_alert (warning shield)
 
 	BehindIcon         = "󰇮"
 	BlockedIcon        = ""
