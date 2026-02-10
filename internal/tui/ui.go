@@ -983,7 +983,7 @@ func (m *Model) syncMainContentWidth() {
 		w := m.ctx.Config.Defaults.Preview.Width
 		if w > 0 && w < 1 {
 			w *= float64(m.ctx.ScreenWidth)
-		} 
+		}
 		m.ctx.DynamicPreviewWidth = min(int(w), m.ctx.ScreenWidth)
 		sideBarOffset = m.ctx.DynamicPreviewWidth
 	}
