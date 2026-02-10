@@ -608,6 +608,108 @@ func TestCommandTemplateMissingVariable(t *testing.T) {
 	require.Error(t, err, "template with missing variable should return an error")
 }
 
+func TestSyncMainContentWidth(t *testing.T) {
+	tests := []struct {
+		name                 string
+		screenWidth          int
+		previewWidth         float64
+		sidebarOpen          bool
+		expectedPreviewWidth int
+		expectedMainWidth    int
+	}{
+		{
+			name:                 "absolute width with sidebar open",
+			screenWidth:          100,
+			previewWidth:         50,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 50,
+			expectedMainWidth:    50,
+		},
+		{
+			name:                 "absolute width with sidebar closed",
+			screenWidth:          100,
+			previewWidth:         50,
+			sidebarOpen:          false,
+			expectedPreviewWidth: 0,
+			expectedMainWidth:    100,
+		},
+		{
+			name:                 "relative width 40%",
+			screenWidth:          100,
+			previewWidth:         0.4,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 40,
+			expectedMainWidth:    60,
+		},
+		{
+			name:                 "relative width 50%",
+			screenWidth:          200,
+			previewWidth:         0.5,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 100,
+			expectedMainWidth:    100,
+		},
+		{
+			name:                 "very small relative width results in zero",
+			screenWidth:          100,
+			previewWidth:         0.005,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 0,
+			expectedMainWidth:    100,
+		},
+		{
+			name:                 "absolute width of 1",
+			screenWidth:          100,
+			previewWidth:         1,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 1,
+			expectedMainWidth:    99,
+		},
+		{
+			name:                 "small screen with relative width",
+			screenWidth:          10,
+			previewWidth:         0.1,
+			sidebarOpen:          true,
+			expectedPreviewWidth: 1,
+			expectedMainWidth:    9,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.Config{
+				Defaults: config.Defaults{
+					Preview: config.PreviewConfig{
+						Open:  true,
+						Width: tc.previewWidth,
+					},
+				},
+			}
+
+			m := Model{
+				ctx: &context.ProgramContext{
+					Config:      &cfg,
+					ScreenWidth: tc.screenWidth,
+				},
+				sidebar: sidebar.Model{
+					IsOpen: tc.sidebarOpen,
+				},
+			}
+
+			m.syncMainContentWidth()
+
+			if tc.sidebarOpen {
+				require.Equal(t, tc.expectedPreviewWidth, m.ctx.DynamicPreviewWidth,
+					"DynamicPreviewWidth mismatch")
+			}
+			require.Equal(t, tc.expectedMainWidth, m.ctx.MainContentWidth,
+				"MainContentWidth mismatch")
+			require.Equal(t, tc.sidebarOpen, m.ctx.SidebarOpen,
+				"SidebarOpen mismatch")
+		})
+	}
+}
+
 func TestPromptConfirmationForNotificationPR(t *testing.T) {
 	// Test that promptConfirmationForNotificationPR sets the pending action
 	// and displays the confirmation prompt in the footer.
