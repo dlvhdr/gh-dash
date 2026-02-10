@@ -374,3 +374,89 @@ func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.R
 		},
 	})
 }
+
+func ApproveWorkflows(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+	prNumber := pr.GetNumber()
+	repo := pr.GetRepoNameWithOwner()
+	taskId := buildTaskId("pr_approve_workflows", prNumber)
+
+	task := context.Task{
+		Id:           taskId,
+		StartText:    fmt.Sprintf("Approving workflows for PR #%d", prNumber),
+		FinishedText: fmt.Sprintf("Workflows for PR #%d have been approved", prNumber),
+		State:        context.TaskStart,
+		Error:        nil,
+	}
+	startCmd := ctx.StartTask(task)
+
+	return tea.Batch(startCmd, func() tea.Msg {
+		// Step 1: Get head SHA
+		shaCmd := exec.Command("gh", "pr", "view", fmt.Sprint(prNumber),
+			"-R", repo, "--json", "headRefOid", "--jq", ".headRefOid")
+		shaOut, err := shaCmd.Output()
+		if err != nil {
+			return constants.TaskFinishedMsg{
+				TaskId:      taskId,
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				Err:         fmt.Errorf("failed to get head SHA: %w", err),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+		sha := strings.TrimSpace(string(shaOut))
+
+		// Step 2: Get workflow run IDs awaiting approval
+		runsCmd := exec.Command("gh", "api",
+			fmt.Sprintf("repos/%s/actions/runs?status=action_required&head_sha=%s", repo, sha),
+			"--jq", ".workflow_runs[].id")
+		runsOut, err := runsCmd.Output()
+		if err != nil {
+			return constants.TaskFinishedMsg{
+				TaskId:      taskId,
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				Err:         fmt.Errorf("failed to get workflow runs: %w", err),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
+		runIds := strings.Fields(strings.TrimSpace(string(runsOut)))
+		if len(runIds) == 0 {
+			return constants.TaskFinishedMsg{
+				TaskId:      taskId,
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				Err:         fmt.Errorf("no workflows awaiting approval"),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
+		// Step 3: Approve each run (best-effort)
+		var lastErr error
+		approved := 0
+		for _, runId := range runIds {
+			log.Info("Approving workflow run", "runId", runId, "pr", prNumber)
+			approveCmd := exec.Command("gh", "api", "-X", "POST",
+				fmt.Sprintf("repos/%s/actions/runs/%s/approve", repo, runId))
+			output, err := approveCmd.CombinedOutput()
+			if err != nil {
+				outStr := string(output)
+				if strings.Contains(outStr, "not from a fork pull request") {
+					lastErr = fmt.Errorf("workflow not approvable via API (only fork PR workflows can be approved)")
+				} else {
+					lastErr = fmt.Errorf("failed to approve run %s: %w", runId, err)
+				}
+			} else {
+				approved++
+			}
+		}
+
+		return constants.TaskFinishedMsg{
+			TaskId:      taskId,
+			SectionId:   section.Id,
+			SectionType: section.Type,
+			Err:         lastErr,
+			Msg:         UpdatePRMsg{PrNumber: prNumber},
+		}
+	})
+}

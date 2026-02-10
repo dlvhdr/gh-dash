@@ -1101,3 +1101,85 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	require.True(t, data.IsEnrichmentCacheCleared(),
 		"cache should be cleared after refresh all key press")
 }
+
+func TestPromptConfirmationForNotificationPR_ApproveWorkflows(t *testing.T) {
+	// Test that promptConfirmationForNotificationPR sets the pending action
+	// for approveWorkflows.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:    ctx,
+		keys:   keys.Keys,
+		footer: footer.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 42,
+		},
+	}, "test-notification-id")
+
+	// Call promptConfirmationForNotificationPR with approveWorkflows
+	m.promptConfirmationForNotificationPR("approveWorkflows")
+
+	// Verify pending action is set
+	require.Equal(t, "pr_approveWorkflows", m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be set to pr_approveWorkflows")
+}
+
+func TestNotificationConfirmation_ApproveWorkflows_AcceptWithY(t *testing.T) {
+	// Test that confirming approveWorkflows executes the action
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil // No-op for testing
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject and pending approveWorkflows action
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 42,
+			Repository: data.Repository{
+				NameWithOwner: "owner/repo",
+			},
+		},
+	}, "test-notification-id")
+	m.notificationView.SetPendingPRAction("approveWorkflows")
+
+	// Press 'y' to confirm
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared and command is returned
+	require.Empty(t, m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be cleared after confirmation")
+	require.NotNil(t, cmd, "should return a command to execute the action")
+}

@@ -418,6 +418,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
+			case key.Matches(msg, keys.PRKeys.ApproveWorkflows):
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "approveWorkflows")
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				cmds = append(cmds, m.switchSelectedView())
 
@@ -520,6 +526,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionUpdate:
 							cmd = m.promptConfirmationForNotificationPR("update")
+							return m, cmd
+
+						case prview.PRActionApproveWorkflows:
+							cmd = m.promptConfirmationForNotificationPR("approveWorkflows")
 							return m, cmd
 
 						case prview.PRActionSummaryViewMore:
@@ -1611,6 +1621,10 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	case "pr_update":
 		if pr != nil {
 			return tasks.UpdatePR(m.ctx, sid, pr)
+		}
+	case "pr_approveWorkflows":
+		if pr != nil {
+			return tasks.ApproveWorkflows(m.ctx, sid, pr)
 		}
 	case "issue_close":
 		if issue != nil {
