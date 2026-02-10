@@ -5,3 +5,6 @@ type ErrMsg struct {
 }
 
 func (e ErrMsg) Error() string { return e.Err.Error() }
+
+// ExecFinishedMsg is sent when an external process (tea.ExecProcess) finishes.
+type ExecFinishedMsg struct{}

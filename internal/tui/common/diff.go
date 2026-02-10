@@ -26,6 +26,6 @@ func DiffPR(prNumber int, repoName string, env []string) tea.Cmd {
 		if err != nil {
 			return constants.ErrMsg{Err: err}
 		}
-		return nil
+		return constants.ExecFinishedMsg{}
 	})
 }
