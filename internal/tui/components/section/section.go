@@ -208,6 +208,23 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 	return false
 }
 
+func (m *BaseModel) SyncSmartFilterWithSearchValue() {
+	if m.HasRepoNameInConfiguredFilter() {
+		return
+	}
+	repo, err := repository.Current()
+	if err != nil {
+		return
+	}
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	for token := range strings.FieldsSeq(m.SearchValue) {
+		if strings.HasPrefix(token, currentCloneFilter) {
+			return
+		}
+	}
+	m.IsFilteredByCurrentRemote = false
+}
+
 func (m *BaseModel) GetSearchValue() string {
 	searchValue := m.enrichSearchWithTemplateVars()
 	repo, err := repository.Current()
