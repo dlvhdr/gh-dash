@@ -68,6 +68,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 			case tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
