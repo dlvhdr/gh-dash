@@ -2,6 +2,7 @@ package section
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cli/go-gh/v2/pkg/repository"
@@ -12,7 +13,7 @@ import (
 func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 	repo, err := repository.Current()
 	if err != nil {
-		t.Skip("not running inside a git repository with a remote")
+		t.Fatal("failed to resolve current repository:", err)
 	}
 	repoFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 
@@ -72,7 +73,7 @@ func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 			got := m.GetSearchValue()
 
 			containsRepoFilter := false
-			for token := range splitFields(got) {
+			for token := range strings.FieldsSeq(got) {
 				if token == repoFilter {
 					containsRepoFilter = true
 					break
@@ -84,27 +85,5 @@ func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 					got, repoFilter, containsRepoFilter, tt.wantContainsRepoFilter)
 			}
 		})
-	}
-}
-
-// splitFields iterates over whitespace-separated tokens (same as strings.FieldsSeq).
-func splitFields(s string) func(func(string) bool) {
-	return func(yield func(string) bool) {
-		start := -1
-		for i, r := range s {
-			if r == ' ' || r == '\t' || r == '\n' || r == '\r' {
-				if start >= 0 {
-					if !yield(s[start:i]) {
-						return
-					}
-					start = -1
-				}
-			} else if start < 0 {
-				start = i
-			}
-		}
-		if start >= 0 {
-			yield(s[start:])
-		}
 	}
 }
