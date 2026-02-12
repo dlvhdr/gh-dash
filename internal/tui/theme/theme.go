@@ -62,11 +62,11 @@ var DefaultTheme = &Theme{
 }
 
 func ParseTheme(cfg *config.Config) Theme {
-	_shimHex := func(hex config.HexColor, fallback lipgloss.AdaptiveColor) lipgloss.AdaptiveColor {
-		if hex == "" {
+	_shimColor := func(color config.Color, fallback lipgloss.AdaptiveColor) lipgloss.AdaptiveColor {
+		if color == "" {
 			return fallback
 		}
-		return lipgloss.AdaptiveColor{Light: string(hex), Dark: string(hex)}
+		return lipgloss.AdaptiveColor{Light: string(color), Dark: string(color)}
 	}
 	_shimIcon := func(icon string, fallback string) string {
 		if icon != "" {
@@ -76,71 +76,71 @@ func ParseTheme(cfg *config.Config) Theme {
 	}
 
 	if cfg.Theme.Colors != nil {
-		DefaultTheme.SelectedBackground = _shimHex(
+		DefaultTheme.SelectedBackground = _shimColor(
 			cfg.Theme.Colors.Inline.Background.Selected,
 			DefaultTheme.SelectedBackground,
 		)
-		DefaultTheme.PrimaryBorder = _shimHex(
+		DefaultTheme.PrimaryBorder = _shimColor(
 			cfg.Theme.Colors.Inline.Border.Primary,
 			DefaultTheme.PrimaryBorder,
 		)
-		DefaultTheme.FaintBorder = _shimHex(
+		DefaultTheme.FaintBorder = _shimColor(
 			cfg.Theme.Colors.Inline.Border.Faint,
 			DefaultTheme.FaintBorder,
 		)
-		DefaultTheme.SecondaryBorder = _shimHex(
+		DefaultTheme.SecondaryBorder = _shimColor(
 			cfg.Theme.Colors.Inline.Border.Secondary,
 			DefaultTheme.SecondaryBorder,
 		)
-		DefaultTheme.FaintText = _shimHex(
+		DefaultTheme.FaintText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Faint,
 			DefaultTheme.FaintText,
 		)
-		DefaultTheme.PrimaryText = _shimHex(
+		DefaultTheme.PrimaryText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Primary,
 			DefaultTheme.PrimaryText,
 		)
-		DefaultTheme.SecondaryText = _shimHex(
+		DefaultTheme.SecondaryText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Secondary,
 			DefaultTheme.SecondaryText,
 		)
-		DefaultTheme.InvertedText = _shimHex(
+		DefaultTheme.InvertedText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Inverted,
 			DefaultTheme.InvertedText,
 		)
-		DefaultTheme.SuccessText = _shimHex(
+		DefaultTheme.SuccessText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Success,
 			DefaultTheme.SuccessText,
 		)
-		DefaultTheme.WarningText = _shimHex(
+		DefaultTheme.WarningText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Warning,
 			DefaultTheme.WarningText,
 		)
-		DefaultTheme.ErrorText = _shimHex(
+		DefaultTheme.ErrorText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Error,
 			DefaultTheme.ErrorText,
 		)
-		DefaultTheme.ActorText = _shimHex(
+		DefaultTheme.ActorText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Actor,
 			DefaultTheme.ActorText,
 		)
-		DefaultTheme.NewContributorIconColor = _shimHex(
+		DefaultTheme.NewContributorIconColor = _shimColor(
 			cfg.Theme.Colors.Inline.Icon.NewContributor,
 			DefaultTheme.NewContributorIconColor,
 		)
-		DefaultTheme.ContributorIconColor = _shimHex(
+		DefaultTheme.ContributorIconColor = _shimColor(
 			cfg.Theme.Colors.Inline.Icon.Contributor,
 			DefaultTheme.ContributorIconColor,
 		)
-		DefaultTheme.CollaboratorIconColor = _shimHex(
+		DefaultTheme.CollaboratorIconColor = _shimColor(
 			cfg.Theme.Colors.Inline.Icon.Collaborator,
 			DefaultTheme.CollaboratorIconColor,
 		)
-		DefaultTheme.MemberIconColor = _shimHex(
+		DefaultTheme.MemberIconColor = _shimColor(
 			cfg.Theme.Colors.Inline.Icon.Member,
 			DefaultTheme.MemberIconColor,
 		)
-		DefaultTheme.OwnerIconColor = _shimHex(
+		DefaultTheme.OwnerIconColor = _shimColor(
 			cfg.Theme.Colors.Inline.Icon.Owner,
 			DefaultTheme.OwnerIconColor,
 		)
