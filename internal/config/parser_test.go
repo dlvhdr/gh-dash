@@ -202,10 +202,10 @@ func TestValidateColor(t *testing.T) {
 	}
 
 	invalid := []string{
-		"256", "999", "-1",     // out of range
-		"abc", "red", "0xFF",   // not numeric, not hex format
-		"#GG00FF", "#12345",    // bad hex
-		"#1234567",             // too long
+		"256", "999", "-1", // out of range
+		"abc", "red", "0xFF", // not numeric, not hex format
+		"#GG00FF", "#12345", // bad hex
+		"#1234567", // too long
 	}
 	for _, v := range invalid {
 		err := validate.Struct(testColor{Val: Color(v)})
