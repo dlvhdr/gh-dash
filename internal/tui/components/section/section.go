@@ -86,6 +86,12 @@ func NewModel(
 	options NewSectionOptions,
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
+	isFilteredByCurrentRemote := false
+	repo, err := repository.Current()
+	if err == nil {
+		isFilteredByCurrentRemote = strings.Contains(filters,
+			fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name))
+	}
 	m := BaseModel{
 		Ctx:          ctx,
 		Id:           options.Id,
@@ -101,14 +107,11 @@ func NewModel(
 		}),
 		SearchValue:               filters,
 		IsSearching:               false,
-		IsFilteredByCurrentRemote: filters != options.Config.Filters,
+		IsFilteredByCurrentRemote: isFilteredByCurrentRemote,
 		TotalCount:                0,
 		PageInfo:                  nil,
 		PromptConfirmationBox:     prompt.NewModel(ctx),
 		ShowAuthorIcon:            ctx.Config.ShowAuthorIcons,
-	}
-	if !ctx.Config.SmartFilteringAtLaunch {
-		m.IsFilteredByCurrentRemote = false
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -176,7 +179,6 @@ type Search interface {
 	ResetFilters()
 	GetFilters() string
 	ResetPageInfo()
-	IsFilteringByClone() bool
 }
 
 type PromptConfirmation interface {
@@ -199,7 +201,7 @@ func (m *BaseModel) GetConfig() config.SectionConfig {
 }
 
 func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
-	filters := m.Config.Filters
+	filters := m.SearchValue
 	for token := range strings.FieldsSeq(filters) {
 		if strings.HasPrefix(token, "repo:") {
 			return true
@@ -208,21 +210,22 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 	return false
 }
 
-func (m *BaseModel) SyncSmartFilterWithSearchValue() {
-	if m.HasRepoNameInConfiguredFilter() {
-		return
-	}
+func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
+	filters := m.SearchValue
 	repo, err := repository.Current()
 	if err != nil {
-		return
+		return false
 	}
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
-	for token := range strings.FieldsSeq(m.SearchValue) {
-		if strings.HasPrefix(token, currentCloneFilter) {
-			return
+	for token := range strings.FieldsSeq(filters) {
+		if strings.HasPrefix(token, fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)) {
+			return true
 		}
 	}
-	m.IsFilteredByCurrentRemote = false
+	return false
+}
+
+func (m *BaseModel) SyncSmartFilterWithSearchValue() {
+	m.IsFilteredByCurrentRemote = m.HasCurrentRepoNameInConfiguredFilter()
 }
 
 func (m *BaseModel) GetSearchValue() string {
@@ -232,14 +235,12 @@ func (m *BaseModel) GetSearchValue() string {
 		return searchValue
 	}
 
-	if m.HasRepoNameInConfiguredFilter() {
-		return searchValue
-	}
 	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if !strings.HasPrefix(token, currentCloneFilter) {
-			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
+			searchValueWithoutCurrentCloneFilter =
+				append(searchValueWithoutCurrentCloneFilter, token)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {
@@ -395,10 +396,6 @@ func (m *BaseModel) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 
 func (m *BaseModel) GetFilters() string {
 	return m.GetSearchValue()
-}
-
-func (m *BaseModel) IsFilteringByClone() bool {
-	return m.IsFilteredByCurrentRemote
 }
 
 func (m *BaseModel) GetMainContent() string {
