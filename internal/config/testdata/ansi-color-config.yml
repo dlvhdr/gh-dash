@@ -1,0 +1,19 @@
+prSections:
+  - title: My Pull Requests
+    filters: is:open author:@me
+
+theme:
+  colors:
+    text:
+      primary: "12"
+      secondary: "244"
+      inverted: "015"
+      faint: "245"
+      warning: "003"
+      success: "002"
+    background:
+      selected: "008"
+    border:
+      primary: "013"
+      secondary: "007"
+      faint: "000"

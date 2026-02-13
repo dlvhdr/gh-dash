@@ -7,6 +7,8 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -21,6 +23,8 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
+
+var hexColorRegex = regexp.MustCompile(`^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$`)
 
 var conf = koanf.Conf{
 	Delim:       ".",
@@ -229,44 +233,44 @@ type Pager struct {
 	Diff string `yaml:"diff"`
 }
 
-type HexColor string
+type Color string
 
-func (hc HexColor) String() string {
-	return string(hc)
+func (c Color) String() string {
+	return string(c)
 }
 
-func (hc HexColor) IsZero() bool {
-	return hc.String() == ""
+func (c Color) IsZero() bool {
+	return c.String() == ""
 }
 
 type ColorThemeIcon struct {
-	NewContributor HexColor `yaml:"newcontributor"   validate:"omitempty,hexcolor"`
-	Contributor    HexColor `yaml:"contributor"      validate:"omitempty,hexcolor"`
-	Collaborator   HexColor `yaml:"collaborator"     validate:"omitempty,hexcolor"`
-	Member         HexColor `yaml:"member"           validate:"omitempty,hexcolor"`
-	Owner          HexColor `yaml:"owner"            validate:"omitempty,hexcolor"`
-	UnknownRole    HexColor `yaml:"unknownrole"      validate:"omitempty,hexcolor"`
+	NewContributor Color `yaml:"newcontributor"   validate:"omitempty,color"`
+	Contributor    Color `yaml:"contributor"      validate:"omitempty,color"`
+	Collaborator   Color `yaml:"collaborator"     validate:"omitempty,color"`
+	Member         Color `yaml:"member"           validate:"omitempty,color"`
+	Owner          Color `yaml:"owner"            validate:"omitempty,color"`
+	UnknownRole    Color `yaml:"unknownrole"      validate:"omitempty,color"`
 }
 
 type ColorThemeText struct {
-	Primary   HexColor `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
-	Inverted  HexColor `yaml:"inverted"  validate:"omitempty,hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
-	Warning   HexColor `yaml:"warning"   validate:"omitempty,hexcolor"`
-	Success   HexColor `yaml:"success"   validate:"omitempty,hexcolor"`
-	Error     HexColor `yaml:"error"     validate:"omitempty,hexcolor"`
-	Actor     HexColor `yaml:"actor"     validate:"omitempty,hexcolor"`
+	Primary   Color `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,color"`
+	Secondary Color `yaml:"secondary" validate:"omitempty,color"`
+	Inverted  Color `yaml:"inverted"  validate:"omitempty,color"`
+	Faint     Color `yaml:"faint"     validate:"omitempty,color"`
+	Warning   Color `yaml:"warning"   validate:"omitempty,color"`
+	Success   Color `yaml:"success"   validate:"omitempty,color"`
+	Error     Color `yaml:"error"     validate:"omitempty,color"`
+	Actor     Color `yaml:"actor"     validate:"omitempty,color"`
 }
 
 type ColorThemeBorder struct {
-	Primary   HexColor `yaml:"primary"   validate:"omitempty,hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
+	Primary   Color `yaml:"primary"   validate:"omitempty,color"`
+	Secondary Color `yaml:"secondary" validate:"omitempty,color"`
+	Faint     Color `yaml:"faint"     validate:"omitempty,color"`
 }
 
 type ColorThemeBackground struct {
-	Selected HexColor `yaml:"selected" validate:"omitempty,hexcolor"`
+	Selected Color `yaml:"selected" validate:"omitempty,color"`
 }
 
 type ColorTheme struct {
@@ -714,6 +718,15 @@ func (e parsingError) Error() string {
 	return fmt.Sprintf("failed parsing config at path %s with error %v", e.path, e.err)
 }
 
+func validateColor(fl validator.FieldLevel) bool {
+	s := fl.Field().String()
+	if hexColorRegex.MatchString(s) {
+		return true
+	}
+	n, err := strconv.Atoi(s)
+	return err == nil && n >= 0 && n <= 255
+}
+
 func initParser() ConfigParser {
 	validate = validator.New()
 
@@ -724,6 +737,8 @@ func initParser() ConfigParser {
 		}
 		return name
 	})
+
+	validate.RegisterValidation("color", validateColor)
 
 	return ConfigParser{
 		k: koanf.NewWithConf(conf),

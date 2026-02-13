@@ -38,4 +38,24 @@ func TestTheme(t *testing.T) {
 		parsed := ParseTheme(&cfg)
 		require.Equal(t, "#FF0000", parsed.PrimaryText.Dark)
 	})
+
+	t.Run("Should use ANSI color indices", func(t *testing.T) {
+		colors := config.ColorThemeConfig{
+			Inline: config.ColorTheme{
+				Text: config.ColorThemeText{
+					Primary: "12",
+				},
+			},
+		}
+		thm := config.ThemeConfig{
+			Colors: &colors,
+		}
+		cfg := config.Config{
+			Theme: &thm,
+		}
+
+		parsed := ParseTheme(&cfg)
+		require.Equal(t, "12", parsed.PrimaryText.Light)
+		require.Equal(t, "12", parsed.PrimaryText.Dark)
+	})
 }

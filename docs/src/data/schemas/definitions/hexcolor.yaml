@@ -1,17 +1,19 @@
 # yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: hexcolor.schema.yaml
-title: Hex Color
+$id: color.schema.yaml
+title: Color
 description: >-
-  Represents a valid hex color, like `#a3c` or `#aa33cc`.
+  Represents a valid color: either a hex color like `#a3c` or `#aa33cc`, or an
+  ANSI color index from `0` to `255`.
 type: string
-format: hexcolor
-pattern: ^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$
+format: color
+pattern: ^(#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})|([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))$
 example: "#aa33cc"
 schematize:
   details: >-
-    Every color for the dashboard's theme must be a valid
+    Every color for the dashboard's theme must be either a valid
     [hex color](https://developer.mozilla.org/en-US/docs/Web/CSS/hex-color), like `#a3c` or
-    `#aa33cc`.
+    `#aa33cc`, or an ANSI color index from `0` to `255` (e.g. `"12"`, `"013"`). Using ANSI
+    indices allows your theme to follow your terminal's color palette.
   no_munge_description: true
   skip_more_info: true
