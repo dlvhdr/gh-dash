@@ -1,0 +1,63 @@
+---
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import Logo from "./Logo.astro";
+import EnhanceLogo from "./EnhanceLogo.astro";
+import ReleaseVersionButton from "./ReleaseVersionButton.astro";
+import Terminal from "./Terminal.astro";
+import { Icon } from "@astrojs/starlight/components";
+
+const { tagline, githubUrl, videoUrl, getStartedUrl } = Astro.props;
+---
+
+<div class="flex flex-col-reverse items-center gap-16 2xl:flex-row 2xl:gap-6">
+  <Terminal>
+    <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
+      <source src={`/${videoUrl}.webm`} type="video/webm" />
+      <source src={`/${videoUrl}.mp4`} type="video/mp4" />
+    </video>
+  </Terminal>
+  <div class="flex w-full shrink-[5] flex-col items-center">
+    <slot />
+    <div class="flex flex-row items-center gap-1">
+      <form action={`${githubUrl}/releases`}>
+        <ReleaseVersionButton server:defer>
+          <button
+            slot="fallback"
+            class="m-0 h-7 w-16 animate-pulse rounded-lg bg-[var(--sl-color-black)] px-2 py-2 text-sm text-[var(--sl-color-gray-3)]"
+          ></button>
+        </ReleaseVersionButton>
+      </form>
+      <button
+        class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+      >
+        Build: passing
+      </button>
+    </div>
+    <h2
+      class="text-center !text-xl font-normal text-pretty lg:w-[30ch] lg:!text-2xl"
+    >
+      {tagline}
+    </h2>
+    <div
+      id="main-buttons"
+      class="mt-8 flex flex-col items-center gap-4 md:flex-row"
+    >
+      <form action={getStartedUrl}>
+        <button
+          class="flex items-center justify-center gap-1 bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
+          >Get started <Icon
+            class="inline"
+            name="right-arrow"
+            size="20px"
+          /></button
+        >
+      </form>
+      <form class="m-0" action={githubUrl} target="_blank">
+        <button
+          class="flex items-center justify-center gap-1 bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
+          >View on GitHub <Icon class="inline" name="external" size="20px" />
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
