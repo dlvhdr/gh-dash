@@ -10,6 +10,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
@@ -431,14 +432,19 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	if m.PageInfo != nil {
 		startCursor = m.PageInfo.StartCursor
 	}
+	itemType := "PRs"
+	if provider.IsGitLab() {
+		itemType = "MRs"
+	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
 	isFirstFetch := m.LastFetchTaskId == ""
 	m.LastFetchTaskId = taskId
 	task := context.Task{
 		Id:        taskId,
-		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
+		StartText: fmt.Sprintf(`Fetching %s for "%s"`, itemType, m.Config.Title),
 		FinishedText: fmt.Sprintf(
-			`PRs for "%s" have been fetched`,
+			`%s for "%s" have been fetched`,
+			itemType,
 			m.Config.Title,
 		),
 		State: context.TaskStart,
@@ -554,10 +560,16 @@ func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
 }
 
 func (m Model) GetItemSingularForm() string {
+	if provider.IsGitLab() {
+		return "MR"
+	}
 	return "PR"
 }
 
 func (m Model) GetItemPluralForm() string {
+	if provider.IsGitLab() {
+		return "MRs"
+	}
 	return "PRs"
 }
 

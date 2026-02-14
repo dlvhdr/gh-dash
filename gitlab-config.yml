@@ -1,0 +1,45 @@
+# GitLab configuration for gh-dash
+# Use with: ./gh-dash --gitlab gitlab.krone.at --config ./gitlab-config.yml
+#
+# Note: GitLab requires specifying a repo in the filters using 'repo:GROUP/PROJECT'
+
+keybindings:
+  prs:
+    - key: tab
+      builtin: nextSidebarTab
+    - key: shift+tab
+      builtin: prevSidebarTab
+
+prSections:
+  - title: Test MRs
+    filters: repo:hjanuschka/hjlab
+  - title: My Merge Requests
+    filters: repo:KRN/MGMT author:@me
+  - title: All Open MRs
+    filters: repo:KRN/MGMT
+
+issuesSections:
+  - title: Test Issues
+    filters: repo:hjanuschka/hjlab
+  - title: My Issues
+    filters: repo:KRN/MGMT author:@me
+  - title: Assigned to Me
+    filters: repo:KRN/MGMT assignee:@me
+
+defaults:
+  preview:
+    open: true
+    width: 50
+  prsLimit: 20
+  issuesLimit: 20
+  view: prs
+  refetchIntervalMinutes: 30
+
+theme:
+  ui:
+    sectionsShowCount: true
+    table:
+      showSeparator: true
+      compact: false
+
+confirmQuit: false

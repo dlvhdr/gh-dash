@@ -10,6 +10,7 @@ import (
 	graphql "github.com/cli/shurcooL-graphql"
 	"github.com/shurcooL/githubv4"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
@@ -95,6 +96,11 @@ func makeIssuesQuery(query string) string {
 }
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
+	// Use GitLab provider if configured
+	if provider.IsGitLab() {
+		return fetchIssuesFromGitLab(query, limit, pageInfo)
+	}
+
 	var err error
 	if client == nil {
 		client, err = gh.DefaultGraphQLClient()
@@ -141,6 +147,79 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 	}, nil
 }
 
+// fetchIssuesFromGitLab fetches issues from GitLab and converts them to the internal format
+func fetchIssuesFromGitLab(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
+	p := provider.GetProvider()
+
+	var providerPageInfo *provider.PageInfo
+	if pageInfo != nil {
+		providerPageInfo = &provider.PageInfo{
+			HasNextPage: pageInfo.HasNextPage,
+			StartCursor: pageInfo.StartCursor,
+			EndCursor:   pageInfo.EndCursor,
+		}
+	}
+
+	resp, err := p.FetchIssues(query, limit, providerPageInfo)
+	if err != nil {
+		return IssuesResponse{}, err
+	}
+
+	issues := make([]IssueData, len(resp.Issues))
+	for i, issue := range resp.Issues {
+		issues[i] = convertProviderIssueToData(issue)
+	}
+
+	return IssuesResponse{
+		Issues:     issues,
+		TotalCount: resp.TotalCount,
+		PageInfo: PageInfo{
+			HasNextPage: resp.PageInfo.HasNextPage,
+			StartCursor: resp.PageInfo.StartCursor,
+			EndCursor:   resp.PageInfo.EndCursor,
+		},
+	}, nil
+}
+
+// convertProviderIssueToData converts provider.IssueData to data.IssueData
+func convertProviderIssueToData(issue provider.IssueData) IssueData {
+	assignees := make([]Assignee, len(issue.Assignees.Nodes))
+	for i, a := range issue.Assignees.Nodes {
+		assignees[i] = Assignee{Login: a.Login}
+	}
+
+	labels := make([]Label, len(issue.Labels.Nodes))
+	for i, l := range issue.Labels.Nodes {
+		labels[i] = Label{Name: l.Name, Color: l.Color}
+	}
+
+	comments := make([]IssueComment, len(issue.Comments.Nodes))
+	for i, c := range issue.Comments.Nodes {
+		comments[i] = IssueComment{
+			Author:    struct{ Login string }{Login: c.Author.Login},
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		}
+	}
+
+	return IssueData{
+		Number: issue.Number,
+		Title:  issue.Title,
+		Body:   issue.Body,
+		State:  issue.State,
+		Author: struct{ Login string }{Login: issue.Author.Login},
+		AuthorAssociation: issue.AuthorAssociation,
+		UpdatedAt:         issue.UpdatedAt,
+		CreatedAt:         issue.CreatedAt,
+		Url:               issue.Url,
+		Repository:        Repository{NameWithOwner: issue.Repository.NameWithOwner, IsArchived: issue.Repository.IsArchived},
+		Assignees:         Assignees{Nodes: assignees},
+		Comments:          IssueComments{TotalCount: issue.Comments.TotalCount, Nodes: comments},
+		Reactions:         IssueReactions{TotalCount: issue.Reactions.TotalCount},
+		Labels:            IssueLabels{Nodes: labels},
+	}
+}
+
 type IssuesResponse struct {
 	Issues     []IssueData
 	TotalCount int
@@ -177,4 +256,28 @@ func FetchIssue(issueUrl string) (IssueData, error) {
 	log.Info("Successfully fetched Issue", "url", issueUrl)
 
 	return queryResult.Resource.Issue, nil
+}
+
+// FetchIssueComments fetches comments for a single issue (GitLab only)
+func FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	if !provider.IsGitLab() {
+		return nil, nil // GitHub fetches comments in the main query
+	}
+
+	p := provider.GetProvider()
+	providerComments, err := p.FetchIssueComments(issueUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	comments := make([]IssueComment, len(providerComments))
+	for i, c := range providerComments {
+		comments[i] = IssueComment{
+			Author:    struct{ Login string }{Login: c.Author.Login},
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		}
+	}
+
+	return comments, nil
 }

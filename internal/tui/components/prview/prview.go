@@ -574,9 +574,9 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 	if m == nil || m.pr == nil || m.pr.Data.IsEnriched {
 		return nil
 	}
-	url := m.pr.Data.Primary.Url
+	prUrl := m.pr.Data.Primary.Url
 	return func() tea.Msg {
-		d, err := data.FetchPullRequest(url)
+		d, err := data.FetchPullRequest(prUrl)
 		return EnrichedPrMsg{
 			Id:   m.sectionId,
 			Type: prssection.SectionType,
@@ -750,9 +750,9 @@ func (m *Model) SetSummaryViewLess() {
 	m.summaryViewMore = false
 }
 
-func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
-	if m.pr.Data.Primary.Url == data.Url {
-		m.pr.Data.Enriched = data
+func (m *Model) SetEnrichedPR(enrichedData data.EnrichedPullRequestData) {
+	if m.pr.Data.Primary.Url == enrichedData.Url {
+		m.pr.Data.Enriched = enrichedData
 		m.pr.Data.IsEnriched = true
 	}
 }
