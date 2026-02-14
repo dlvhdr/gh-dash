@@ -294,7 +294,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, keys.NotificationKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
 			}
 			searchValue := m.GetSearchValue()

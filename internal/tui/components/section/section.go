@@ -89,8 +89,13 @@ func NewModel(
 	isFilteredByCurrentRemote := false
 	repo, err := repository.Current()
 	if err == nil {
-		isFilteredByCurrentRemote = strings.Contains(filters,
-			fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name))
+		currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+		for token := range strings.FieldsSeq(filters) {
+			if token == currentCloneFilter {
+				isFilteredByCurrentRemote = true
+				break
+			}
+		}
 	}
 	m := BaseModel{
 		Ctx:          ctx,
@@ -216,8 +221,9 @@ func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
 	if err != nil {
 		return false
 	}
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 	for token := range strings.FieldsSeq(filters) {
-		if strings.HasPrefix(token, fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)) {
+		if token == currentCloneFilter {
 			return true
 		}
 	}
@@ -238,7 +244,7 @@ func (m *BaseModel) GetSearchValue() string {
 	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
-		if !strings.HasPrefix(token, currentCloneFilter) {
+		if token != currentCloneFilter {
 			searchValueWithoutCurrentCloneFilter =
 				append(searchValueWithoutCurrentCloneFilter, token)
 		}

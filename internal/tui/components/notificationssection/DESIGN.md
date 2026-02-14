@@ -414,6 +414,7 @@ Notifications respect the global `smartFilteringAtLaunch` setting (enabled by de
 
 Users can:
 - Press `t` to toggle filtering on/off for the current session
+- Manually edit the search bar to remove or replace the `repo:` filter; submitting with Enter syncs the smart filter state to match
 - Set `smartFilteringAtLaunch: false` in config to disable this behavior globally
 
 #### 11. CheckSuite URL Resolution
