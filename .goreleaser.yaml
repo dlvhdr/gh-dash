@@ -29,7 +29,6 @@ builds:
       - arm
       - "386"
     goarm:
-      - "6"
       - "7"
     ldflags:
       - -s -w
@@ -41,10 +40,12 @@ builds:
     # https://goreleaser.com/limitations/cgo/
     ignore:
       - goos: android
-        goarch: "386"
-      - goos: android
         goarch: amd64
       - goos: android
+        goarch: arm
+      - goos: android
+        goarch: "386"
+      - goos: windows
         goarch: arm
 
 archives:
