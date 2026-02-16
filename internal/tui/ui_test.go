@@ -492,6 +492,129 @@ func TestNotificationView_EnterKeyWorksAfterViewingIssue(t *testing.T) {
 	require.NotNil(t, cmd, "Enter key should trigger loadNotificationContent and return a command")
 }
 
+func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	defer keys.SetNotificationSubject(keys.NotificationSubjectNone)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-pr",
+				Subject: data.NotificationSubject{
+					Title: "Test PR",
+					Url:   "https://api.github.com/repos/owner/repo/pulls/123",
+					Type:  "PullRequest",
+				},
+				Repository: data.NotificationRepository{FullName: "owner/repo"},
+				Unread:     true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-pr")
+	keys.SetNotificationSubject(keys.NotificationSubjectPR)
+
+	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = newModel.(Model)
+	require.Nil(t, m.notificationView.GetSubjectPR(), "PR subject should be cleared after pressing esc")
+	require.Empty(t, m.notificationView.GetSubjectId(), "subject ID should be cleared after pressing esc")
+
+	newModel, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("m")})
+	m = newModel.(Model)
+	require.False(t, m.notificationView.HasPendingAction(),
+		"notification mark-read key should not be routed to PR merge action after backing out")
+}
+
+func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	defer keys.SetNotificationSubject(keys.NotificationSubjectNone)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-issue",
+				Subject: data.NotificationSubject{
+					Title: "Test Issue",
+					Url:   "https://api.github.com/repos/owner/repo/issues/456",
+					Type:  "Issue",
+				},
+				Repository: data.NotificationRepository{FullName: "owner/repo"},
+				Unread:     true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-issue")
+	keys.SetNotificationSubject(keys.NotificationSubjectIssue)
+
+	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = newModel.(Model)
+	require.Nil(t, m.notificationView.GetSubjectIssue(), "Issue subject should be cleared after pressing esc")
+	require.Empty(t, m.notificationView.GetSubjectId(), "subject ID should be cleared after pressing esc")
+}
+
 // executeCommandTemplate mimics the template execution logic from runCustomCommand
 // to allow testing template variable substitution without executing shell commands.
 func executeCommandTemplate(t *testing.T, commandTemplate string, input map[string]any) (string, error) {

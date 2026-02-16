@@ -6,6 +6,7 @@ import (
 
 type NotificationKeyMap struct {
 	View                 key.Binding
+	BackToNotification   key.Binding
 	MarkAsDone           key.Binding
 	MarkAllAsDone        key.Binding
 	MarkAsRead           key.Binding
@@ -22,6 +23,10 @@ var NotificationKeys = NotificationKeyMap{
 	View: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "view notification"),
+	),
+	BackToNotification: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "back to notification"),
 	),
 	MarkAsDone: key.NewBinding(
 		key.WithKeys("D"),
@@ -68,6 +73,7 @@ var NotificationKeys = NotificationKeyMap{
 func NotificationFullHelp() []key.Binding {
 	return []key.Binding{
 		NotificationKeys.View,
+		NotificationKeys.BackToNotification,
 		NotificationKeys.MarkAsDone,
 		NotificationKeys.MarkAllAsDone,
 		NotificationKeys.MarkAsRead,
