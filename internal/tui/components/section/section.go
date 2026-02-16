@@ -245,8 +245,7 @@ func (m *BaseModel) GetSearchValue() string {
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if token != currentCloneFilter {
-			searchValueWithoutCurrentCloneFilter =
-				append(searchValueWithoutCurrentCloneFilter, token)
+			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {
