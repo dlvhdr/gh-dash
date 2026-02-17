@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"text/template"
@@ -33,6 +34,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/sidebar"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -1100,4 +1102,85 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	// Verify cache is cleared - this is the key assertion
 	require.True(t, data.IsEnrichmentCacheCleared(),
 		"cache should be cleared after refresh all key press")
+}
+
+func containsEnableMouseCellMotion(t *testing.T, cmd tea.Cmd) bool {
+	t.Helper()
+	if cmd == nil {
+		return false
+	}
+
+	expectedType := reflect.TypeOf(tea.EnableMouseCellMotion())
+
+	msg := cmd()
+	// If the cmd itself returns the right type, it's a match
+	if reflect.TypeOf(msg) == expectedType {
+		return true
+	}
+	// Otherwise check if it's a batch containing the command
+	batch, ok := msg.(tea.BatchMsg)
+	if !ok {
+		return false
+	}
+	for _, c := range batch {
+		if c != nil {
+			if reflect.TypeOf(c()) == expectedType {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func TestMouseTrackingRestoredAfterExecProcess(t *testing.T) {
+	// Verify that mouse cell motion is re-enabled after receiving messages
+	// from external process callbacks, working around a Bubble Tea bug where
+	// RestoreTerminal() does not restore mouse mode.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.PRsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	makeModel := func() Model {
+		sidebarModel := sidebar.NewModel()
+		sidebarModel.UpdateProgramContext(ctx)
+		return Model{
+			ctx:              ctx,
+			keys:             keys.Keys,
+			tasks:            map[string]context.Task{},
+			footer:           footer.NewModel(ctx),
+			prView:           prview.NewModel(ctx),
+			issueSidebar:     issueview.NewModel(ctx),
+			branchSidebar:    branchsidebar.NewModel(ctx),
+			notificationView: notificationview.NewModel(ctx),
+			sidebar:          sidebarModel,
+			tabs:             tabs.NewModel(ctx),
+		}
+	}
+
+	tests := []struct {
+		name string
+		msg  tea.Msg
+	}{
+		{"execProcessFinishedMsg", execProcessFinishedMsg{}},
+		{"ExecFinishedMsg", constants.ExecFinishedMsg{}},
+		{"TaskFinishedMsg", constants.TaskFinishedMsg{TaskId: "nonexistent"}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m := makeModel()
+			_, cmd := m.Update(tc.msg)
+			require.True(t, containsEnableMouseCellMotion(t, cmd),
+				"Update(%T) should return EnableMouseCellMotion command", tc.msg)
+		})
+	}
 }

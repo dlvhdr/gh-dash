@@ -625,6 +625,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.User = msg.user
 
 	case constants.TaskFinishedMsg:
+		cmds = append(cmds, tea.EnableMouseCellMotion)
 		task, ok := m.tasks[msg.TaskId]
 		if ok {
 			log.Info("Task finished", "id", task.Id)
@@ -738,7 +739,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.onViewedRowChanged())
 		}
 
-	case execProcessFinishedMsg, tea.FocusMsg:
+	case execProcessFinishedMsg, constants.ExecFinishedMsg, tea.FocusMsg:
+		// Re-enable mouse tracking after external processes, to work around
+		// a Bubble Tea bug where RestoreTerminal doesn’t restore mouse mode.
+		cmds = append(cmds, tea.EnableMouseCellMotion)
 		if currSection != nil {
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 		}
