@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cli/go-gh/v2/pkg/browser"
@@ -36,7 +37,7 @@ func (m *Model) markAsDone() tea.Cmd {
 		err := data.MarkNotificationDone(notificationId)
 		if err == nil {
 			// Persist to done store so it stays hidden across sessions
-			data.GetDoneStore().MarkDone(notificationId)
+			data.GetDoneStore().MarkDone(notificationId, notification.Notification.UpdatedAt)
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
@@ -69,9 +70,13 @@ func (m *Model) markAllAsDone() tea.Cmd {
 		Error:        nil,
 	}
 
-	notificationIds := make([]string, 0, count)
+	type doneEntry struct {
+		id        string
+		updatedAt time.Time
+	}
+	entries := make([]doneEntry, 0, count)
 	for _, n := range m.Notifications {
-		notificationIds = append(notificationIds, n.GetId())
+		entries = append(entries, doneEntry{n.GetId(), n.Notification.UpdatedAt})
 	}
 
 	startCmd := m.Ctx.StartTask(task)
@@ -79,12 +84,12 @@ func (m *Model) markAllAsDone() tea.Cmd {
 		// Mark each notification as done (delete it)
 		doneStore := data.GetDoneStore()
 		var lastErr error
-		for _, id := range notificationIds {
-			if err := data.MarkNotificationDone(id); err != nil {
+		for _, e := range entries {
+			if err := data.MarkNotificationDone(e.id); err != nil {
 				lastErr = err
 			} else {
 				// Persist to done store so it stays hidden across sessions
-				doneStore.MarkDone(id)
+				doneStore.MarkDone(e.id, e.updatedAt)
 			}
 		}
 
