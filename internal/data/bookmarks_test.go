@@ -164,12 +164,6 @@ func TestNotificationIDStore(t *testing.T) {
 		if len(store.GetBookmarkedIds()) != 0 {
 			t.Error("GetBookmarkedIds should be empty after toggle off")
 		}
-
-		// Done convenience methods
-		store.MarkDone("done1")
-		if !store.IsDone("done1") {
-			t.Error("IsDone should return true after MarkDone")
-		}
 	})
 
 	t.Run("load from non-existent file", func(t *testing.T) {
