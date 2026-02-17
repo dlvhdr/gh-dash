@@ -128,10 +128,11 @@ type StatusContext struct {
 type CheckSuiteNode struct {
 	Status     graphql.String
 	Conclusion graphql.String
-	App        struct {
+
+	App struct {
 		Name graphql.String
-		Slug graphql.String
 	}
+
 	WorkflowRun struct {
 		Workflow struct {
 			Name graphql.String
@@ -197,6 +198,10 @@ type LastCommitWithStatusChecks struct {
 					}
 				} `graphql:"contexts(last: 100)"`
 			}
+			// CheckSuites are fetched separately from StatusCheckRollup because
+			// workflows awaiting approval (conclusion ACTION_REQUIRED) and workflows
+			// still queued have no CheckRun objects yet, so they don’t appear in
+			// StatusCheckRollup.contexts.
 			CheckSuites CheckSuites `graphql:"checkSuites(last: 20)"`
 		}
 	}
