@@ -110,7 +110,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					cmd = tasks.CreatePR(m.Ctx, sid, branch, input)
 				default:
 					pr := findPRForRef(m.Prs, branch)
-					if input == "Y" || input == "y" {
+					if input == "" || input == "Y" || input == "y" {
 						switch action {
 						case "delete":
 							cmd = m.deleteBranch()
