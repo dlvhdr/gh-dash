@@ -92,8 +92,11 @@ func (m *Model) SetPendingPRAction(action string) string {
 	m.pendingAction = "pr_" + action
 
 	actionDisplay := action
-	if action == "ready" {
+	switch action {
+	case "ready":
 		actionDisplay = "mark as ready"
+	case "approveWorkflows":
+		actionDisplay = "approve all workflows for"
 	}
 	return fmt.Sprintf("Are you sure you want to %s PR #%d? (y/N)", actionDisplay, m.subjectPR.GetNumber())
 }

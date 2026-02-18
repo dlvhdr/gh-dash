@@ -73,9 +73,13 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "Some checks were not successful"
 		status = statusFailure
+	} else if stats.awaitingApproval > 0 {
+		icon = m.ctx.Styles.Common.ActionRequiredGlyph
+		title = "Workflows awaiting approval"
+		status = statusWaiting
 	} else if stats.inProgress > 0 {
 		icon = m.ctx.Styles.Common.WaitingGlyph
-		title = "Some checks haven't completed yet"
+		title = "Some checks haven’t completed yet"
 		status = statusWaiting
 	} else if stats.succeeded > 0 {
 		icon = m.ctx.Styles.Common.SuccessGlyph
@@ -87,6 +91,9 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 
 	if stats.failed > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d failing", stats.failed))
+	}
+	if stats.awaitingApproval > 0 {
+		statStrs = append(statStrs, fmt.Sprintf("%d awaiting approval", stats.awaitingApproval))
 	}
 	if stats.inProgress > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d in progress", stats.inProgress))
@@ -254,9 +261,12 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 func (m *Model) viewChecksBar() string {
 	w := m.getIndentedContentWidth() - 4
 	stats := m.getChecksStats()
-	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress)
+	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress + stats.awaitingApproval)
 	numSections := 0
 	if stats.failed > 0 {
+		numSections++
+	}
+	if stats.awaitingApproval > 0 {
 		numSections++
 	}
 	if stats.inProgress > 0 {
@@ -276,6 +286,11 @@ func (m *Model) viewChecksBar() string {
 		failWidth := int(math.Floor((float64(stats.failed) / total) * float64(w)))
 		sections = append(sections, lipgloss.NewStyle().Width(failWidth).Foreground(
 			m.ctx.Theme.ErrorText).Height(1).Render(strings.Repeat("▃", failWidth)))
+	}
+	if stats.awaitingApproval > 0 {
+		awWidth := int(math.Floor((float64(stats.awaitingApproval) / total) * float64(w)))
+		sections = append(sections, lipgloss.NewStyle().Width(awWidth).Foreground(
+			m.ctx.Theme.WarningText).Height(1).Render(strings.Repeat("▃", awWidth)))
 	}
 	if stats.inProgress > 0 {
 		ipWidth := int(math.Floor((float64(stats.inProgress) / total) * float64(w)))
@@ -384,24 +399,56 @@ func (sidebar *Model) renderChecks() string {
 	failures := make([]string, 0)
 	waiting := make([]string, 0)
 	rest := make([]string, 0)
+	awaitingApproval := make([]string, 0)
+	pending := make([]string, 0)
 
 	lastCommit := commits[0]
+
+	// Collect check suites that don't appear in statusCheckRollup
+	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
+		workflowName := strings.TrimSpace(string(suite.WorkflowRun.Workflow.Name))
+		if workflowName == "" {
+			workflowName = strings.TrimSpace(string(suite.App.Name))
+		}
+		if workflowName == "" {
+			workflowName = "Workflow"
+		}
+
+		if suite.Conclusion == "ACTION_REQUIRED" {
+			// Workflow requires approval before it can run
+			check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.ActionRequiredGlyph, " ", workflowName)
+			awaitingApproval = append(awaitingApproval, check)
+		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
+			// Workflow is queued/pending (will run automatically)
+			check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.WaitingGlyph, " ", workflowName)
+			pending = append(pending, check)
+		}
+	}
+
+	// Build a set of reported check names to compare against required checks
+	reportedChecks := make(map[string]bool)
+
 	for _, node := range lastCommit.Commit.StatusCheckRollup.Contexts.Nodes {
 		var category CheckCategory
 		var check string
+		var checkName string
 		switch node.Typename {
 		case "CheckRun":
 			checkRun := node.CheckRun
 			var renderedStatus string
 			category, renderedStatus = sidebar.renderCheckRunConclusion(checkRun)
+			checkName = string(checkRun.Name)
 			name := renderCheckRunName(checkRun)
 			check = lipgloss.JoinHorizontal(lipgloss.Top, renderedStatus, " ", name)
 		case "StatusContext":
 			statusContext := node.StatusContext
 			var status string
 			category, status = sidebar.renderStatusContextConclusion(statusContext)
+			checkName = string(statusContext.Context)
 			check = lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext))
 		}
+
+		reportedChecks[checkName] = true
 
 		switch category {
 		case CheckWaiting:
@@ -413,7 +460,20 @@ func (sidebar *Model) renderChecks() string {
 		}
 	}
 
-	if len(waiting)+len(failures)+len(rest) == 0 {
+	// Check for required status checks that haven't been reported yet
+	branchRules := sidebar.pr.Data.Primary.Repository.BranchProtectionRules.Nodes
+	if len(branchRules) > 0 {
+		for _, requiredContext := range branchRules[0].RequiredStatusCheckContexts {
+			contextName := string(requiredContext)
+			if !reportedChecks[contextName] {
+				// Required check hasn't been reported yet
+				check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.WaitingGlyph, " ", contextName)
+				pending = append(pending, check)
+			}
+		}
+	}
+
+	if len(awaitingApproval)+len(pending)+len(waiting)+len(failures)+len(rest) == 0 {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			title,
@@ -426,6 +486,29 @@ func (sidebar *Model) renderChecks() string {
 	}
 
 	parts := make([]string, 0)
+
+	// Show awaiting approval workflows first
+	if len(awaitingApproval) > 0 {
+		sectionHeader := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(sidebar.ctx.Theme.WarningText).
+			Render(fmt.Sprintf("Awaiting Approval (%d)", len(awaitingApproval)))
+		parts = append(parts, sectionHeader)
+		parts = append(parts, awaitingApproval...)
+		parts = append(parts, "") // spacing
+	}
+
+	// Show pending workflows
+	if len(pending) > 0 {
+		sectionHeader := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(sidebar.ctx.Theme.WarningText).
+			Render(fmt.Sprintf("Pending (%d)", len(pending)))
+		parts = append(parts, sectionHeader)
+		parts = append(parts, pending...)
+		parts = append(parts, "") // spacing
+	}
+
 	parts = append(parts, failures...)
 	parts = append(parts, waiting...)
 	parts = append(parts, rest...)
@@ -439,11 +522,12 @@ func (sidebar *Model) renderChecks() string {
 }
 
 type checksStats struct {
-	succeeded  int
-	neutral    int
-	failed     int
-	skipped    int
-	inProgress int
+	succeeded        int
+	neutral          int
+	failed           int
+	skipped          int
+	inProgress       int
+	awaitingApproval int
 }
 
 func (m *Model) getStatusCheckRollupStats(rollup data.StatusCheckRollupStats) checksStats {
@@ -494,6 +578,15 @@ func (m *Model) getChecksStats() checksStats {
 			res.neutral += int(count.Count)
 		} else if ghchecks.IsConclusionASuccess(state) {
 			res.succeeded += int(count.Count)
+		}
+	}
+
+	// Count check suites that don't appear in statusCheckRollup
+	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
+		if suite.Conclusion == "ACTION_REQUIRED" {
+			res.awaitingApproval++
+		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
+			res.inProgress++
 		}
 	}
 

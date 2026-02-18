@@ -39,6 +39,7 @@ const (
 	SuccessIcon          = ""
 	TeamIcon             = ""
 	WaitingIcon          = ""
+	ActionRequiredIcon   = "" // nf-cod-warning (matches GitHub UI)
 
 	BehindIcon         = "󰇮"
 	BlockedIcon        = ""
