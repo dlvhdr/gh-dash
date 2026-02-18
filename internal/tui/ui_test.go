@@ -1183,3 +1183,335 @@ func TestNotificationConfirmation_ApproveWorkflows_AcceptWithY(t *testing.T) {
 		"pendingNotificationAction should be cleared after confirmation")
 	require.NotNil(t, cmd, "should return a command to execute the action")
 }
+
+func TestIsUserDefinedKeybinding_NotificationsView_PRNotification(t *testing.T) {
+	// Custom PR keybindings should be recognized when viewing a PR notification
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom PR keybinding
+	cfg.Keybindings.Prs = []config.Keybinding{
+		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a PR notification as the current row
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-1",
+				Subject: data.NotificationSubject{
+					Title: "Test PR",
+					Url:   "https://api.github.com/repos/owner/repo/pulls/42",
+					Type:  "PullRequest",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom PR keybinding "B" should be recognized
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("B")}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom PR keybinding should be recognized in NotificationsView for PR notifications")
+
+	// A non-configured key should not be recognized
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Z")}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"unconfigured key should not be recognized")
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_IssueNotification(t *testing.T) {
+	// Custom Issue keybindings should be recognized when viewing an Issue notification
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom Issue keybinding
+	cfg.Keybindings.Issues = []config.Keybinding{
+		{Key: "B", Command: "gh issue view -w {{.IssueNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with an Issue notification as the current row
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-2",
+				Subject: data.NotificationSubject{
+					Title: "Test Issue",
+					Url:   "https://api.github.com/repos/owner/repo/issues/99",
+					Type:  "Issue",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom Issue keybinding "B" should be recognized
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("B")}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom Issue keybinding should be recognized in NotificationsView for Issue notifications")
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_NonPRIssueNotification(t *testing.T) {
+	// Custom PR/Issue keybindings should NOT be recognized for other notification types
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	cfg.Keybindings.Prs = []config.Keybinding{
+		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a Release notification
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-3",
+				Subject: data.NotificationSubject{
+					Title: "v1.0.0",
+					Url:   "https://api.github.com/repos/owner/repo/releases/12345",
+					Type:  "Release",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom PR keybinding "B" should NOT be recognized for a Release notification
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("B")}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"custom PR keybinding should not be recognized for Release notifications")
+}
+
+func TestNotificationPRCommandTemplateVariables(t *testing.T) {
+	// Test that notification PR command templates have RepoName and PrNumber available,
+	// matching the behavior of runCustomNotificationPRCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"PrNumber": 42,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "PrNumber variable",
+			template: "gh pr view {{.PrNumber}}",
+			expected: "gh pr view 42",
+		},
+		{
+			name:     "RepoName and PrNumber",
+			template: "gh pr view -R {{.RepoName}} {{.PrNumber}}",
+			expected: "gh pr view -R owner/repo 42",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationPRCommandTemplateVariables_WithSidebar(t *testing.T) {
+	// When the sidebar is open for a PR notification, HeadRefName, BaseRefName,
+	// and Author become available in the template fields.
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"PrNumber":    42,
+		"HeadRefName": "feature-branch",
+		"BaseRefName": "main",
+		"Author":      "octocat",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "HeadRefName variable",
+			template: "git checkout {{.HeadRefName}}",
+			expected: "git checkout feature-branch",
+		},
+		{
+			name:     "BaseRefName variable",
+			template: "git diff {{.BaseRefName}}...{{.HeadRefName}}",
+			expected: "git diff main...feature-branch",
+		},
+		{
+			name:     "Author variable",
+			template: "echo {{.Author}}",
+			expected: "echo octocat",
+		},
+		{
+			name:     "all fields combined",
+			template: "gh pr view -R {{.RepoName}} {{.PrNumber}} # by {{.Author}} ({{.HeadRefName}} -> {{.BaseRefName}})",
+			expected: "gh pr view -R owner/repo 42 # by octocat (feature-branch -> main)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationIssueCommandTemplateVariables(t *testing.T) {
+	// Test that notification Issue command templates have RepoName and IssueNumber available,
+	// matching the behavior of runCustomNotificationIssueCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 99,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "IssueNumber variable",
+			template: "gh issue view {{.IssueNumber}}",
+			expected: "gh issue view 99",
+		},
+		{
+			name:     "RepoName and IssueNumber",
+			template: "gh issue view -R {{.RepoName}} {{.IssueNumber}}",
+			expected: "gh issue view -R owner/repo 99",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationIssueCommandTemplateVariables_WithSidebar(t *testing.T) {
+	// When the sidebar is open for an Issue notification, Author becomes available.
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 99,
+		"Author":      "octocat",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Author variable",
+			template: "echo {{.Author}}",
+			expected: "echo octocat",
+		},
+		{
+			name:     "all fields combined",
+			template: "gh issue view -R {{.RepoName}} {{.IssueNumber}} # by {{.Author}}",
+			expected: "gh issue view -R owner/repo 99 # by octocat",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationCommandTemplate_PRFieldsWithoutSidebar(t *testing.T) {
+	// When the sidebar is not open, notification PR commands only have RepoName and PrNumber.
+	// Templates referencing sidebar-only fields should error (missingkey=error behavior).
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"PrNumber": 42,
+	}
+
+	unavailableFields := []struct {
+		name     string
+		template string
+	}{
+		{"HeadRefName", "git checkout {{.HeadRefName}}"},
+		{"BaseRefName", "git checkout {{.BaseRefName}}"},
+		{"Author", "echo {{.Author}}"},
+	}
+
+	for _, tc := range unavailableFields {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := executeCommandTemplate(t, tc.template, input)
+			require.Error(t, err,
+				"%s should not be available in notification PR commands", tc.name)
+		})
+	}
+}

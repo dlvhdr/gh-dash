@@ -1457,6 +1457,26 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 		}
 	}
 
+	if m.ctx.View == config.NotificationsView {
+		currRowData := m.getCurrRowData()
+		if nData, ok := currRowData.(*notificationrow.Data); ok {
+			switch nData.Notification.Subject.Type {
+			case "PullRequest":
+				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			case "Issue":
+				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			}
+		}
+	}
+
 	return false
 }
 
