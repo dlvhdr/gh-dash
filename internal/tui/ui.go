@@ -148,6 +148,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
 		cfg.Keybindings.Branches,
+		cfg.Keybindings.Notifications,
 	)
 	if err != nil {
 		showError(err)
@@ -1458,6 +1459,12 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 	}
 
 	if m.ctx.View == config.NotificationsView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+				return true
+			}
+		}
+
 		currRowData := m.getCurrRowData()
 		if nData, ok := currRowData.(*notificationrow.Data); ok {
 			switch nData.Notification.Subject.Type {

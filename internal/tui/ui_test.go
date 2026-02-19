@@ -1515,3 +1515,93 @@ func TestNotificationCommandTemplate_PRFieldsWithoutSidebar(t *testing.T) {
 		})
 	}
 }
+
+func TestIsUserDefinedKeybinding_NotificationsView_NotificationKeybinding(t *testing.T) {
+	// Custom notification keybindings should be recognized regardless of subject type
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom notification keybinding
+	cfg.Keybindings.Notifications = []config.Keybinding{
+		{Key: "N", Command: "echo {{.RepoName}} {{.Number}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a Release notification (not PR or Issue)
+	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notif",
+				Subject: data.NotificationSubject{
+					Title: "v2.0.0",
+					Url:   "https://api.github.com/repos/owner/repo/releases/99",
+					Type:  "Release",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom notification keybinding "N" should be recognized
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("N")}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom notification keybinding should be recognized for any notification type")
+
+	// A non-configured key should not be recognized
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Z")}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"unconfigured key should not be recognized")
+}
+
+func TestNotificationCommandTemplateVariables(t *testing.T) {
+	// Test that notification-specific command templates have RepoName and Number available,
+	// matching the behavior of runCustomNotificationCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"Number":   42,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Number variable",
+			template: "gh api /notifications/threads/{{.Number}}",
+			expected: "gh api /notifications/threads/42",
+		},
+		{
+			name:     "RepoName and Number",
+			template: "echo {{.RepoName}} #{{.Number}}",
+			expected: "echo owner/repo #42",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}

@@ -169,3 +169,79 @@ func findKeyByHelp(keys []key.Binding, helpDesc string) bool {
 	}
 	return false
 }
+
+func TestRebindNotificationKeys_Builtin(t *testing.T) {
+	// Save original key and restore after test
+	origKey := NotificationKeys.MarkAsDone.Keys()
+	origHelp := NotificationKeys.MarkAsDone.Help().Desc
+	defer func() {
+		NotificationKeys.MarkAsDone.SetKeys(origKey...)
+		NotificationKeys.MarkAsDone.SetHelp(origKey[0], origHelp)
+	}()
+
+	err := rebindNotificationKeys([]config.Keybinding{
+		{Builtin: "markAsDone", Key: "X"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := NotificationKeys.MarkAsDone.Keys()
+	if len(keys) != 1 || keys[0] != "X" {
+		t.Errorf("expected key to be rebound to X, got %v", keys)
+	}
+}
+
+func TestRebindNotificationKeys_UnknownBuiltin(t *testing.T) {
+	err := rebindNotificationKeys([]config.Keybinding{
+		{Builtin: "nonExistent", Key: "Z"},
+	})
+	if err == nil {
+		t.Error("expected error for unknown builtin, got nil")
+	}
+}
+
+func TestRebindNotificationKeys_CustomCommand(t *testing.T) {
+	// Clear any previous custom bindings
+	CustomNotificationBindings = nil
+
+	err := rebindNotificationKeys([]config.Keybinding{
+		{Key: "N", Command: "echo hello"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(CustomNotificationBindings) != 1 {
+		t.Fatalf("expected 1 custom binding, got %d", len(CustomNotificationBindings))
+	}
+	if CustomNotificationBindings[0].Keys()[0] != "N" {
+		t.Errorf("expected custom binding key N, got %s", CustomNotificationBindings[0].Keys()[0])
+	}
+}
+
+func TestFullHelpIncludesCustomNotificationBindings(t *testing.T) {
+	// Set up custom notification bindings
+	CustomNotificationBindings = []key.Binding{
+		key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "custom notif action")),
+	}
+	defer func() { CustomNotificationBindings = nil }()
+
+	keymap := CreateKeyMapForView(config.NotificationsView)
+	SetNotificationSubject(NotificationSubjectNone)
+
+	help := keymap.FullHelp()
+
+	var allKeys []key.Binding
+	for _, section := range help {
+		allKeys = append(allKeys, section...)
+	}
+
+	found := findKeyByHelp(allKeys, "custom notif action")
+	if !found {
+		t.Error("expected custom notification binding to appear in help")
+	}
+
+	// Clean up
+	SetNotificationSubject(NotificationSubjectNone)
+}

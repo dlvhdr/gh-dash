@@ -75,6 +75,7 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 		customKeys = append(customKeys, CustomBranchBindings...)
 	case config.NotificationsView:
 		additionalKeys = NotificationFullHelp()
+		customKeys = append(customKeys, CustomNotificationBindings...)
 		// Include PR or Issue keys when viewing that subject type
 		switch notificationSubject {
 		case NotificationSubjectPR:
@@ -205,7 +206,7 @@ var Keys = &KeyMap{
 }
 
 // Rebind will update our saved keybindings from configuration values.
-func Rebind(universal, issueKeys, prKeys, branchKeys []config.Keybinding) error {
+func Rebind(universal, issueKeys, prKeys, branchKeys, notificationKeys []config.Keybinding) error {
 	err := rebindUniversal(universal)
 	if err != nil {
 		return err
@@ -221,15 +222,21 @@ func Rebind(universal, issueKeys, prKeys, branchKeys []config.Keybinding) error 
 		return err
 	}
 
-	return rebindIssueKeys(issueKeys)
+	err = rebindIssueKeys(issueKeys)
+	if err != nil {
+		return err
+	}
+
+	return rebindNotificationKeys(notificationKeys)
 }
 
 // CustomBindings stores custom keybindings that don't have built-in equivalents
 var (
-	CustomUniversalBindings []key.Binding
-	CustomPRBindings        []key.Binding
-	CustomIssueBindings     []key.Binding
-	CustomBranchBindings    []key.Binding
+	CustomUniversalBindings    []key.Binding
+	CustomPRBindings           []key.Binding
+	CustomIssueBindings        []key.Binding
+	CustomBranchBindings       []key.Binding
+	CustomNotificationBindings []key.Binding
 )
 
 func rebindUniversal(universal []config.Keybinding) error {

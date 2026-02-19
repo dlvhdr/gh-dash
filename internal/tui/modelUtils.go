@@ -116,6 +116,16 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 			}
 		}
 	case config.NotificationsView:
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Key != key || keybinding.Command == "" {
+				continue
+			}
+			log.Debug("executing notification keybind", "key", keybinding.Key, "command", keybinding.Command)
+			if nData, ok := currRowData.(*notificationrow.Data); ok {
+				return m.runCustomNotificationCommand(keybinding.Command, nData)
+			}
+		}
+
 		if nData, ok := currRowData.(*notificationrow.Data); ok {
 			switch nData.Notification.Subject.Type {
 			case "PullRequest":
@@ -249,6 +259,14 @@ func (m *Model) runCustomNotificationIssueCommand(commandTemplate string, nData 
 	}
 	if issue := m.notificationView.GetSubjectIssue(); issue != nil {
 		fields["Author"] = issue.Author.Login
+	}
+	return m.runCustomCommand(commandTemplate, &fields)
+}
+
+func (m *Model) runCustomNotificationCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+	fields := map[string]any{
+		"RepoName": nData.GetRepoNameWithOwner(),
+		"Number":   nData.GetNumber(),
 	}
 	return m.runCustomCommand(commandTemplate, &fields)
 }
