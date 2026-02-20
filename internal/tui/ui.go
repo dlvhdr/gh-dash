@@ -1167,13 +1167,20 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 		content.WriteString("\n")
 	}
 
-	// Add Enter at the end
+	// Add Enter and Esc at the end
 	content.WriteString(leftMargin)
 	padding := strings.Repeat(" ", keyWidth-len("Enter"))
 	content.WriteString(padding)
 	content.WriteString(keyStyle.Render("Enter"))
 	content.WriteString("  ")
 	content.WriteString(actionStyle.Render(enterAction))
+	content.WriteString("\n")
+	content.WriteString(leftMargin)
+	escPadding := strings.Repeat(" ", keyWidth-len("Esc"))
+	content.WriteString(escPadding)
+	content.WriteString(keyStyle.Render("Esc"))
+	content.WriteString("  ")
+	content.WriteString(actionStyle.Render("go back"))
 
 	return content.String()
 }
