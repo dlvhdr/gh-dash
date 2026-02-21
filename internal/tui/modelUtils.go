@@ -18,6 +18,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -114,6 +115,37 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 				return m.runCustomBranchCommand(keybinding.Command, data)
 			}
 		}
+	case config.NotificationsView:
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Key != key || keybinding.Command == "" {
+				continue
+			}
+			log.Debug("executing notification keybind", "key", keybinding.Key, "command", keybinding.Command)
+			if nData, ok := currRowData.(*notificationrow.Data); ok {
+				return m.runCustomNotificationCommand(keybinding.Command, nData)
+			}
+		}
+
+		if nData, ok := currRowData.(*notificationrow.Data); ok {
+			switch nData.Notification.Subject.Type {
+			case "PullRequest":
+				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+					if keybinding.Key != key || keybinding.Command == "" {
+						continue
+					}
+					log.Debug("executing notification PR keybind", "key", keybinding.Key, "command", keybinding.Command)
+					return m.runCustomNotificationPRCommand(keybinding.Command, nData)
+				}
+			case "Issue":
+				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+					if keybinding.Key != key || keybinding.Command == "" {
+						continue
+					}
+					log.Debug("executing notification issue keybind", "key", keybinding.Key, "command", keybinding.Command)
+					return m.runCustomNotificationIssueCommand(keybinding.Command, nData)
+				}
+			}
+		}
 	default:
 		// Not a valid case - ignore it
 	}
@@ -205,6 +237,38 @@ func (m *Model) runCustomBranchCommand(commandTemplate string, branchData *prrow
 func (m *Model) runCustomUniversalCommand(commandTemplate string) tea.Cmd {
 	input := map[string]any{"RepoPath": m.ctx.RepoPath}
 	return m.runCustomCommand(commandTemplate, &input)
+}
+
+func (m *Model) runCustomNotificationPRCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+	fields := map[string]any{
+		"RepoName": nData.GetRepoNameWithOwner(),
+		"PrNumber": nData.GetNumber(),
+	}
+	if pr := m.notificationView.GetSubjectPR(); pr != nil {
+		fields["HeadRefName"] = pr.Primary.HeadRefName
+		fields["BaseRefName"] = pr.Primary.BaseRefName
+		fields["Author"] = pr.Primary.Author.Login
+	}
+	return m.runCustomCommand(commandTemplate, &fields)
+}
+
+func (m *Model) runCustomNotificationIssueCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+	fields := map[string]any{
+		"RepoName":    nData.GetRepoNameWithOwner(),
+		"IssueNumber": nData.GetNumber(),
+	}
+	if issue := m.notificationView.GetSubjectIssue(); issue != nil {
+		fields["Author"] = issue.Author.Login
+	}
+	return m.runCustomCommand(commandTemplate, &fields)
+}
+
+func (m *Model) runCustomNotificationCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+	fields := map[string]any{
+		"RepoName": nData.GetRepoNameWithOwner(),
+		"Number":   nData.GetNumber(),
+	}
+	return m.runCustomCommand(commandTemplate, &fields)
 }
 
 type execProcessFinishedMsg struct{}

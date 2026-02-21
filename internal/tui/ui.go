@@ -148,6 +148,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
 		cfg.Keybindings.Branches,
+		cfg.Keybindings.Notifications,
 	)
 	if err != nil {
 		showError(err)
@@ -418,6 +419,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
+			case key.Matches(msg, keys.PRKeys.ApproveWorkflows):
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "approveWorkflows")
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				cmds = append(cmds, m.switchSelectedView())
 
@@ -524,6 +531,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionUpdate:
 							cmd = m.promptConfirmationForNotificationPR("update")
+							return m, cmd
+
+						case prview.PRActionApproveWorkflows:
+							cmd = m.promptConfirmationForNotificationPR("approveWorkflows")
 							return m, cmd
 
 						case prview.PRActionSummaryViewMore:
@@ -1471,6 +1482,32 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 		}
 	}
 
+	if m.ctx.View == config.NotificationsView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+				return true
+			}
+		}
+
+		currRowData := m.getCurrRowData()
+		if nData, ok := currRowData.(*notificationrow.Data); ok {
+			switch nData.Notification.Subject.Type {
+			case "PullRequest":
+				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			case "Issue":
+				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			}
+		}
+	}
+
 	return false
 }
 
@@ -1635,6 +1672,10 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	case "pr_update":
 		if pr != nil {
 			return tasks.UpdatePR(m.ctx, sid, pr)
+		}
+	case "pr_approveWorkflows":
+		if pr != nil {
+			return tasks.ApproveWorkflows(m.ctx, sid, pr)
 		}
 	case "issue_close":
 		if issue != nil {

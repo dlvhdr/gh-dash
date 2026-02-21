@@ -1,7 +1,12 @@
 package keys
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
+	log "github.com/charmbracelet/log"
+
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
 
 type NotificationKeyMap struct {
@@ -85,4 +90,69 @@ func NotificationFullHelp() []key.Binding {
 		NotificationKeys.SwitchToPRs,
 		NotificationKeys.ToggleSmartFiltering,
 	}
+}
+
+func rebindNotificationKeys(keys []config.Keybinding) error {
+	CustomNotificationBindings = []key.Binding{}
+
+	for _, notifKey := range keys {
+		if notifKey.Builtin == "" {
+			// Handle custom commands
+			if notifKey.Command != "" {
+				name := notifKey.Name
+				if notifKey.Name == "" {
+					name = config.TruncateCommand(notifKey.Command)
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(notifKey.Key),
+					key.WithHelp(notifKey.Key, name),
+				)
+
+				CustomNotificationBindings = append(CustomNotificationBindings, customBinding)
+			}
+			continue
+		}
+
+		log.Debug("Rebinding notification key", "builtin", notifKey.Builtin, "key", notifKey.Key)
+
+		var key *key.Binding
+
+		switch notifKey.Builtin {
+		case "view":
+			key = &NotificationKeys.View
+		case "markAsDone":
+			key = &NotificationKeys.MarkAsDone
+		case "markAllAsDone":
+			key = &NotificationKeys.MarkAllAsDone
+		case "markAsRead":
+			key = &NotificationKeys.MarkAsRead
+		case "markAllAsRead":
+			key = &NotificationKeys.MarkAllAsRead
+		case "unsubscribe":
+			key = &NotificationKeys.Unsubscribe
+		case "toggleBookmark":
+			key = &NotificationKeys.ToggleBookmark
+		case "open":
+			key = &NotificationKeys.Open
+		case "sortByRepo":
+			key = &NotificationKeys.SortByRepo
+		case "switchToPRs":
+			key = &NotificationKeys.SwitchToPRs
+		case "toggleSmartFiltering":
+			key = &NotificationKeys.ToggleSmartFiltering
+		default:
+			return fmt.Errorf("unknown built-in notification key: '%s'", notifKey.Builtin)
+		}
+
+		key.SetKeys(notifKey.Key)
+
+		helpDesc := key.Help().Desc
+		if notifKey.Name != "" {
+			helpDesc = notifKey.Name
+		}
+		key.SetHelp(notifKey.Key, helpDesc)
+	}
+
+	return nil
 }

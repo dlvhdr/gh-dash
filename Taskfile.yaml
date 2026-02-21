@@ -85,7 +85,7 @@ tasks:
     cmds:
       - cd docs && pnpm i
 
-  docs-dev:
+  docs:
     cmds:
       - cd docs && pnpm dev
     desc: Start docs server

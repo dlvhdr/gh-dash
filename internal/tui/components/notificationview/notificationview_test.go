@@ -54,6 +54,13 @@ func TestSetPendingPRAction(t *testing.T) {
 			expectedAction: "pr_update",
 			expectedPrompt: "Are you sure you want to update PR #200? (y/N)",
 		},
+		{
+			name:           "approveWorkflows action displays as approve all workflows for",
+			action:         "approveWorkflows",
+			prNumber:       300,
+			expectedAction: "pr_approveWorkflows",
+			expectedPrompt: "Are you sure you want to approve all workflows for PR #300? (y/N)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -291,7 +298,7 @@ func TestUpdate_NonKeyMsg(t *testing.T) {
 
 func TestUpdate_AllPRActions(t *testing.T) {
 	// Test that all PR action types work correctly
-	actions := []string{"close", "reopen", "ready", "merge", "update"}
+	actions := []string{"close", "reopen", "ready", "merge", "update", "approveWorkflows"}
 
 	for _, action := range actions {
 		t.Run(action, func(t *testing.T) {

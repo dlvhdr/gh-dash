@@ -89,7 +89,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				action := m.GetPromptConfirmationAction()
 				pr := m.GetCurrRow()
 				sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
-				if input == "Y" || input == "y" {
+				if input == "" || input == "Y" || input == "y" {
 					switch action {
 					case "close":
 						cmd = tasks.ClosePR(m.Ctx, sid, pr)
@@ -101,6 +101,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 						cmd = tasks.MergePR(m.Ctx, sid, pr)
 					case "update":
 						cmd = tasks.UpdatePR(m.Ctx, sid, pr)
+					case "approveWorkflows":
+						cmd = tasks.ApproveWorkflows(m.Ctx, sid, pr)
 					}
 				}
 

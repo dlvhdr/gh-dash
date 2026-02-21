@@ -61,6 +61,7 @@ func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 		{"merge key", "m", PRActionMerge},
 		{"update key", "u", PRActionUpdate},
 		{"summary view more key", "e", PRActionSummaryViewMore},
+		{"approve workflows key", "V", PRActionApproveWorkflows},
 	}
 
 	for _, tc := range testCases {
@@ -154,6 +155,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionMerge,
 		PRActionUpdate,
 		PRActionSummaryViewMore,
+		PRActionApproveWorkflows,
 	}
 
 	seen := make(map[PRActionType]bool)
