@@ -24,7 +24,36 @@ keybindings:
       name: lazygit
       command: >
         cd {{.RepoPath}} && lazygit
+    - key: s
+      builtin: search
 ```
+
+### Built-in Commands
+
+The following built-in universal commands can be overridden with custom keybinds:
+
+| Command         | Description                                     |
+| --------------- | ----------------------------------------------- |
+| `up`            | row up                                          |
+| `down`          | row down                                        |
+| `firstLine`     | go to first row                                 |
+| `lastLine`      | go to last row                                  |
+| `togglePreview` | toggle the preview pane                         |
+| `openGithub`    | open the selection in GitHub                    |
+| `refresh`       | refresh the current section                     |
+| `refreshAll`    | refresh all sections                            |
+| `redraw`        | redraw the screen - in case of visual artifacts |
+| `pageDown`      | go one page down in the preview pane            |
+| `pageUp`        | go one page up in the preview pane              |
+| `nextSection`   | go to next section                              |
+| `prevSection`   | go to previous section                          |
+| `search`        | focus the search bar                            |
+| `copyurl`       | copy the URL of the selected row                |
+| `copyNumber`    | copy the number of the selected row             |
+| `help`          | toggle the help menu                            |
+| `quit`          | quit gh-dash                                    |
+
+See [global keys](../../getting-started/keybindings/global/) and [navigation keys](../../getting-started/keybindings/navigation/) for more details.
 
 ## PR Keybindings
 
@@ -49,7 +78,7 @@ keybindings:
         gh pr review --repo {{.RepoName}} --approve --body "$(gum input --prompt='Approval Comment: ')" {{.PrNumber}}
 ```
 
-The available arguments are:
+### Available Command Arguments
 
 | Argument      | Description                                                                     |
 | ------------- | ------------------------------------------------------------------------------- |
@@ -59,6 +88,32 @@ The available arguments are:
 | `HeadRefName` | The PR's head branch name                                                       |
 | `BaseRefName` | The PR's base branch name                                                       |
 | `Author`      | The username of the PR author                                                   |
+
+### Built-in Commands
+
+The following built-in PR commands can be overridden with custom keybinds:
+
+| Command            | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `prevSidebarTab`   | previous sidebar tab                        |
+| `nextSidebarTab`   | next sidebar tab                            |
+| `approve`          | approve the PR                              |
+| `assign`           | assign users to the PR                      |
+| `unassign`         | unassign users from the PR                  |
+| `comment`          | add a comment to the PR                     |
+| `diff`             | show the diff of the PR                     |
+| `checkout`         | locally checkout the PR                     |
+| `close`            | close the PR                                |
+| `ready`            | mark the PR as ready                        |
+| `reopen`           | reopen a closed PR                          |
+| `merge`            | merge the PR                                |
+| `update`           | update the PR to the latest base branch     |
+| `watchChecks`      | watch the checks of the PR and get notified |
+| `approveWorkflows` | approve the runs of the PR                  |
+| `viewIssues`       | switch to the Issues view                   |
+| `summaryViewMore`  | expand the truncated PR description         |
+
+See [PR keys](../../getting-started/keybindings/selected-pr/) for more details.
 
 ## Issue Keybindings
 
@@ -74,7 +129,7 @@ keybindings:
       gh issue pin {{ .IssueNumber }} --repo {{ .RepoName }}
 ```
 
-The available arguments are:
+### Available Command Arguments
 
 | Argument      | Description                                                                     |
 | ------------- | ------------------------------------------------------------------------------- |
@@ -82,3 +137,66 @@ The available arguments are:
 | `RepoPath`    | The path to the Repo, using the `config.yml` `repoPaths` key to get the mapping |
 | `IssueNumber` | The issue number                                                                |
 | `Author`      | The username of the issue author                                                |
+
+### Built-in Commands
+
+The following built-in PR commands can be overridden with custom keybinds:
+
+| Command    | Description                          |
+| ---------- | ------------------------------------ |
+| `label`    | edit the issue's labels              |
+| `assign`   | assign users to the issue            |
+| `unassign` | remove assigned users from the issue |
+| `comment`  | add a comment to the issue           |
+| `close`    | close the issue                      |
+| `reopen`   | reopen a closed issue                |
+| `viewPrs`  | switch to the PRs view               |
+
+See [issue keys](../../getting-started/keybindings/selected-issue/) for more details.
+
+## Notification Keybindings
+
+Define any number of keybindings for the notifications view or override existing ones.
+
+For example:
+
+```yaml
+keybindings:
+  notifications:
+    - key: d
+      builtin: markAsDone
+    - key: D
+      builtin: markAllAsDone
+```
+
+### Available Command Arguments
+
+The command template receives different fields depending on whether the sidebar has been opened:
+
+| State            | PR template fields                       |
+| ---------------- | ---------------------------------------- |
+| Sidebar not open | `RepoName`, `PrNumber`, `RepoPath`       |
+| Sidebar open     | + `HeadRefName`, `BaseRefName`, `Author` |
+
+| State            | Issue template fields                 |
+| ---------------- | ------------------------------------- |
+| Sidebar not open | `RepoName`, `IssueNumber`, `RepoPath` |
+| Sidebar open     | + `Author`                            |
+
+If a template references a sidebar-only field (e.g., `{{.HeadRefName}}`) before the sidebar is opened, the template engine’s `missingkey=error` option produces an error message. This is intentional — users should open the notification first to populate the full data.
+
+### Built-in Commands
+
+The following built-in notifications commands can be overridden with custom keybinds:
+
+| Command          | Description                                        |
+| ---------------- | -------------------------------------------------- |
+| `view`           | view notification (fetches content, marks as read) |
+| `markAsDone`     | mark as done (removes from inbox)                  |
+| `markAllAsDone`  | mark all as done                                   |
+| `markAsRead`     | mark as read                                       |
+| `markAllAsRead`  | mark all as read                                   |
+| `unsubscribe`    | unsubscribe from thread                            |
+| `toggleBookmark` | toggle bookmark                                    |
+
+See [notification keys](../../getting-started/keybindings/selected-notification/) for more details.
