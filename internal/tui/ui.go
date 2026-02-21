@@ -476,6 +476,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.NotificationKeys.View):
 				cmds = append(cmds, m.loadNotificationContent())
 
+			// Return from PR/Issue detail back to the default notification prompt
+			case key.Matches(msg, keys.NotificationKeys.BackToNotification):
+				return m, m.backToNotification()
+
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
 				// Check for PR actions first (before updating prView)
@@ -918,6 +922,7 @@ func (m *Model) onViewedRowChanged() tea.Cmd {
 	enrichCmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
 	m.notificationView.ResetSubject()
+	keys.SetNotificationSubject(keys.NotificationSubjectNone)
 	return tea.Batch(sidebarCmd, enrichCmd)
 }
 
@@ -1016,6 +1021,17 @@ func (m *Model) openSidebarForInput(setFunc func(bool) tea.Cmd) tea.Cmd {
 	return cmd
 }
 
+func (m *Model) backToNotification() tea.Cmd {
+	if m.notificationView.GetSubjectPR() == nil && m.notificationView.GetSubjectIssue() == nil {
+		return nil
+	}
+
+	m.notificationView.ClearSubject()
+	keys.SetNotificationSubject(keys.NotificationSubjectNone)
+	m.sidebar.ScrollToTop()
+	return m.syncSidebar()
+}
+
 func (m *Model) promptConfirmation(currSection section.Section, action string) tea.Cmd {
 	if currSection != nil {
 		currSection.SetPromptConfirmationAction(action)
@@ -1071,6 +1087,7 @@ func (m *Model) syncSidebar() tea.Cmd {
 		// Clear cached subject when navigating to a different notification
 		// so key dispatch doesn't route keys to the wrong subject's handler.
 		m.notificationView.ClearSubject()
+		keys.SetNotificationSubject(keys.NotificationSubjectNone)
 		// Show prompt to view notification (don't auto-fetch)
 		// User must press Enter to view content and mark as read
 		m.sidebar.SetContent(m.renderNotificationPrompt(row, width))
@@ -1161,13 +1178,20 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 		content.WriteString("\n")
 	}
 
-	// Add Enter at the end
+	// Add Enter and Esc at the end
 	content.WriteString(leftMargin)
 	padding := strings.Repeat(" ", keyWidth-len("Enter"))
 	content.WriteString(padding)
 	content.WriteString(keyStyle.Render("Enter"))
 	content.WriteString("  ")
 	content.WriteString(actionStyle.Render(enterAction))
+	content.WriteString("\n")
+	content.WriteString(leftMargin)
+	escPadding := strings.Repeat(" ", keyWidth-len("Esc"))
+	content.WriteString(escPadding)
+	content.WriteString(keyStyle.Render("Esc"))
+	content.WriteString("  ")
+	content.WriteString(actionStyle.Render("go back"))
 
 	return content.String()
 }
