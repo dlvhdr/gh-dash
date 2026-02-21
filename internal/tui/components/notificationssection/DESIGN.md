@@ -323,6 +323,26 @@ The confirmation state is managed by `notificationView.Model`:
 
 This encapsulation keeps confirmation logic close to the view that displays it, while `ui.go` coordinates between the footer prompt and action execution.
 
+#### Custom Keybindings in Notifications View
+
+User-defined keybindings (configured under `keybindings.prs` and `keybindings.issues` in `config.yml`) are also supported in the Notifications view. When a notification’s subject is a PR or Issue, the corresponding custom keybindings are recognized and dispatched.
+
+The command template receives different fields depending on whether the sidebar has been opened:
+
+| State | PR template fields |
+|-------|-------------------|
+| Sidebar not open | `RepoName`, `PrNumber`, `RepoPath` |
+| Sidebar open | + `HeadRefName`, `BaseRefName`, `Author` |
+
+| State | Issue template fields |
+|-------|---------------------|
+| Sidebar not open | `RepoName`, `IssueNumber`, `RepoPath` |
+| Sidebar open | + `Author` |
+
+If a template references a sidebar-only field (e.g., `{{.HeadRefName}}`) before the sidebar is opened, the template engine’s `missingkey=error` option produces an error message. This is intentional — users should open the notification first to populate the full data.
+
+The implementation in `modelUtils.go` checks `notificationView.GetSubjectPR()` / `GetSubjectIssue()` and enriches the template fields map when the subject data is available. This avoids an extra API call — the sidebar fetch that already happened is reused.
+
 ## Configuration
 
 ### Search Section

@@ -223,10 +223,11 @@ func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 }
 
 type Keybindings struct {
-	Universal []Keybinding `yaml:"universal,omitempty"`
-	Issues    []Keybinding `yaml:"issues,omitempty"`
-	Prs       []Keybinding `yaml:"prs,omitempty"`
-	Branches  []Keybinding `yaml:"branches,omitempty"`
+	Universal     []Keybinding `yaml:"universal,omitempty"`
+	Issues        []Keybinding `yaml:"issues,omitempty"`
+	Prs           []Keybinding `yaml:"prs,omitempty"`
+	Branches      []Keybinding `yaml:"branches,omitempty"`
+	Notifications []Keybinding `yaml:"notifications,omitempty"`
 }
 
 type Pager struct {

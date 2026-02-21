@@ -148,6 +148,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
 		cfg.Keybindings.Branches,
+		cfg.Keybindings.Notifications,
 	)
 	if err != nil {
 		showError(err)
@@ -1453,6 +1454,32 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 		for _, keybinding := range m.ctx.Config.Keybindings.Branches {
 			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
 				return true
+			}
+		}
+	}
+
+	if m.ctx.View == config.NotificationsView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+				return true
+			}
+		}
+
+		currRowData := m.getCurrRowData()
+		if nData, ok := currRowData.(*notificationrow.Data); ok {
+			switch nData.Notification.Subject.Type {
+			case "PullRequest":
+				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			case "Issue":
+				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
 			}
 		}
 	}
