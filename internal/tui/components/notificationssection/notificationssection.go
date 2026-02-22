@@ -214,6 +214,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 			case tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
@@ -293,7 +294,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, keys.NotificationKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
 			}
 			searchValue := m.GetSearchValue()
@@ -340,7 +341,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case UpdateNotificationCommentsMsg:
 		// Update the notification with fetched data
-		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count",
+			msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 		for i := range m.Notifications {
 			if m.Notifications[i].GetId() == msg.Id {
 				m.Notifications[i].NewCommentsCount = msg.NewCommentsCount
@@ -354,7 +356,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					msg.Actor,
 				)
 				m.Table.SetRows(m.BuildRows())
-				log.Debug("Updated notification", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+				log.Debug("Updated notification", "id", msg.Id, "count",
+					msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 				break
 			}
 		}

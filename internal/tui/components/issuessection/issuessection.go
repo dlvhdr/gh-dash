@@ -68,6 +68,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 			case tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
@@ -107,7 +108,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 		switch {
 		case key.Matches(msg, keys.IssueKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
 			}
 			searchValue := m.GetSearchValue()
