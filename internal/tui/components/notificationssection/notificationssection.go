@@ -709,7 +709,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			for _, n := range res.Notifications {
 				// Skip notifications marked as done (GitHub API still returns them with all=true)
 				// Check both persistent store and session state
-				if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
+				if doneStore.IsDone(n.Id, n.UpdatedAt) || sessionMarkedDone[n.Id] {
 					continue
 				}
 
