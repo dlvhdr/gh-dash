@@ -14,6 +14,7 @@ import (
 
 func currentRepoFilter(t *testing.T) string {
 	t.Helper()
+	t.Setenv("GH_REPO", "https://github.com/dlvhdr/gh-dash")
 	repo, err := repository.Current()
 	if err != nil {
 		t.Fatal("failed to resolve current repository:", err)
