@@ -396,12 +396,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case ClearAllNotificationsMsg:
-		// Clear all notifications after marking all as done
+		// Clear all notifications after marking all as done, then refetch
 		m.Notifications = []notificationrow.Data{}
 		m.TotalCount = 0
-		m.SetIsLoading(false)
+		m.PageInfo = nil
+		m.sessionMarkedDone = make(map[string]bool)
+		m.SetIsLoading(true)
 		m.Table.SetRows(m.BuildRows())
 		m.UpdateTotalItemsCount(0)
+		cmd = tea.Batch(m.FetchNextPageSectionRows()...)
 
 	case MarkAllAsReadMsg:
 		// Mark all notifications as read (update their state)
