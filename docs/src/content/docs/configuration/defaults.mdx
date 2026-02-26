@@ -231,3 +231,25 @@ Pressing any other key dismisses the message.
 By default, dash doesn't need a confirmation.
 
 [approving a PR]: /getting-started/keybindings/selected-pr/#v---approve-pr
+
+
+## Include Read Notifications (`includeReadNotifications`)
+
+| Type    | Default |
+| :------ | :-----: |
+| Boolean |  true   |
+
+This setting controls whether the default notification view includes read notifications
+alongside unread ones, matching GitHub’s default behavior.
+
+When set to `true` (the default), notification sections with no explicit `is:` filter show
+both read and unread notifications. When set to `false`, they show only unread notifications
+plus any bookmarked items.
+
+Explicit filters like `is:unread` or `is:read` in a section’s `filters` always override
+this setting.
+
+```yaml
+# Show only unread notifications by default (old behavior)
+includeReadNotifications: false
+```

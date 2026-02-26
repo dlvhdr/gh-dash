@@ -112,8 +112,8 @@ This setting defines the filters for notifications in the section's table. Notif
 
 ### Filter Behavior
 
-- **Default behavior**: With no filters or empty filters, the section shows unread notifications plus any bookmarked notifications
-- **Explicit `is:unread`**: Shows only unread notifications, excluding bookmarked read notifications
+- **Default behavior**: With no filters or empty filters, the section shows all notifications (both read and unread), matching GitHub's default behavior. To show only unread notifications by default, set `includeReadNotifications: false` in your config.
+- **Explicit `is:unread`**: Shows only unread notifications, excluding bookmarked read notifications. This overrides the `includeReadNotifications` setting.
 - **Reason filters**: Applied client-side after fetching from GitHub's API
 
 ## Notification Fetch Limit (`limit`)

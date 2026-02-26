@@ -96,15 +96,21 @@ func parseReasonFilters(search string) []string {
 	return reasons
 }
 
-// parseNotificationFilters extracts all notification filters from search string
-func parseNotificationFilters(search string) NotificationFilters {
+// parseNotificationFilters extracts all notification filters from search string.
+// When includeRead is true (the default config), the default read state is "all"
+// instead of "unread", matching GitHub's default behavior.
+func parseNotificationFilters(search string, includeRead bool) NotificationFilters {
+	defaultReadState := data.NotificationStateUnread
+	if includeRead {
+		defaultReadState = data.NotificationStateAll
+	}
 	filters := NotificationFilters{
 		RepoFilters:       parseRepoFilters(search),
 		ReasonFilters:     parseReasonFilters(search),
-		ReadState:         data.NotificationStateUnread, // Default to unread
+		ReadState:         defaultReadState,
 		IsDone:            false,
 		ExplicitUnread:    false,
-		IncludeBookmarked: true, // Default view includes bookmarked items
+		IncludeBookmarked: !includeRead, // Only auto-include bookmarks when filtering to unread
 	}
 
 	matches := stateFilterRegex.FindAllStringSubmatch(search, -1)
@@ -543,7 +549,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 
 	// Parse filters from search value (includes repo filter if smartFilteringAtLaunch is enabled)
-	filters := parseNotificationFilters(m.GetSearchValue())
+	filters := parseNotificationFilters(m.GetSearchValue(), m.Ctx.Config.IncludeReadNotifications)
 
 	// Handle is:done filter - these notifications cannot be retrieved
 	if filters.IsDone {
