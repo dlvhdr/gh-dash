@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prompt"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -393,6 +394,53 @@ func TestGetConfigFiltersWithCurrentRemoteAdded(t *testing.T) {
 
 			require.Contains(t, got, "is:open",
 				"original filters should be preserved")
+		})
+	}
+}
+
+func TestGetPromptConfirmation(t *testing.T) {
+	tests := []struct {
+		name         string
+		action       string
+		view         config.ViewType
+		wantNonEmpty bool
+	}{
+		{
+			name:         "done_all in notifications view shows confirmation",
+			action:       "done_all",
+			view:         config.NotificationsView,
+			wantNonEmpty: true,
+		},
+		{
+			name:         "close in PRs view shows confirmation",
+			action:       "close",
+			view:         config.PRsView,
+			wantNonEmpty: true,
+		},
+		{
+			name:         "merge in PRs view shows confirmation",
+			action:       "merge",
+			view:         config.PRsView,
+			wantNonEmpty: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := &context.ProgramContext{
+				View: tt.view,
+			}
+			m := BaseModel{
+				IsPromptConfirmationShown: true,
+				PromptConfirmationAction:  tt.action,
+				PromptConfirmationBox:     prompt.NewModel(ctx),
+			}
+			m.Ctx = ctx
+
+			result := m.GetPromptConfirmation()
+			if tt.wantNonEmpty {
+				require.NotEmpty(t, result, "GetPromptConfirmation() should return non-empty for action %q in view %v", tt.action, tt.view)
+			}
 		})
 	}
 }
