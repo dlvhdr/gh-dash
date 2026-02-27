@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/aymanbagabas/go-osc52/v2"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	log "github.com/charmbracelet/log"
@@ -25,6 +26,19 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
+
+func oscCopy(text string) error {
+	s := osc52.New(text)
+
+	if _, ok := os.LookupEnv("TMUX"); ok {
+		s = s.Tmux()
+	} else if _, ok := os.LookupEnv("STY"); ok {
+		s = s.Screen()
+	}
+
+	_, err := s.WriteTo(os.Stdout)
+	return err
+}
 
 func (m *Model) getCurrSection() section.Section {
 	sections := m.getCurrentViewSections()
