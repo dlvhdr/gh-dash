@@ -68,6 +68,7 @@ func (s *DoneStore) load() error {
 			}
 			s.entries[id] = t
 		}
+		s.prune()
 		log.Debug("Loaded done notifications (new format)", "count", len(s.entries))
 		return nil
 	}
@@ -80,8 +81,20 @@ func (s *DoneStore) load() error {
 	for _, id := range idList {
 		s.entries[id] = time.Time{}
 	}
+	s.prune()
 	log.Debug("Loaded done notifications (legacy format)", "count", len(s.entries))
 	return nil
+}
+
+// prune removes stale entries on load. It deletes entries older than 14 days
+// and zero-time entries (legacy format with no timestamp).
+func (s *DoneStore) prune() {
+	cutoff := time.Now().Add(-14 * 24 * time.Hour)
+	for id, t := range s.entries {
+		if t.IsZero() || t.Before(cutoff) {
+			delete(s.entries, id)
+		}
+	}
 }
 
 func (s *DoneStore) save() error {

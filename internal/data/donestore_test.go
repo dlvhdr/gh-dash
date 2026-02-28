@@ -15,7 +15,7 @@ func TestDoneStore(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	baseTime := time.Date(2024, 6, 15, 12, 0, 0, 0, time.UTC)
+	baseTime := time.Now().Add(-1 * time.Hour).UTC().Truncate(time.Second)
 
 	t.Run("MarkDone and IsDone with matching timestamp", func(t *testing.T) {
 		store := &DoneStore{
@@ -185,7 +185,7 @@ func TestDoneStore(t *testing.T) {
 		}
 	})
 
-	t.Run("legacy entries upgrade to new format on save", func(t *testing.T) {
+	t.Run("legacy entries pruned and saved as new format", func(t *testing.T) {
 		legacyFile := filepath.Join(tempDir, "legacy-upgrade.json")
 		legacyData, _ := json.Marshal([]string{"id1", "id2"})
 		if err := os.WriteFile(legacyFile, legacyData, 0o644); err != nil {
@@ -203,7 +203,8 @@ func TestDoneStore(t *testing.T) {
 			t.Fatalf("Flush failed: %v", err)
 		}
 
-		// Re-read file: should now be a JSON object, not an array
+		// Re-read file: should now be a JSON object (not an array),
+		// and empty because zero-time legacy entries are pruned on load.
 		raw, err := os.ReadFile(legacyFile)
 		if err != nil {
 			t.Fatalf("ReadFile failed: %v", err)
@@ -212,8 +213,8 @@ func TestDoneStore(t *testing.T) {
 		if err := json.Unmarshal(raw, &tsMap); err != nil {
 			t.Fatalf("Saved legacy file should be new format (JSON object): %v", err)
 		}
-		if len(tsMap) != 2 {
-			t.Errorf("Expected 2 entries, got %d", len(tsMap))
+		if len(tsMap) != 0 {
+			t.Errorf("Expected 0 entries (legacy pruned), got %d", len(tsMap))
 		}
 	})
 
@@ -288,6 +289,57 @@ func TestDoneStore(t *testing.T) {
 		err := store.load()
 		if err == nil {
 			t.Error("load from empty file should return an error (invalid JSON)")
+		}
+	})
+
+	t.Run("prune removes entries older than 14 days", func(t *testing.T) {
+		pruneFile := filepath.Join(tempDir, "prune.json")
+		now := time.Now().UTC().Truncate(time.Second)
+
+		store := &DoneStore{
+			entries:  make(map[string]time.Time),
+			filePath: pruneFile,
+		}
+
+		// Entries at various ages
+		store.entries["fresh"] = now.Add(-1 * 24 * time.Hour)    // 1 day old
+		store.entries["border"] = now.Add(-13 * 24 * time.Hour)  // 13 days old
+		store.entries["expired"] = now.Add(-15 * 24 * time.Hour) // 15 days old
+		store.entries["ancient"] = now.Add(-30 * 24 * time.Hour) // 30 days old
+		store.entries["legacy"] = time.Time{}                    // zero time (legacy)
+
+		if err := store.Flush(); err != nil {
+			t.Fatalf("Flush failed: %v", err)
+		}
+
+		// Reload to trigger pruning
+		store2 := &DoneStore{
+			entries:  make(map[string]time.Time),
+			filePath: pruneFile,
+		}
+		if err := store2.load(); err != nil {
+			t.Fatalf("load failed: %v", err)
+		}
+
+		// Fresh and border entries should survive
+		if _, ok := store2.entries["fresh"]; !ok {
+			t.Error("1-day-old entry should be kept")
+		}
+		if _, ok := store2.entries["border"]; !ok {
+			t.Error("13-day-old entry should be kept")
+		}
+
+		// Expired entries should be pruned
+		if _, ok := store2.entries["expired"]; ok {
+			t.Error("15-day-old entry should be pruned")
+		}
+		if _, ok := store2.entries["ancient"]; ok {
+			t.Error("30-day-old entry should be pruned")
+		}
+
+		// Legacy (zero-time) entries should be pruned
+		if _, ok := store2.entries["legacy"]; ok {
+			t.Error("zero-time (legacy) entry should be pruned")
 		}
 	})
 
