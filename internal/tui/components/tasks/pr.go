@@ -26,7 +26,6 @@ type UpdatePRMsg struct {
 	NewComment       *data.Comment
 	ReadyForReview   *bool
 	IsMerged         *bool
-	IsQueued         *bool // PR was added to merge queue
 	AutoMergeEnabled *bool // Auto-merge was enabled (waiting for checks)
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
@@ -193,6 +192,16 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 			}
 		}
 
+		if prData.IsDraft {
+			return constants.TaskFinishedMsg{
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				TaskId:      taskId,
+				Err:         fmt.Errorf("cannot merge a draft PR, please publish it first"),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
 		status, err := data.MergePullRequest(prData.ID, prData.MergeStateStatus, prData.Repository)
 		if err != nil {
 			log.Error("Failed to merge PR via GraphQL", "pr", prNumber, "err", err)
@@ -212,10 +221,6 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 			isMerged := true
 			updateMsg.IsMerged = &isMerged
 			finishedText = fmt.Sprintf("PR #%d has been merged", prNumber)
-		} else if status.IsInMergeQueue {
-			isQueued := true
-			updateMsg.IsQueued = &isQueued
-			finishedText = fmt.Sprintf("PR #%d has been added to merge queue", prNumber)
 		} else if status.HasAutoMerge {
 			autoMergeEnabled := true
 			updateMsg.AutoMergeEnabled = &autoMergeEnabled
