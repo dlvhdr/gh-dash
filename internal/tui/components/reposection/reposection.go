@@ -169,6 +169,22 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.Prs = append(m.Prs, *msg.NewPr)
 		}
 
+	case tasks.UpdatePRMsg:
+		for i, pr := range m.Prs {
+			if pr.Number != msg.PrNumber {
+				continue
+			}
+			if msg.IsMerged != nil && *msg.IsMerged {
+				m.Prs[i].State = "MERGED"
+				m.Prs[i].Mergeable = ""
+			}
+			if msg.AutoMergeEnabled != nil && *msg.AutoMergeEnabled {
+				m.Prs[i].AutoMergeEnabled = true
+			}
+			m.Table.SetRows(m.BuildRows())
+			break
+		}
+
 	case repoMsg:
 		m.repo = msg.repo
 		m.SetIsLoading(false)
