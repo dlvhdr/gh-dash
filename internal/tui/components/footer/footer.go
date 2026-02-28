@@ -5,9 +5,10 @@ import (
 	"path"
 	"strings"
 
-	bbHelp "github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
+	bbHelp "charm.land/bubbles/v2/help"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
+	zone "github.com/lrstanley/bubblezone/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -102,7 +103,7 @@ func (m *Model) SetShowConfirmQuit(val bool) {
 }
 
 func (m *Model) SetWidth(width int) {
-	m.help.Width = width
+	m.help.SetWidth(width)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -140,7 +141,7 @@ func (m *Model) renderViewButton(view config.ViewType) string {
 		// Use gold for notifications bell, green for others
 		iconColor := m.ctx.Theme.SuccessText
 		if view == config.NotificationsView {
-			iconColor = lipgloss.AdaptiveColor{Light: "#B8860B", Dark: "#FFD700"} // Gold
+			iconColor = compat.AdaptiveColor{Light: lipgloss.Color("#B8860B"), Dark: lipgloss.Color("#FFD700")} // Gold
 		}
 		activeStyle := lipgloss.NewStyle().
 			Foreground(iconColor).

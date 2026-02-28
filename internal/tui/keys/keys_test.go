@@ -3,7 +3,7 @@ package keys
 import (
 	"testing"
 
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )

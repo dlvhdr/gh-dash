@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/cli/go-gh/v2/pkg/browser"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"

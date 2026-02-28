@@ -1,6 +1,6 @@
 package markdown
 
-import "github.com/charmbracelet/glamour/ansi"
+import "charm.land/glamour/v2/ansi"
 
 // DarkStyleConfig is the default dark style.
 var CustomDarkStyleConfig = ansi.StyleConfig{
@@ -126,7 +126,6 @@ var CustomDarkStyleConfig = ansi.StyleConfig{
 	Code: ansi.StyleBlock{
 		StylePrimitive: ansi.StylePrimitive{
 			Color:       stringPtr("#E2E1ED"),
-			Overlined:   boolPtr(true),
 			Prefix:      "`",
 			Suffix:      "`",
 			BlockPrefix: "",

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -136,8 +136,8 @@ func (m Model) Update(msg tea.Msg) (Model, string) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
+	case tea.KeyPressMsg:
+		if msg.String() == "y" || msg.String() == "Y" || msg.Code == tea.KeyEnter {
 			action := m.pendingAction
 			m.pendingAction = ""
 			return m, action

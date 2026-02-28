@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -37,7 +38,7 @@ func RenderIssueTitle(
 	prNumber := ""
 	if ctx.Config.Theme.Ui.Table.Compact {
 		prNumber = fmt.Sprintf("#%d ", number)
-		var prNumberFg lipgloss.AdaptiveColor
+		var prNumberFg compat.AdaptiveColor
 		if state != "OPEN" {
 			prNumberFg = ctx.Theme.FaintText
 		} else {

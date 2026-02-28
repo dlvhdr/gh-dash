@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	ghchecks "github.com/dlvhdr/x/gh-checks"

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -272,7 +272,11 @@ func (m *Model) renderHeaderColumns() []string {
 
 func (m *Model) renderHeader() string {
 	headerColumns := m.renderHeaderColumns()
-	header := ansi.Truncate(lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...), m.dimensions.Width, constants.Ellipsis)
+	header := ansi.Truncate(
+		lipgloss.JoinHorizontal(lipgloss.Top, headerColumns...),
+		m.dimensions.Width,
+		constants.Ellipsis,
+	)
 	return m.ctx.Styles.Table.HeaderStyle.
 		Width(m.dimensions.Width).
 		Height(common.TableHeaderHeight).
@@ -330,10 +334,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 		// For multi-line content, truncate long lines and pad short lines
 		// so lines don't wrap and background color extends properly
 		// Account for cell padding (1 left + 1 right = 2)
-		contentWidth := colWidth - 2
-		if contentWidth < 1 {
-			contentWidth = 1
-		}
+		contentWidth := max(colWidth-2, 1)
 		var renderedCol string
 		if strings.Contains(col, "\n") {
 			// For multi-line content, apply cell style to each line individually

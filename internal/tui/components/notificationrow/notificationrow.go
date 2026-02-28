@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
@@ -74,10 +75,10 @@ func (n *Notification) renderType() string {
 		}
 	case "Discussion":
 		icon = ""
-		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"})
+		style = style.Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")})
 	case "Release":
 		icon = ""
-		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#0969da", Dark: "#58a6ff"})
+		style = style.Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#0969da"), Dark: lipgloss.Color("#58a6ff")})
 	case "Commit":
 		icon = ""
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)

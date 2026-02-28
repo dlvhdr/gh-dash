@@ -1,8 +1,8 @@
 package prompt
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
