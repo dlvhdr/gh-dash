@@ -1,72 +1,130 @@
 package theme
 
 import (
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 )
 
 type Theme struct {
-	SelectedBackground      lipgloss.AdaptiveColor // config.Theme.Colors.Background.Selected
-	PrimaryBorder           lipgloss.AdaptiveColor // config.Theme.Colors.Border.Primary
-	FaintBorder             lipgloss.AdaptiveColor // config.Theme.Colors.Border.Faint
-	SecondaryBorder         lipgloss.AdaptiveColor // config.Theme.Colors.Border.Secondary
-	FaintText               lipgloss.AdaptiveColor // config.Theme.Colors.Text.Faint
-	PrimaryText             lipgloss.AdaptiveColor // config.Theme.Colors.Text.Primary
-	SecondaryText           lipgloss.AdaptiveColor // config.Theme.Colors.Text.Secondary
-	InvertedText            lipgloss.AdaptiveColor // config.Theme.Colors.Text.Inverted
-	SuccessText             lipgloss.AdaptiveColor // config.Theme.Colors.Text.Success
-	WarningText             lipgloss.AdaptiveColor // config.Theme.Colors.Text.Warning
-	ErrorText               lipgloss.AdaptiveColor // config.Theme.Colors.Text.Error
-	ActorText               lipgloss.AdaptiveColor // config.Theme.Colors.Text.Actor
-	NewContributorIconColor lipgloss.AdaptiveColor // config.Theme.Colors.Icon.NewContributor
-	ContributorIconColor    lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Contributor
-	CollaboratorIconColor   lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Collaborator
-	MemberIconColor         lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Member
-	OwnerIconColor          lipgloss.AdaptiveColor // config.Theme.Colors.Icon.Owner
-	UnknownRoleIconColor    lipgloss.AdaptiveColor // config.Theme.Colors.Icon.UnknownRole
-	NewContributorIcon      string                 // config.Theme.Icons.NewContributor
-	ContributorIcon         string                 // config.Theme.Icons.Contributor
-	CollaboratorIcon        string                 // config.Theme.Icons.Collaborator
-	MemberIcon              string                 // config.Theme.Icons.Member
-	OwnerIcon               string                 // config.Theme.Icons.Owner
-	UnknownRoleIcon         string                 // config.Theme.Icons.UnknownRole
+	SelectedBackground      compat.AdaptiveColor // config.Theme.Colors.Background.Selected
+	PrimaryBorder           compat.AdaptiveColor // config.Theme.Colors.Border.Primary
+	FaintBorder             compat.AdaptiveColor // config.Theme.Colors.Border.Faint
+	SecondaryBorder         compat.AdaptiveColor // config.Theme.Colors.Border.Secondary
+	FaintText               compat.AdaptiveColor // config.Theme.Colors.Text.Faint
+	PrimaryText             compat.AdaptiveColor // config.Theme.Colors.Text.Primary
+	SecondaryText           compat.AdaptiveColor // config.Theme.Colors.Text.Secondary
+	InvertedText            compat.AdaptiveColor // config.Theme.Colors.Text.Inverted
+	SuccessText             compat.AdaptiveColor // config.Theme.Colors.Text.Success
+	WarningText             compat.AdaptiveColor // config.Theme.Colors.Text.Warning
+	ErrorText               compat.AdaptiveColor // config.Theme.Colors.Text.Error
+	ActorText               compat.AdaptiveColor // config.Theme.Colors.Text.Actor
+	NewContributorIconColor compat.AdaptiveColor // config.Theme.Colors.Icon.NewContributor
+	ContributorIconColor    compat.AdaptiveColor // config.Theme.Colors.Icon.Contributor
+	CollaboratorIconColor   compat.AdaptiveColor // config.Theme.Colors.Icon.Collaborator
+	MemberIconColor         compat.AdaptiveColor // config.Theme.Colors.Icon.Member
+	OwnerIconColor          compat.AdaptiveColor // config.Theme.Colors.Icon.Owner
+	UnknownRoleIconColor    compat.AdaptiveColor // config.Theme.Colors.Icon.UnknownRole
+	NewContributorIcon      string               // config.Theme.Icons.NewContributor
+	ContributorIcon         string               // config.Theme.Icons.Contributor
+	CollaboratorIcon        string               // config.Theme.Icons.Collaborator
+	MemberIcon              string               // config.Theme.Icons.Member
+	OwnerIcon               string               // config.Theme.Icons.Owner
+	UnknownRoleIcon         string               // config.Theme.Icons.UnknownRole
 }
 
 var DefaultTheme = &Theme{
-	PrimaryBorder:           lipgloss.AdaptiveColor{Light: "013", Dark: "008"},
-	SecondaryBorder:         lipgloss.AdaptiveColor{Light: "008", Dark: "007"},
-	SelectedBackground:      lipgloss.AdaptiveColor{Light: "006", Dark: "008"},
-	FaintBorder:             lipgloss.AdaptiveColor{Light: "254", Dark: "000"},
-	PrimaryText:             lipgloss.AdaptiveColor{Light: "000", Dark: "015"},
-	SecondaryText:           lipgloss.AdaptiveColor{Light: "244", Dark: "251"},
-	FaintText:               lipgloss.AdaptiveColor{Light: "007", Dark: "245"},
-	InvertedText:            lipgloss.AdaptiveColor{Light: "015", Dark: "236"},
-	SuccessText:             lipgloss.AdaptiveColor{Light: "002", Dark: "002"},
-	WarningText:             lipgloss.AdaptiveColor{Light: "003", Dark: "003"},
-	ErrorText:               lipgloss.AdaptiveColor{Light: "001", Dark: "001"},
-	ActorText:               lipgloss.AdaptiveColor{Light: "244", Dark: "251"}, // Same as SecondaryText
-	NewContributorIconColor: lipgloss.AdaptiveColor{Light: "077", Dark: "077"},
-	ContributorIconColor:    lipgloss.AdaptiveColor{Light: "075", Dark: "075"},
-	CollaboratorIconColor:   lipgloss.AdaptiveColor{Light: "178", Dark: "178"},
-	MemberIconColor:         lipgloss.AdaptiveColor{Light: "178", Dark: "178"},
-	OwnerIconColor:          lipgloss.AdaptiveColor{Light: "178", Dark: "178"},
-	UnknownRoleIconColor:    lipgloss.AdaptiveColor{Light: "178", Dark: "178"},
-	NewContributorIcon:      constants.NewContributorIcon,
-	ContributorIcon:         constants.ContributorIcon,
-	CollaboratorIcon:        constants.CollaboratorIcon,
-	MemberIcon:              constants.MemberIcon,
-	OwnerIcon:               constants.OwnerIcon,
-	UnknownRoleIcon:         constants.UnknownRoleIcon,
+	PrimaryBorder: compat.AdaptiveColor{
+		Light: lipgloss.Color("008"),
+		Dark:  lipgloss.Color("008"),
+	},
+	SecondaryBorder: compat.AdaptiveColor{
+		Light: lipgloss.Color("008"),
+		Dark:  lipgloss.Color("007"),
+	},
+	SelectedBackground: compat.AdaptiveColor{
+		Light: lipgloss.Color("007"),
+		Dark:  lipgloss.Color("008"),
+	},
+	FaintBorder: compat.AdaptiveColor{
+		Light: lipgloss.Color("254"),
+		Dark:  lipgloss.Color("000"),
+	},
+	PrimaryText: compat.AdaptiveColor{
+		Light: lipgloss.Color("000"),
+		Dark:  lipgloss.Color("015"),
+	},
+	SecondaryText: compat.AdaptiveColor{
+		Light: lipgloss.Color("244"),
+		Dark:  lipgloss.Color("251"),
+	},
+	FaintText: compat.AdaptiveColor{
+		Light: lipgloss.Color("007"),
+		Dark:  lipgloss.Color("245"),
+	},
+	InvertedText: compat.AdaptiveColor{
+		Light: lipgloss.Color("015"),
+		Dark:  lipgloss.Color("236"),
+	},
+	SuccessText: compat.AdaptiveColor{
+		Light: lipgloss.Color("002"),
+		Dark:  lipgloss.Color("002"),
+	},
+	WarningText: compat.AdaptiveColor{
+		Light: lipgloss.Color("003"),
+		Dark:  lipgloss.Color("003"),
+	},
+	ErrorText: compat.AdaptiveColor{
+		Light: lipgloss.Color("001"),
+		Dark:  lipgloss.Color("001"),
+	},
+	ActorText: compat.AdaptiveColor{
+		Light: lipgloss.Color("244"),
+		Dark:  lipgloss.Color("251"),
+	}, // Same as SecondaryText
+	NewContributorIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("077"),
+		Dark:  lipgloss.Color("077"),
+	},
+	ContributorIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("075"),
+		Dark:  lipgloss.Color("075"),
+	},
+	CollaboratorIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("178"),
+		Dark:  lipgloss.Color("178"),
+	},
+	MemberIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("178"),
+		Dark:  lipgloss.Color("178"),
+	},
+	OwnerIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("178"),
+		Dark:  lipgloss.Color("178"),
+	},
+	UnknownRoleIconColor: compat.AdaptiveColor{
+		Light: lipgloss.Color("178"),
+		Dark:  lipgloss.Color("178"),
+	},
+	NewContributorIcon: constants.NewContributorIcon,
+	ContributorIcon:    constants.ContributorIcon,
+	CollaboratorIcon:   constants.CollaboratorIcon,
+	MemberIcon:         constants.MemberIcon,
+	OwnerIcon:          constants.OwnerIcon,
+	UnknownRoleIcon:    constants.UnknownRoleIcon,
 }
 
 func ParseTheme(cfg *config.Config) Theme {
-	_shimColor := func(color config.Color, fallback lipgloss.AdaptiveColor) lipgloss.AdaptiveColor {
+	_shimColor := func(color config.Color, fallback compat.AdaptiveColor) compat.AdaptiveColor {
 		if color == "" {
 			return fallback
 		}
-		return lipgloss.AdaptiveColor{Light: string(color), Dark: string(color)}
+		return compat.AdaptiveColor{
+			Light: lipgloss.Color(string(color)),
+			Dark:  lipgloss.Color(string(color)),
+		}
 	}
 	_shimIcon := func(icon string, fallback string) string {
 		if icon != "" {

@@ -6,7 +6,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -19,6 +20,7 @@ var sponsorsCmd = &cobra.Command{
 	Long: `Show the list of current sponsors for gh-dash from GitHub Sponsors under https://github.com/sponsors/dlvhdr.
 If you enjoy dash and want to help, consider supporting the project with a donation!`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		log.SetLevel(log.ErrorLevel)
 		sponsors, err := data.FetchSponsors()
 		if err != nil {
 			return err
@@ -26,8 +28,12 @@ If you enjoy dash and want to help, consider supporting the project with a donat
 
 		fmt.Print("\n")
 		fmt.Print(
-			lipgloss.JoinHorizontal(lipgloss.Top,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Bold(true).Render("Thank you ❤️ "),
+			lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				lipgloss.NewStyle().
+					Foreground(lipgloss.Color("1")).
+					Bold(true).
+					Render("Thank you ❤️ "),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Render(
 					"to all the current (and past!) sponsors - you rock! 🤘🏽"),
 			))

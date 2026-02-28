@@ -2,13 +2,14 @@ package prview
 
 import (
 	"fmt"
+	"image/color"
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -81,8 +82,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.isCommenting {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
 					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
@@ -91,7 +92,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isCommenting = false
 				return m, cmd
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				if !m.ShowConfirmCancel {
 					m.shouldCancelComment()
 				}
@@ -114,8 +115,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isApproving {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				comment := ""
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					comment = m.inputBox.Value()
@@ -126,7 +127,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isApproving = false
 				return m, cmd
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				if m.shouldCancelComment() {
 					return m, nil
 				}
@@ -138,8 +139,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isAssigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
@@ -149,7 +150,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isAssigning = false
 				return m, cmd
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				m.inputBox.Blur()
 				m.isAssigning = false
 				return m, nil
@@ -158,8 +159,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isUnassigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
@@ -169,7 +170,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.isUnassigning = false
 				return m, cmd
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				m.inputBox.Blur()
 				m.isUnassigning = false
 				return m, nil
@@ -278,7 +279,7 @@ func (m *Model) renderBranches() string {
 }
 
 func (m *Model) renderStatusPill() string {
-	bgColor := ""
+	var bgColor color.Color
 	switch m.pr.Data.Primary.State {
 	case "OPEN":
 		if m.pr.Data.Primary.IsDraft {
@@ -293,8 +294,8 @@ func (m *Model) renderStatusPill() string {
 	}
 
 	return m.ctx.Styles.PrView.PillStyle.
-		BorderForeground(lipgloss.Color(bgColor)).
-		Background(lipgloss.Color(bgColor)).
+		BorderForeground(bgColor).
+		Background(bgColor).
 		Render(m.pr.RenderState())
 }
 

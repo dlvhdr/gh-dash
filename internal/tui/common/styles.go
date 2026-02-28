@@ -1,7 +1,8 @@
 package common
 
 import (
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
@@ -76,9 +77,9 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 		Foreground(theme.PrimaryText).
 		Render(constants.DraftIcon)
 	s.MergedGlyph = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{
-			Light: "#A371F7",
-			Dark:  "#A371F7",
+		Foreground(compat.AdaptiveColor{
+			Light: lipgloss.Color("#A371F7"),
+			Dark:  lipgloss.Color("#A371F7"),
 		}).
 		Render(constants.MergedIcon)
 	s.ActionRequiredGlyph = lipgloss.NewStyle().

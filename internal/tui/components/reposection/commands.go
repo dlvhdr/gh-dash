@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	gitm "github.com/aymanbagabas/git-module"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"

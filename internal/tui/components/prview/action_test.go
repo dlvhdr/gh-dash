@@ -3,7 +3,7 @@ package prview
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -66,7 +66,7 @@ func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tc.keyBinding)}
+			msg := tea.KeyPressMsg{Text: tc.keyBinding}
 
 			action := MsgToAction(msg)
 
@@ -78,7 +78,7 @@ func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 }
 
 func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")}
+	msg := tea.KeyPressMsg{Text: "z"}
 
 	action := MsgToAction(msg)
 
@@ -120,7 +120,7 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		m.carousel.MoveRight()
 		initialTab := m.carousel.SelectedItem()
 
-		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("[")}
+		msg := tea.KeyPressMsg{Text: "["}
 		m, _ = m.Update(msg)
 
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
@@ -131,7 +131,7 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		m := newTestModelForAction(t)
 		initialTab := m.carousel.SelectedItem()
 
-		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("]")}
+		msg := tea.KeyPressMsg{Text: "]"}
 		m, _ = m.Update(msg)
 
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
@@ -179,7 +179,7 @@ func TestMsgToActionWithReboundKeys(t *testing.T) {
 		keys.PRKeys.Approve.SetKeys(originalApproveKeys...)
 	}()
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("V")}
+	msg := tea.KeyPressMsg{Text: "V"}
 
 	action := MsgToAction(msg)
 

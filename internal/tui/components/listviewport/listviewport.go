@@ -3,8 +3,8 @@ package listviewport
 import (
 	"time"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -38,10 +38,10 @@ func NewModel(
 		NumCurrentItems: numItems,
 		ListItemHeight:  listItemHeight,
 		currId:          0,
-		viewport: viewport.Model{
-			Width:  dimensions.Width,
-			Height: dimensions.Height,
-		},
+		viewport: viewport.New(
+			viewport.WithWidth(dimensions.Width),
+			viewport.WithHeight(dimensions.Height),
+		),
 		topBoundId:    0,
 		ItemTypeLabel: itemTypeLabel,
 		LastUpdated:   lastUpdated,
@@ -75,7 +75,7 @@ func (m *Model) getNumPrsPerPage() int {
 	if m.ListItemHeight == 0 {
 		return 0
 	}
-	return m.viewport.Height / m.ListItemHeight
+	return m.viewport.Height() / m.ListItemHeight
 }
 
 func (m *Model) ResetCurrItem() {
@@ -126,15 +126,15 @@ func (m *Model) LastItem() int {
 }
 
 func (m *Model) SetDimensions(dimensions constants.Dimensions) {
-	m.viewport.Height = max(0, dimensions.Height)
-	m.viewport.Width = max(0, dimensions.Width)
+	m.viewport.SetHeight(max(0, dimensions.Height))
+	m.viewport.SetWidth(max(0, dimensions.Width))
 }
 
 func (m *Model) View() string {
 	viewport := m.viewport.View()
 	return lipgloss.NewStyle().
-		Width(m.viewport.Width).
-		MaxWidth(m.viewport.Width).
+		Width(m.viewport.Width()).
+		MaxWidth(m.viewport.Width()).
 		Render(
 			viewport,
 		)

@@ -11,9 +11,9 @@ import (
 	"text/template"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	log "github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"

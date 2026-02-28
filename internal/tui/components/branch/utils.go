@@ -15,15 +15,3 @@ func keepSameSpacesOnAddDeletions(str string) string {
 		strAsList[1],
 	)
 }
-
-func isConclusionAFailure(conclusion string) bool {
-	return conclusion == "FAILURE" || conclusion == "TIMED_OUT" ||
-		conclusion == "STARTUP_FAILURE"
-}
-
-func isStatusWaiting(status string) bool {
-	return status == "PENDING" ||
-		status == "QUEUED" ||
-		status == "IN_PROGRESS" ||
-		status == "WAITING"
-}
