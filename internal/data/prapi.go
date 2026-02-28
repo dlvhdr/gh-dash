@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"charm.land/log/v2"
@@ -476,6 +477,7 @@ type PullRequestsResponse struct {
 }
 
 var (
+	clientMu     sync.Mutex
 	client       *gh.GraphQLClient
 	cachedClient *gh.GraphQLClient
 )
@@ -588,7 +590,7 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 // PRMergeStatus represents the merge/queue state of a PR
 type PRMergeStatus struct {
 	State          string // OPEN, CLOSED, MERGED
-	IsInMergeQueue bool
+	IsInMergeQueue bool   // TODO: not yet populated; reserved for future merge-queue mutation support
 	HasAutoMerge   bool
 }
 
@@ -612,27 +614,76 @@ func mergeMethodForRepo(repo Repository) (graphql.String, error) {
 	}
 }
 
+// enableAutoMerge calls the enablePullRequestAutoMerge GraphQL mutation and
+// returns the resulting PRMergeStatus.
+func enableAutoMerge(prNodeID string, mergeMethod graphql.String) (PRMergeStatus, error) {
+	var mutation struct {
+		EnablePullRequestAutoMerge struct {
+			PullRequest struct {
+				State            string `graphql:"state"`
+				AutoMergeRequest *struct {
+					EnabledAt time.Time `graphql:"enabledAt"`
+				} `graphql:"autoMergeRequest"`
+			} `graphql:"pullRequest"`
+		} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+	}
+	type EnablePullRequestAutoMergeInput struct {
+		PullRequestID string         `json:"pullRequestId"`
+		MergeMethod   graphql.String `json:"mergeMethod"`
+	}
+	variables := map[string]any{
+		"input": EnablePullRequestAutoMergeInput{
+			PullRequestID: prNodeID,
+			MergeMethod:   mergeMethod,
+		},
+	}
+	if err := client.Mutate("EnablePullRequestAutoMerge", &mutation, variables); err != nil {
+		return PRMergeStatus{}, err
+	}
+	hasAutoMerge := mutation.EnablePullRequestAutoMerge.PullRequest.AutoMergeRequest != nil
+	log.Info("Auto-merge enabled for PR", "nodeID", prNodeID, "hasAutoMerge", hasAutoMerge)
+	return PRMergeStatus{
+		State:        mutation.EnablePullRequestAutoMerge.PullRequest.State,
+		HasAutoMerge: hasAutoMerge,
+	}, nil
+}
+
 // MergePullRequest performs the appropriate merge action via a single GraphQL
 // mutation, returning the outcome directly from the mutation response without
 // a follow-up query.
 //
-// The mutation chosen depends on the PR's current mergeStateStatus:
-//   - CLEAN or UNSTABLE → mergePullRequest (direct merge)
-//   - BLOCKED           → addPullRequestToMergeQueue (repo has a merge queue)
-//   - anything else     → enablePullRequestAutoMerge (checks still pending)
+// The mutation chosen depends on the PR's current mergeStateStatus
+// https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+//   - CLEAN, UNSTABLE, or HAS_HOOKS → mergePullRequest
+//   - BLOCKED                       → enablePullRequestAutoMerge
+//   - BEHIND                        → enablePullRequestAutoMerge
+//   - DIRTY                         → error
+//   - UNKNOWN                       → log warning, attempt enablePullRequestAutoMerge
+//
+// Note: draft PRs are not handled here; callers should check IsDraft before
+// invoking this function.
 func MergePullRequest(prNodeID string, mergeStateStatus MergeStateStatus, repo Repository) (PRMergeStatus, error) {
-	var err error
-	if cachedClient == nil {
-		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: false})
+	clientMu.Lock()
+	if client == nil {
+		var err error
+		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
+			log.Info("using mock data", "server", "https://localhost:3000")
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+		} else {
+			client, err = gh.DefaultGraphQLClient()
+		}
 		if err != nil {
+			clientMu.Unlock()
 			return PRMergeStatus{}, err
 		}
 	}
+	clientMu.Unlock()
 
 	log.Debug("Performing PR merge via GraphQL", "nodeID", prNodeID, "mergeStateStatus", mergeStateStatus)
 
 	switch mergeStateStatus {
-	case "CLEAN", "UNSTABLE":
+	case "CLEAN", "UNSTABLE", "HAS_HOOKS":
 		mergeMethod, err := mergeMethodForRepo(repo)
 		if err != nil {
 			return PRMergeStatus{}, err
@@ -655,68 +706,36 @@ func MergePullRequest(prNodeID string, mergeStateStatus MergeStateStatus, repo R
 				MergeMethod:   mergeMethod,
 			},
 		}
-		if err := cachedClient.Mutate("MergePullRequest", &mutation, variables); err != nil {
+		if err := client.Mutate("MergePullRequest", &mutation, variables); err != nil {
 			return PRMergeStatus{}, err
 		}
 		log.Info("PR merged directly", "nodeID", prNodeID, "state", mutation.MergePullRequest.PullRequest.State)
 		return PRMergeStatus{State: mutation.MergePullRequest.PullRequest.State}, nil
 
-	case "BLOCKED":
-		var mutation struct {
-			AddPullRequestToMergeQueue struct {
-				MergeQueueEntry struct {
-					ID string `graphql:"id"`
-				} `graphql:"mergeQueueEntry"`
-			} `graphql:"addPullRequestToMergeQueue(input: $input)"`
-		}
-		type AddPullRequestToMergeQueueInput struct {
-			PullRequestID string `json:"pullRequestId"`
-		}
-		variables := map[string]any{
-			"input": AddPullRequestToMergeQueueInput{
-				PullRequestID: prNodeID,
-			},
-		}
-		if err := cachedClient.Mutate("AddPullRequestToMergeQueue", &mutation, variables); err != nil {
-			return PRMergeStatus{}, err
-		}
-		log.Info("PR added to merge queue", "nodeID", prNodeID)
-		return PRMergeStatus{State: "OPEN", IsInMergeQueue: true}, nil
+	case "DIRTY":
+		return PRMergeStatus{}, fmt.Errorf("PR has merge conflicts, please resolve locally")
 
-	default:
+	case "BLOCKED", "BEHIND":
 		mergeMethod, err := mergeMethodForRepo(repo)
 		if err != nil {
 			return PRMergeStatus{}, err
 		}
+		return enableAutoMerge(prNodeID, mergeMethod)
 
-		var mutation struct {
-			EnablePullRequestAutoMerge struct {
-				PullRequest struct {
-					State            string `graphql:"state"`
-					AutoMergeRequest *struct {
-						EnabledAt time.Time `graphql:"enabledAt"`
-					} `graphql:"autoMergeRequest"`
-				} `graphql:"pullRequest"`
-			} `graphql:"enablePullRequestAutoMerge(input: $input)"`
-		}
-		type EnablePullRequestAutoMergeInput struct {
-			PullRequestID string         `json:"pullRequestId"`
-			MergeMethod   graphql.String `json:"mergeMethod"`
-		}
-		variables := map[string]any{
-			"input": EnablePullRequestAutoMergeInput{
-				PullRequestID: prNodeID,
-				MergeMethod:   mergeMethod,
-			},
-		}
-		if err := cachedClient.Mutate("EnablePullRequestAutoMerge", &mutation, variables); err != nil {
+	case "UNKNOWN":
+		log.Warn("Unknown merge state status, attempting auto-merge", "status", mergeStateStatus)
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
 			return PRMergeStatus{}, err
 		}
-		hasAutoMerge := mutation.EnablePullRequestAutoMerge.PullRequest.AutoMergeRequest != nil
-		log.Info("Auto-merge enabled for PR", "nodeID", prNodeID, "hasAutoMerge", hasAutoMerge)
-		return PRMergeStatus{
-			State:        mutation.EnablePullRequestAutoMerge.PullRequest.State,
-			HasAutoMerge: hasAutoMerge,
-		}, nil
+		return enableAutoMerge(prNodeID, mergeMethod)
+
+	default:
+		log.Warn("Unrecognised merge state status, attempting auto-merge", "status", mergeStateStatus)
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
+			return PRMergeStatus{}, err
+		}
+		return enableAutoMerge(prNodeID, mergeMethod)
 	}
 }
