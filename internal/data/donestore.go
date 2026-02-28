@@ -97,7 +97,7 @@ func (s *DoneStore) save() error {
 		tsMap[id] = t.Format(time.RFC3339)
 	}
 
-	data, err := json.MarshalIndent(tsMap, "", "  ")
+	data, err := json.Marshal(tsMap)
 	if err != nil {
 		return err
 	}
