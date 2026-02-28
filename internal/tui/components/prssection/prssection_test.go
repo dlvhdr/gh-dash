@@ -2,14 +2,17 @@ package prssection
 
 import (
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prompt"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -103,6 +106,31 @@ func TestConfirmation_CancelWithCtrlC(t *testing.T) {
 	require.False(t, m.IsPromptConfirmationShown,
 		"Ctrl+C should dismiss the confirmation prompt")
 	_ = cmd
+}
+
+func TestUpdatePRMsg_AutoMergeEnabled_SetsFlag(t *testing.T) {
+	// Construct a minimal model with one PR whose AutoMergeEnabled starts false.
+	ctx := &context.ProgramContext{
+		Config: &config.Config{Theme: &config.ThemeConfig{}},
+		StartTask: func(task context.Task) tea.Cmd {
+			return func() tea.Msg { return nil }
+		},
+	}
+	m := NewModel(0, ctx, config.PrsSectionConfig{}, time.Time{}, time.Time{})
+	m.Prs = []prrow.Data{
+		{Primary: &data.PullRequestData{Number: 42}},
+	}
+
+	autoMerge := true
+	m.Update(tasks.UpdatePRMsg{
+		PrNumber:         42,
+		AutoMergeEnabled: &autoMerge,
+	})
+
+	require.True(t, m.Prs[0].Primary.AutoMergeEnabled,
+		"AutoMergeEnabled should be set to true after receiving AutoMergeEnabled update")
+	require.Nil(t, m.Prs[0].Primary.AutoMergeRequest,
+		"AutoMergeRequest should remain nil (only real API data should populate it)")
 }
 
 func TestConfirmation_AllActions(t *testing.T) {
