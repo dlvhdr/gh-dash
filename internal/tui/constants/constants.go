@@ -54,6 +54,7 @@ const (
 	LabelsIcon         = "󰌖"
 	MergedIcon         = ""
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
+	AutoMergeIcon      = "󰦼" // \uF09BC nf-md-arrow_decision_auto
 	OpenIcon           = ""
 	SelectionIcon      = "❯"
 
