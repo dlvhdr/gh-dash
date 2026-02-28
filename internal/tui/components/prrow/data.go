@@ -35,3 +35,14 @@ func (data Data) GetUpdatedAt() time.Time {
 func (data Data) GetCreatedAt() time.Time {
 	return data.Primary.CreatedAt
 }
+
+// GetPrimaryPRData returns the underlying PullRequestData, satisfying the
+// primaryPRDataProvider interface consumed by tasks.extractPullRequestData
+// (see internal/tui/components/tasks/pr.go). The method is on a pointer
+// receiver, so only *Data satisfies primaryPRDataProvider — a caller holding
+// a plain Data value (non-pointer) will not match the interface case and
+// extractPullRequestData will return nil. All prrow rows are stored and
+// passed as *Data throughout the codebase, so this is the expected usage.
+func (d *Data) GetPrimaryPRData() *data.PullRequestData {
+	return d.Primary
+}
