@@ -207,7 +207,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			switch msg.Type {
 			case tea.KeyCtrlD:
 				labels := dataautocomplete.CurrentLabels(m.inputBox.Value())
-				if len(labels) > 0 {
+				if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
 					cmd = m.label(labels)
 				}
 				m.inputBox.Blur()

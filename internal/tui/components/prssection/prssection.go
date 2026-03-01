@@ -165,6 +165,9 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				currPr.Primary.Assignees.Nodes = removeAssignees(
 					currPr.Primary.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 			}
+			if msg.Labels != nil {
+				currPr.Primary.Labels.Nodes = msg.Labels.Nodes
+			}
 			if msg.ReadyForReview != nil && *msg.ReadyForReview {
 				currPr.Primary.IsDraft = false
 			}
