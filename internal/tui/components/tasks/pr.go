@@ -28,6 +28,7 @@ type UpdatePRMsg struct {
 	IsMerged         *bool
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
+	Labels           *data.PRLabels
 }
 
 type UpdateBranchMsg struct {

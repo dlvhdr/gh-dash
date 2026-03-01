@@ -3,7 +3,6 @@ package prview
 import (
 	"fmt"
 	"image/color"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -54,14 +53,6 @@ type RepoUsersFetchedMsg struct {
 type RepoUsersFetchFailedMsg struct {
 	Err error
 }
-
-// PrActionErrorMsg is sent when a PR action fails
-type PrActionErrorMsg struct {
-	Err error
-}
-
-// PrLabeledMsg is sent when a PR is successfully labeled
-type PrLabeledMsg struct{}
 
 type Model struct {
 	ctx       *context.ProgramContext
@@ -361,7 +352,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch msg.String() {
 			case "ctrl+d":
 				labels := dataautocomplete.CurrentLabels(m.inputBox.Value())
-				if len(labels) > 0 {
+				if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
 					cmd = m.label(labels)
 				}
 				m.inputBox.Blur()
@@ -1163,22 +1154,4 @@ func (m *Model) prLabels() []string {
 		labels = append(labels, n.Name)
 	}
 	return labels
-}
-
-// label executes the label command via gh CLI
-func (m *Model) label(labels []string) tea.Cmd {
-	prNumber := m.pr.Data.Primary.GetNumber()
-	repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-
-	cmd := func() tea.Msg {
-		cmd := exec.Command("gh", "pr", "edit", fmt.Sprintf("%d", prNumber),
-			"-R", repoName, "--add-label", strings.Join(labels, ","))
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return PrActionErrorMsg{Err: fmt.Errorf("failed to label PR: %s", string(output))}
-		}
-		return PrLabeledMsg{}
-	}
-
-	return cmd
 }
