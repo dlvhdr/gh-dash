@@ -87,29 +87,33 @@ func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isCommenting = true
+	cmd := m.SetIsCommenting(true)
 
+	require.NotNil(t, cmd)
 	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in commenting mode")
 }
 
 func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isApproving = true
+	cmd := m.SetIsApproving(true)
 
+	require.NotNil(t, cmd)
 	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in approving mode")
 }
 
 func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isAssigning = true
+	cmd := m.SetIsAssigning(true)
 
+	require.NotNil(t, cmd)
 	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in assigning mode")
 }
 
 func TestIsTextInputBoxFocusedWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isUnassigning = true
+	cmd := m.SetIsUnassigning(true)
 
+	require.NotNil(t, cmd)
 	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in unassigning mode")
 }
 
@@ -189,8 +193,9 @@ func TestMsgToActionWithReboundKeys(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenLabeling(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isLabeling = true
+	cmd := m.SetIsLabeling(true)
 
+	require.NotNil(t, cmd)
 	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in labeling mode")
 }
 
@@ -202,7 +207,8 @@ func TestGetIsLabeling(t *testing.T) {
 
 	t.Run("returns true when labeling", func(t *testing.T) {
 		m := newTestModelForAction(t)
-		m.isLabeling = true
+		cmd := m.SetIsLabeling(true)
+		require.NotNil(t, cmd)
 		require.True(t, m.GetIsLabeling(), "expected GetIsLabeling to return true when labeling")
 	})
 }
