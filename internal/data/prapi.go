@@ -381,6 +381,10 @@ func (data PullRequestData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
 }
 
+func (data PullRequestData) GetRepoNameAndOwner() (owner, repoName string) {
+	return data.Repository.Owner.Login, data.Repository.Name
+}
+
 func (data PullRequestData) GetNumber() int {
 	return data.Number
 }

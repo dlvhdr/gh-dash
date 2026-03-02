@@ -608,8 +608,8 @@ func (m *Model) fetchUsers() tea.Cmd {
 	spinnerTickCmd := m.ac.SetFetchLoading()
 
 	fetchCmd := func() tea.Msg {
-		repoName := m.issue.Data.GetRepoNameWithOwner()
-		users, err := data.FetchRepoUsers(repoName)
+		owner, repoName := m.issue.Data.GetRepoNameAndOwner()
+		users, err := data.FetchRepoUsers(owner, repoName)
 		if err != nil {
 			return RepoUsersFetchFailedMsg{Err: err}
 		}
@@ -622,8 +622,8 @@ func (m *Model) fetchUsers() tea.Cmd {
 // fetchUsersSilent returns a command to fetch repository users without showing loading UI
 func (m *Model) fetchUsersSilent() tea.Cmd {
 	return func() tea.Msg {
-		repoName := m.issue.Data.GetRepoNameWithOwner()
-		users, err := data.FetchRepoUsers(repoName)
+		owner, repoName := m.issue.Data.GetRepoNameAndOwner()
+		users, err := data.FetchRepoUsers(owner, repoName)
 		if err != nil {
 			return RepoUsersFetchFailedMsg{Err: err}
 		}
