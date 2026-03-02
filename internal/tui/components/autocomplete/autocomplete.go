@@ -280,6 +280,10 @@ func (m *Model) View() string {
 	}
 
 	numVisible := min(len(m.filtered), m.maxVisible)
+	numRows := m.maxVisible
+	if numRows <= 0 {
+		numRows = numVisible
+	}
 
 	var b strings.Builder
 
@@ -297,8 +301,11 @@ func (m *Model) View() string {
 	detailColumnStyle := lipgloss.NewStyle().Width(layout.detailWidth).Foreground(m.ctx.Theme.FaintText)
 	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
 
-	for i := 0; i < numVisible; i++ {
-		suggestion := m.filtered[i]
+	for i := 0; i < numRows; i++ {
+		suggestion := Suggestion{}
+		if i < numVisible {
+			suggestion = m.filtered[i]
+		}
 		value := suggestion.Value
 		detail := suggestion.Detail
 
@@ -319,13 +326,13 @@ func (m *Model) View() string {
 			)
 		}
 
-		if i == m.selected {
+		if i < numVisible && i == m.selected {
 			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(selectedPrefix + rowText))
 		} else {
 			b.WriteString(normalPrefix + rowText)
 		}
 
-		if i < numVisible-1 {
+		if i < numRows-1 {
 			b.WriteString("\n")
 		}
 	}
