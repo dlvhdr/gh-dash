@@ -115,7 +115,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 		m.ac.SetSuggestions(userSuggestions(msg.Users))
 		if m.isCommenting {
 			mention := m.inputBox.CurrentAutocompleteContext()
-			if mention.Content != "" {
+			if mention != (dataautocomplete.Context{}) {
 				m.ac.Show(mention.Content, m.inputBox.AutocompleteItemsToExclude())
 			}
 		} else if m.isAssigning {
@@ -196,8 +196,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			// Check for @-mention context change after the keystroke
 			currentMention := m.inputBox.CurrentAutocompleteContext()
 
-			if currentMention.Content != previousMention.Content {
-				if currentMention.Content != "" {
+			if currentMention != previousMention {
+				if currentMention != (dataautocomplete.Context{}) {
 					// User is typing an @-mention, show autocomplete
 					m.ac.Show(currentMention.Content, m.inputBox.AutocompleteItemsToExclude())
 				} else {
@@ -514,7 +514,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 			m.repoUsers = users
 			m.ac.SetSuggestions(userSuggestions(users))
 			mention := m.inputBox.CurrentAutocompleteContext()
-			if mention.Content != "" {
+			if mention != (dataautocomplete.Context{}) {
 				m.ac.Show(mention.Content, m.inputBox.AutocompleteItemsToExclude())
 			}
 			return tea.Sequence(textarea.Blink, m.inputBox.Focus())

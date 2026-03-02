@@ -99,6 +99,8 @@ func TestWhitespaceSource(t *testing.T) {
 func TestUserMentionSource(t *testing.T) {
 	source := UserMentionSource{}
 	require.Equal(t, Context{}, source.ExtractContext("hello world", 5))
+	require.Equal(t, Context{Start: 6, End: 7, Content: ""}, source.ExtractContext("hello @", 7))
+	require.Equal(t, Context{Start: 0, End: 1, Content: ""}, source.ExtractContext("@", 1))
 	require.Equal(t, Context{Start: 6, End: 11, Content: "octo"}, source.ExtractContext("hello @octo", 9))
 
 	newInput, newCursor := source.InsertSuggestion("hello @oc", "octo", 6, 9)
