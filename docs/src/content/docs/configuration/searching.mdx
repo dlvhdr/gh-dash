@@ -20,7 +20,7 @@ prsSections:
     filter: >-
       is:open
       -author:@me
-      updated>={{ nowModify "-2w" }}
+      updated:>={{ nowModify "-2w" }}
 ```
 
 Note: don't specify `is:pr` for this setting. The dashboard always adds that filter for PR
@@ -40,7 +40,7 @@ In addition to GitHub's filters, gh-dash adds templating functions.
 
 The `nowModify` function helps you calculate relative dates in the ISO-8601 format (which is what GitHub expects).
 
-Given the date today is 2025-02-02, a search filter of `updated>={{ nowModify "-1mo" }}` will output `updated>=2025-01-02`.
+Given the date today is 2025-02-02, a search filter of `updated:>={{ nowModify "-1mo" }}` will output `updated:>=2025-01-02`.
 
 A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as `1w`, `-8h` or `1mo2w`.
 
