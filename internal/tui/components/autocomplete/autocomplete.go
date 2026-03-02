@@ -16,13 +16,20 @@ import (
 	"github.com/sahilm/fuzzy"
 )
 
-// suggestionList wraps a slice of strings to implement fuzzy.Source
+// Suggestion represents an autocomplete entry
+// Value is the text inserted into the input; Detail is optional display-only context
+type Suggestion struct {
+	Value  string
+	Detail string
+}
+
+// suggestionList wraps a slice of suggestions to implement fuzzy.Source
 type suggestionList struct {
-	items []string
+	items []Suggestion
 }
 
 func (s suggestionList) String(i int) string {
-	return s.items[i]
+	return s.items[i].Value
 }
 
 type FetchState int
@@ -73,8 +80,8 @@ func NewFetchSuggestionsRequestedCmd(force bool) tea.Cmd {
 type Model struct {
 	ctx            *context.ProgramContext
 	suggestionHelp help.Model
-	suggestions    []string
-	filtered       []string
+	suggestions    []Suggestion
+	filtered       []Suggestion
 	selected       int
 	visible        bool
 	maxVisible     int
@@ -106,7 +113,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m *Model) SetSuggestions(suggestions []string) {
+func (m *Model) SetSuggestions(suggestions []Suggestion) {
 	m.suggestions = suggestions
 }
 
@@ -117,9 +124,9 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 	}
 
 	// Filter excluded items first
-	var filteredSuggestions []string
+	filteredSuggestions := make([]Suggestion, 0, len(m.suggestions))
 	for _, suggestion := range m.suggestions {
-		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion))] {
+		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion.Value))] {
 			filteredSuggestions = append(filteredSuggestions, suggestion)
 		}
 	}
@@ -140,16 +147,12 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 	matches := fuzzy.FindFrom(currentItem, list)
 
 	// Collect matched items up to maxResults
-	m.filtered = make([]string, 0, m.maxVisible)
+	m.filtered = make([]Suggestion, 0, m.maxVisible)
 	for _, match := range matches {
 		if len(m.filtered) >= m.maxVisible {
 			break
 		}
-		m.filtered = append(m.filtered, match.Str)
-	}
-
-	for len(m.filtered) < m.maxVisible {
-		m.filtered = append(m.filtered, "")
+		m.filtered = append(m.filtered, filteredSuggestions[match.Index])
 	}
 
 	m.selected = 0
@@ -159,7 +162,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 
 func (m *Model) Selected() string {
 	if m.selected >= 0 && m.selected < len(m.filtered) {
-		return m.filtered[m.selected]
+		return m.filtered[m.selected].Value
 	}
 	return ""
 }
@@ -221,6 +224,41 @@ func (m *Model) SetWidth(width int) {
 	m.width = max(0, width)
 }
 
+type columnLayout struct {
+	valueWidth  int
+	detailWidth int
+	gapWidth    int
+}
+
+func (m *Model) computeColumnLayout(numVisible, totalContentWidth int) columnLayout {
+	layout := columnLayout{
+		valueWidth: totalContentWidth,
+	}
+
+	maxValueWidth := 0
+	hasAnyDetail := false
+	for i := 0; i < numVisible; i++ {
+		suggestion := m.filtered[i]
+		maxValueWidth = max(maxValueWidth, lipgloss.Width(suggestion.Value))
+		hasAnyDetail = hasAnyDetail || strings.TrimSpace(suggestion.Detail) != ""
+	}
+	if !hasAnyDetail || totalContentWidth <= 0 {
+		return layout
+	}
+
+	layout.gapWidth = min(constants.AutocompleteColumnGap, max(0, totalContentWidth-constants.AutocompleteMinDetailWidth))
+	maxValueForDetails := max(0, totalContentWidth-layout.gapWidth-constants.AutocompleteMinDetailWidth)
+	if maxValueForDetails <= 0 {
+		return layout
+	}
+
+	preferredValueWidth := min(maxValueWidth, max(constants.AutocompleteMinValueWidth, (totalContentWidth*constants.AutocompletePreferredValueRatioNum)/constants.AutocompletePreferredValueRatioDen))
+	layout.valueWidth = max(1, min(preferredValueWidth, maxValueForDetails))
+	layout.detailWidth = max(0, totalContentWidth-layout.valueWidth-layout.gapWidth)
+
+	return layout
+}
+
 func (m *Model) View() string {
 	if !m.visible || len(m.filtered) == 0 {
 		return ""
@@ -232,21 +270,44 @@ func (m *Model) View() string {
 
 	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle.Width(m.width)
 	maxLabelWidth := m.width - popupStyle.GetHorizontalPadding()
+
+	selectedPrefix := constants.SelectionIcon + " "
+	normalPrefix := "  "
+	selectedPrefixWidth := lipgloss.Width(selectedPrefix)
+	normalPrefixWidth := lipgloss.Width(normalPrefix)
+	maxPrefixWidth := max(selectedPrefixWidth, normalPrefixWidth)
+	totalContentWidth := max(0, maxLabelWidth-maxPrefixWidth)
+	layout := m.computeColumnLayout(numVisible, totalContentWidth)
+	valueColumnStyle := lipgloss.NewStyle().Width(layout.valueWidth)
+	detailColumnStyle := lipgloss.NewStyle().Width(layout.detailWidth).Foreground(m.ctx.Theme.FaintText)
 	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
 
-	for i := 0; i < numVisible && i < len(m.filtered); i++ {
-		label := m.filtered[i]
-		if len(label) > maxLabelWidth {
-			label = ansi.Truncate(label, maxLabelWidth-ellipsisWidth, constants.Ellipsis)
+	for i := 0; i < numVisible; i++ {
+		suggestion := m.filtered[i]
+		value := suggestion.Value
+		detail := suggestion.Detail
+
+		if layout.valueWidth > 0 && lipgloss.Width(value) > layout.valueWidth {
+			value = ansi.Truncate(value, max(0, layout.valueWidth-ellipsisWidth), constants.Ellipsis)
+		}
+		if layout.detailWidth > 0 && lipgloss.Width(detail) > layout.detailWidth {
+			detail = ansi.Truncate(detail, max(0, layout.detailWidth-ellipsisWidth), constants.Ellipsis)
 		}
 
-		// Style based on selection
+		rowText := value
+		if layout.detailWidth > 0 {
+			rowText = lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				valueColumnStyle.Render(value),
+				strings.Repeat(" ", layout.gapWidth),
+				detailColumnStyle.Render(detail),
+			)
+		}
+
 		if i == m.selected {
-			// Selected row - use inverted colors
-			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + " " + label))
+			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(selectedPrefix + rowText))
 		} else {
-			// Non-selected row
-			b.WriteString("  " + label)
+			b.WriteString(normalPrefix + rowText)
 		}
 
 		if i < numVisible-1 {
@@ -283,9 +344,9 @@ func (m *Model) SetFetchLoading() tea.Cmd {
 	m.fetchState = FetchStateLoading
 	m.fetchError = nil
 
-	placeholders := make([]string, 0, m.maxVisible)
+	placeholders := make([]Suggestion, 0, m.maxVisible)
 	for i := 0; i < m.maxVisible; i++ {
-		placeholders = append(placeholders, "")
+		placeholders = append(placeholders, Suggestion{})
 	}
 	m.filtered = placeholders
 	m.selected = 0

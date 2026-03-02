@@ -50,8 +50,9 @@ type IssueReactions struct {
 }
 
 type Label struct {
-	Color string
-	Name  string
+	Color       string
+	Name        string
+	Description string
 }
 
 type IssueLabels struct {

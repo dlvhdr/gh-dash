@@ -95,8 +95,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 	case RepoLabelsFetchedMsg:
 		clearCmd := m.ac.SetFetchSuccess()
 		m.repoLabels = msg.Labels
-		labelNames := data.LabelNames(msg.Labels)
-		m.ac.SetSuggestions(labelNames)
+		m.ac.SetSuggestions(labelSuggestions(msg.Labels))
 		if m.isLabeling {
 			currentLabel := m.inputBox.CurrentAutocompleteContext()
 			m.ac.Show(currentLabel.Content, m.inputBox.AutocompleteItemsToExclude())
@@ -110,8 +109,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 	case RepoUsersFetchedMsg:
 		clearCmd := m.ac.SetFetchSuccess()
 		m.repoUsers = msg.Users
-		userLogins := data.UserLogins(msg.Users)
-		m.ac.SetSuggestions(userLogins)
+		m.ac.SetSuggestions(userSuggestions(msg.Users))
 		if m.isCommenting {
 			mention := m.inputBox.CurrentAutocompleteContext()
 			if mention.Content != "" {
@@ -495,7 +493,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
 		if users, ok := data.CachedRepoUsers(repoName); ok {
 			m.repoUsers = users
-			m.ac.SetSuggestions(data.UserLogins(users))
+			m.ac.SetSuggestions(userSuggestions(users))
 			mention := m.inputBox.CurrentAutocompleteContext()
 			if mention.Content != "" {
 				m.ac.Show(mention.Content, m.inputBox.AutocompleteItemsToExclude())
@@ -535,7 +533,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		repoName := m.issue.Data.GetRepoNameWithOwner()
 		if users, ok := data.CachedRepoUsers(repoName); ok {
 			m.repoUsers = users
-			m.ac.SetSuggestions(data.UserLogins(users))
+			m.ac.SetSuggestions(userSuggestions(users))
 			currentWord := m.inputBox.CurrentAutocompleteContext()
 			m.ac.Show(currentWord.Content, m.inputBox.AutocompleteItemsToExclude())
 			return tea.Sequence(m.fetchUsers(), textarea.Blink, m.inputBox.Focus())
@@ -575,7 +573,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		if labels, ok := data.CachedRepoLabels(repoName); ok {
 			// Use cached labels
 			m.repoLabels = labels
-			m.ac.SetSuggestions(data.LabelNames(labels))
+			m.ac.SetSuggestions(labelSuggestions(labels))
 			currentLabel := m.inputBox.CurrentAutocompleteContext()
 			m.ac.Show(currentLabel.Content, m.inputBox.AutocompleteItemsToExclude())
 			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -675,4 +673,26 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
 	m.ac.UpdateProgramContext(ctx)
+}
+
+func userSuggestions(users []data.User) []popupautocomplete.Suggestion {
+	suggestions := make([]popupautocomplete.Suggestion, 0, len(users))
+	for _, user := range users {
+		suggestions = append(suggestions, popupautocomplete.Suggestion{
+			Value:  user.Login,
+			Detail: strings.TrimSpace(user.Name),
+		})
+	}
+	return suggestions
+}
+
+func labelSuggestions(labels []data.Label) []popupautocomplete.Suggestion {
+	suggestions := make([]popupautocomplete.Suggestion, 0, len(labels))
+	for _, label := range labels {
+		suggestions = append(suggestions, popupautocomplete.Suggestion{
+			Value:  label.Name,
+			Detail: strings.TrimSpace(label.Description),
+		})
+	}
+	return suggestions
 }
