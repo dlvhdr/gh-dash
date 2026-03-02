@@ -7,17 +7,14 @@ import (
 	"strings"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/spinner"
-	"charm.land/bubbles/v2/textarea"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
-	popupautocomplete "github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/detailedit"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -34,378 +31,92 @@ var (
 	foldBodyHeight   = 8
 )
 
-// RepoLabelsFetchedMsg is sent when repository labels are successfully fetched
-type RepoLabelsFetchedMsg struct {
-	Labels []data.Label
-}
-
-// RepoLabelsFetchFailedMsg is sent when repository label fetching fails
-type RepoLabelsFetchFailedMsg struct {
-	Err error
-}
-
-// RepoUsersFetchedMsg is sent when repository users are successfully fetched
-type RepoUsersFetchedMsg struct {
-	Users []data.User
-}
-
-// RepoUsersFetchFailedMsg is sent when repository user fetching fails
-type RepoUsersFetchFailedMsg struct {
-	Err error
-}
-
 type Model struct {
-	ctx       *context.ProgramContext
-	sectionId int
-	pr        *prrow.PullRequest
-	width     int
-	carousel  carousel.Model
-
-	ShowConfirmCancel bool
-	isCommenting      bool
-	isApproving       bool
-	isAssigning       bool
-	isUnassigning     bool
-	isLabeling        bool
-	summaryViewMore   bool
-
-	inputBox   inputbox.Model
-	ac         *popupautocomplete.Model
-	repoLabels []data.Label
-	repoUsers  []data.User
+	ctx             *context.ProgramContext
+	sectionId       int
+	pr              *prrow.PullRequest
+	width           int
+	carousel        carousel.Model
+	editor          detailedit.Controller
+	summaryViewMore bool
 }
 
 var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
 func NewModel(ctx *context.ProgramContext) Model {
-	inputBox := inputbox.NewModel(ctx)
-
-	// Set up autocomplete for labeling
-	ac := popupautocomplete.NewModel(ctx)
-	inputBox.SetAutocompleteSource(dataautocomplete.LabelSource{})
-	inputBox.SetAutocomplete(&ac)
-
 	c := carousel.New(
 		carousel.WithItems(tabs),
 		carousel.WithWidth(ctx.MainContentWidth),
 	)
 
 	return Model{
-		pr: nil,
-
-		isCommenting:  false,
-		isApproving:   false,
-		isAssigning:   false,
-		isUnassigning: false,
-		isLabeling:    false,
-		carousel:      c,
-
-		inputBox:   inputBox,
-		ac:         &ac,
-		repoLabels: nil,
-		repoUsers:  nil,
+		pr:       nil,
+		carousel: c,
+		editor:   detailedit.New(ctx),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var (
-		cmds  []tea.Cmd
-		cmd   tea.Cmd
-		taCmd tea.Cmd
-	)
+	editor, cmd, submit, handled := m.editor.Update(msg)
+	m.editor = editor
 
-	switch msg := msg.(type) {
-	case RepoLabelsFetchedMsg:
-		clearCmd := m.ac.SetFetchSuccess()
-		m.repoLabels = msg.Labels
-		// Only set suggestions and show if we're actually in labeling mode
-		if m.isLabeling {
-			m.ac.SetSuggestions(labelSuggestions(msg.Labels))
-			currentLabel := m.inputBox.CurrentAutocompleteContext()
-			m.ac.Show(currentLabel.Content, m.inputBox.AutocompleteItemsToExclude())
+	if submit != nil {
+		if m.pr == nil {
+			return m, nil
 		}
-		return m, clearCmd
 
-	case RepoLabelsFetchFailedMsg:
-		clearCmd := m.ac.SetFetchError(msg.Err)
-		return m, clearCmd
+		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
 
-	case RepoUsersFetchedMsg:
-		clearCmd := m.ac.SetFetchSuccess()
-		m.repoUsers = msg.Users
-		// Only set suggestions if we're in a mode that uses user suggestions
-		if m.isCommenting || m.isApproving || m.isAssigning {
-			m.ac.SetSuggestions(userSuggestions(msg.Users))
-			if m.isCommenting {
-				mention := m.inputBox.CurrentAutocompleteContext()
-				if mention != (dataautocomplete.Context{}) {
-					m.ac.Show(mention.Content, m.inputBox.AutocompleteItemsToExclude())
-				}
-			} else if m.isApproving || m.isAssigning {
-				word := m.inputBox.CurrentAutocompleteContext()
-				m.ac.Show(word.Content, m.inputBox.AutocompleteItemsToExclude())
+		switch submit.Mode {
+		case detailedit.ModeComment:
+			if len(strings.TrimSpace(submit.Value)) != 0 {
+				return m, tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, submit.Value)
 			}
+			return m, nil
+
+		case detailedit.ModeApprove:
+			comment := ""
+			if len(strings.TrimSpace(submit.Value)) != 0 {
+				comment = submit.Value
+			}
+			return m, tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
+
+		case detailedit.ModeAssign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
+			}
+			return m, nil
+
+		case detailedit.ModeUnassign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
+			}
+			return m, nil
+
+		case detailedit.ModeLabel:
+			labels := dataautocomplete.CurrentLabels(submit.Value)
+			if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
+				return m, m.label(labels)
+			}
+			return m, nil
 		}
-		return m, clearCmd
+	}
+	if handled {
+		return m, cmd
+	}
 
-	case RepoUsersFetchFailedMsg:
-		clearCmd := m.ac.SetFetchError(msg.Err)
-		return m, clearCmd
-
-	case popupautocomplete.FetchSuggestionsRequestedMsg:
-		if m.isLabeling {
-			// If this is a forced refresh (e.g., via Ctrl+f), clear the cached labels
-			// for this repo so FetchRepoLabels will actually call the gh CLI.
-			if msg.Force {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoLabelCache(repoName)
-				}
-			}
-			cmd := m.fetchLabels()
-			return m, cmd
-		} else if m.isCommenting || m.isApproving {
-			// If this is a forced refresh (e.g., via Ctrl+f), clear the cached users
-			// for this repo so FetchRepoCollaborators will actually call the gh CLI.
-			if msg.Force {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoUserCache(repoName)
-				}
-			}
-			cmd := m.fetchUsers()
-			return m, cmd
-		}
-		return m, nil
-
-	case tea.KeyMsg:
-		if m.isCommenting {
-			switch msg.String() {
-			case "ctrl+d":
-				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
-				}
-				m.inputBox.Blur()
-				m.isCommenting = false
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				if !m.ShowConfirmCancel {
-					m.shouldCancelComment()
-				}
-
-			default:
-				if msg.String() == "Y" || msg.String() == "y" {
-					if m.shouldCancelComment() {
-						return m, nil
-					}
-				}
-				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(constants.CommentPrompt)
-					m.ShowConfirmCancel = false
-					return m, nil
-				}
-				m.inputBox.SetPrompt(constants.CommentPrompt)
-				m.ShowConfirmCancel = false
-			}
-
-			if key.Matches(msg, popupautocomplete.RefreshSuggestionsKey) {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoUserCache(repoName)
-				}
-				cmds = append(cmds, m.fetchUsers())
-			}
-
-			// Track @-mention context before and after the keystroke
-			previousCursorPos := m.inputBox.CursorPosition()
-			previousValue := m.inputBox.Value()
-			previousMention := dataautocomplete.UserMentionSource{}.ExtractContext(previousValue, previousCursorPos)
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-
-			// Check for @-mention context change after the keystroke
-			currentMention := m.inputBox.CurrentAutocompleteContext()
-
-			if currentMention != previousMention {
-				if currentMention != (dataautocomplete.Context{}) {
-					// User is typing an @-mention, show autocomplete
-					m.ac.Show(currentMention.Content, m.inputBox.AutocompleteItemsToExclude())
-				} else {
-					// No longer in an @-mention context
-					m.ac.Hide()
-				}
-			}
-		} else if m.isApproving {
-			switch msg.String() {
-			case "ctrl+d":
-				comment := ""
-				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					comment = m.inputBox.Value()
-				}
-				sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
-				m.inputBox.Blur()
-				m.isApproving = false
-				m.ac.Hide()
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				if m.shouldCancelComment() {
-					return m, nil
-				}
-			default:
-				m.inputBox.SetPrompt(constants.ApprovalPrompt)
-				m.ShowConfirmCancel = false
-			}
-
-			if key.Matches(msg, popupautocomplete.RefreshSuggestionsKey) {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoUserCache(repoName)
-				}
-				cmds = append(cmds, m.fetchUsers())
-			}
-
-			// Track current user context before and after the keystroke
-			previousCursorPos := m.inputBox.CursorPosition()
-			previousValue := m.inputBox.Value()
-			previousUser := dataautocomplete.WhitespaceSource{}.ExtractContext(previousValue, previousCursorPos)
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-
-			// Check for user context change after the keystroke
-			currentUser := m.inputBox.CurrentAutocompleteContext()
-
-			if currentUser.Content != previousUser.Content {
-				// Always show autocomplete for approve mode (even with empty word)
-				m.ac.Show(currentUser.Content, m.inputBox.AutocompleteItemsToExclude())
-			}
-		} else if m.isAssigning {
-			switch msg.String() {
-			case "ctrl+d":
-				usernames := dataautocomplete.AllWords(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
-				}
-				m.inputBox.Blur()
-				m.isAssigning = false
-				m.ac.Hide()
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				m.inputBox.Blur()
-				m.isAssigning = false
-				m.ac.Hide()
-				return m, nil
-			}
-
-			if key.Matches(msg, popupautocomplete.RefreshSuggestionsKey) {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoUserCache(repoName)
-				}
-				cmds = append(cmds, m.fetchUsers())
-			}
-
-			// Track current word context before and after the keystroke
-			previousCursorPos := m.inputBox.CursorPosition()
-			previousValue := m.inputBox.Value()
-			previousWord := dataautocomplete.WhitespaceSource{}.ExtractContext(previousValue, previousCursorPos)
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-
-			// Check for word context change after the keystroke
-			currentWord := m.inputBox.CurrentAutocompleteContext()
-
-			if currentWord.Content != previousWord.Content {
-				// Always show autocomplete for assign mode (even with empty word)
-				m.ac.Show(currentWord.Content, m.inputBox.AutocompleteItemsToExclude())
-			}
-		} else if m.isUnassigning {
-			switch msg.String() {
-			case "ctrl+d":
-				usernames := dataautocomplete.AllWords(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
-				}
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, nil
-			}
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isLabeling {
-			switch msg.String() {
-			case "ctrl+d":
-				labels := dataautocomplete.CurrentLabels(m.inputBox.Value())
-				if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
-					cmd = m.label(labels)
-				}
-				m.inputBox.Blur()
-				m.isLabeling = false
-				m.ac.Hide()
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				m.inputBox.Blur()
-				m.isLabeling = false
-				m.ac.Hide()
-				return m, nil
-			}
-
-			if key.Matches(msg, popupautocomplete.RefreshSuggestionsKey) {
-				if m.pr != nil {
-					repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-					data.ClearRepoLabelCache(repoName)
-				}
-				cmds = append(cmds, m.fetchLabels())
-			}
-
-			// Track label context before and after the keystroke
-			previousCursorPos := m.inputBox.CursorPosition()
-			previousValue := m.inputBox.Value()
-			previousLabel := dataautocomplete.LabelSource{}.ExtractContext(previousValue, previousCursorPos)
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-
-			// Check for label context change after the keystroke
-			currentLabel := m.inputBox.CurrentAutocompleteContext()
-
-			if currentLabel.Content != previousLabel.Content {
-				m.ac.Show(currentLabel.Content, m.inputBox.AutocompleteItemsToExclude())
-			}
-		} else {
-			switch {
-			case key.Matches(msg, keys.PRKeys.PrevSidebarTab):
-				m.carousel.MoveLeft()
-			case key.Matches(msg, keys.PRKeys.NextSidebarTab):
-				m.carousel.MoveRight()
-			}
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch {
+		case key.Matches(keyMsg, keys.PRKeys.PrevSidebarTab):
+			m.carousel.MoveLeft()
+		case key.Matches(keyMsg, keys.PRKeys.NextSidebarTab):
+			m.carousel.MoveRight()
 		}
 	}
 
-	switch msg.(type) {
-	case spinner.TickMsg, popupautocomplete.ClearFetchStatusMsg:
-		var acCmd tea.Cmd
-		*m.ac, acCmd = m.ac.Update(msg)
-		cmds = append(cmds, acCmd)
-	}
-
-	return m, tea.Batch(cmds...)
+	return m, cmd
 }
 
 func (m Model) View() string {
@@ -458,10 +169,8 @@ func (m Model) View() string {
 		body.WriteString("\n")
 		body.WriteString(m.renderChecksOverview())
 
-		if m.isCommenting || m.isApproving || m.isLabeling || m.isAssigning {
-			body.WriteString(m.inputBox.ViewWithAutocomplete())
-		} else if m.isUnassigning {
-			body.WriteString(m.inputBox.View())
+		if editorView := m.editor.View(); editorView != "" {
+			body.WriteString(editorView)
 		}
 
 	case tabs[1]:
@@ -837,22 +546,20 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.carousel.SetWidth(width)
-	m.inputBox.SetWidth(width)
-	m.ac.SetWidth(width - 4)
+	m.editor.SetWidth(width)
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isApproving || m.isUnassigning || m.isLabeling
+	return m.editor.Active()
 }
 
 func (m *Model) GetIsCommenting() bool {
-	return m.isCommenting
+	return m.editor.Mode() == detailedit.ModeComment
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.inputBox.UpdateProgramContext(ctx)
-	m.ac.UpdateProgramContext(ctx)
+	m.editor.UpdateProgramContext(ctx)
 	m.carousel.SetStyles(
 		carousel.Styles{
 			Item:     lipgloss.NewStyle().Padding(0, 1).Foreground(m.ctx.Theme.FaintText),
@@ -861,51 +568,30 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	)
 }
 
-func (m *Model) shouldCancelComment() bool {
-	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
-		)
-		m.ShowConfirmCancel = true
-		return false
-	}
-	m.inputBox.Blur()
-	m.isCommenting = false
-	m.isApproving = false
-	m.ac.Hide()
-	m.ShowConfirmCancel = false
-	return true
-}
-
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	if m.pr == nil {
 		return nil
 	}
 
-	if !m.isCommenting && isCommenting {
-		m.inputBox.Reset()
-		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
-
-		m.inputBox.SetAutocompleteSource(dataautocomplete.UserMentionSource{})
-	}
-	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt(constants.CommentPrompt)
-
-	if isCommenting {
-		// Fetch users for autocomplete if not already cached
-		repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-		if users, ok := data.CachedRepoUsers(repoName); ok {
-			m.repoUsers = users
-			m.ac.SetSuggestions(userSuggestions(users))
-			mention := m.inputBox.CurrentAutocompleteContext()
-			if mention != (dataautocomplete.Context{}) {
-				m.ac.Show(mention.Content, m.inputBox.AutocompleteItemsToExclude())
-			}
-			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	if !isCommenting {
+		if m.editor.Mode() == detailedit.ModeComment {
+			m.editor = m.editor.Exit()
 		}
-		return tea.Sequence(m.fetchUsersSilent(), textarea.Blink, m.inputBox.Focus())
+		return nil
 	}
-	return nil
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeComment,
+		Prompt:                           constants.CommentPrompt,
+		Source:                           dataautocomplete.UserMentionSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: true,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) getIndentedContentWidth() int {
@@ -913,7 +599,7 @@ func (m *Model) getIndentedContentWidth() int {
 }
 
 func (m *Model) GetIsApproving() bool {
-	return m.isApproving
+	return m.editor.Mode() == detailedit.ModeApprove
 }
 
 func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
@@ -921,33 +607,30 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isApproving && isApproving {
-		m.ac.Reset()
-		m.inputBox.Reset()
-
-		m.inputBox.SetAutocompleteSource(dataautocomplete.WhitespaceSource{})
-	}
-	m.isApproving = isApproving
-	m.inputBox.SetPrompt(constants.ApprovalPrompt)
-	m.inputBox.SetValue(m.ctx.Config.Defaults.PrApproveComment)
-
-	if isApproving {
-		repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-		if users, ok := data.CachedRepoUsers(repoName); ok {
-			m.repoUsers = users
-			m.ac.SetSuggestions(userSuggestions(users))
-			currentWord := m.inputBox.CurrentAutocompleteContext()
-			m.ac.Show(currentWord.Content, m.inputBox.AutocompleteItemsToExclude())
-			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	if !isApproving {
+		if m.editor.Mode() == detailedit.ModeApprove {
+			m.editor = m.editor.Exit()
 		}
-		// Fetch users asynchronously in background (no loading UI)
-		return tea.Sequence(m.fetchUsers(), textarea.Blink, m.inputBox.Focus())
+		return nil
 	}
-	return nil
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeApprove,
+		Prompt:                           constants.ApprovalPrompt,
+		InitialValue:                     m.ctx.Config.Defaults.PrApproveComment,
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) GetIsAssigning() bool {
-	return m.isAssigning
+	return m.editor.Mode() == detailedit.ModeAssign
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
@@ -955,35 +638,30 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isAssigning && isAssigning {
-		m.inputBox.Reset()
-		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
-
-		m.inputBox.SetAutocompleteSource(dataautocomplete.WhitespaceSource{})
-	}
-	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt(constants.AssignPrompt)
-	if !m.userAssignedToPr(m.ctx.User) {
-		m.inputBox.SetValue(m.ctx.User)
-	}
-
-	// Reset autocomplete
-	m.ac.Hide()
-	m.ac.SetSuggestions(nil)
-
-	if isAssigning {
-		repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-		if users, ok := data.CachedRepoUsers(repoName); ok {
-			m.repoUsers = users
-			m.ac.SetSuggestions(userSuggestions(users))
-			currentWord := m.inputBox.CurrentAutocompleteContext()
-			m.ac.Show(currentWord.Content, m.inputBox.AutocompleteItemsToExclude())
-			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	if !isAssigning {
+		if m.editor.Mode() == detailedit.ModeAssign {
+			m.editor = m.editor.Exit()
 		}
-		// Fetch users asynchronously in background (no loading UI)
-		return tea.Sequence(m.fetchUsers(), textarea.Blink, m.inputBox.Focus())
+		return nil
 	}
-	return nil
+
+	initialValue := ""
+	if !m.userAssignedToPr(m.ctx.User) {
+		initialValue = m.ctx.User
+	}
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeAssign,
+		Prompt:                           constants.AssignPrompt,
+		InitialValue:                     initialValue,
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) userAssignedToPr(login string) bool {
@@ -996,7 +674,7 @@ func (m *Model) userAssignedToPr(login string) bool {
 }
 
 func (m *Model) GetIsUnassigning() bool {
-	return m.isUnassigning
+	return m.editor.Mode() == detailedit.ModeUnassign
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
@@ -1004,17 +682,21 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isUnassigning && isUnassigning {
-		m.inputBox.Reset()
+	if !isUnassigning {
+		if m.editor.Mode() == detailedit.ModeUnassign {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt(constants.UnassignPrompt)
-	m.inputBox.SetValue(strings.Join(m.prAssignees(), "\n"))
 
-	if isUnassigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:         detailedit.ModeUnassign,
+		Prompt:       constants.UnassignPrompt,
+		InitialValue: strings.Join(m.prAssignees(), "\n"),
+		Repo:         m.repoRef(),
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) prAssignees() []string {
@@ -1053,7 +735,7 @@ func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
 }
 
 func (m *Model) GetIsLabeling() bool {
-	return m.isLabeling
+	return m.editor.Mode() == detailedit.ModeLabel
 }
 
 // SetIsLabeling enters or exits labeling mode
@@ -1062,117 +744,38 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isLabeling && isLabeling {
-		m.inputBox.Reset()
-
-		m.inputBox.SetAutocompleteSource(dataautocomplete.LabelSource{})
+	if !isLabeling {
+		if m.editor.Mode() == detailedit.ModeLabel {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isLabeling = isLabeling
-	m.inputBox.SetPrompt(constants.LabelPrompt)
 
-	// Pre-populate with current labels
-	labels := make([]string, 0)
+	labels := make([]string, 0, len(m.pr.Data.Primary.Labels.Nodes)+1)
 	for _, label := range m.pr.Data.Primary.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
 	labels = append(labels, "")
-	m.inputBox.SetValue(strings.Join(labels, ", "))
 
-	// Reset autocomplete
-	m.ac.Hide()
-	m.ac.SetSuggestions(nil)
-
-	// Trigger label fetching for autocomplete
-	if isLabeling {
-		repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-		if labels, ok := data.CachedRepoLabels(repoName); ok {
-			// Use cached labels
-			m.repoLabels = labels
-			m.ac.SetSuggestions(labelSuggestions(labels))
-			currentLabel := m.inputBox.CurrentAutocompleteContext()
-			m.ac.Show(currentLabel.Content, m.inputBox.AutocompleteItemsToExclude())
-			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-		} else {
-			// Fetch labels asynchronously
-			return tea.Sequence(m.fetchLabels(), textarea.Blink, m.inputBox.Focus())
-		}
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeLabel,
+		Prompt:                           constants.LabelPrompt,
+		InitialValue:                     strings.Join(labels, ", "),
+		Source:                           dataautocomplete.LabelSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionLabels,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
-// fetchLabels returns a command to fetch repository labels
-func (m *Model) fetchLabels() tea.Cmd {
-	spinnerTickCmd := m.ac.SetFetchLoading()
-
-	fetchCmd := func() tea.Msg {
-		repoName := m.pr.Data.Primary.GetRepoNameWithOwner()
-		labels, err := data.FetchRepoLabels(repoName)
-		if err != nil {
-			return RepoLabelsFetchFailedMsg{Err: err}
-		}
-		return RepoLabelsFetchedMsg{Labels: labels}
+func (m *Model) repoRef() detailedit.RepoRef {
+	owner, repo := m.pr.Data.Primary.GetRepoNameAndOwner()
+	return detailedit.RepoRef{
+		NameWithOwner: m.pr.Data.Primary.GetRepoNameWithOwner(),
+		Owner:         owner,
+		Name:          repo,
 	}
-
-	return tea.Batch(spinnerTickCmd, fetchCmd)
-}
-
-// fetchUsers returns a command to fetch repository users for @-mention autocomplete
-// This shows a loading UI - use when user explicitly requests a refresh (e.g., Ctrl+f)
-func (m *Model) fetchUsers() tea.Cmd {
-	spinnerTickCmd := m.ac.SetFetchLoading()
-
-	fetchCmd := func() tea.Msg {
-		owner, repoName := m.pr.Data.Primary.GetRepoNameAndOwner()
-		users, err := data.FetchRepoUsers(owner, repoName)
-		if err != nil {
-			return RepoUsersFetchFailedMsg{Err: err}
-		}
-		return RepoUsersFetchedMsg{Users: users}
-	}
-
-	return tea.Batch(spinnerTickCmd, fetchCmd)
-}
-
-// fetchUsersSilent returns a command to fetch repository users without showing loading UI
-// Use this for background fetching when entering commenting/approving modes
-func (m *Model) fetchUsersSilent() tea.Cmd {
-	return func() tea.Msg {
-		owner, repoName := m.pr.Data.Primary.GetRepoNameAndOwner()
-		users, err := data.FetchRepoUsers(owner, repoName)
-		if err != nil {
-			return RepoUsersFetchFailedMsg{Err: err}
-		}
-		return RepoUsersFetchedMsg{Users: users}
-	}
-}
-
-// prLabels returns the current labels of the PR as a slice of strings
-func (m *Model) prLabels() []string {
-	var labels []string
-	for _, n := range m.pr.Data.Primary.Labels.Nodes {
-		labels = append(labels, n.Name)
-	}
-	return labels
-}
-
-func userSuggestions(users []data.User) []popupautocomplete.Suggestion {
-	suggestions := make([]popupautocomplete.Suggestion, 0, len(users))
-	for _, user := range users {
-		suggestions = append(suggestions, popupautocomplete.Suggestion{
-			Value:  user.Login,
-			Detail: strings.TrimSpace(user.Name),
-		})
-	}
-	return suggestions
-}
-
-func labelSuggestions(labels []data.Label) []popupautocomplete.Suggestion {
-	suggestions := make([]popupautocomplete.Suggestion, 0, len(labels))
-	for _, label := range labels {
-		suggestions = append(suggestions, popupautocomplete.Suggestion{
-			Value:  label.Name,
-			Detail: strings.TrimSpace(label.Description),
-		})
-	}
-	return suggestions
 }
