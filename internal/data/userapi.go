@@ -1,10 +1,8 @@
 package data
 
 import (
-	"fmt"
 	"sync"
 
-	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 )
@@ -36,19 +34,12 @@ func CachedRepoUsers(repoNameWithOwner string) ([]User, bool) {
 // FetchRepoUsers fetches users that can be mentioned in a repository.
 // It uses the publicly available mentionableUsers field which includes
 // anyone who can interact with the repository (issue/PR authors, commenters, etc.)
-func FetchRepoUsers(repoNameWithOwner string) ([]User, error) {
+func FetchRepoUsers(owner, repoName string) ([]User, error) {
 	// Check cache first
-	if cachedUsers, ok := CachedRepoUsers(repoNameWithOwner); ok {
-		log.Debug("FetchRepoUsers: cache hit", "repo", repoNameWithOwner, "count", len(cachedUsers))
+	repo := owner + "/" + repoName
+	if cachedUsers, ok := CachedRepoUsers(repo); ok {
 		return cachedUsers, nil
 	}
-	log.Debug("FetchRepoUsers: cache miss", "repo", repoNameWithOwner)
-
-	parts := splitRepoName(repoNameWithOwner)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid repo name format: %s", repoNameWithOwner)
-	}
-	owner, name := parts[0], parts[1]
 
 	// Initialize client if needed
 	if client == nil {
@@ -59,20 +50,17 @@ func FetchRepoUsers(repoNameWithOwner string) ([]User, error) {
 		}
 	}
 
-	log.Debug("FetchRepoUsers: executing GraphQL query", "repo", repoNameWithOwner)
-
 	// Query only publicly available mentionable users
 	// This includes anyone who has interacted with the repo (issues, PRs, comments)
 	var result MentionableUsersResponse
 	variables := map[string]any{
 		"owner": graphql.String(owner),
-		"name":  graphql.String(name),
+		"name":  graphql.String(repoName),
 		"limit": graphql.Int(100),
 	}
 
 	err := client.Query("GetMentionableUsers", &result, variables)
 	if err != nil {
-		log.Error("FetchRepoUsers: GraphQL query failed", "repo", repoNameWithOwner, "err", err)
 		return nil, err
 	}
 
@@ -81,10 +69,7 @@ func FetchRepoUsers(repoNameWithOwner string) ([]User, error) {
 	userCacheMu.Lock()
 	defer userCacheMu.Unlock()
 
-	repoUserCache[repoNameWithOwner] = users
-	log.Info("FetchRepoUsers: successfully fetched mentionable users",
-		"repo", repoNameWithOwner,
-		"count", len(users))
+	repoUserCache[repo] = users
 	return users, nil
 }
 
