@@ -180,13 +180,11 @@ func (s *NotificationIDStore) Flush() error {
 	return s.save()
 }
 
-// Singletons for bookmark and done stores
+// Singleton for bookmark store
 
 var (
 	bookmarkStore     *NotificationIDStore
 	bookmarkStoreOnce sync.Once
-	doneStore         *NotificationIDStore
-	doneStoreOnce     sync.Once
 )
 
 // GetBookmarkStore returns the singleton bookmark store
@@ -195,14 +193,6 @@ func GetBookmarkStore() *NotificationIDStore {
 		bookmarkStore = newNotificationIDStore("bookmarks.json", "bookmarks")
 	})
 	return bookmarkStore
-}
-
-// GetDoneStore returns the singleton done store
-func GetDoneStore() *NotificationIDStore {
-	doneStoreOnce.Do(func() {
-		doneStore = newNotificationIDStore("done.json", "done notifications")
-	})
-	return doneStore
 }
 
 // Convenience methods for BookmarkStore (maintains API compatibility)
@@ -220,16 +210,4 @@ func (s *NotificationIDStore) ToggleBookmark(id string) bool {
 // GetBookmarkedIds returns all bookmarked IDs
 func (s *NotificationIDStore) GetBookmarkedIds() []string {
 	return s.GetAll()
-}
-
-// Convenience methods for DoneStore
-
-// IsDone checks if a notification is marked as done
-func (s *NotificationIDStore) IsDone(id string) bool {
-	return s.Has(id)
-}
-
-// MarkDone marks a notification as done
-func (s *NotificationIDStore) MarkDone(id string) {
-	s.Add(id)
 }
