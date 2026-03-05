@@ -14,7 +14,7 @@ defaults:
   prApproveComment: LGTM
   preview:
     open: true
-    width: 50
+    width: 0.45
   prsLimit: 20
   refetchIntervalMinutes: 30
   view: prs
@@ -22,7 +22,7 @@ defaults:
 
 By default, the dashboard is configured to:
 
-- Display the preview pane with a width of 50 columns for all work items.
+- Display the preview pane with a width of 45% for all work items.
 - Only fetch 20 PRs, issues, and notifications at a time for each section.
 - Display the PRs view when the dashboard loads.
 - Refetch PRs and issues for each section every 30 minutes.
@@ -149,11 +149,11 @@ By default, the dashboard displays the preview pane.
 
 | Type    | Minimum | Default |
 | :------ | :-----: | :-----: |
-| Number  |    0    |   50    |
+| Number  |    0    |  0.45   |
 
 Specifies the width of the preview pane. You can set the size to the percentage of the terminal size by using fractions (e.g. 0.4 would be 40%).
 
-By default, the preview pane is 50 columns wide.
+By default, the preview pane is 45% wide.
 
 ### Refetch Interval in Minutes (`refetchIntervalMinutes`)
 
