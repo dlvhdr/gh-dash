@@ -1,0 +1,155 @@
+---
+title: Worktree Paths
+---
+
+By default, checking out a PR (<kbd>C</kbd>/<kbd>Space</kbd>) switches branches in the repository’s main worktree — the directory created by `git clone`.
+
+If you work on multiple PRs simultaneously, that means stashing or committing in-progress changes every time you switch. And if you need to build, it means completely rebuilding every time you switch.
+
+The `worktreePaths` setting enables [linked worktree](https://git-scm.com/docs/git-worktree) checkouts instead. Each PR gets its own worktree in a separate directory, so you can have multiple PRs checked out at once without interfering with each other.
+
+You can easily and quickly switch among multiple builds in separate worktrees — without needing to rebuild each time you switch.
+
+## How it works
+
+A git repo has one **main worktree** (the original clone — either a “normal” clone or a [bare clone](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare)) and zero or more **linked worktrees**. `git worktree add` creates linked worktrees, and must be run from within the main worktree.
+
+That’s why two config settings are involved:
+
+- **`repoPaths`** — points to the **main worktree** (the clone). This is where `git worktree add` runs.
+- **`worktreePaths`** — points to a **parent directory** where linked worktrees are created as subdirectories, one per PR branch.
+
+:::caution
+To use `worktreePaths` for a repository or for a template pattern, you _must_ also configure `repoPaths` for the same repository or template pattern. Without `repoPaths`, gh-dash doesn’t know where the main worktree is and can’t create linked worktrees.
+:::
+
+Both settings use the same path-matching syntax: exact matches, wildcard matches (`owner/*`), and template matches (`:owner/:repo`). See [Repo Paths](/configuration/repo-paths) for details.
+
+If a repository matches both `repoPaths` and `worktreePaths`, the checkout creates a linked worktree instead of switching branches in the main worktree.
+
+## Examples
+
+### Linked worktrees inside direct subdirs in main worktree
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+
+worktreePaths:
+  myorg/some-repo: ~/repos/some-repo
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a linked worktree at `~/repos/some-repo/fix/memory-leak`.
+
+### Linked worktrees inside same subdir in main worktree
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+
+worktreePaths:
+  myorg/some-repo: ~/repos/some-repo/.worktrees
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a linked worktree at `~/repos/some-repo/.worktrees/fix/memory-leak`.
+
+### Linked worktrees in “cousin” directory of main worktree
+
+```yaml
+repoPaths:
+  torvalds/*: ~/repos/torvalds/*
+
+worktreePaths:
+  torvalds/*: ~/worktrees/torvalds/*
+```
+
+Checking out a PR with branch `fix/memory-leak` from `torvalds/linux` creates a linked worktree at `~/worktrees/torvalds/linux/fix/memory-leak`. The main worktree at `~/repos/torvalds/linux` is unchanged.
+
+:::note
+The above example is less common than keeping linked worktree directories inside the main worktree directory (clone directory), but useful when you want clean separation — the `~/repos/` tree contains only clones, while `~/worktrees/` contains only temporary PR checkouts.
+
+That makes it easy to clean up with `rm -rf ~/worktrees/*` without touching your clones. It also lets you apply different backup or sync rules, since linked worktrees are disposable.
+:::
+
+### Mixed: some repos use linked worktrees, others don’t
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+  myorg/lib-*: ~/repos/myorg/*
+
+worktreePaths:
+  myorg/lib-*: ~/worktrees/myorg/*
+```
+
+Here, `myorg/some-repo` uses regular checkout (switching branches in the main worktree), while any `myorg/lib-*` repository creates linked worktrees.
+
+### Inside-direct-subdirs template catch-all
+
+```yaml
+repoPaths:
+  :owner/:repo: ~/repos/:repo
+
+worktreePaths:
+  :owner/:repo: ~/repos/:repo
+```
+
+Any repository gets linked worktrees created under `~/repos/<repo>/<branch>`.
+
+### Inside-same-subdir template catch-all
+
+```yaml
+repoPaths:
+  :owner/:repo: ~/repos/:repo
+
+worktreePaths:
+  :owner/:repo: ~/repos/:repo/.worktrees
+```
+
+Any repository gets linked worktrees created under `~/repos/<repo>/.worktreess/<branch>`.
+
+### Bare-repository workflow
+
+Some people prefer to clone repos as [bare repos](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare), and create each branch (including the main branch) as a linked worktree — with a layout like this:
+
+```
+~/repos/gh-dash/
+  .bare/       # git clone --bare ... .bare
+  .git         # file containing: gitdir: .bare
+  main/        # linked worktree for the main branch
+  feat/thing/  # linked worktree for a feature branch
+```
+
+That works with gh-dash as long as `repoPaths` points to the parent directory (the one containing the `.git` file) — not the `.bare` directory itself:
+
+```yaml
+repoPaths:
+  dlvhdr/gh-dash: ~/repos/gh-dash
+
+worktreePaths:
+  dlvhdr/gh-dash: ~/repos/gh-dash
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a linked worktree at
+`~/repos/gh-dash/fix/memory-leak` — alongside the other worktrees.
+
+## Behavior details
+
+- **New PR:** Creates a linked worktree and checks out the PR branch.
+- **Existing worktree:** Skips creation, copies the path to your clipboard.
+- **Checkout failure:** Automatically removes the partially created worktree.
+- **Repo not cloned:** Shows an error asking you to clone the repository first.
+- **Missing `repoPaths`:** Shows an error explaining that both settings are required.
+
+On success, the path to the linked worktree is copied to your clipboard.
+
+## Cleaning up
+
+Git won’t let you delete a branch that’s checked out in a linked worktree. To clean up:
+
+```bash
+git worktree remove <path>   # remove the linked worktree
+git branch -D <branch>       # then delete the branch
+```
+
+If you’ve already deleted the directory manually, run `git worktree prune` before deleting the branch.
