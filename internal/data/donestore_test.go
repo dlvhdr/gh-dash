@@ -292,7 +292,7 @@ func TestDoneStore(t *testing.T) {
 		}
 	})
 
-	t.Run("prune removes entries older than 14 days", func(t *testing.T) {
+	t.Run("prune removes entries older than 90 days", func(t *testing.T) {
 		pruneFile := filepath.Join(tempDir, "prune.json")
 		now := time.Now().UTC().Truncate(time.Second)
 
@@ -302,11 +302,11 @@ func TestDoneStore(t *testing.T) {
 		}
 
 		// Entries at various ages
-		store.entries["fresh"] = now.Add(-1 * 24 * time.Hour)    // 1 day old
-		store.entries["border"] = now.Add(-13 * 24 * time.Hour)  // 13 days old
-		store.entries["expired"] = now.Add(-15 * 24 * time.Hour) // 15 days old
-		store.entries["ancient"] = now.Add(-30 * 24 * time.Hour) // 30 days old
-		store.entries["legacy"] = time.Time{}                    // zero time (legacy)
+		store.entries["fresh"] = now.Add(-1 * 24 * time.Hour)     // 1 day old
+		store.entries["border"] = now.Add(-89 * 24 * time.Hour)   // 89 days old
+		store.entries["expired"] = now.Add(-91 * 24 * time.Hour)  // 91 days old
+		store.entries["ancient"] = now.Add(-180 * 24 * time.Hour) // 180 days old
+		store.entries["legacy"] = time.Time{}                     // zero time (legacy)
 
 		if err := store.Flush(); err != nil {
 			t.Fatalf("Flush failed: %v", err)
@@ -326,15 +326,15 @@ func TestDoneStore(t *testing.T) {
 			t.Error("1-day-old entry should be kept")
 		}
 		if _, ok := store2.entries["border"]; !ok {
-			t.Error("13-day-old entry should be kept")
+			t.Error("89-day-old entry should be kept")
 		}
 
 		// Expired entries should be pruned
 		if _, ok := store2.entries["expired"]; ok {
-			t.Error("15-day-old entry should be pruned")
+			t.Error("91-day-old entry should be pruned")
 		}
 		if _, ok := store2.entries["ancient"]; ok {
-			t.Error("30-day-old entry should be pruned")
+			t.Error("180-day-old entry should be pruned")
 		}
 
 		// Legacy (zero-time) entries should be pruned
