@@ -126,6 +126,7 @@ keybindings:
   branches: []
 repoPaths:
   dlvhdr/*: ~/code/personal/*
+worktreePaths: {}
 theme:
   ui:
     sectionsShowCount: true

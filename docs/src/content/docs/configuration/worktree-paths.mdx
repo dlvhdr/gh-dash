@@ -1,0 +1,165 @@
+---
+title: Worktree Paths
+---
+
+By default, pressing <kbd>C</kbd> or <kbd>Space</kbd> in dash switches [branches](https://git-scm.com/docs/gitglossary#def_branch) in a repo’s [clone directory](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-emltdirectorygtem) (i.e., a directory that was created by running `git clone`).
+
+If you work on or review multiple PRs at once, switching among branches means stashing or committing in-progress changes every time you switch. And if you need to build, it means completely rebuilding every time you switch.
+
+The `worktreePaths` setting enables instead what the git docs call [linked worktree](https://git-scm.com/docs/git-worktree) checkouts: Each PR gets its own linked worktree in a separate (sub)directory — so you can have multiple PRs checked out at once without interfering with each other.
+
+:::note
+The rest of the documentation in this section uses the word _worktree_ on its own to refer to what the git docs calls a _linked worktree_.
+:::
+
+You can easily and quickly switch among and run multiple builds from separate worktrees — without needing to rebuild each time you switch.
+
+## How it works
+
+Every git repo has exactly one **clone directory** (either a “normal” clone with a main branch checked out, or a [bare clone](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare)) and zero or more **worktrees**. `git worktree add` creates worktrees, and must be run from within the clone directory. That’s why two config settings are involved:
+
+- **`repoPaths`:** points to the **clone directory** where `git worktree add` gets run
+- **`worktreePaths`:** points to a **worktrees directory** where worktrees are created as subdirectories, one per PR branch
+
+:::note
+Your clone directory and worktrees directory may be the same directory.
+:::
+
+:::caution
+To use `worktreePaths` for a repository or for a template pattern, you _must_ also configure `repoPaths` for the same repository or template pattern. Without `repoPaths`, dash doesn’t know where the clone directory is and can’t create worktrees.
+:::
+
+Both settings use the same path-matching syntax: exact matches, wildcard matches (`owner/*`), and template matches (`:owner/:repo`). See [Repo Paths](/configuration/repo-paths).
+
+If a repository matches both `repoPaths` and `worktreePaths`, dash creates worktrees rather than switching branches in the clone directory.
+
+## Examples
+
+### Worktrees as direct subdirs inside clone dir
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+
+worktreePaths:
+  myorg/some-repo: ~/repos/some-repo
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a worktree at `~/repos/some-repo/fix/memory-leak`.
+
+### Worktrees in same subdir inside clone dir
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+
+worktreePaths:
+  myorg/some-repo: ~/repos/some-repo/.worktrees
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a worktree at `~/repos/some-repo/.worktrees/fix/memory-leak`.
+
+### Worktrees in “cousin” directory of clone dir
+
+```yaml
+repoPaths:
+  torvalds/*: ~/repos/torvalds/*
+
+worktreePaths:
+  torvalds/*: ~/worktrees/torvalds/*
+```
+
+Checking out a PR with branch `fix/memory-leak` from `torvalds/linux` creates a worktree at `~/worktrees/torvalds/linux/fix/memory-leak`. The clone directory at `~/repos/torvalds/linux` is unchanged.
+
+:::note
+Placing a project’s worktree directories outside the project’s clone directory is useful when you want clean separation — or when you _need_ it (for example, if the project code would otherwise not compile if you build from within a subdirectory).
+
+And if you follow a general policy of having a `~/repos/` (or whatever) tree that _only_ contains clones — and no worktrees — and a `~/worktrees/` (or whatever) directory that contains temporary PR checkouts, then:
+
+- that makes it easy to clean up your worktrees by just doing something like `rm -rf ~/worktrees/*` — without touching your clones
+- that lets you apply different backup or sync rules — since worktrees are essentially disposable
+
+:::
+
+### Mixed: some repos use worktrees, others don’t
+
+```yaml
+repoPaths:
+  myorg/some-repo: ~/repos/some-repo
+  myorg/lib-*: ~/repos/myorg/*
+
+worktreePaths:
+  myorg/lib-*: ~/worktrees/myorg/*
+```
+
+Here, `myorg/some-repo` uses regular checkout (switching branches in the clone directory), while any `myorg/lib-*` repository creates worktrees.
+
+### Inside-direct-subdirs template catch-all
+
+```yaml
+repoPaths:
+  :owner/:repo: ~/repos/:repo
+
+worktreePaths:
+  :owner/:repo: ~/repos/:repo
+```
+
+Any repository gets worktrees created under `~/repos/<repo>/<branch>`.
+
+### Inside-same-subdir template catch-all
+
+```yaml
+repoPaths:
+  :owner/:repo: ~/repos/:repo
+
+worktreePaths:
+  :owner/:repo: ~/repos/:repo/.worktrees
+```
+
+Any repository gets worktrees created under `~/repos/<repo>/.worktreess/<branch>`.
+
+### Bare-repository workflow
+
+Some people prefer to clone repos as [bare repos](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---bare), and create each branch (including the main branch) as a worktree — with a layout like this:
+
+```
+~/repos/gh-dash/
+  .bare/       # git clone --bare ... .bare
+  .git         # file containing: gitdir: .bare
+  main/        # worktree for the main branch
+  feat/thing/  # worktree for a feature branch
+```
+
+That works with dash as long as `repoPaths` points not to a `.bare` directory but to an actual clone directory (one containing a `.bare`/`.git` directory):
+
+```yaml
+repoPaths:
+  dlvhdr/gh-dash: ~/repos/gh-dash
+
+worktreePaths:
+  dlvhdr/gh-dash: ~/repos/gh-dash
+```
+
+Checking out a PR with branch `fix/memory-leak` creates a worktree at
+`~/repos/gh-dash/fix/memory-leak` — alongside the other worktrees.
+
+## Behavior details
+
+- **New PR:** Creates a worktree from a PR branch.
+- **Existing worktree:** Skips creation, copies the path to your clipboard.
+- **Checkout failure:** Auto-removes the partially-created worktree.
+- **Repo not cloned:** Shows error asking you to clone the repository first.
+- **Missing `repoPaths`:** Shows error explaining: both settings are required.
+
+On success, the path to the worktree is copied to your clipboard.
+
+## Cleaning up
+
+Git won’t let you delete a branch that’s checked out in a worktree. To clean up:
+
+```bash
+git worktree remove <path>   # remove the worktree
+git branch -D <branch>       # then delete the branch
+```
+
+If you’ve already deleted the directory manually, run `git worktree prune` before deleting the branch.

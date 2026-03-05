@@ -49,14 +49,19 @@ To submit the comment on the PR, press <kbd>Ctrl</kbd>+<kbd>d</kbd>. To cancel t
 
 ## `C` - Checkout PR
 
-Press <kbd>C</kbd> to checkout the PR locally. The dashboard checks for the `repoPaths` key in your
-configuration to find the repository on your local filesystem.
+Press <kbd>C</kbd> to checkout the PR locally. The dashboard checks for the `worktreePaths` and
+`repoPaths` keys in your configuration to find the repository on your local filesystem.
+`worktreePaths` takes priority if the repository matches both.
 
-The dashboard errors if you haven't defined `repoPaths` in your configuration or if the dashboard
-can't determine where the repository for this PR is located using that setting.
+The dashboard errors if you haven't defined `repoPaths` or `worktreePaths` in your configuration
+or if the dashboard can't determine where the repository for this PR is located using those settings.
 
-If the dashboard is able to locate the repository for the PR on your local filesystem, it uses the
-`gh pr checkout` command to checkout the PR locally.
+If the repository matches a `worktreePaths` entry, the dashboard creates a
+[git worktree](https://git-scm.com/docs/git-worktree) for the PR branch and copies the path to
+your clipboard. See [Worktree Paths](/configuration/worktree-paths) for details.
+
+Otherwise, the dashboard uses the `gh pr checkout` command to checkout the PR locally in the
+directory specified by `repoPaths`.
 
 ## `d` - View PR Diff
 
