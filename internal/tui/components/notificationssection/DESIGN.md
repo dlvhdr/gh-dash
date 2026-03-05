@@ -14,7 +14,8 @@ internal/
 │   ├── notificationapi.go       # GitHub API interactions for notifications
 │   ├── bookmarks.go             # Local bookmark storage (singleton)
 │   ├── donestore.go             # Timestamp-based Done tracking (singleton)
-│   └── donestore_test.go        # Tests for Done store
+│   ├── donestore_test.go        # Tests for Done store
+│   └── donestore_testing.go     # Test helpers (create/override DoneStore)
 ├── tui/
 │   ├── keys/
 │   │   └── notificationKeys.go  # Key bindings specific to notifications
@@ -187,7 +188,7 @@ When marking a notification as Done, the store records the notification’s curr
 - Backward-compatible: loads the legacy format (plain JSON array of IDs) used by older versions; legacy entries are assigned the zero time and pruned on load
 - Persists across sessions and application restarts
 
-**Pruning:** On load, the DoneStore removes stale entries, to prevent the file from growing indefinitely. GitHub only retains Done-marked notifications for about 1 week, so entries older than 14 days (1 week + 1 week safety margin) are dead weight — the API won’t return those notifications anymore. Zero-time entries (from the legacy format) are also pruned, since removing them from the store has the same effect as keeping them: `IsDone` returns false either way, so active notifications still resurface.
+**Pruning:** On load, the DoneStore removes stale entries, to prevent the file from growing indefinitely. Entries older than 90 days are pruned — because those are unlikely to still appear in API responses. Zero-time entries (from the legacy format) are also pruned, since removing them from the store has the same effect as keeping them: `IsDone` returns false either way, so active notifications still resurface.
 
 **Pagination with local filtering:** Because Done notifications are filtered out locally after fetching from the API, a single page of results may yield very few visible notifications. To handle this, the fetch logic automatically requests additional pages from the API until the requested limit is reached or all pages are exhausted. This ensures users see a full page of results even when many notifications have been marked as Done.
 
@@ -219,7 +220,7 @@ The `UpdateNotificationMsg` and `UpdateNotificationReadStateMsg` types propagate
 Notification commands are organized in `commands.go`, following the pattern established by `prssection` (which has `checkout.go`, `diff.go`). Commands fall into two categories:
 
 **Section methods** — Commands that operate on section state and are invoked via key handling in the section's `Update` method:
-- `markAsDone()` — Marks the current notification as Done (persists ID + `updated_at` timestamp to DoneStore)
+- `markAsDone()` — Marks the current notification as Done (persists ID + `updated_at` timestamp to DoneStore). Important: This captures `updatedAt` _by value before_ the closure — because `GetCurrNotification()` returns a pointer into the `Notifications` slice, which may shift when other notifications are removed concurrently.
 - `markAllAsDone()` — Marks all visible notifications as Done (persists each ID + `updated_at` to DoneStore)
 - `markAsRead()` — Marks the current notification as read
 - `markAllAsRead()` — Marks all notifications as read
@@ -450,5 +451,5 @@ This async resolution uses the existing `UpdateNotificationUrlMsg` message type,
 - **Mark as Unread**: GitHub's REST API does not support marking notifications as unread, so this feature is not available. Bookmarks provide a workaround by keeping items visible in the inbox.
 - **Discussion/Release Content**: Only PR and Issue notifications can display detailed content in the sidebar; other types open directly in the browser.
 - **Local State Persistence**: Bookmarks and Done status are stored locally (`~/.local/state/gh-dash/`) and are not synced across machines or with GitHub.
-- **Done Notifications in API**: GitHub’s “mark as Done” doesn’t delete notifications — they still appear in API responses with `all=true`. We track Done IDs with timestamps locally to filter them out and detect new activity. Entries older than 14 days are pruned on startup.
+- **Done Notifications in API**: GitHub’s “mark as Done” doesn’t delete notifications — they still appear in API responses with `all=true`. We track Done IDs with timestamps locally to filter them out and detect new activity. Entries older than 90 days are pruned on startup.
 - **Server-Side Reason Filtering**: GitHub's notification API does not support filtering by reason on the server side. Reason filters are applied client-side after fetching notifications, which means all notifications are fetched before filtering.

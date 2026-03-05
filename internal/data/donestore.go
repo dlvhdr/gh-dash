@@ -86,10 +86,10 @@ func (s *DoneStore) load() error {
 	return nil
 }
 
-// prune removes stale entries on load. It deletes entries older than 14 days
+// prune removes stale entries on load. It deletes entries older than 90 days
 // and zero-time entries (legacy format with no timestamp).
 func (s *DoneStore) prune() {
-	cutoff := time.Now().Add(-14 * 24 * time.Hour)
+	cutoff := time.Now().Add(-90 * 24 * time.Hour)
 	for id, t := range s.entries {
 		if t.IsZero() || t.Before(cutoff) {
 			delete(s.entries, id)

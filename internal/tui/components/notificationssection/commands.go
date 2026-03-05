@@ -17,6 +17,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
+// markNotificationDoneFunc is the function used to mark a notification as done
+// via the GitHub API. It is a variable so tests can override it.
+var markNotificationDoneFunc = data.MarkNotificationDone
+
 func (m *Model) markAsDone() tea.Cmd {
 	notification := m.GetCurrNotification()
 	if notification == nil {
@@ -24,6 +28,7 @@ func (m *Model) markAsDone() tea.Cmd {
 	}
 
 	notificationId := notification.GetId()
+	updatedAt := notification.Notification.UpdatedAt
 	taskId := fmt.Sprintf("notification_done_%s", notificationId)
 	task := context.Task{
 		Id:           taskId,
@@ -34,10 +39,10 @@ func (m *Model) markAsDone() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := data.MarkNotificationDone(notificationId)
+		err := markNotificationDoneFunc(notificationId)
 		if err == nil {
 			// Persist to done store so it stays hidden across sessions
-			data.GetDoneStore().MarkDone(notificationId, notification.Notification.UpdatedAt)
+			data.GetDoneStore().MarkDone(notificationId, updatedAt)
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
