@@ -75,7 +75,7 @@ func TestCheckoutPR(t *testing.T) {
 				StartTask: noopStartTask,
 			}
 
-			cmd, err := CheckoutPR(ctx, tt.prNumber, tt.repoName)
+			cmd, err := CheckoutPR(ctx, tt.prNumber, tt.repoName, "some-branch")
 
 			if tt.wantErr && err == nil {
 				t.Errorf("CheckoutPR() error = nil, want error")
@@ -101,13 +101,13 @@ func TestCheckoutPRErrorMessage(t *testing.T) {
 		StartTask: noopStartTask,
 	}
 
-	_, err := CheckoutPR(ctx, 123, "owner/repo")
+	_, err := CheckoutPR(ctx, 123, "owner/repo", "some-branch")
 
 	if err == nil {
 		t.Fatal("CheckoutPR() expected error, got nil")
 	}
 
-	expectedMsg := "local path to repo not specified, set one in your config.yml under repoPaths"
+	expectedMsg := "local path to repo not specified, set one in your config.yml under repoPaths or worktreePaths"
 	if err.Error() != expectedMsg {
 		t.Errorf("CheckoutPR() error = %q, want %q", err.Error(), expectedMsg)
 	}
