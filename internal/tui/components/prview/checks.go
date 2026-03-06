@@ -280,6 +280,9 @@ func (m *Model) viewChecksBar() string {
 	}
 	// subtract number of spacers
 	w -= numSections - 1
+	if w < 0 {
+		w = 0
+	}
 
 	sections := make([]string, 0)
 	if stats.failed > 0 {
