@@ -687,7 +687,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			keys.SetNotificationSubject(keys.NotificationSubjectPR)
 			// Update sidebar with PR view
 			width := m.sidebar.GetSidebarContentWidth()
+			sectionHost := ""
+			if currSection := m.getCurrSection(); currSection != nil {
+				sectionHost = currSection.GetConfig().Host
+			}
 			m.prView.SetSectionId(0)
+			m.prView.SetHost(sectionHost)
 			m.prView.SetRow(m.notificationView.GetSubjectPR())
 			m.prView.SetWidth(width)
 			m.prView.SetEnrichedPR(msg.PR)
@@ -714,7 +719,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 			// Update sidebar with Issue view
 			width := m.sidebar.GetSidebarContentWidth()
+			sectionHost := ""
+			if currSection := m.getCurrSection(); currSection != nil {
+				sectionHost = currSection.GetConfig().Host
+			}
 			m.issueSidebar.SetSectionId(0)
+			m.issueSidebar.SetHost(sectionHost)
 			m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 			m.issueSidebar.SetWidth(width)
 			m.sidebar.SetContent(m.issueSidebar.View())
@@ -1050,17 +1060,25 @@ func (m *Model) syncSidebar() tea.Cmd {
 		return nil
 	}
 
+	// Get host from current section config
+	sectionHost := ""
+	if currSection := m.getCurrSection(); currSection != nil {
+		sectionHost = currSection.GetConfig().Host
+	}
+
 	switch row := currRowData.(type) {
 	case branch.BranchData:
 		cmd = m.branchSidebar.SetRow(&row)
 		m.sidebar.SetContent(m.branchSidebar.View())
 	case *prrow.Data:
 		m.prView.SetSectionId(m.currSectionId)
+		m.prView.SetHost(sectionHost)
 		m.prView.SetRow(row)
 		m.prView.SetWidth(width)
 		m.sidebar.SetContent(m.prView.View())
 	case *data.IssueData:
 		m.issueSidebar.SetSectionId(m.currSectionId)
+		m.issueSidebar.SetHost(sectionHost)
 		m.issueSidebar.SetRow(row)
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
@@ -1072,11 +1090,13 @@ func (m *Model) syncSidebar() tea.Cmd {
 			// Use cached data
 			if m.notificationView.GetSubjectPR() != nil {
 				m.prView.SetSectionId(0)
+				m.prView.SetHost(sectionHost)
 				m.prView.SetRow(m.notificationView.GetSubjectPR())
 				m.prView.SetWidth(width)
 				m.sidebar.SetContent(m.prView.View())
 			} else if m.notificationView.GetSubjectIssue() != nil {
 				m.issueSidebar.SetSectionId(0)
+				m.issueSidebar.SetHost(sectionHost)
 				m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 				m.issueSidebar.SetWidth(width)
 				m.sidebar.SetContent(m.issueSidebar.View())
@@ -1209,6 +1229,12 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 	subjectUrl := row.GetUrl()
 	latestCommentUrl := row.GetLatestCommentUrl()
 
+	// Get host from current section config
+	host := ""
+	if currSection := m.getCurrSection(); currSection != nil {
+		host = currSection.GetConfig().Host
+	}
+
 	// Show loading indicator
 	width := m.sidebar.GetSidebarContentWidth()
 	m.notificationView.SetRow(row)
@@ -1219,7 +1245,7 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 	case "PullRequest":
 		return tea.Batch(
 			func() tea.Msg {
-				_ = data.MarkNotificationRead(notifId)
+				_ = data.MarkNotificationRead(notifId, host)
 				return notificationssection.UpdateNotificationReadStateMsg{
 					Id:     notifId,
 					Unread: false,
@@ -1238,7 +1264,7 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 	case "Issue":
 		return tea.Batch(
 			func() tea.Msg {
-				_ = data.MarkNotificationRead(notifId)
+				_ = data.MarkNotificationRead(notifId, host)
 				return notificationssection.UpdateNotificationReadStateMsg{
 					Id:     notifId,
 					Unread: false,
@@ -1259,7 +1285,7 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 		// since we can't show rich content for these types
 		return tea.Batch(
 			func() tea.Msg {
-				_ = data.MarkNotificationRead(notifId)
+				_ = data.MarkNotificationRead(notifId, host)
 				return notificationssection.UpdateNotificationReadStateMsg{
 					Id:     notifId,
 					Unread: false,
@@ -1652,26 +1678,32 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	pr := m.notificationView.GetSubjectPR()
 	issue := m.notificationView.GetSubjectIssue()
 
+	// Get host from current section config
+	sectionHost := ""
+	if currSection := m.getCurrSection(); currSection != nil {
+		sectionHost = currSection.GetConfig().Host
+	}
+
 	switch action {
 	case "pr_close":
 		if pr != nil {
-			return tasks.ClosePR(m.ctx, sid, pr)
+			return tasks.ClosePR(m.ctx, sid, pr, sectionHost)
 		}
 	case "pr_reopen":
 		if pr != nil {
-			return tasks.ReopenPR(m.ctx, sid, pr)
+			return tasks.ReopenPR(m.ctx, sid, pr, sectionHost)
 		}
 	case "pr_ready":
 		if pr != nil {
-			return tasks.PRReady(m.ctx, sid, pr)
+			return tasks.PRReady(m.ctx, sid, pr, sectionHost)
 		}
 	case "pr_merge":
 		if pr != nil {
-			return tasks.MergePR(m.ctx, sid, pr)
+			return tasks.MergePR(m.ctx, sid, pr, sectionHost)
 		}
 	case "pr_update":
 		if pr != nil {
-			return tasks.UpdatePR(m.ctx, sid, pr)
+			return tasks.UpdatePR(m.ctx, sid, pr, sectionHost)
 		}
 	case "pr_approveWorkflows":
 		if pr != nil {
@@ -1679,11 +1711,11 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 		}
 	case "issue_close":
 		if issue != nil {
-			return tasks.CloseIssue(m.ctx, sid, issue)
+			return tasks.CloseIssue(m.ctx, sid, issue, sectionHost)
 		}
 	case "issue_reopen":
 		if issue != nil {
-			return tasks.ReopenIssue(m.ctx, sid, issue)
+			return tasks.ReopenIssue(m.ctx, sid, issue, sectionHost)
 		}
 	}
 

@@ -688,7 +688,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 						wg.Add(1)
 						go func(threadId string) {
 							defer wg.Done()
-							notification, err := data.FetchNotificationByThreadId(threadId)
+							notification, err := data.FetchNotificationByThreadId(threadId, host)
 							results <- fetchResult{notification: notification, err: err}
 						}(id)
 					}
@@ -930,6 +930,9 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 
 	log.Debug("fetchCommentCountsForNotifications called", "numNotifications", len(notifications))
 
+	// Capture host for closures
+	host := m.Config.Host
+
 	for _, notif := range notifications {
 		// Copy values for closure capture
 		notifId := notif.GetId()
@@ -955,7 +958,7 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 					return nil
 				}
 				count := countNewPRComments(pr, readAt)
-				actor, _ := data.FetchCommentAuthor(commentUrl)
+				actor, _ := data.FetchCommentAuthor(commentUrl, host)
 				if actor == "" {
 					actor = pr.Author.Login
 				}
@@ -979,7 +982,7 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 					return nil
 				}
 				count := countNewIssueComments(issue, readAt)
-				actor, _ := data.FetchCommentAuthor(commentUrl)
+				actor, _ := data.FetchCommentAuthor(commentUrl, host)
 				if actor == "" {
 					actor = issue.Author.Login
 				}
@@ -1000,7 +1003,7 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 			title := notif.Notification.Subject.Title
 			cmds = append(cmds, func() tea.Msg {
 				log.Debug("Fetching workflow run for CheckSuite", "id", id, "repo", repo)
-				url, err := data.FetchRecentWorkflowRun(repo, updatedAt, title)
+				url, err := data.FetchRecentWorkflowRun(repo, updatedAt, title, host)
 				if err != nil {
 					log.Error("Failed to fetch workflow run", "id", id, "err", err)
 					return nil

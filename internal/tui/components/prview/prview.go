@@ -33,6 +33,7 @@ var (
 type Model struct {
 	ctx       *context.ProgramContext
 	sectionId int
+	host      string
 	pr        *prrow.PullRequest
 	width     int
 	carousel  carousel.Model
@@ -85,7 +86,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
+					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value(), m.host)
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
@@ -121,7 +122,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					comment = m.inputBox.Value()
 				}
 				sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
+				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment, m.host)
 				m.inputBox.Blur()
 				m.isApproving = false
 				return m, cmd
@@ -143,7 +144,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
+					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames, m.host)
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
@@ -163,7 +164,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
+					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames, m.host)
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
@@ -553,6 +554,10 @@ func (m *Model) renderSummary() string {
 
 func (m *Model) SetSectionId(id int) {
 	m.sectionId = id
+}
+
+func (m *Model) SetHost(host string) {
+	m.host = host
 }
 
 func (m *Model) SetRow(d *prrow.Data) {

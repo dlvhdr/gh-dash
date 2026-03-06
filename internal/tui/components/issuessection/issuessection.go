@@ -92,9 +92,9 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
 					switch action {
 					case "close":
-						cmd = tasks.CloseIssue(m.Ctx, sid, issue)
+						cmd = tasks.CloseIssue(m.Ctx, sid, issue, m.Config.Host)
 					case "reopen":
-						cmd = tasks.ReopenIssue(m.Ctx, sid, issue)
+						cmd = tasks.ReopenIssue(m.Ctx, sid, issue, m.Config.Host)
 					}
 				}
 

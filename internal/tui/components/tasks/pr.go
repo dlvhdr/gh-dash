@@ -74,7 +74,7 @@ func fireTask(ctx *context.ProgramContext, task GitHubTask) tea.Cmd {
 	})
 }
 
-func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch string) tea.Cmd {
+func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch string, host string) tea.Cmd {
 	return fireTask(ctx, GitHubTask{
 		Id: fmt.Sprintf("branch_open_%s", branch),
 		Args: []string{
@@ -83,7 +83,7 @@ func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch
 			"--web",
 			branch,
 			"-R",
-			ctx.RepoUrl,
+			data.RepoWithHost(ctx.RepoUrl, host),
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Opening PR for branch %s", branch),
@@ -94,7 +94,7 @@ func OpenBranchPR(ctx *context.ProgramContext, section SectionIdentifier, branch
 	})
 }
 
-func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_reopen", prNumber),
@@ -103,7 +103,7 @@ func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 			"reopen",
 			fmt.Sprint(prNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Reopening PR #%d", prNumber),
@@ -117,7 +117,7 @@ func ReopenPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 	})
 }
 
-func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_close", prNumber),
@@ -126,7 +126,7 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 			"close",
 			fmt.Sprint(prNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Closing PR #%d", prNumber),
@@ -140,7 +140,7 @@ func ClosePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	})
 }
 
-func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_ready", prNumber),
@@ -149,7 +149,7 @@ func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 			"ready",
 			fmt.Sprint(prNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Marking PR #%d as ready for review", prNumber),
@@ -163,7 +163,7 @@ func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	})
 }
 
-func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	c := exec.Command(
 		"gh",
@@ -171,7 +171,7 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 		"merge",
 		fmt.Sprint(prNumber),
 		"-R",
-		pr.GetRepoNameWithOwner(),
+		data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 	)
 
 	taskId := fmt.Sprintf("merge_%d", prNumber)
@@ -200,7 +200,7 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	}))
 }
 
-func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName string, title string) tea.Cmd {
+func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName string, title string, host string) tea.Cmd {
 	c := exec.Command(
 		"gh",
 		"pr",
@@ -208,7 +208,7 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName
 		"--title",
 		title,
 		"-R",
-		ctx.RepoUrl,
+		data.RepoWithHost(ctx.RepoUrl, host),
 	)
 
 	taskId := fmt.Sprintf("create_pr_%s", title)
@@ -234,7 +234,7 @@ func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName
 	}))
 }
 
-func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_update", prNumber),
@@ -243,7 +243,7 @@ func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 			"update-branch",
 			fmt.Sprint(prNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 		},
 		Section:      section,
 		StartText:    fmt.Sprintf("Updating PR #%d", prNumber),
@@ -257,14 +257,14 @@ func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 	})
 }
 
-func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
 		"edit",
 		fmt.Sprint(prNumber),
 		"-R",
-		pr.GetRepoNameWithOwner(),
+		data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 	}
 	for _, assignee := range usernames {
 		args = append(args, "--add-assignee", assignee)
@@ -288,14 +288,14 @@ func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 	})
 }
 
-func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
 		"edit",
 		fmt.Sprint(prNumber),
 		"-R",
-		pr.GetRepoNameWithOwner(),
+		data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 	}
 	for _, assignee := range usernames {
 		args = append(args, "--remove-assignee", assignee)
@@ -319,7 +319,7 @@ func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.
 	})
 }
 
-func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, body string) tea.Cmd {
+func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, body string, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_comment", prNumber),
@@ -328,7 +328,7 @@ func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data
 			"comment",
 			fmt.Sprint(prNumber),
 			"-R",
-			pr.GetRepoNameWithOwner(),
+			data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 			"-b",
 			body,
 		},
@@ -348,13 +348,13 @@ func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data
 	})
 }
 
-func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, comment string) tea.Cmd {
+func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, comment string, host string) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
 		"review",
 		"-R",
-		pr.GetRepoNameWithOwner(),
+		data.RepoWithHost(pr.GetRepoNameWithOwner(), host),
 		fmt.Sprint(prNumber),
 		"--approve",
 	}

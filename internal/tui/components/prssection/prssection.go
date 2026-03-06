@@ -94,15 +94,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				if input == "" || input == "Y" || input == "y" {
 					switch action {
 					case "close":
-						cmd = tasks.ClosePR(m.Ctx, sid, pr)
+						cmd = tasks.ClosePR(m.Ctx, sid, pr, m.Config.Host)
 					case "reopen":
-						cmd = tasks.ReopenPR(m.Ctx, sid, pr)
+						cmd = tasks.ReopenPR(m.Ctx, sid, pr, m.Config.Host)
 					case "ready":
-						cmd = tasks.PRReady(m.Ctx, sid, pr)
+						cmd = tasks.PRReady(m.Ctx, sid, pr, m.Config.Host)
 					case "merge":
-						cmd = tasks.MergePR(m.Ctx, sid, pr)
+						cmd = tasks.MergePR(m.Ctx, sid, pr, m.Config.Host)
 					case "update":
-						cmd = tasks.UpdatePR(m.Ctx, sid, pr)
+						cmd = tasks.UpdatePR(m.Ctx, sid, pr, m.Config.Host)
 					case "approveWorkflows":
 						cmd = tasks.ApproveWorkflows(m.Ctx, sid, pr)
 					}

@@ -107,7 +107,7 @@ func TestCloseIssue(t *testing.T) {
 				repoName: tt.repoName,
 			}
 
-			cmd := CloseIssue(ctx, section, issue)
+			cmd := CloseIssue(ctx, section, issue, "")
 
 			require.NotNil(t, cmd, "CloseIssue should return a non-nil command")
 		})
@@ -129,7 +129,7 @@ func TestCloseIssue_TaskConfiguration(t *testing.T) {
 		repoName: "test/repo",
 	}
 
-	_ = CloseIssue(ctx, section, issue)
+	_ = CloseIssue(ctx, section, issue, "")
 
 	require.Equal(t, "issue_close_42", capturedTask.Id)
 	require.Equal(t, "Closing issue #42", capturedTask.StartText)
@@ -172,7 +172,7 @@ func TestReopenIssue(t *testing.T) {
 				repoName: tt.repoName,
 			}
 
-			cmd := ReopenIssue(ctx, section, issue)
+			cmd := ReopenIssue(ctx, section, issue, "")
 
 			require.NotNil(t, cmd, "ReopenIssue should return a non-nil command")
 		})
@@ -194,7 +194,7 @@ func TestReopenIssue_TaskConfiguration(t *testing.T) {
 		repoName: "example/project",
 	}
 
-	_ = ReopenIssue(ctx, section, issue)
+	_ = ReopenIssue(ctx, section, issue, "")
 
 	require.Equal(t, "issue_reopen_99", capturedTask.Id)
 	require.Equal(t, "Reopening issue #99", capturedTask.StartText)
@@ -229,7 +229,7 @@ func TestCloseIssue_SectionIdentifierPropagation(t *testing.T) {
 			section := SectionIdentifier{Id: tt.sectionId, Type: tt.sectionType}
 			issue := mockIssue{number: 1, repoName: "o/r"}
 
-			cmd := CloseIssue(ctx, section, issue)
+			cmd := CloseIssue(ctx, section, issue, "")
 
 			require.NotNil(t, cmd)
 		})
@@ -262,7 +262,7 @@ func TestReopenIssue_SectionIdentifierPropagation(t *testing.T) {
 			section := SectionIdentifier{Id: tt.sectionId, Type: tt.sectionType}
 			issue := mockIssue{number: 1, repoName: "o/r"}
 
-			cmd := ReopenIssue(ctx, section, issue)
+			cmd := ReopenIssue(ctx, section, issue, "")
 
 			require.NotNil(t, cmd)
 		})
@@ -291,7 +291,7 @@ func TestCloseIssue_UsesCorrectIssueNumber(t *testing.T) {
 			}
 			issue := mockIssue{number: num, repoName: "o/r"}
 
-			CloseIssue(ctx, SectionIdentifier{}, issue)
+			CloseIssue(ctx, SectionIdentifier{}, issue, "")
 
 			expectedId := fmt.Sprintf("issue_close_%d", num)
 			require.Equal(t, expectedId, capturedTask.Id)
@@ -314,7 +314,7 @@ func TestReopenIssue_UsesCorrectIssueNumber(t *testing.T) {
 			}
 			issue := mockIssue{number: num, repoName: "o/r"}
 
-			ReopenIssue(ctx, SectionIdentifier{}, issue)
+			ReopenIssue(ctx, SectionIdentifier{}, issue, "")
 
 			expectedId := fmt.Sprintf("issue_reopen_%d", num)
 			require.Equal(t, expectedId, capturedTask.Id)
