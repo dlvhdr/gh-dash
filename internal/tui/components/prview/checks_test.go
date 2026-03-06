@@ -498,3 +498,32 @@ func TestGetChecksStats_Mixed(t *testing.T) {
 	require.Equal(t, 2, stats.inProgress,
 		"expected 2 in progress, got: %d", stats.inProgress)
 }
+
+func TestViewChecksBar_NarrowWidth_NoPanic(t *testing.T) {
+	// Regression test for https://github.com/dlvhdr/gh-dash/issues/795
+	// When the sidebar is very narrow, viewChecksBar() computes a negative
+	// width for strings.Repeat, which panics.
+	opts := checksTestOptions{
+		checkSuites: data.CheckSuites{
+			TotalCount: 0,
+			Nodes:      []data.CheckSuiteNode{},
+		},
+		checkRuns: []data.CheckRun{
+			makeCheckRun("build", "COMPLETED", "FAILURE"),
+			makeCheckRun("lint", "COMPLETED", "SUCCESS"),
+			makeCheckRun("test", "IN_PROGRESS", ""),
+		},
+		rollupState: "FAILURE",
+	}
+
+	m := newTestModelForChecks(t, opts)
+
+	// Simulate a very narrow sidebar that would make w negative
+	for _, width := range []int{0, 1, 5, 10} {
+		m.width = width
+		// Should not panic
+		require.NotPanics(t, func() {
+			m.viewChecksBar()
+		}, "viewChecksBar panicked with width=%d", width)
+	}
+}
