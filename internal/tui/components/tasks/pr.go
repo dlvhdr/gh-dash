@@ -276,10 +276,7 @@ func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 		StartText:    fmt.Sprintf("Assigning pr #%d to %s", prNumber, usernames),
 		FinishedText: fmt.Sprintf("pr #%d has been assigned to %s", prNumber, usernames),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
-			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
-			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
-			}
+			returnedAssignees := data.AssigneesFromLogins(usernames)
 			return UpdatePRMsg{
 				PrNumber:       prNumber,
 				AddedAssignees: &returnedAssignees,
@@ -307,10 +304,7 @@ func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.
 		StartText:    fmt.Sprintf("Unassigning %s from pr #%d", usernames, prNumber),
 		FinishedText: fmt.Sprintf("%s unassigned from pr #%d", usernames, prNumber),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
-			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
-			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
-			}
+			returnedAssignees := data.AssigneesFromLogins(usernames)
 			return UpdatePRMsg{
 				PrNumber:         prNumber,
 				RemovedAssignees: &returnedAssignees,

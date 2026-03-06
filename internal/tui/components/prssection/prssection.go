@@ -2,7 +2,6 @@ package prssection
 
 import (
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -167,11 +166,11 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					currPr.Enriched.Comments.Nodes, *msg.NewComment)
 			}
 			if msg.AddedAssignees != nil {
-				currPr.Primary.Assignees.Nodes = addAssignees(
+				currPr.Primary.Assignees.Nodes = data.AddAssignees(
 					currPr.Primary.Assignees.Nodes, msg.AddedAssignees.Nodes)
 			}
 			if msg.RemovedAssignees != nil {
-				currPr.Primary.Assignees.Nodes = removeAssignees(
+				currPr.Primary.Assignees.Nodes = data.RemoveAssignees(
 					currPr.Primary.Assignees.Nodes, msg.RemovedAssignees.Nodes)
 			}
 			if msg.ReadyForReview != nil && *msg.ReadyForReview {
@@ -532,34 +531,6 @@ func FetchAllSections(
 			sectionModel.FetchNextPageSectionRows()...)
 	}
 	return sections, tea.Batch(fetchPRsCmds...)
-}
-
-func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
-	newAssignees := assignees
-	for _, assignee := range addedAssignees {
-		if !assigneesContains(newAssignees, assignee) {
-			newAssignees = append(newAssignees, assignee)
-		}
-	}
-
-	return newAssignees
-}
-
-func removeAssignees(
-	assignees, removedAssignees []data.Assignee,
-) []data.Assignee {
-	newAssignees := []data.Assignee{}
-	for _, assignee := range assignees {
-		if !assigneesContains(removedAssignees, assignee) {
-			newAssignees = append(newAssignees, assignee)
-		}
-	}
-
-	return newAssignees
-}
-
-func assigneesContains(assignees []data.Assignee, assignee data.Assignee) bool {
-	return slices.Contains(assignees, assignee)
 }
 
 func (m Model) GetItemSingularForm() string {

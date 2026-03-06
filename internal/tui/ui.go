@@ -687,10 +687,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			keys.SetNotificationSubject(keys.NotificationSubjectPR)
 			// Update sidebar with PR view
 			width := m.sidebar.GetSidebarContentWidth()
-			sectionHost := ""
-			if currSection := m.getCurrSection(); currSection != nil {
-				sectionHost = currSection.GetConfig().Host
-			}
+			sectionHost := m.getCurrSectionHost()
 			m.prView.SetSectionId(0)
 			m.prView.SetHost(sectionHost)
 			m.prView.SetRow(m.notificationView.GetSubjectPR())
@@ -719,10 +716,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 			// Update sidebar with Issue view
 			width := m.sidebar.GetSidebarContentWidth()
-			sectionHost := ""
-			if currSection := m.getCurrSection(); currSection != nil {
-				sectionHost = currSection.GetConfig().Host
-			}
+			sectionHost := m.getCurrSectionHost()
 			m.issueSidebar.SetSectionId(0)
 			m.issueSidebar.SetHost(sectionHost)
 			m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
@@ -1061,10 +1055,7 @@ func (m *Model) syncSidebar() tea.Cmd {
 	}
 
 	// Get host from current section config
-	sectionHost := ""
-	if currSection := m.getCurrSection(); currSection != nil {
-		sectionHost = currSection.GetConfig().Host
-	}
+	sectionHost := m.getCurrSectionHost()
 
 	switch row := currRowData.(type) {
 	case branch.BranchData:
@@ -1230,10 +1221,7 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 	latestCommentUrl := row.GetLatestCommentUrl()
 
 	// Get host from current section config
-	host := ""
-	if currSection := m.getCurrSection(); currSection != nil {
-		host = currSection.GetConfig().Host
-	}
+	host := m.getCurrSectionHost()
 
 	// Show loading indicator
 	width := m.sidebar.GetSidebarContentWidth()
@@ -1679,10 +1667,7 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	issue := m.notificationView.GetSubjectIssue()
 
 	// Get host from current section config
-	sectionHost := ""
-	if currSection := m.getCurrSection(); currSection != nil {
-		sectionHost = currSection.GetConfig().Host
-	}
+	sectionHost := m.getCurrSectionHost()
 
 	switch action {
 	case "pr_close":

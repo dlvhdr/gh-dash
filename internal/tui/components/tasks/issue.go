@@ -24,7 +24,7 @@ type UpdateIssueMsg struct {
 func CloseIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, host string) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	return fireTask(ctx, GitHubTask{
-		Id: fmt.Sprintf("issue_close_%d", issueNumber),
+		Id: buildTaskId("issue_close", issueNumber),
 		Args: []string{
 			"issue",
 			"close",
@@ -47,7 +47,7 @@ func CloseIssue(ctx *context.ProgramContext, section SectionIdentifier, issue da
 func ReopenIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, host string) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	return fireTask(ctx, GitHubTask{
-		Id: fmt.Sprintf("issue_reopen_%d", issueNumber),
+		Id: buildTaskId("issue_reopen", issueNumber),
 		Args: []string{
 			"issue",
 			"reopen",
@@ -80,16 +80,13 @@ func AssignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue d
 		args = append(args, "--add-assignee", assignee)
 	}
 	return fireTask(ctx, GitHubTask{
-		Id:           fmt.Sprintf("issue_assign_%d", issueNumber),
+		Id:           buildTaskId("issue_assign", issueNumber),
 		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Assigning issue #%d to %s", issueNumber, usernames),
 		FinishedText: fmt.Sprintf("Issue #%d has been assigned to %s", issueNumber, usernames),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
-			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
-			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
-			}
+			returnedAssignees := data.AssigneesFromLogins(usernames)
 			return UpdateIssueMsg{
 				IssueNumber:    issueNumber,
 				AddedAssignees: &returnedAssignees,
@@ -111,16 +108,13 @@ func UnassignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue
 		args = append(args, "--remove-assignee", assignee)
 	}
 	return fireTask(ctx, GitHubTask{
-		Id:           fmt.Sprintf("issue_unassign_%d", issueNumber),
+		Id:           buildTaskId("issue_unassign", issueNumber),
 		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Unassigning %s from issue #%d", usernames, issueNumber),
 		FinishedText: fmt.Sprintf("%s unassigned from issue #%d", usernames, issueNumber),
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
-			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
-			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
-			}
+			returnedAssignees := data.AssigneesFromLogins(usernames)
 			return UpdateIssueMsg{
 				IssueNumber:      issueNumber,
 				RemovedAssignees: &returnedAssignees,
@@ -132,7 +126,7 @@ func UnassignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue
 func CommentOnIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, body string, host string) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	return fireTask(ctx, GitHubTask{
-		Id: fmt.Sprintf("issue_comment_%d", issueNumber),
+		Id: buildTaskId("issue_comment", issueNumber),
 		Args: []string{
 			"issue",
 			"comment",
@@ -189,7 +183,7 @@ func LabelIssue(ctx *context.ProgramContext, section SectionIdentifier, issue da
 	}
 
 	return fireTask(ctx, GitHubTask{
-		Id:           fmt.Sprintf("issue_label_%d", issueNumber),
+		Id:           buildTaskId("issue_label", issueNumber),
 		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Labeling issue #%d to %s", issueNumber, labels),

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -34,7 +35,11 @@ const (
 	ReasonSecurityAlert   = "security_alert"
 )
 
-var restClient *gh.RESTClient
+var (
+	restClient     *gh.RESTClient
+	hostRESTClients   = make(map[string]*gh.RESTClient)
+	hostRESTClientsMu sync.Mutex
+)
 
 type NotificationSubject struct {
 	Title            string `json:"title"`
@@ -114,7 +119,17 @@ func getRESTClientForHost(host string) (*gh.RESTClient, error) {
 	if host == "" {
 		return getRESTClient()
 	}
-	return gh.NewRESTClient(gh.ClientOptions{Host: host})
+	hostRESTClientsMu.Lock()
+	defer hostRESTClientsMu.Unlock()
+	if c, ok := hostRESTClients[host]; ok {
+		return c, nil
+	}
+	c, err := gh.NewRESTClient(gh.ClientOptions{Host: host})
+	if err != nil {
+		return nil, err
+	}
+	hostRESTClients[host] = c
+	return c, nil
 }
 
 // NotificationReadState represents the read state filter for notifications

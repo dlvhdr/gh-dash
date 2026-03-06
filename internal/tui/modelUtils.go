@@ -26,6 +26,13 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
+func (m *Model) getCurrSectionHost() string {
+	if currSection := m.getCurrSection(); currSection != nil {
+		return currSection.GetConfig().Host
+	}
+	return ""
+}
+
 func (m *Model) getCurrSection() section.Section {
 	sections := m.getCurrentViewSections()
 	if len(sections) == 0 || m.currSectionId >= len(sections) {
@@ -299,25 +306,14 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 }
 
 func (m *Model) notify(text string) tea.Cmd {
-	id := fmt.Sprint(time.Now().Unix())
-	startCmd := m.ctx.StartTask(
-		context.Task{
-			Id:           id,
-			StartText:    text,
-			FinishedText: text,
-			State:        context.TaskStart,
-		})
-
-	finishCmd := func() tea.Msg {
-		return constants.TaskFinishedMsg{
-			TaskId: id,
-		}
-	}
-
-	return tea.Sequence(startCmd, finishCmd)
+	return m.notifyWithErr(text, nil)
 }
 
 func (m *Model) notifyErr(text string) tea.Cmd {
+	return m.notifyWithErr(text, errors.New(text))
+}
+
+func (m *Model) notifyWithErr(text string, err error) tea.Cmd {
 	id := fmt.Sprint(time.Now().Unix())
 	startCmd := m.ctx.StartTask(
 		context.Task{
@@ -330,7 +326,7 @@ func (m *Model) notifyErr(text string) tea.Cmd {
 	finishCmd := func() tea.Msg {
 		return constants.TaskFinishedMsg{
 			TaskId: id,
-			Err:    errors.New(text),
+			Err:    err,
 		}
 	}
 

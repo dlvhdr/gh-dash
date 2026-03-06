@@ -95,17 +95,7 @@ func makeIssuesQuery(query string) string {
 }
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo, host string) (IssuesResponse, error) {
-	var err error
-	var c *gh.GraphQLClient
-
-	if host != "" {
-		c, err = gh.NewGraphQLClient(gh.ClientOptions{Host: host})
-	} else if client == nil {
-		client, err = gh.DefaultGraphQLClient()
-		c = client
-	} else {
-		c = client
-	}
+	c, err := getGraphQLClientForHost(host)
 
 	if err != nil {
 		return IssuesResponse{}, err
