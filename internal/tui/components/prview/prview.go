@@ -16,6 +16,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -26,8 +27,6 @@ import (
 var (
 	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt    = "Leave a comment..."
-	approvalPrompt   = "Approve with comment..."
 	foldBodyHeight   = 8
 )
 
@@ -85,7 +84,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			switch msg.Type {
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					cmd = m.comment(m.inputBox.Value())
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
@@ -103,11 +103,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(commentPrompt)
+					m.inputBox.SetPrompt(constants.CommentPrompt)
 					m.ShowConfirmCancel = false
 					return m, nil
 				}
-				m.inputBox.SetPrompt(commentPrompt)
+				m.inputBox.SetPrompt(constants.CommentPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -120,7 +120,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					comment = m.inputBox.Value()
 				}
-				cmd = m.approve(comment)
+				sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
 				m.inputBox.Blur()
 				m.isApproving = false
 				return m, cmd
@@ -130,7 +131,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					return m, nil
 				}
 			default:
-				m.inputBox.SetPrompt(approvalPrompt)
+				m.inputBox.SetPrompt(constants.ApprovalPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -141,7 +142,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.assign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
@@ -160,7 +162,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.unassign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
+					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
@@ -630,7 +633,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt(commentPrompt)
+	m.inputBox.SetPrompt(constants.CommentPrompt)
 
 	if isCommenting {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -655,7 +658,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isApproving = isApproving
-	m.inputBox.SetPrompt(approvalPrompt)
+	m.inputBox.SetPrompt(constants.ApprovalPrompt)
 	m.inputBox.SetValue(m.ctx.Config.Defaults.PrApproveComment)
 
 	if isApproving {
@@ -677,7 +680,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.AssignPrompt)
 	if !m.userAssignedToPr(m.ctx.User) {
 		m.inputBox.SetValue(m.ctx.User)
 	}
@@ -710,7 +713,7 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.UnassignPrompt)
 	m.inputBox.SetValue(strings.Join(m.prAssignees(), "\n"))
 
 	if isUnassigning {

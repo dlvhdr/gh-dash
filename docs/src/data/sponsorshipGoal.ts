@@ -12,7 +12,23 @@ export const getSponsorshipGoal = async () => {
   });
 
   if (response.status != 200) {
-    return { data: { user: { monthlyEstimatedSponsorsIncomeInCents: 4000 } } };
+    return await response
+      .json()
+      .then((res) => {
+        console.error("failed fetching sponsorship goal", {
+          status: response.status,
+          json: res,
+        });
+        return {
+          data: { user: { monthlyEstimatedSponsorsIncomeInCents: 4000 } },
+        };
+      })
+      .catch((e) => {
+        console.error("failed deseralizing response", e);
+        return {
+          data: { user: { monthlyEstimatedSponsorsIncomeInCents: 4000 } },
+        };
+      });
   }
 
   const data: {

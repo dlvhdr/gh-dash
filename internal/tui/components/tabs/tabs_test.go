@@ -25,7 +25,8 @@ func TestTabs(t *testing.T) {
 	t.Run("Should display loading tabs", func(t *testing.T) {
 		t.Parallel()
 		cfg, err := config.ParseConfig(config.Location{
-			ConfigFlag: "../../../config/testdata/test-config.yml",
+			ConfigFlag:       "../../../config/testdata/test-config.yml",
+			SkipGlobalConfig: true,
 		})
 		if err != nil {
 			t.Error(err)
@@ -43,7 +44,8 @@ func TestTabs(t *testing.T) {
 	t.Run("Should display tab counts", func(t *testing.T) {
 		t.Parallel()
 		cfg, err := config.ParseConfig(config.Location{
-			ConfigFlag: "../../../config/testdata/test-config.yml",
+			ConfigFlag:       "../../../config/testdata/test-config.yml",
+			SkipGlobalConfig: true,
 		})
 		if err != nil {
 			t.Error(err)
@@ -63,7 +65,8 @@ func TestTabs(t *testing.T) {
 	t.Run("Should allow setting new tabs", func(t *testing.T) {
 		t.Parallel()
 		cfg, err := config.ParseConfig(config.Location{
-			ConfigFlag: "../../../config/testdata/test-config.yml",
+			ConfigFlag:       "../../../config/testdata/test-config.yml",
+			SkipGlobalConfig: true,
 		})
 		if err != nil {
 			t.Error(err)
@@ -88,7 +91,8 @@ func TestTabs(t *testing.T) {
 		t.Parallel()
 
 		baseCfg, err := config.ParseConfig(config.Location{
-			ConfigFlag: "../../../config/testdata/test-config.yml",
+			ConfigFlag:       "../../../config/testdata/test-config.yml",
+			SkipGlobalConfig: true,
 		})
 		if err != nil {
 			t.Error(err)

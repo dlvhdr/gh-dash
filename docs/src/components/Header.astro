@@ -27,24 +27,15 @@ const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
         ) : null
       }
     </div>
-    <form action="/insiders/">
+    <form action="/insiders/" class="flex items-center">
       <button
-        class="dark:bg-orange-250 relative rounded border border-orange-200 bg-orange-100 text-base text-orange-600 hover:bg-orange-200 hover:text-orange-700 hover:!no-underline md:h-[38px] md:px-3 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-400 dark:hover:bg-orange-900 dark:hover:text-orange-200"
+        class="dark:bg-orange-250 relative h-8 rounded border border-orange-200 bg-orange-100 px-1 text-sm text-orange-600 hover:bg-orange-200 hover:text-orange-700 hover:!no-underline md:h-[38px] md:px-3 lg:text-base dark:border-orange-900 dark:bg-orange-950 dark:text-orange-400 dark:hover:bg-orange-900 dark:hover:text-orange-200"
       >
-        <div
-          class="hidden flex-col items-start gap-0 leading-1.5 md:flex md:pt-2"
-        >
-          <span
-            class="relative -top-2 text-[0.625rem] text-orange-600 uppercase dark:text-orange-400"
-            >Join Insiders</span
-          >
-          <span class="hidden md:inline-block">Get Companion Apps 🌟</span>
-        </div>
-        <div class="md:hidden">
-          <span class="text-xs text-orange-400 uppercase dark:text-orange-600"
-            >Join Insiders</span
-          >
-        </div>
+        <span class="hidden md:block">🌟 Join Insiders</span>
+        <span class="flex flex-row items-center gap-1 md:hidden">
+          <Icon name="heart" size="16px" color="var(--color-red-500)" />
+          Donate
+        </span>
       </button>
     </form>
     {
@@ -57,9 +48,11 @@ const isEnhanceHomepage = Astro.locals.starlightRoute.id === "enhance";
         </PillLink>
       ) : null
     }
-    <StargazersCount server:defer>
-      <StargazersFallback slot="fallback" />
-    </StargazersCount>
+    <div class="hidden md:block">
+      <StargazersCount server:defer>
+        <StargazersFallback slot="fallback" />
+      </StargazersCount>
+    </div>
     <PillLink class="hidden lg:block" href="/donating">
       <Icon name="heart" size="20px" color="var(--color-red-500)" /><span
         class="hidden lg:block"

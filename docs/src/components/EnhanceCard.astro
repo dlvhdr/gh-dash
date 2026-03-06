@@ -1,34 +1,24 @@
 ---
 import { Icon } from "@astrojs/starlight/components";
-import SponsorshipGoal from "./SponsorshipGoal.astro";
 import EnhanceMiniLogo from "./EnhanceMiniLogo.astro";
 ---
 
-<div class="py-4 md:p-6">
-  <a href="/enhance" class="no-underline">
-    <div
-      class="flex w-full flex-row items-center gap-8 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)] md:w-max"
-    >
-      <div class="flex flex-col gap-4">
-        <EnhanceMiniLogo />
-        <SponsorshipGoal server:defer variant="mini">
-          <div
-            slot="fallback"
-            class="h-9 w-full animate-pulse rounded bg-[var(--sl-color-gray-6)]"
-          >
-          </div>
-        </SponsorshipGoal>
-        <Icon
-          name="right-arrow"
-          size="24px"
-          class="mt-0 animate-pulse self-center rounded-full bg-[var(--sl-color-gray-4)] md:hidden"
-        />
-      </div>
+<a href="/enhance" class="no-underline">
+  <div
+    class="flex w-full flex-row items-center gap-8 border border-[var(--sl-color-gray-4)] p-4 no-underline hover:bg-[var(--sl-color-gray-6)]"
+  >
+    <div class="flex flex-col gap-4">
+      <EnhanceMiniLogo />
       <Icon
         name="right-arrow"
         size="24px"
-        class="mt-0 hidden animate-pulse justify-self-end rounded-full bg-[var(--sl-color-gray-4)] md:block"
+        class="mt-0 animate-pulse self-center rounded-full bg-[var(--sl-color-gray-4)] md:hidden"
       />
     </div>
-  </a>
-</div>
+    <Icon
+      name="right-arrow"
+      size="24px"
+      class="relative -left-4 mt-0 hidden min-w-max animate-pulse justify-self-end rounded-full bg-[var(--sl-color-gray-4)] md:block"
+    />
+  </div>
+</a>

@@ -20,11 +20,11 @@ prsSections:
     filter: >-
       is:open
       -author:@me
-      updated>={{ nowModify "-2w" }}
+      updated:>={{ nowModify "-2w" }}
 ```
 
 Note: don't specify `is:pr` for this setting. The dashboard always adds that filter for PR
-sections.
+sections. Results from archived repositories are excluded by default with `archived:false`.
 
 You can define any combination of search filters. To make it easier to read and maintain
 your filters, we recommend using the `>-` syntax after the `filter` key and writing one
@@ -40,7 +40,7 @@ In addition to GitHub's filters, gh-dash adds templating functions.
 
 The `nowModify` function helps you calculate relative dates in the ISO-8601 format (which is what GitHub expects).
 
-Given the date today is 2025-02-02, a search filter of `updated>={{ nowModify "-1mo" }}` will output `updated>=2025-01-02`.
+Given the date today is 2025-02-02, a search filter of `updated:>={{ nowModify "-1mo" }}` will output `updated:>=2025-01-02`.
 
 A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as `1w`, `-8h` or `1mo2w`.
 
@@ -86,6 +86,10 @@ smartFilteringAtLaunch: false
 To toggle Smart Filtering on or off for the current section you’re currently viewing, either use the
 `t` key — or else use whatever custom keybinding you have set for the `togglesearch` builtin in the
 `keybindings` section of your [configuration](/configuration).
+
+You can also manually edit the search bar (press `/`) to remove or replace the `repo:` filter, then
+press Enter. The Smart Filtering state automatically syncs to match your edit — so if you remove the
+`repo:` filter from the search bar, Smart Filtering turns off for that section, and vice versa.
 
 [01]: https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
 [02]: https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax

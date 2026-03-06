@@ -109,3 +109,61 @@ func TestFindBestWorkflowRunMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationDataGetUrl(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     NotificationData
+		expected string
+	}{
+		{
+			name: "uses HtmlUrl from repository",
+			data: NotificationData{
+				Repository: NotificationRepository{
+					FullName: "owner/repo",
+					HtmlUrl:  "https://github.com/owner/repo",
+				},
+			},
+			expected: "https://github.com/owner/repo",
+		},
+		{
+			name: "uses GHE host from HtmlUrl",
+			data: NotificationData{
+				Repository: NotificationRepository{
+					FullName: "org/repo",
+					HtmlUrl:  "https://ghe.company.com/org/repo",
+				},
+			},
+			expected: "https://ghe.company.com/org/repo",
+		},
+		{
+			name: "trims trailing slash from HtmlUrl",
+			data: NotificationData{
+				Repository: NotificationRepository{
+					FullName: "org/repo",
+					HtmlUrl:  "https://ghe.company.com/org/repo/",
+				},
+			},
+			expected: "https://ghe.company.com/org/repo",
+		},
+		{
+			name: "falls back to github.com when HtmlUrl is empty",
+			data: NotificationData{
+				Repository: NotificationRepository{
+					FullName: "owner/repo",
+					HtmlUrl:  "",
+				},
+			},
+			expected: "https://github.com/owner/repo",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.data.GetUrl()
+			if result != tt.expected {
+				t.Errorf("GetUrl() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}

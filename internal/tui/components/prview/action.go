@@ -24,6 +24,7 @@ const (
 	PRActionMerge
 	PRActionUpdate
 	PRActionSummaryViewMore
+	PRActionApproveWorkflows
 )
 
 // PRAction represents an action to be performed on a PR.
@@ -63,6 +64,8 @@ func MsgToAction(msg tea.Msg) *PRAction {
 		return &PRAction{Type: PRActionUpdate}
 	case key.Matches(keyMsg, keys.PRKeys.SummaryViewMore):
 		return &PRAction{Type: PRActionSummaryViewMore}
+	case key.Matches(keyMsg, keys.PRKeys.ApproveWorkflows):
+		return &PRAction{Type: PRActionApproveWorkflows}
 	}
 
 	return nil

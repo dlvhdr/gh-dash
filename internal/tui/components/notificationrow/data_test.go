@@ -170,6 +170,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -185,6 +186,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -200,6 +202,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -215,6 +218,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -230,6 +234,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -245,6 +250,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -256,10 +262,11 @@ func TestGetUrl(t *testing.T) {
 				Notification: data.NotificationData{
 					Subject: data.NotificationSubject{
 						Type: "CheckSuite",
-						Url:  "", // GitHub API returns null for CheckSuite subject.url
+						Url:  "",
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -271,10 +278,11 @@ func TestGetUrl(t *testing.T) {
 				Notification: data.NotificationData{
 					Subject: data.NotificationSubject{
 						Type: "CheckSuite",
-						Url:  "", // GitHub API returns null for CheckSuite subject.url
+						Url:  "",
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 				ResolvedUrl: "https://github.com/owner/repo/actions/runs/12345678",
@@ -291,6 +299,7 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "owner/repo",
+						HtmlUrl:  "https://github.com/owner/repo",
 					},
 				},
 			},
@@ -306,10 +315,109 @@ func TestGetUrl(t *testing.T) {
 					},
 					Repository: data.NotificationRepository{
 						FullName: "my-org/my-repo",
+						HtmlUrl:  "https://github.com/my-org/my-repo",
 					},
 				},
 			},
 			expected: "https://github.com/my-org/my-repo/pull/1",
+		},
+		// GitHub Enterprise tests
+		{
+			name: "GHE: PullRequest uses enterprise host",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "PullRequest",
+						Url:  "https://ghe.company.com/api/v3/repos/org/repo/pulls/42",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "org/repo",
+						HtmlUrl:  "https://ghe.company.com/org/repo",
+					},
+				},
+			},
+			expected: "https://ghe.company.com/org/repo/pull/42",
+		},
+		{
+			name: "GHE: Issue uses enterprise host",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "Issue",
+						Url:  "https://ghe.company.com/api/v3/repos/org/repo/issues/99",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "org/repo",
+						HtmlUrl:  "https://ghe.company.com/org/repo",
+					},
+				},
+			},
+			expected: "https://ghe.company.com/org/repo/issues/99",
+		},
+		{
+			name: "GHE: CheckSuite uses enterprise host",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "CheckSuite",
+						Url:  "",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "org/repo",
+						HtmlUrl:  "https://ghe.company.com/org/repo",
+					},
+				},
+			},
+			expected: "https://ghe.company.com/org/repo/actions",
+		},
+		{
+			name: "GHE: unknown type falls back to enterprise repo URL",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "UnknownType",
+						Url:  "",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "org/repo",
+						HtmlUrl:  "https://ghe.company.com/org/repo",
+					},
+				},
+			},
+			expected: "https://ghe.company.com/org/repo",
+		},
+		{
+			name: "GHE: HtmlUrl with trailing slash is trimmed",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "PullRequest",
+						Url:  "https://ghe.company.com/api/v3/repos/org/repo/pulls/1",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "org/repo",
+						HtmlUrl:  "https://ghe.company.com/org/repo/",
+					},
+				},
+			},
+			expected: "https://ghe.company.com/org/repo/pull/1",
+		},
+		// Fallback when HtmlUrl is empty
+		{
+			name: "empty HtmlUrl falls back to github.com",
+			data: Data{
+				Notification: data.NotificationData{
+					Subject: data.NotificationSubject{
+						Type: "PullRequest",
+						Url:  "https://api.github.com/repos/owner/repo/pulls/7",
+					},
+					Repository: data.NotificationRepository{
+						FullName: "owner/repo",
+						HtmlUrl:  "",
+					},
+				},
+			},
+			expected: "https://github.com/owner/repo/pull/7",
 		},
 	}
 

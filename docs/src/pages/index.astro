@@ -15,88 +15,53 @@ import tokyonightSrc from "../assets/tokyo.png";
 import catppuccinSrc from "../assets/catpuccin.png";
 import gruvSrc from "../assets/gruv.png";
 import charmVidPreviewSrc from "../assets/charm-vid-preview.jpg";
-import ReleaseVersionButton from "../components/ReleaseVersionButton.astro";
 import EnhanceCard from "../components/EnhanceCard.astro";
+import DiffnavCard from "../components/DiffnavCard.astro";
+import DashHeroLogo from "../components/DashHeroLogo.astro";
+import Hero from "../components/Hero.astro";
+import SupportSection from "../components/SupportSection.astro";
 ---
+
+<style is:global>
+  h1#_top {
+    display: none;
+  }
+</style>
 
 <StarlightPage
   frontmatter={{ title: "DASH Through Your GitHub", template: "splash" }}
 >
-  <div class="flex flex-row items-center gap-1">
-    <form action="https://github.com/dlvhdr/gh-dash/releases">
-      <ReleaseVersionButton server:defer>
-        <button
-          slot="fallback"
-          class="m-0 h-7 w-16 animate-pulse rounded-lg bg-[var(--sl-color-black)] px-2 py-2 text-sm text-[var(--sl-color-gray-3)]"
-        ></button>
-      </ReleaseVersionButton>
-    </form>
-    <button
-      class="m-0 rounded-lg bg-[var(--sl-color-black)] px-2 py-1 text-sm text-[var(--sl-color-gray-3)]"
+  <div class="mt-0 2xl:mt-12">
+    <Hero
+      tagline="A rich terminal UI for GitHub that doesn't break your flow"
+      videoUrl="overview"
+      githubUrl="https://github.com/dlvhdr/gh-dash"
+      getStartedUrl="/getting-started/"
     >
-      Build: passing
-    </button>
+      <DashHeroLogo />
+    </Hero>
   </div>
-  <div id="hero" class="mb-24">
-    <div
-      class="flex w-full flex-col items-center justify-center gap-4 pt-2 pb-4 lg:flex-row lg:gap-12 lg:pt-8"
-    >
-      <h2
-        class="text-center !text-xl font-normal text-pretty lg:w-[30ch] lg:!text-2xl"
-      >
-        A rich terminal UI for GitHub that doesn't break your flow
-      </h2>
-      <div id="main-buttons" class="flex flex-col items-center gap-4">
-        <form action="/getting-started/">
-          <button
-            class="flex items-center justify-center gap-1 bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
-            >Get started <Icon
-              class="inline"
-              name="right-arrow"
-              size="20px"
-            /></button
-          >
-        </form>
-        <form
-          class="m-0"
-          action="https://github.com/dlvhdr/gh-dash"
-          target="_blank"
-        >
-          <button
-            class="flex items-center justify-center gap-1 bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
-            >View on GitHub <Icon class="inline" name="external" size="20px" />
-          </button>
-        </form>
-      </div>
-    </div>
-    <div class="relative -mx-[2.5vw]">
-      <Terminal>
-        <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
-          <source src="/overview.webm" type="video/webm" />
-          <source src="/overview.mp4" type="video/mp4" />
-        </video>
-      </Terminal>
-      <div
-        class="absolute hidden h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)] lg:-right-32 lg:-bottom-2 lg:block"
-      >
-        <div>⌄</div>
-        <div class="relative -top-8 mt-0">⌄</div>
-      </div>
-    </div>
+  <div class="mt-12 text-[var(--sl-color-gray-5)]">──◇──</div>
+
+  <h2 class="mt-8 mb-12 text-center !text-3xl">Companion Apps</h2>
+
+  <div
+    class="grid w-full grid-cols-[repeat(auto-fit,_minmax(20em,_30em))] justify-center gap-6 overflow-hidden"
+  >
+    <EnhanceCard />
+    <DiffnavCard />
   </div>
 
-  <div class="mt-0 mb-4 text-[var(--sl-color-gray-5)]">──◇──</div>
+  <div
+    class="absolute top-[90vh] right-32 hidden h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)] lg:block"
+  >
+    <div>⌄</div>
+    <div class="relative -top-8 mt-0">⌄</div>
+  </div>
 
-  <h2 class="mb-4 text-center !text-3xl">
-    Support the Project and Get Companion Apps
-  </h2>
-  <p class="text-center text-pretty lg:w-[80ch]">
-    I'm always working on new terminal UIs to make my life easier.<br />By
-    joining <a href="/insiders">Insiders</a> you can support this and any of my other
-    projects.<br />
-    Currently joining insiders gives you access to:
-  </p>
-  <EnhanceCard />
+  <div class="mt-12 text-[var(--sl-color-gray-5)]">──◇──</div>
+
+  <SupportSection />
 
   <div class="mt-16 mb-8 text-[var(--sl-color-gray-5)]">──◇──</div>
 

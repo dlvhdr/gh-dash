@@ -21,7 +21,8 @@ func newTestModel(t *testing.T, prData *data.PullRequestData) Model {
 func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int) Model {
 	t.Helper()
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../../../config/testdata/test-config.yml",
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -326,7 +327,8 @@ func TestRenderRequestedReviewersWrapping(t *testing.T) {
 
 func TestRenderRequestedReviewersLoading(t *testing.T) {
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../../../config/testdata/test-config.yml",
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	require.NoError(t, err)
 
@@ -357,7 +359,8 @@ func TestRenderRequestedReviewersLoading(t *testing.T) {
 
 func TestRenderSuggestedReviewers(t *testing.T) {
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../../../config/testdata/test-config.yml",
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	require.NoError(t, err)
 

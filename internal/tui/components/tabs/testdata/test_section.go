@@ -95,11 +95,6 @@ func (t *TestSection) GetType() string {
 	panic("unimplemented")
 }
 
-// IsFilteringByClone implements section.Section.
-func (t *TestSection) IsFilteringByClone() bool {
-	panic("unimplemented")
-}
-
 // IsPromptConfirmationFocused implements section.Section.
 func (t *TestSection) IsPromptConfirmationFocused() bool {
 	panic("unimplemented")

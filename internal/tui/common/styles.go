@@ -23,19 +23,20 @@ var (
 )
 
 type CommonStyles struct {
-	MainTextStyle   lipgloss.Style
-	FaintTextStyle  lipgloss.Style
-	FooterStyle     lipgloss.Style
-	ErrorStyle      lipgloss.Style
-	SuccessStyle    lipgloss.Style
-	DraftGlyph      string
-	PersonGlyph     string
-	WaitingGlyph    string
-	WaitingDotGlyph string
-	FailureGlyph    string
-	SuccessGlyph    string
-	MergedGlyph     string
-	CommentGlyph    string
+	MainTextStyle       lipgloss.Style
+	FaintTextStyle      lipgloss.Style
+	FooterStyle         lipgloss.Style
+	ErrorStyle          lipgloss.Style
+	SuccessStyle        lipgloss.Style
+	DraftGlyph          string
+	PersonGlyph         string
+	WaitingGlyph        string
+	WaitingDotGlyph     string
+	FailureGlyph        string
+	SuccessGlyph        string
+	MergedGlyph         string
+	CommentGlyph        string
+	ActionRequiredGlyph string
 }
 
 func BuildStyles(theme theme.Theme) CommonStyles {
@@ -80,6 +81,9 @@ func BuildStyles(theme theme.Theme) CommonStyles {
 			Dark:  "#A371F7",
 		}).
 		Render(constants.MergedIcon)
+	s.ActionRequiredGlyph = lipgloss.NewStyle().
+		Foreground(theme.WarningText).
+		Render(constants.ActionRequiredIcon)
 	return s
 }
 

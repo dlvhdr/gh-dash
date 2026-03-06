@@ -17,7 +17,8 @@ import (
 func newTestModelForAction(t *testing.T) Model {
 	t.Helper()
 	cfg, err := config.ParseConfig(config.Location{
-		ConfigFlag: "../../../config/testdata/test-config.yml",
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -60,6 +61,7 @@ func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 		{"merge key", "m", PRActionMerge},
 		{"update key", "u", PRActionUpdate},
 		{"summary view more key", "e", PRActionSummaryViewMore},
+		{"approve workflows key", "V", PRActionApproveWorkflows},
 	}
 
 	for _, tc := range testCases {
@@ -153,6 +155,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionMerge,
 		PRActionUpdate,
 		PRActionSummaryViewMore,
+		PRActionApproveWorkflows,
 	}
 
 	seen := make(map[PRActionType]bool)

@@ -96,15 +96,21 @@ func parseReasonFilters(search string) []string {
 	return reasons
 }
 
-// parseNotificationFilters extracts all notification filters from search string
-func parseNotificationFilters(search string) NotificationFilters {
+// parseNotificationFilters extracts all notification filters from search string.
+// When includeRead is true (the default config), the default read state is "all"
+// instead of "unread", matching GitHub's default behavior.
+func parseNotificationFilters(search string, includeRead bool) NotificationFilters {
+	defaultReadState := data.NotificationStateUnread
+	if includeRead {
+		defaultReadState = data.NotificationStateAll
+	}
 	filters := NotificationFilters{
 		RepoFilters:       parseRepoFilters(search),
 		ReasonFilters:     parseReasonFilters(search),
-		ReadState:         data.NotificationStateUnread, // Default to unread
+		ReadState:         defaultReadState,
 		IsDone:            false,
 		ExplicitUnread:    false,
-		IncludeBookmarked: true, // Default view includes bookmarked items
+		IncludeBookmarked: !includeRead, // Only auto-include bookmarks when filtering to unread
 	}
 
 	matches := stateFilterRegex.FindAllStringSubmatch(search, -1)
@@ -214,6 +220,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 			case tea.KeyEnter:
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
@@ -232,7 +239,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case tea.KeyEnter:
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
-				if input == "Y" || input == "y" {
+				if input == "" || input == "Y" || input == "y" {
 					switch action {
 					case "done":
 						cmd = m.markAsDone()
@@ -293,7 +300,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, keys.NotificationKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
 			}
 			searchValue := m.GetSearchValue()
@@ -340,7 +347,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case UpdateNotificationCommentsMsg:
 		// Update the notification with fetched data
-		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count",
+			msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 		for i := range m.Notifications {
 			if m.Notifications[i].GetId() == msg.Id {
 				m.Notifications[i].NewCommentsCount = msg.NewCommentsCount
@@ -354,7 +362,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					msg.Actor,
 				)
 				m.Table.SetRows(m.BuildRows())
-				log.Debug("Updated notification", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+				log.Debug("Updated notification", "id", msg.Id, "count",
+					msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 				break
 			}
 		}
@@ -393,12 +402,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case ClearAllNotificationsMsg:
-		// Clear all notifications after marking all as done
+		// Clear all notifications after marking all as done, then refetch
 		m.Notifications = []notificationrow.Data{}
 		m.TotalCount = 0
-		m.SetIsLoading(false)
+		m.PageInfo = nil
+		m.sessionMarkedDone = make(map[string]bool)
+		m.SetIsLoading(true)
 		m.Table.SetRows(m.BuildRows())
 		m.UpdateTotalItemsCount(0)
+		cmd = tea.Batch(m.FetchNextPageSectionRows()...)
 
 	case MarkAllAsReadMsg:
 		// Mark all notifications as read (update their state)
@@ -537,7 +549,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 
 	// Parse filters from search value (includes repo filter if smartFilteringAtLaunch is enabled)
-	filters := parseNotificationFilters(m.GetSearchValue())
+	filters := parseNotificationFilters(m.GetSearchValue(), m.Ctx.Config.IncludeReadNotifications)
 
 	// Handle is:done filter - these notifications cannot be retrieved
 	if filters.IsDone {
@@ -709,7 +721,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			for _, n := range res.Notifications {
 				// Skip notifications marked as done (GitHub API still returns them with all=true)
 				// Check both persistent store and session state
-				if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
+				if doneStore.IsDone(n.Id, n.UpdatedAt) || sessionMarkedDone[n.Id] {
 					continue
 				}
 

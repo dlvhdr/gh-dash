@@ -141,3 +141,4 @@ pager:
 confirmQuit: true
 showAuthorIcons: true
 smartFilteringAtLaunch: true
+includeReadNotifications: true

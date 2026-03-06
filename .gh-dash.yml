@@ -26,7 +26,7 @@ issuesSections:
   - title: Mid
     filters: repo:dlvhdr/gh-dash is:open sort:reactions label:mid-pri
   - title: Low
-    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:mid-pri
+    filters: repo:dlvhdr/gh-dash is:open sort:reactions label:low-pri
   - title: Unlabeled
     filters: repo:dlvhdr/gh-dash is:open sort:reactions -label:bug -label:feat
   - title: All

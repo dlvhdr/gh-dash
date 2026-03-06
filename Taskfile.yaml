@@ -10,6 +10,26 @@ tasks:
     interactive: true
     desc: Run
 
+  build:
+    - go build .
+
+  uninstall:
+    cmds:
+      - gh ext remove dash
+
+  install:
+    cmds:
+      - task: build
+      - task: uninstall
+      - echo "🕐 Installing local build..." && gh ext install .
+      - gh dash --version
+
+  install:prod:
+    cmds:
+      - task: uninstall
+      - echo "🕐 Installing latest version..." && gh ext install dlvhdr/gh-dash
+      - gh dash --version
+
   debug:
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
@@ -85,7 +105,7 @@ tasks:
     cmds:
       - cd docs && pnpm i
 
-  docs-dev:
+  docs:
     cmds:
       - cd docs && pnpm dev
     desc: Start docs server

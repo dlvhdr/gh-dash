@@ -33,6 +33,8 @@ This setting defines the [GitHub search filters][01] for the PRs in the section'
 Don't specify `is:pr` for this setting. The dashboard always adds that filter for PR
 sections.
 
+Note pull requests from archived repositories are excluded by default with `archived:false`.
+
 You can define any combination of search filters. To make it easier to read and maintain
 your filters, we recommend using the `>-` syntax after the `filter` key and writing one
 filter per line.
@@ -45,7 +47,7 @@ For example:
     is:open
     involves:@me
     -author:@me
-    updated>={{ nowModify "-2w" }}
+    updated:>={{ nowModify "-2w" }}
 ```
 
 For more information about writing filters for searching GitHub, see [Searching].

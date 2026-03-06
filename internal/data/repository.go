@@ -10,6 +10,7 @@ type BranchProtectionRules struct {
 		RequiresApprovingReviews     graphql.Boolean
 		RequiresCodeOwnerReviews     graphql.Boolean
 		RequiresStatusChecks         graphql.Boolean
+		RequiredStatusCheckContexts  []graphql.String
 	}
 }
 

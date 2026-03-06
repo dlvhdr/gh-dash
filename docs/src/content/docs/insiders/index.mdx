@@ -4,13 +4,77 @@ title: Join Insiders
 
 import { Icon } from "@astrojs/starlight/components";
 import EnhanceCard from "../../../components/EnhanceCard.astro";
+import FeatureCard from "../../../components/FeatureCard.astro";
+import Sponsorship from "../../../components/Sponsorship.astro";
 
 `DASH Insiders` is a program you can join by sponsoring me on GitHub and gets you early access to
-exclusive companion apps.
+new companion apps and features.
 
-## Included Apps
+The first app I worked on, [ENHANCE](../enhance), was successfully funded and is now fully open
+source.
 
-Currently Insiders gives you access to:
+Currently, there are no benefits other than supporting me in
+maintaining my apps and adding new features to them.
+
+In the future I'm intending to create more apps so I can do everything through
+the terminal. If you're also passionate about that please do support me and
+let's make that a reality!
+
+<form action="#how-do-i-join" class="flex w-full justify-center pt-8">
+  <button
+    type="submit"
+    class="flex items-center gap-2 bg-[var(--sl-color-accent)] px-4 py-2 font-bold text-black"
+  >
+    Support Me!
+    <Icon class="mt-0" name="heart" size="20px" color="var(--color-pink-800)" />
+  </button>
+</form>
+
+<div class="m-auto mt-12 flex flex-col gap-2 md:w-full lg:w-1/2">
+  <p>This is my current sponsorship goal:</p>
+  <Sponsorship server:defer />
+</div>
+
+## Future Plans
+
+Supporting me will help me make these things a reality:
+
+<div class="flex flex-col gap-2">
+  <FeatureCard
+    project="dash"
+    feature="Support for More Git Forges"
+    description="DASH currently only works against GitHub. This will add support
+    for more git forges such as Gitlab, Bitbucket, Codeberg etc."
+    future={true}
+  />
+
+  <FeatureCard
+    project="dash"
+    feature="Fully Editable PRs and Issues"
+    description="Add support for fully editing a PR / Issue from DASH such as:
+    editing the title, description, base branch, deleting a comment etc."
+    future={true}
+  />
+
+  <FeatureCard
+    project="dash"
+    feature="Search Autocompletions"
+    description="Add autocompletions for the search bar for things like the
+    author, owner, repo, commenter, review requested etc."
+    future={true}
+  />
+
+  <FeatureCard
+    project="enhance"
+    feature="View Repo-Level Workflow Runs"
+    description="The ability to view checks at the repo level - against branches, tags or manually triggered. Currently it's only supported to view checks that are run against a PR."
+    future={true}
+  />
+</div>
+
+## Achieved Benefits
+
+The community successfully funded the release of:
 
 <EnhanceCard />
 
@@ -49,7 +113,7 @@ I would really appreciate your support! ❤️
   releasing them to the public.
 </details>
 
-## Benefits
+## How Does this Help Me?
 
 By sponsoring me on one of the eligible tiers you:
 

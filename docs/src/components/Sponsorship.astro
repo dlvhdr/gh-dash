@@ -1,0 +1,39 @@
+---
+import { getSponsorshipGoal } from "../data/sponsorshipGoal";
+
+const response = await getSponsorshipGoal();
+const current = response.data.user.monthlyEstimatedSponsorsIncomeInCents / 100;
+const GOAL = 250; // USD
+---
+
+<div class={`text-center mt-0 max-w-full md:max-w-[80ch]`}>
+  <div class="relative mt-1">
+    <progress
+      id="sponsorship-goal"
+      value={current}
+      max={GOAL}
+      class="h-4 w-full appearance-none [&::-moz-progress-bar]:bg-pink-200 dark:[&::-moz-progress-bar]:bg-pink-300 [&::-webkit-progress-bar]:rounded [&::-webkit-progress-bar]:bg-[var(--sl-color-gray-5)] [&::-webkit-progress-value]:rounded [&::-webkit-progress-value]:bg-pink-400 dark:[&::-webkit-progress-value]:bg-pink-800"
+    >
+      {
+        Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(current)
+      } / {
+        Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(GOAL)
+      }
+    </progress>
+    <p
+      class="absolute -top-[0.6rem] right-0 left-0 text-xs text-[var(--sl-color-gray-2)] mix-blend-hard-light dark:mix-blend-lighten"
+    >
+      {
+        Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+          (current / GOAL) * 100,
+        )
+      }% towards ${GOAL} per month goal
+    </p>
+  </div>
+</div>

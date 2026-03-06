@@ -91,7 +91,7 @@ func (data IssueData) GetCreatedAt() time.Time {
 }
 
 func makeIssuesQuery(query string) string {
-	return fmt.Sprintf("is:issue %s sort:updated", query)
+	return fmt.Sprintf("is:issue archived:false %s sort:updated", query)
 }
 
 func FetchIssues(query string, limit int, pageInfo *PageInfo, host string) (IssuesResponse, error) {
@@ -138,9 +138,6 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo, host string) (Issu
 
 	issues := make([]IssueData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
-		if node.Issue.Repository.IsArchived {
-			continue
-		}
 		issues = append(issues, node.Issue)
 	}
 
@@ -160,8 +157,8 @@ type IssuesResponse struct {
 // FetchIssue fetches a single issue by its GitHub URL
 func FetchIssue(issueUrl string) (IssueData, error) {
 	var err error
-	if cachedClient == nil {
-		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+	if client == nil {
+		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
 			return IssueData{}, err
 		}
@@ -180,7 +177,7 @@ func FetchIssue(issueUrl string) (IssueData, error) {
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching Issue", "url", issueUrl)
-	err = cachedClient.Query("FetchIssue", &queryResult, variables)
+	err = client.Query("FetchIssue", &queryResult, variables)
 	if err != nil {
 		return IssueData{}, err
 	}

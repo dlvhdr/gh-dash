@@ -95,6 +95,7 @@ type PullRequestData struct {
 	ReviewRequests   ReviewRequests `graphql:"reviewRequests(last: 5)"`
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
+	IsInMergeQueue   bool
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
@@ -122,6 +123,26 @@ type StatusContext struct {
 	Creator struct {
 		Login graphql.String
 	}
+}
+
+type CheckSuiteNode struct {
+	Status     graphql.String
+	Conclusion graphql.String
+
+	App struct {
+		Name graphql.String
+	}
+
+	WorkflowRun struct {
+		Workflow struct {
+			Name graphql.String
+		}
+	}
+}
+
+type CheckSuites struct {
+	TotalCount graphql.Int
+	Nodes      []CheckSuiteNode
 }
 
 type StatusCheckRollupStats struct {
@@ -177,6 +198,11 @@ type LastCommitWithStatusChecks struct {
 					}
 				} `graphql:"contexts(last: 100)"`
 			}
+			// CheckSuites are fetched separately from StatusCheckRollup because
+			// workflows awaiting approval (conclusion ACTION_REQUIRED) and workflows
+			// still queued have no CheckRun objects yet, so they don’t appear in
+			// StatusCheckRollup.contexts.
+			CheckSuites CheckSuites `graphql:"checkSuites(last: 20)"`
 		}
 	}
 	TotalCount int
@@ -429,7 +455,7 @@ func (e EnrichedPullRequestData) ToPullRequestData() PullRequestData {
 }
 
 func makePullRequestsQuery(query string) string {
-	return fmt.Sprintf("is:pr %s sort:updated", query)
+	return fmt.Sprintf("is:pr archived:false %s sort:updated", query)
 }
 
 type PullRequestsResponse struct {
@@ -446,6 +472,18 @@ var (
 func SetClient(c *gh.GraphQLClient) {
 	client = c
 	cachedClient = c
+}
+
+// ClearEnrichmentCache clears the cached GraphQL client used for fetching
+// enriched PR/Issue data. Call this when refreshing to ensure fresh data.
+func ClearEnrichmentCache() {
+	cachedClient = nil
+}
+
+// IsEnrichmentCacheCleared returns true if the enrichment cache is cleared.
+// This is primarily for testing purposes.
+func IsEnrichmentCacheCleared() bool {
+	return cachedClient == nil
 }
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo, host string) (PullRequestsResponse, error) {
@@ -498,9 +536,6 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo, host string)
 
 	prs := make([]PullRequestData, 0, len(queryResult.Search.Nodes))
 	for _, node := range queryResult.Search.Nodes {
-		if node.PullRequest.Repository.IsArchived {
-			continue
-		}
 		prs = append(prs, node.PullRequest)
 	}
 
@@ -513,8 +548,8 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo, host string)
 
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
-	if cachedClient == nil {
-		cachedClient, err = gh.NewGraphQLClient(gh.ClientOptions{EnableCache: true, CacheTTL: 5 * time.Minute})
+	if client == nil {
+		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
 			return EnrichedPullRequestData{}, err
 		}
@@ -533,7 +568,7 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 		"url": githubv4.URI{URL: parsedUrl},
 	}
 	log.Debug("Fetching PR", "url", prUrl)
-	err = cachedClient.Query("FetchPullRequest", &queryResult, variables)
+	err = client.Query("FetchPullRequest", &queryResult, variables)
 	if err != nil {
 		return EnrichedPullRequestData{}, err
 	}

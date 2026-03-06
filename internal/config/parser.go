@@ -7,6 +7,8 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -21,6 +23,8 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
+
+var hexColorRegex = regexp.MustCompile(`^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$`)
 
 var conf = koanf.Conf{
 	Delim:       ".",
@@ -111,7 +115,7 @@ type NotificationsSectionConfig struct {
 
 type PreviewConfig struct {
 	Open  bool
-	Width int
+	Width float64 `yaml:"width" validate:"gt=0"`
 }
 
 type NullableBool struct {
@@ -223,54 +227,55 @@ func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 }
 
 type Keybindings struct {
-	Universal []Keybinding `yaml:"universal,omitempty"`
-	Issues    []Keybinding `yaml:"issues,omitempty"`
-	Prs       []Keybinding `yaml:"prs,omitempty"`
-	Branches  []Keybinding `yaml:"branches,omitempty"`
+	Universal     []Keybinding `yaml:"universal,omitempty"`
+	Issues        []Keybinding `yaml:"issues,omitempty"`
+	Prs           []Keybinding `yaml:"prs,omitempty"`
+	Branches      []Keybinding `yaml:"branches,omitempty"`
+	Notifications []Keybinding `yaml:"notifications,omitempty"`
 }
 
 type Pager struct {
 	Diff string `yaml:"diff"`
 }
 
-type HexColor string
+type Color string
 
-func (hc HexColor) String() string {
-	return string(hc)
+func (c Color) String() string {
+	return string(c)
 }
 
-func (hc HexColor) IsZero() bool {
-	return hc.String() == ""
+func (c Color) IsZero() bool {
+	return c.String() == ""
 }
 
 type ColorThemeIcon struct {
-	NewContributor HexColor `yaml:"newcontributor"   validate:"omitempty,hexcolor"`
-	Contributor    HexColor `yaml:"contributor"      validate:"omitempty,hexcolor"`
-	Collaborator   HexColor `yaml:"collaborator"     validate:"omitempty,hexcolor"`
-	Member         HexColor `yaml:"member"           validate:"omitempty,hexcolor"`
-	Owner          HexColor `yaml:"owner"            validate:"omitempty,hexcolor"`
-	UnknownRole    HexColor `yaml:"unknownrole"      validate:"omitempty,hexcolor"`
+	NewContributor Color `yaml:"newcontributor"   validate:"omitempty,color"`
+	Contributor    Color `yaml:"contributor"      validate:"omitempty,color"`
+	Collaborator   Color `yaml:"collaborator"     validate:"omitempty,color"`
+	Member         Color `yaml:"member"           validate:"omitempty,color"`
+	Owner          Color `yaml:"owner"            validate:"omitempty,color"`
+	UnknownRole    Color `yaml:"unknownrole"      validate:"omitempty,color"`
 }
 
 type ColorThemeText struct {
-	Primary   HexColor `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
-	Inverted  HexColor `yaml:"inverted"  validate:"omitempty,hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
-	Warning   HexColor `yaml:"warning"   validate:"omitempty,hexcolor"`
-	Success   HexColor `yaml:"success"   validate:"omitempty,hexcolor"`
-	Error     HexColor `yaml:"error"     validate:"omitempty,hexcolor"`
-	Actor     HexColor `yaml:"actor"     validate:"omitempty,hexcolor"`
+	Primary   Color `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,color"`
+	Secondary Color `yaml:"secondary" validate:"omitempty,color"`
+	Inverted  Color `yaml:"inverted"  validate:"omitempty,color"`
+	Faint     Color `yaml:"faint"     validate:"omitempty,color"`
+	Warning   Color `yaml:"warning"   validate:"omitempty,color"`
+	Success   Color `yaml:"success"   validate:"omitempty,color"`
+	Error     Color `yaml:"error"     validate:"omitempty,color"`
+	Actor     Color `yaml:"actor"     validate:"omitempty,color"`
 }
 
 type ColorThemeBorder struct {
-	Primary   HexColor `yaml:"primary"   validate:"omitempty,hexcolor"`
-	Secondary HexColor `yaml:"secondary" validate:"omitempty,hexcolor"`
-	Faint     HexColor `yaml:"faint"     validate:"omitempty,hexcolor"`
+	Primary   Color `yaml:"primary"   validate:"omitempty,color"`
+	Secondary Color `yaml:"secondary" validate:"omitempty,color"`
+	Faint     Color `yaml:"faint"     validate:"omitempty,color"`
 }
 
 type ColorThemeBackground struct {
-	Selected HexColor `yaml:"selected" validate:"omitempty,hexcolor"`
+	Selected Color `yaml:"selected" validate:"omitempty,color"`
 }
 
 type ColorTheme struct {
@@ -314,18 +319,19 @@ type ThemeConfig struct {
 }
 
 type Config struct {
-	PRSections             []PrsSectionConfig           `yaml:"prSections"`
-	IssuesSections         []IssuesSectionConfig        `yaml:"issuesSections"`
-	NotificationsSections  []NotificationsSectionConfig `yaml:"notificationsSections"`
-	Repo                   RepoConfig                   `yaml:"repo,omitempty"`
-	Defaults               Defaults                     `yaml:"defaults"`
-	Keybindings            Keybindings                  `yaml:"keybindings"`
-	RepoPaths              map[string]string            `yaml:"repoPaths"`
-	Theme                  *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
-	Pager                  Pager                        `yaml:"pager"`
-	ConfirmQuit            bool                         `yaml:"confirmQuit"`
-	ShowAuthorIcons        bool                         `yaml:"showAuthorIcons,omitempty"`
-	SmartFilteringAtLaunch bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
+	PRSections               []PrsSectionConfig           `yaml:"prSections"`
+	IssuesSections           []IssuesSectionConfig        `yaml:"issuesSections"`
+	NotificationsSections    []NotificationsSectionConfig `yaml:"notificationsSections"`
+	Repo                     RepoConfig                   `yaml:"repo,omitempty"`
+	Defaults                 Defaults                     `yaml:"defaults"`
+	Keybindings              Keybindings                  `yaml:"keybindings"`
+	RepoPaths                map[string]string            `yaml:"repoPaths"`
+	Theme                    *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
+	Pager                    Pager                        `yaml:"pager"`
+	ConfirmQuit              bool                         `yaml:"confirmQuit"`
+	ShowAuthorIcons          bool                         `yaml:"showAuthorIcons,omitempty"`
+	SmartFilteringAtLaunch   bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
+	IncludeReadNotifications bool                         `yaml:"includeReadNotifications" default:"true"`
 }
 
 type configError struct {
@@ -343,7 +349,7 @@ func (parser ConfigParser) getDefaultConfig() Config {
 		Defaults: Defaults{
 			Preview: PreviewConfig{
 				Open:  true,
-				Width: 50,
+				Width: 0.45,
 			},
 			PrsLimit:               20,
 			PrApproveComment:       "LGTM",
@@ -484,9 +490,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 				},
 			},
 		},
-		ConfirmQuit:            false,
-		ShowAuthorIcons:        true,
-		SmartFilteringAtLaunch: true,
+		ConfirmQuit:              false,
+		ShowAuthorIcons:          true,
+		SmartFilteringAtLaunch:   true,
+		IncludeReadNotifications: true,
 	}
 }
 
@@ -718,6 +725,15 @@ func (e parsingError) Error() string {
 	return fmt.Sprintf("failed parsing config at path %s with error %v", e.path, e.err)
 }
 
+func validateColor(fl validator.FieldLevel) bool {
+	s := fl.Field().String()
+	if hexColorRegex.MatchString(s) {
+		return true
+	}
+	n, err := strconv.Atoi(s)
+	return err == nil && n >= 0 && n <= 255
+}
+
 func initParser() ConfigParser {
 	validate = validator.New()
 
@@ -729,14 +745,17 @@ func initParser() ConfigParser {
 		return name
 	})
 
+	validate.RegisterValidation("color", validateColor)
+
 	return ConfigParser{
 		k: koanf.NewWithConf(conf),
 	}
 }
 
 type Location struct {
-	RepoPath   string // path if inside a git repo
-	ConfigFlag string // Config passed with explicit --config flag
+	RepoPath         string // path if inside a git repo
+	ConfigFlag       string // Config passed with explicit --config flag
+	SkipGlobalConfig bool   // Skip loading global config (for testing)
 }
 
 func ParseConfig(location Location) (Config, error) {
@@ -745,12 +764,22 @@ func ParseConfig(location Location) (Config, error) {
 	var config Config
 	var err error
 
+	userProvidedCfgPath := parser.getProvidedConfigPath(location)
+
+	// For testing: skip global config and load only the provided config
+	if location.SkipGlobalConfig && userProvidedCfgPath != "" {
+		if err := parser.k.Load(file.Provider(userProvidedCfgPath), yaml.Parser()); err != nil {
+			return Config{}, parsingError{path: userProvidedCfgPath, err: err}
+		}
+		log.Info("Loaded user provided config (skipping global)", "path", userProvidedCfgPath)
+		return parser.unmarshalConfigWithDefaults()
+	}
+
 	globalCfgPath, err := parser.getGlobalConfigPathOrCreateIfMissing()
 	if err != nil {
 		return config, parsingError{path: globalCfgPath, err: err}
 	}
 
-	userProvidedCfgPath := parser.getProvidedConfigPath(location)
 	if userProvidedCfgPath != "" {
 		mergedCfg, err := parser.mergeConfigs(globalCfgPath, userProvidedCfgPath)
 		if err != nil {

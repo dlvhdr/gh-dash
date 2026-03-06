@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -78,9 +79,9 @@ func (n NotificationData) GetNumber() int {
 }
 
 func (n NotificationData) GetUrl() string {
-	// Convert API URL to HTML URL
-	// API URL: https://api.github.com/repos/owner/repo/pulls/123
-	// HTML URL: https://github.com/owner/repo/pull/123
+	if n.Repository.HtmlUrl != "" {
+		return strings.TrimRight(n.Repository.HtmlUrl, "/")
+	}
 	return fmt.Sprintf("https://github.com/%s", n.Repository.FullName)
 }
 

@@ -9,54 +9,37 @@ import Box from "../components/Box.astro";
 import Showcase from "../components/Showcase.astro";
 import { Image } from "astro:assets";
 import prSectionsImage from "../assets/pr-sections.png";
-import SponsorshipGoal from "../components/SponsorshipGoal.astro";
 import FadeImages from "../components/FadeImages.astro";
 import draculaSrc from "../assets/enhance-dracula.png";
 import gruvboxSrc from "../assets/enhance-gruvbox_dark.png";
 import nordSrc from "../assets/enhance-nord.png";
-import { Icon } from "@astrojs/starlight/components";
+import Hero from "../components/Hero.astro";
+import EnhanceLogo from "../components/EnhanceLogo.astro";
+import SupportSection from "../components/SupportSection.astro";
 ---
 
+<style is:global>
+  h1#_top {
+    display: none;
+  }
+</style>
+
 <StarlightPage frontmatter={{ title: "ENHANCE", template: "splash" }}>
-  <div class="z-1 flex flex-row items-center pt-8 pb-8">
-    <h2
-      aria-label="The GitHub Actions Companion to DASH"
-      class="m-auto mr-4 text-center leading-10 font-normal text-balance md:w-[30ch]"
+  <div id="_top"></div>
+  <div class="mt-0 2xl:mt-12">
+    <Hero
+      tagline="A Blazingly Fast Terminal UI for GitHub Actions"
+      videoUrl="enhance-demo"
+      githubUrl="https://github.com/dlvhdr/gh-enhance"
+      getStartedUrl="/companions/enhance/getting-started/"
     >
-      A Blazingly Fast Terminal UI for GitHub Actions
-    </h2>
+      <EnhanceLogo />
+    </Hero>
   </div>
-  <div
-    id="main-buttons"
-    class="flex flex-col items-center gap-4 pb-8 md:flex-row"
-  >
-    <form action="/insiders/">
-      <button
-        class="bg-[var(--sl-color-accent-high)] font-bold text-[var(--sl-color-black)]"
-        >Download Now</button
-      >
-    </form>
-    <form class="m-0" action="/insiders/enhance/getting-started">
-      <button class="bg-[var(--sl-color-gray-6)] text-[var(--sl-color-white)]"
-        >View Docs</button
-      >
-    </form>
-  </div>
-  <SponsorshipGoal server:defer />
-  <div id="hero" class="relative mt-8 md:mt-10">
-    <Terminal title="gh enhance">
-      <video autoplay loop muted playsinline class="w-[95vw] lg:w-[800px]">
-        <source src="/enhance-demo.webm" type="video/webm" />
-        <source src="/enhance-demo.mp4" type="video/mp4" />
-      </video>
-    </Terminal>
-    <div
-      class="absolute hidden h-10 animate-bounce rounded-2xl border border-gray-700 p-1 text-[var(--sl-color-accent)] lg:-right-32 lg:-bottom-2 lg:block"
-    >
-      <div>⌄</div>
-      <div class="relative -top-8 mt-0">⌄</div>
-    </div>
-  </div>
+
+  <div class="mt-12 text-[var(--sl-color-gray-5)]">──◇──</div>
+
+  <SupportSection />
 
   <div class="mt-16 mb-16 text-[var(--sl-color-gray-5)]">──◇──</div>
 

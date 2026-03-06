@@ -39,6 +39,7 @@ const (
 	SuccessIcon          = ""
 	TeamIcon             = ""
 	WaitingIcon          = ""
+	ActionRequiredIcon   = "" // nf-cod-warning (matches GitHub UI)
 
 	BehindIcon         = "󰇮"
 	BlockedIcon        = ""
@@ -52,6 +53,7 @@ const (
 	VerticalCommitIcon = "󰜘"
 	LabelsIcon         = "󰌖"
 	MergedIcon         = ""
+	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""
 	SelectionIcon      = "❯"
 
@@ -79,6 +81,13 @@ const (
 	SecurityIcon     = "󰒃" // \udb80\udc83 nf-md-shield_alert (for security alerts)
 	NotificationIcon = "" // \ueaa2 nf-cod-bell (generic notification fallback)
 	SearchIcon       = "" // \uf002 nf-fa-search
+
+	// Prompts
+	AssignPrompt   = "Assign users (whitespace-separated)" + Ellipsis
+	UnassignPrompt = "Unassign users (whitespace-separated)" + Ellipsis
+	CommentPrompt  = "Leave a comment" + Ellipsis
+	ApprovalPrompt = "Approve with comment" + Ellipsis
+	LabelPrompt    = "Add/remove labels (comma-separated)" + Ellipsis
 
 	Logo = `▜▔▚▐▔▌▚▔▐ ▌
 ▟▁▞▐▔▌▁▚▐▔▌`

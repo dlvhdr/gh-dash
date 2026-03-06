@@ -16,6 +16,9 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -25,7 +28,6 @@ import (
 var (
 	htmlCommentRegex = regexp.MustCompile("(?U)<!--(.|[[:space:]])*-->")
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
-	commentPrompt    = "Leave a comment..."
 )
 
 type RepoLabelsFetchedMsg struct {
@@ -125,7 +127,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			switch msg.Type {
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					cmd = m.comment(m.inputBox.Value())
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
+					cmd = tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, m.inputBox.Value())
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
@@ -142,11 +145,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 					}
 				}
 				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(commentPrompt)
+					m.inputBox.SetPrompt(constants.CommentPrompt)
 					m.ShowConfirmCancel = false
 					return m, nil, nil
 				}
-				m.inputBox.SetPrompt(commentPrompt)
+				m.inputBox.SetPrompt(constants.CommentPrompt)
 				m.ShowConfirmCancel = false
 			}
 
@@ -157,7 +160,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			case tea.KeyCtrlD:
 				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
-					cmd = m.label(labels)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
+					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
@@ -199,7 +203,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.assign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
+					cmd = tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames)
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
@@ -218,7 +223,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			case tea.KeyCtrlD:
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
-					cmd = m.unassign(usernames)
+					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
+					cmd = tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames)
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
@@ -420,9 +426,10 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 	if !m.isCommenting && isCommenting {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt("Leave a comment...")
+	m.inputBox.SetPrompt(constants.CommentPrompt)
 
 	if isCommenting {
 		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
@@ -441,9 +448,10 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 
 	if !m.isAssigning && isAssigning {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt("Assign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.AssignPrompt)
 	if !m.userAssignedToIssue(m.ctx.User) {
 		m.inputBox.SetValue(m.ctx.User)
 	}
@@ -463,7 +471,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		m.inputBox.Reset()
 	}
 	m.isLabeling = isLabeling
-	m.inputBox.SetPrompt("Add/remove labels (comma-separated)...")
+	m.inputBox.SetPrompt(constants.LabelPrompt)
 
 	labels := make([]string, 0)
 	for _, label := range m.issue.Data.Labels.Nodes {
@@ -532,9 +540,10 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 
 	if !m.isUnassigning && isUnassigning {
 		m.inputBox.Reset()
+		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
 	}
 	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt("Unassign users (whitespace-separated)...")
+	m.inputBox.SetPrompt(constants.UnassignPrompt)
 	m.inputBox.SetValue(strings.Join(m.issueAssignees(), "\n"))
 
 	if isUnassigning {
@@ -554,5 +563,7 @@ func (m *Model) issueAssignees() []string {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.inputBox.UpdateProgramContext(ctx)
-	m.ac.UpdateProgramContext(ctx)
+	if m.ac != nil {
+		m.ac.UpdateProgramContext(ctx)
+	}
 }
