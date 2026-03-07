@@ -304,7 +304,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 			number := fmt.Sprint(currRowData.GetNumber())
-			err := clipboard.WriteAll(number)
+			var err error
+			if m.ctx.Config.OscClipboard {
+				err = oscCopy(number)
+			} else {
+				err = clipboard.WriteAll(number)
+			}
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {
@@ -319,7 +324,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 			url := currRowData.GetUrl()
-			err := clipboard.WriteAll(url)
+			var err error
+			if m.ctx.Config.OscClipboard {
+				err = oscCopy(url)
+			} else {
+				err = clipboard.WriteAll(url)
+			}
 			if err != nil {
 				cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
 			} else {

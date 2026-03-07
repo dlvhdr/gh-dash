@@ -325,6 +325,7 @@ type Config struct {
 	Theme                    *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
 	Pager                    Pager                        `yaml:"pager"`
 	ConfirmQuit              bool                         `yaml:"confirmQuit"`
+	OscClipboard             bool                         `yaml:"oscClipboard"`
 	ShowAuthorIcons          bool                         `yaml:"showAuthorIcons,omitempty"`
 	SmartFilteringAtLaunch   bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
 	IncludeReadNotifications bool                         `yaml:"includeReadNotifications" default:"true"`
