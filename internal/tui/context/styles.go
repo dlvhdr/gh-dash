@@ -54,6 +54,7 @@ type Styles struct {
 		PagerHeight    int
 		ContentPadding int
 		Root           lipgloss.Style
+		BottomRoot     lipgloss.Style
 		PagerStyle     lipgloss.Style
 	}
 	ListViewPort struct {
@@ -171,6 +172,19 @@ func InitStyles(theme theme.Theme) Styles {
 			Top:         "",
 			Bottom:      "",
 			Left:        "│",
+			Right:       "",
+			TopLeft:     "",
+			TopRight:    "",
+			BottomRight: "",
+			BottomLeft:  "",
+		}).
+		BorderForeground(theme.PrimaryBorder)
+	s.Sidebar.BottomRoot = lipgloss.NewStyle().
+		BorderTop(true).
+		BorderStyle(lipgloss.Border{
+			Top:         "─",
+			Bottom:      "",
+			Left:        "",
 			Right:       "",
 			TopLeft:     "",
 			TopRight:    "",

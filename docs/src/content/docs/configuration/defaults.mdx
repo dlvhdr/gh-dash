@@ -15,6 +15,8 @@ defaults:
   preview:
     open: true
     width: 0.45
+    height: 0.40
+    position: auto
   prsLimit: 20
   refetchIntervalMinutes: 30
   view: prs
@@ -22,7 +24,7 @@ defaults:
 
 By default, the dashboard is configured to:
 
-- Display the preview pane with a width of 45% for all work items.
+- Display the preview pane to the right at 45% width, or below at 40% height when the terminal is narrow.
 - Only fetch 20 PRs, issues, and notifications at a time for each section.
 - Display the PRs view when the dashboard loads.
 - Refetch PRs and issues for each section every 30 minutes.
@@ -129,7 +131,8 @@ This setting defines how many notifications the dashboard should fetch when:
 ### Preview Pane (`preview`)
 
 These settings define how the preview pane displays in the dashboard. You can specify
-whether the preview pane is open by default and how many columns wide it should be when
+whether the preview pane is open by default, its width (for right position), its height
+(for bottom position), and its position relative to the main content.
 
 #### Open on Load (`open`)
 
@@ -154,6 +157,35 @@ By default, the dashboard displays the preview pane.
 Specifies the width of the preview pane. You can set the size to the percentage of the terminal size by using fractions (e.g. 0.4 would be 40%).
 
 By default, the preview pane is 45% wide.
+
+#### Preview Pane Height (`height`)
+
+| Type   | Minimum | Default |
+| :----- | :-----: | :-----: |
+| Number |    0    |  0.40   |
+
+Specifies the height of the preview pane when it appears below the main content (in bottom
+position mode). You can set the size to a percentage of the terminal height by using
+fractions (e.g. 0.4 would be 40%). Values greater than 1 specify a fixed number of rows.
+
+By default, the preview pane height is 40%.
+
+#### Preview Pane Position (`position`)
+
+| Type   |        Options         | Default |
+| :----- | :--------------------: | :-----: |
+| String | `right`, `bottom`, `auto` | `auto`  |
+
+Specifies where the preview pane appears relative to the main content.
+
+- `right` — the preview pane appears to the right of the main content (vertical split).
+- `bottom` — the preview pane appears below the main content (horizontal split).
+- `auto` — automatically chooses `right` when the terminal is wide enough, and switches
+  to `bottom` when the main content would have fewer than 80 columns.
+
+You can toggle the position at runtime with the <kbd>P</kbd> key.
+
+By default, the position is `auto`.
 
 ### Refetch Interval in Minutes (`refetchIntervalMinutes`)
 

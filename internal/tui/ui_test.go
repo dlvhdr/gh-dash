@@ -803,8 +803,9 @@ func TestSyncMainContentWidth(t *testing.T) {
 			cfg := config.Config{
 				Defaults: config.Defaults{
 					Preview: config.PreviewConfig{
-						Open:  true,
-						Width: tc.previewWidth,
+						Open:     true,
+						Width:    tc.previewWidth,
+						Position: "right",
 					},
 				},
 			}
@@ -819,7 +820,7 @@ func TestSyncMainContentWidth(t *testing.T) {
 				},
 			}
 
-			m.syncMainContentWidth()
+			m.syncMainContentDimensions()
 
 			if tc.sidebarOpen {
 				require.Equal(t, tc.expectedPreviewWidth, m.ctx.DynamicPreviewWidth,
@@ -899,6 +900,317 @@ func TestSyncSidebar_NoOpWhenSidebarClosed(t *testing.T) {
 		cmd := m.syncSidebar()
 		require.Nil(t, cmd, "syncSidebar should return nil when sidebar is closed")
 	})
+}
+
+func TestSyncMainContentDimensions_BottomMode(t *testing.T) {
+	tests := []struct {
+		name                  string
+		screenWidth           int
+		screenHeight          int
+		previewHeight         float64
+		sidebarOpen           bool
+		expectedPreviewHeight int
+		expectedMainHeight    int
+		expectedMainWidth     int
+	}{
+		{
+			name:                  "bottom mode with 40% height",
+			screenWidth:           100,
+			screenHeight:          40,
+			previewHeight:         0.4,
+			sidebarOpen:           true,
+			expectedPreviewHeight: 14,
+			expectedMainHeight:    21,
+			expectedMainWidth:     100,
+		},
+		{
+			name:                  "bottom mode sidebar closed",
+			screenWidth:           100,
+			screenHeight:          40,
+			previewHeight:         0.4,
+			sidebarOpen:           false,
+			expectedPreviewHeight: 0,
+			expectedMainHeight:    36,
+			expectedMainWidth:     100,
+		},
+		{
+			name:                  "bottom mode with absolute height",
+			screenWidth:           100,
+			screenHeight:          40,
+			previewHeight:         10,
+			sidebarOpen:           true,
+			expectedPreviewHeight: 10,
+			expectedMainHeight:    25,
+			expectedMainWidth:     100,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := config.ParseConfig(config.Location{
+				ConfigFlag:       "../config/testdata/test-config.yml",
+				SkipGlobalConfig: true,
+			})
+			require.NoError(t, err)
+			cfg.Defaults.Preview.Width = 0.45
+			cfg.Defaults.Preview.Height = tc.previewHeight
+			cfg.Defaults.Preview.Position = "bottom"
+			thm := theme.ParseTheme(&cfg)
+			styles := context.InitStyles(thm)
+
+			m := Model{
+				ctx: &context.ProgramContext{
+					Config:       &cfg,
+					ScreenWidth:  tc.screenWidth,
+					ScreenHeight: tc.screenHeight,
+					Styles:       styles,
+				},
+				sidebar: sidebar.Model{
+					IsOpen: tc.sidebarOpen,
+				},
+			}
+
+			m.syncMainContentDimensions()
+
+			require.Equal(t, tc.expectedMainWidth, m.ctx.MainContentWidth,
+				"MainContentWidth mismatch")
+			require.Equal(t, tc.expectedMainHeight, m.ctx.MainContentHeight,
+				"MainContentHeight mismatch")
+			if tc.sidebarOpen {
+				require.Equal(t, tc.expectedPreviewHeight, m.ctx.DynamicPreviewHeight,
+					"DynamicPreviewHeight mismatch")
+				// Verify total doesn't exceed available space:
+				// main content + preview + border must equal base content height
+				baseHeight := tc.screenHeight - 4 // TabsHeight=3 + FooterHeight=1
+				borderHeight := styles.Sidebar.BorderWidth
+				require.Equal(t, baseHeight, m.ctx.MainContentHeight+m.ctx.DynamicPreviewHeight+borderHeight,
+					"table + preview + border should equal base content height")
+			}
+			require.Equal(t, "bottom", m.ctx.PreviewPosition,
+				"PreviewPosition should be bottom")
+		})
+	}
+}
+
+func TestTogglePreviewPosition_NoOpWhenSidebarClosed(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	cfg.Defaults.Preview.Width = 0.45
+	cfg.Defaults.Preview.Height = 0.4
+	cfg.Defaults.Preview.Position = "right"
+
+	ctx := &context.ProgramContext{
+		Config:       &cfg,
+		ScreenWidth:  100,
+		ScreenHeight: 40,
+		View:         config.PRsView,
+		StartTask:    func(task context.Task) tea.Cmd { return nil },
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	prSection := prssection.NewModel(
+		0,
+		ctx,
+		config.PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+		},
+		time.Now(),
+		time.Now(),
+	)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Sidebar is closed by default from NewModel()
+	require.False(t, m.sidebar.IsOpen, "sidebar should start closed")
+
+	// Set initial dimensions via syncMainContentDimensions
+	m.syncMainContentDimensions()
+	initialMainWidth := m.ctx.MainContentWidth
+	initialMainHeight := m.ctx.MainContentHeight
+	initialPreviewWidth := m.ctx.DynamicPreviewWidth
+	initialPreviewHeight := m.ctx.DynamicPreviewHeight
+	initialPosition := m.ctx.PreviewPosition
+
+	// Pressing P when sidebar is closed should be a no-op
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("P")}
+	_, _ = m.Update(msg)
+
+	require.Equal(t, initialMainWidth, m.ctx.MainContentWidth,
+		"MainContentWidth should not change when sidebar is closed")
+	require.Equal(t, initialMainHeight, m.ctx.MainContentHeight,
+		"MainContentHeight should not change when sidebar is closed")
+	require.Equal(t, initialPreviewWidth, m.ctx.DynamicPreviewWidth,
+		"DynamicPreviewWidth should not change when sidebar is closed")
+	require.Equal(t, initialPreviewHeight, m.ctx.DynamicPreviewHeight,
+		"DynamicPreviewHeight should not change when sidebar is closed")
+	require.Equal(t, initialPosition, m.ctx.PreviewPosition,
+		"PreviewPosition should not change when sidebar is closed")
+	require.Equal(t, "", m.positionOverride,
+		"positionOverride should remain empty when sidebar is closed")
+}
+
+func TestTogglePreviewPosition_TogglesWhenSidebarOpen(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	cfg.Defaults.Preview.Width = 0.45
+	cfg.Defaults.Preview.Height = 0.4
+	cfg.Defaults.Preview.Position = "right"
+
+	ctx := &context.ProgramContext{
+		Config:       &cfg,
+		ScreenWidth:  100,
+		ScreenHeight: 40,
+		View:         config.PRsView,
+		StartTask:    func(task context.Task) tea.Cmd { return nil },
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	prSection := prssection.NewModel(
+		0,
+		ctx,
+		config.PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+		},
+		time.Now(),
+		time.Now(),
+	)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Open the sidebar and set initial right-mode dimensions
+	m.sidebar.IsOpen = true
+	m.syncMainContentDimensions()
+	require.Equal(t, "right", m.ctx.PreviewPosition)
+
+	// Press P to toggle to bottom
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("P")}
+	updated, _ := m.Update(msg)
+	m = updated.(Model)
+
+	require.Equal(t, "bottom", m.positionOverride,
+		"positionOverride should be bottom after toggling from right")
+	require.Equal(t, "bottom", m.ctx.PreviewPosition,
+		"PreviewPosition should be bottom after toggle")
+	require.Equal(t, 100, m.ctx.MainContentWidth,
+		"MainContentWidth should be full screen width in bottom mode")
+	require.Greater(t, m.ctx.DynamicPreviewHeight, 0,
+		"DynamicPreviewHeight should be set in bottom mode")
+
+	// Press P again to toggle back to right
+	updated, _ = m.Update(msg)
+	m = updated.(Model)
+
+	require.Equal(t, "right", m.positionOverride,
+		"positionOverride should be right after toggling back")
+	require.Equal(t, "right", m.ctx.PreviewPosition,
+		"PreviewPosition should be right after second toggle")
+	require.Greater(t, m.ctx.DynamicPreviewWidth, 0,
+		"DynamicPreviewWidth should be set in right mode")
+	require.Less(t, m.ctx.MainContentWidth, 100,
+		"MainContentWidth should be less than screen width in right mode")
+}
+
+func TestView_ClosingSidebarFromBottomMode_NoExtraLine(t *testing.T) {
+	// Regression test: closing the sidebar while PreviewPosition is "bottom"
+	// must not produce an extra line from JoinVertical with an empty string.
+	// The rendered View should have the same line count regardless of whether
+	// we close from right mode or bottom mode.
+	zone.NewGlobal()
+	zone.SetEnabled(false)
+
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	cfg.Defaults.Preview.Width = 0.45
+	cfg.Defaults.Preview.Height = 0.4
+	cfg.Defaults.Preview.Position = "right"
+
+	ctx := &context.ProgramContext{
+		Config:       &cfg,
+		ScreenWidth:  120,
+		ScreenHeight: 40,
+		View:         config.PRsView,
+		StartTask:    func(task context.Task) tea.Cmd { return nil },
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	prSection := prssection.NewModel(
+		0,
+		ctx,
+		config.PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+		},
+		time.Now(),
+		time.Now(),
+	)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Baseline: sidebar closed in right mode
+	m.sidebar.IsOpen = false
+	m.positionOverride = ""
+	m.syncMainContentDimensions()
+	m.syncProgramContext()
+	rightClosedView := m.View()
+	rightClosedLines := strings.Count(rightClosedView, "\n")
+
+	// Now: sidebar closed while in bottom mode (the bug scenario)
+	m.positionOverride = "bottom"
+	m.sidebar.IsOpen = false
+	m.syncMainContentDimensions()
+	m.syncProgramContext()
+	bottomClosedView := m.View()
+	bottomClosedLines := strings.Count(bottomClosedView, "\n")
+
+	require.Equal(t, rightClosedLines, bottomClosedLines,
+		"closing sidebar from bottom mode should produce the same number of lines as right mode")
 }
 
 func TestPromptConfirmationForNotificationPR(t *testing.T) {
