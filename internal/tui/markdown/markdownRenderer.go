@@ -1,9 +1,9 @@
 package markdown
 
 import (
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/glamour/ansi"
-	"github.com/charmbracelet/glamour/styles"
+	"charm.land/glamour/v2"
+	"charm.land/glamour/v2/ansi"
+	"charm.land/glamour/v2/styles"
 )
 
 var markdownStyle *ansi.StyleConfig
@@ -26,7 +26,7 @@ func GetMarkdownRenderer(width int) glamour.TermRenderer {
 	)
 	if err != nil || markdownRenderer == nil {
 		// Return a fallback renderer that just returns input unchanged
-		fallback, _ := glamour.NewTermRenderer(glamour.WithAutoStyle())
+		fallback, _ := glamour.NewTermRenderer()
 		if fallback != nil {
 			return *fallback
 		}

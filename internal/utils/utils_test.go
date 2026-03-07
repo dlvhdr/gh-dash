@@ -3,7 +3,8 @@ package utils
 import (
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 )
 
 func TestGetStylePrefix(t *testing.T) {
@@ -86,7 +87,7 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 		},
 		{
 			name:  "adaptive color",
-			style: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}),
+			style: lipgloss.NewStyle().Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")}),
 		},
 		{
 			name:  "256 color",

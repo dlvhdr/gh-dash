@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -106,12 +107,9 @@ func (b *Branch) renderLines(isSelected bool) string {
 	if b.PR == nil {
 		return "-"
 	}
-	deletions := 0
-	if b.PR.Deletions > 0 {
-		deletions = b.PR.Deletions
-	}
+	deletions := max(b.PR.Deletions, 0)
 
-	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	var additionsFg, deletionsFg compat.AdaptiveColor
 	additionsFg = b.Ctx.Theme.SuccessText
 	deletionsFg = b.Ctx.Theme.ErrorText
 

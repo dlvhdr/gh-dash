@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -32,11 +32,11 @@ func (s suggestionList) Len() int {
 }
 
 var (
-	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/Ctrl+n", "next"))
-	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String()), key.WithHelp("↑/Ctrl+p", "previous"))
-	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String(), tea.KeyCtrlY.String()), key.WithHelp("tab/enter/Ctrl+y", "select"))
-	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
-	ToggleSuggestions     = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
+	NextKey               = key.NewBinding(key.WithKeys("down", "ctrl+n"), key.WithHelp("↓/Ctrl+n", "next"))
+	PrevKey               = key.NewBinding(key.WithKeys("up", "ctrl+p"), key.WithHelp("↑/Ctrl+p", "previous"))
+	SelectKey             = key.NewBinding(key.WithKeys("tab", "enter", "ctrl+y"), key.WithHelp("tab/enter/Ctrl+y", "select"))
+	RefreshSuggestionsKey = key.NewBinding(key.WithKeys("ctrl+f"), key.WithHelp("Ctrl+f", "refresh suggestions"))
+	ToggleSuggestions     = key.NewBinding(key.WithKeys("ctrl+h"), key.WithHelp("Ctrl+h", "toggle suggestions"))
 )
 
 var suggestionKeys = []key.Binding{

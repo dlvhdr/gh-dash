@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/knadh/koanf/maps"
 	"github.com/knadh/koanf/parsers/yaml"

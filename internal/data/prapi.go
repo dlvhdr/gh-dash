@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 	checks "github.com/dlvhdr/x/gh-checks"
