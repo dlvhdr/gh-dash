@@ -509,7 +509,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						case prview.PRActionCheckout:
 							if pr := m.notificationView.GetSubjectPR(); pr != nil {
 								cmd, _ = notificationssection.CheckoutPR(
-									m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner())
+									m.ctx, pr.GetNumber(), pr.GetRepoNameWithOwner(),
+									pr.Primary.HeadRefName)
 							}
 							return m, cmd
 
