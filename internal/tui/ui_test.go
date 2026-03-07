@@ -833,6 +833,74 @@ func TestSyncMainContentWidth(t *testing.T) {
 	}
 }
 
+func TestSyncSidebar_NoOpWhenSidebarClosed(t *testing.T) {
+	// Regression test for https://github.com/dlvhdr/gh-dash/issues/798
+	// When preview.open is false, DynamicPreviewWidth is 0, so
+	// GetSidebarContentWidth() returns 0. If syncSidebar() proceeds to
+	// render the PR view with that zero width, layout breaks.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	cfg.Defaults.Preview.Open = false
+
+	ctx := &context.ProgramContext{
+		Config:      &cfg,
+		ScreenWidth: 100,
+		View:        config.PRsView,
+		StartTask:   func(task context.Task) tea.Cmd { return nil },
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	prSection := prssection.NewModel(
+		0,
+		ctx,
+		config.PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+		},
+		time.Now(),
+		time.Now(),
+	)
+	// Add a PR so getCurrRowData() returns non-nil, exercising the
+	// code path that would use the negative width without the guard.
+	prSection.Prs = []prrow.Data{
+		{Primary: &data.PullRequestData{Title: "test", State: "OPEN"}},
+	}
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// sidebar.IsOpen defaults to false from NewModel(), matching preview.open: false
+	require.False(t, m.sidebar.IsOpen)
+	m.sidebar.UpdateProgramContext(ctx)
+
+	// Confirm the precondition: DynamicPreviewWidth is 0, so
+	// GetSidebarContentWidth returns 0 (no usable width).
+	require.Equal(t, 0, m.ctx.DynamicPreviewWidth)
+	require.Equal(t, 0, m.sidebar.GetSidebarContentWidth(),
+		"GetSidebarContentWidth should be 0 when DynamicPreviewWidth is 0")
+
+	// Without the early-return guard, syncSidebar would needlessly render
+	// the PR view with a zero-width sidebar.
+	require.NotPanics(t, func() {
+		cmd := m.syncSidebar()
+		require.Nil(t, cmd, "syncSidebar should return nil when sidebar is closed")
+	})
+}
+
 func TestPromptConfirmationForNotificationPR(t *testing.T) {
 	// Test that promptConfirmationForNotificationPR sets the pending action
 	// and displays the confirmation prompt in the footer.
