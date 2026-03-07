@@ -82,7 +82,7 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx == nil || m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.DynamicPreviewWidth - m.ctx.Styles.Sidebar.BorderWidth
+	return max(0, m.ctx.DynamicPreviewWidth-m.ctx.Styles.Sidebar.BorderWidth)
 }
 
 func (m *Model) ScrollToTop() {
