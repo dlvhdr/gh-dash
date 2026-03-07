@@ -62,6 +62,7 @@ type Model struct {
 	ctx              *context.ProgramContext
 	taskSpinner      spinner.Model
 	tasks            map[string]context.Task
+	positionOverride string // "" means no override, "right" or "bottom"
 }
 
 func NewModel(location config.Location) Model {
@@ -270,7 +271,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
-			m.syncMainContentWidth()
+			m.syncMainContentDimensions()
+
+		case key.Matches(msg, m.keys.TogglePreviewPosition):
+			if m.sidebar.IsOpen {
+				if m.ctx.PreviewPosition == "right" {
+					m.positionOverride = "bottom"
+				} else {
+					m.positionOverride = "right"
+				}
+				m.syncMainContentDimensions()
+				m.syncProgramContext()
+				cmd := m.syncSidebar()
+				cmds = append(cmds, cmd)
+			}
 
 		case key.Matches(msg, m.keys.Refresh):
 			if currSection != nil {
@@ -301,14 +315,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Help):
-			if !m.footer.ShowAll {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight +
-					common.FooterHeight - common.ExpandedHelpHeight
-			} else {
-				m.ctx.MainContentHeight = m.ctx.MainContentHeight +
-					common.ExpandedHelpHeight - common.FooterHeight
-			}
 			m.footer.ShowAll = !m.footer.ShowAll
+			m.syncMainContentDimensions()
 
 		case key.Matches(msg, m.keys.CopyNumber):
 			var cmd tea.Cmd
@@ -662,7 +670,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
-		m.syncMainContentWidth()
+		m.syncMainContentDimensions()
 
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
@@ -898,11 +906,19 @@ func (m Model) View() tea.View {
 	content := "No sections defined"
 	currSection := m.getCurrSection()
 	if currSection != nil {
-		content = lipgloss.JoinHorizontal(
-			lipgloss.Top,
-			m.getCurrSection().View(),
-			m.sidebar.View(),
-		)
+		if m.ctx.PreviewPosition == "bottom" && m.sidebar.IsOpen {
+			content = lipgloss.JoinVertical(
+				lipgloss.Left,
+				m.getCurrSection().View(),
+				m.sidebar.View(),
+			)
+		} else {
+			content = lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				m.getCurrSection().View(),
+				m.sidebar.View(),
+			)
+		}
 	}
 	s.WriteString(content)
 	s.WriteString("\n")
@@ -1004,12 +1020,13 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 	m.footer.SetWidth(msg.Width)
 	m.ctx.ScreenWidth = msg.Width
 	m.ctx.ScreenHeight = msg.Height
-	if m.footer.ShowAll {
-		m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.ExpandedHelpHeight
-	} else {
-		m.ctx.MainContentHeight = msg.Height - common.TabsHeight - common.FooterHeight
+	if m.ctx.Config != nil {
+		if m.ctx.Config.Defaults.Preview.Position == "auto" ||
+			m.ctx.Config.Defaults.Preview.Position == "" {
+			m.positionOverride = ""
+		}
+		m.syncMainContentDimensions()
 	}
-	m.syncMainContentWidth()
 }
 
 func (m *Model) syncProgramContext() {
@@ -1066,18 +1083,83 @@ func (m *Model) updateCurrentSection(msg tea.Msg) (cmd tea.Cmd) {
 	return m.updateSection(section.GetId(), section.GetType(), msg)
 }
 
-func (m *Model) syncMainContentWidth() {
-	sideBarOffset := 0
-	if m.sidebar.IsOpen {
+const minTableWidthForRightPreview = 80
+
+func (m *Model) resolvePreviewPosition() string {
+	pos := m.ctx.Config.Defaults.Preview.Position
+	if pos == "" {
+		pos = "auto"
+	}
+
+	if m.positionOverride != "" {
+		return m.positionOverride
+	}
+
+	if pos == "right" || pos == "bottom" {
+		return pos
+	}
+
+	// auto: check if right mode would leave enough room for the main content
+	w := m.ctx.Config.Defaults.Preview.Width
+	if w > 0 && w < 1 {
+		w *= float64(m.ctx.ScreenWidth)
+	}
+	previewWidth := min(int(w), m.ctx.ScreenWidth)
+	tableWidth := m.ctx.ScreenWidth - previewWidth
+	if tableWidth < minTableWidthForRightPreview {
+		return "bottom"
+	}
+	return "right"
+}
+
+func (m *Model) getBaseContentHeight() int {
+	if m.footer.ShowAll {
+		// Measure actual footer height — the ExpandedHelpHeight constant
+		// doesn't account for custom keybindings or view-specific bindings.
+		footerHeight := lipgloss.Height(m.footer.View())
+		return m.ctx.ScreenHeight - common.TabsHeight - footerHeight
+	}
+	return m.ctx.ScreenHeight - common.TabsHeight - common.FooterHeight
+}
+
+func (m *Model) syncMainContentDimensions() {
+	m.ctx.PreviewPosition = m.resolvePreviewPosition()
+
+	if !m.sidebar.IsOpen {
+		m.ctx.MainContentWidth = m.ctx.ScreenWidth
+		m.ctx.MainContentHeight = m.getBaseContentHeight()
+		m.ctx.DynamicPreviewWidth = 0
+		m.ctx.DynamicPreviewHeight = 0
+		m.ctx.SidebarOpen = false
+		return
+	}
+
+	m.ctx.SidebarOpen = true
+
+	if m.ctx.PreviewPosition == "bottom" {
+		m.ctx.MainContentWidth = m.ctx.ScreenWidth
+
+		// Subtract border height: lipgloss Height() sets content height,
+		// and BorderTop adds an extra row outside of that.
+		availableHeight := m.getBaseContentHeight() - m.ctx.Styles.Sidebar.BorderWidth
+		h := m.ctx.Config.Defaults.Preview.Height
+		if h > 0 && h < 1 {
+			h *= float64(availableHeight)
+		}
+		m.ctx.DynamicPreviewHeight = min(int(h), availableHeight)
+		m.ctx.MainContentHeight = availableHeight - m.ctx.DynamicPreviewHeight
+		m.ctx.DynamicPreviewWidth = m.ctx.ScreenWidth
+	} else {
+		m.ctx.MainContentHeight = m.getBaseContentHeight()
+
 		w := m.ctx.Config.Defaults.Preview.Width
 		if w > 0 && w < 1 {
 			w *= float64(m.ctx.ScreenWidth)
 		}
 		m.ctx.DynamicPreviewWidth = min(int(w), m.ctx.ScreenWidth)
-		sideBarOffset = m.ctx.DynamicPreviewWidth
+		m.ctx.MainContentWidth = m.ctx.ScreenWidth - m.ctx.DynamicPreviewWidth
+		m.ctx.DynamicPreviewHeight = 0
 	}
-	m.ctx.MainContentWidth = m.ctx.ScreenWidth - sideBarOffset
-	m.ctx.SidebarOpen = m.sidebar.IsOpen
 }
 
 func (m *Model) openSidebarForPRInput(setFunc func(bool) tea.Cmd) tea.Cmd {
@@ -1088,7 +1170,7 @@ func (m *Model) openSidebarForPRInput(setFunc func(bool) tea.Cmd) tea.Cmd {
 func (m *Model) openSidebarForInput(setFunc func(bool) tea.Cmd) tea.Cmd {
 	m.sidebar.IsOpen = true
 	cmd := setFunc(true)
-	m.syncMainContentWidth()
+	m.syncMainContentDimensions()
 	m.syncSidebar()
 	m.sidebar.ScrollToBottom()
 	return cmd
@@ -1529,7 +1611,7 @@ func (m *Model) switchSelectedView() tea.Cmd {
 		}
 	}
 
-	m.syncMainContentWidth()
+	m.syncMainContentDimensions()
 	m.setCurrSectionId(m.getCurrentViewDefaultSection())
 
 	var cmds []tea.Cmd
