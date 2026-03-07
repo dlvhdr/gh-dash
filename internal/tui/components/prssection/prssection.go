@@ -190,7 +190,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if msg.AutoMergeEnabled != nil && *msg.AutoMergeEnabled {
 				// Set a local flag so the auto-merge icon renders immediately
 				// without waiting for a full refresh.
-				currPr.Primary.AutoMergeEnabled = true
+				currPr.AutoMergeEnabled = true
 			}
 			m.Prs[i] = currPr
 			m.SetIsLoading(false)

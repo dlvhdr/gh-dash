@@ -106,7 +106,6 @@ type PullRequestData struct {
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
 	IsInMergeQueue   bool
-	AutoMergeEnabled bool // Set locally when auto-merge is enabled via the UI; AutoMergeRequest holds the real API data when populated from a fetch.
 	AutoMergeRequest *AutoMergeRequest
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`

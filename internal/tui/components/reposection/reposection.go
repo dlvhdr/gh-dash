@@ -178,9 +178,6 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Prs[i].State = "MERGED"
 				m.Prs[i].Mergeable = ""
 			}
-			if msg.AutoMergeEnabled != nil && *msg.AutoMergeEnabled {
-				m.Prs[i].AutoMergeEnabled = true
-			}
 			m.Table.SetRows(m.BuildRows())
 			break
 		}

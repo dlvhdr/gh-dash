@@ -127,7 +127,7 @@ func TestUpdatePRMsg_AutoMergeEnabled_SetsFlag(t *testing.T) {
 		AutoMergeEnabled: &autoMerge,
 	})
 
-	require.True(t, m.Prs[0].Primary.AutoMergeEnabled,
+	require.True(t, m.Prs[0].AutoMergeEnabled,
 		"AutoMergeEnabled should be set to true after receiving AutoMergeEnabled update")
 	require.Nil(t, m.Prs[0].Primary.AutoMergeRequest,
 		"AutoMergeRequest should remain nil (only real API data should populate it)")

@@ -7,9 +7,10 @@ import (
 )
 
 type Data struct {
-	Primary    *data.PullRequestData
-	Enriched   data.EnrichedPullRequestData
-	IsEnriched bool
+	Primary          *data.PullRequestData
+	Enriched         data.EnrichedPullRequestData
+	IsEnriched       bool
+	AutoMergeEnabled bool // Set locally when auto-merge is enabled via the UI; not queried from the API.
 }
 
 func (data Data) GetTitle() string {
