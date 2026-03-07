@@ -53,6 +53,29 @@ func (m Model) View() string {
 		return ""
 	}
 
+	if m.ctx.PreviewPosition == "bottom" {
+		height := m.ctx.DynamicPreviewHeight
+		width := m.ctx.DynamicPreviewWidth
+		style := m.ctx.Styles.Sidebar.BottomRoot.
+			Height(height).
+			Width(width).
+			MaxWidth(width)
+
+		if m.data == "" {
+			return style.Align(lipgloss.Center).Render(
+				lipgloss.PlaceVertical(height, lipgloss.Center, m.emptyState),
+			)
+		}
+
+		return style.Render(lipgloss.JoinVertical(
+			lipgloss.Top,
+			m.viewport.View(),
+			m.ctx.Styles.Sidebar.PagerStyle.
+				Render(fmt.Sprintf("%d%%", int(m.viewport.ScrollPercent()*100))),
+		))
+	}
+
+	// Right mode
 	height := m.ctx.MainContentHeight
 	style := m.ctx.Styles.Sidebar.Root.
 		Height(height).
@@ -104,6 +127,11 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		return
 	}
 	m.ctx = ctx
-	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
-	m.viewport.Width = m.GetSidebarContentWidth()
+	if m.ctx.PreviewPosition == "bottom" {
+		m.viewport.Height = m.ctx.DynamicPreviewHeight - m.ctx.Styles.Sidebar.PagerHeight
+		m.viewport.Width = m.GetSidebarContentWidth()
+	} else {
+		m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
+		m.viewport.Width = m.GetSidebarContentWidth()
+	}
 }

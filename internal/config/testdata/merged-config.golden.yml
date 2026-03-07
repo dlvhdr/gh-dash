@@ -34,6 +34,8 @@ defaults:
   preview:
     open: true
     width: 80
+    height: 0.4
+    position: auto
   prsLimit: 100
   issuesLimit: 100
   notificationsLimit: 100
