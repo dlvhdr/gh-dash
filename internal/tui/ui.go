@@ -1041,6 +1041,10 @@ func (m *Model) promptConfirmation(currSection section.Section, action string) t
 }
 
 func (m *Model) syncSidebar() tea.Cmd {
+	if !m.sidebar.IsOpen {
+		return nil
+	}
+
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 	var cmd tea.Cmd
