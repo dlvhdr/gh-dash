@@ -127,7 +127,7 @@ func TestCheckoutPRErrorMessage(t *testing.T) {
 func TestMarkAsDoneStoresCorrectTimestamp(t *testing.T) {
 	// Mock the API call to succeed without network access.
 	origFunc := markNotificationDoneFunc
-	markNotificationDoneFunc = func(string) error { return nil }
+	markNotificationDoneFunc = func(string, string) error { return nil }
 	defer func() { markNotificationDoneFunc = origFunc }()
 
 	// Set up a DoneStore backed by a temp file so we don't touch real state.

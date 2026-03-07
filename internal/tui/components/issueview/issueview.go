@@ -42,6 +42,7 @@ type Model struct {
 	ctx       *context.ProgramContext
 	issue     *issuerow.Issue
 	sectionId int
+	host      string
 	width     int
 
 	ShowConfirmCancel bool
@@ -128,7 +129,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			case tea.KeyCtrlD:
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, m.inputBox.Value())
+					cmd = tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, m.inputBox.Value(), m.host)
 				}
 				m.inputBox.Blur()
 				m.isCommenting = false
@@ -161,7 +162,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes)
+					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes, m.host)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
@@ -204,7 +205,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames)
+					cmd = tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames, m.host)
 				}
 				m.inputBox.Blur()
 				m.isAssigning = false
@@ -224,7 +225,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames)
+					cmd = tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames, m.host)
 				}
 				m.inputBox.Blur()
 				m.isUnassigning = false
@@ -389,6 +390,10 @@ func (m *Model) SetWidth(width int) {
 
 func (m *Model) SetSectionId(id int) {
 	m.sectionId = id
+}
+
+func (m *Model) SetHost(host string) {
+	m.host = host
 }
 
 func (m *Model) SetRow(data *data.IssueData) {

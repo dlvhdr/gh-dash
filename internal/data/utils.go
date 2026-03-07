@@ -16,6 +16,15 @@ type RowData interface {
 	GetUpdatedAt() time.Time
 }
 
+// RepoWithHost returns "HOST/OWNER/REPO" when host is non-empty,
+// or "OWNER/REPO" when empty. This matches the gh CLI's -R flag format.
+func RepoWithHost(repo string, host string) string {
+	if host != "" {
+		return host + "/" + repo
+	}
+	return repo
+}
+
 func GetAuthorRoleIcon(role string, theme theme.Theme) string {
 	// https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
 	switch role {

@@ -107,7 +107,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				case "new":
 					cmd = m.newBranch(input)
 				case "create_pr":
-					cmd = tasks.CreatePR(m.Ctx, sid, branch, input)
+					cmd = tasks.CreatePR(m.Ctx, sid, branch, input, "")
 				default:
 					pr := findPRForRef(m.Prs, branch)
 					if input == "" || input == "Y" || input == "y" {
@@ -115,15 +115,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 						case "delete":
 							cmd = m.deleteBranch()
 						case "close":
-							cmd = tasks.ClosePR(m.Ctx, sid, pr)
+							cmd = tasks.ClosePR(m.Ctx, sid, pr, "")
 						case "reopen":
-							cmd = tasks.ReopenPR(m.Ctx, sid, pr)
+							cmd = tasks.ReopenPR(m.Ctx, sid, pr, "")
 						case "ready":
-							cmd = tasks.PRReady(m.Ctx, sid, pr)
+							cmd = tasks.PRReady(m.Ctx, sid, pr, "")
 						case "merge":
-							cmd = tasks.MergePR(m.Ctx, sid, pr)
+							cmd = tasks.MergePR(m.Ctx, sid, pr, "")
 						case "update":
-							cmd = tasks.UpdatePR(m.Ctx, sid, pr)
+							cmd = tasks.UpdatePR(m.Ctx, sid, pr, "")
 						}
 					}
 				}

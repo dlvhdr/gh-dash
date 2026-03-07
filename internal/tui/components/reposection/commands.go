@@ -251,7 +251,7 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(m.Ctx.RepoUrl)), *limit, nil)
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(m.Ctx.RepoUrl)), *limit, nil, "")
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   0,
@@ -285,7 +285,7 @@ func (m *Model) fetchPRCmd(branch string) []tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return []tea.Cmd{startCmd, func() tea.Msg {
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(m.Ctx.RepoUrl), branch), 1, nil)
+		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(m.Ctx.RepoUrl), branch), 1, nil, "")
 		log.Debug("Fetching PRs", "res", res)
 		if err != nil {
 			return constants.TaskFinishedMsg{
@@ -369,7 +369,7 @@ func (m *Model) onRefreshPrsMsg() []tea.Cmd {
 func (m *Model) OpenGithub() tea.Cmd {
 	row := m.CurrRow()
 	b := m.getFilteredBranches()[row]
-	return tasks.OpenBranchPR(m.Ctx, tasks.SectionIdentifier{Id: 0, Type: SectionType}, b.Data.Name)
+	return tasks.OpenBranchPR(m.Ctx, tasks.SectionIdentifier{Id: 0, Type: SectionType}, b.Data.Name, "")
 }
 
 func (m *Model) deleteBranch() tea.Cmd {

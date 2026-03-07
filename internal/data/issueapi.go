@@ -94,11 +94,8 @@ func makeIssuesQuery(query string) string {
 	return fmt.Sprintf("is:issue archived:false %s sort:updated", query)
 }
 
-func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
-	var err error
-	if client == nil {
-		client, err = gh.DefaultGraphQLClient()
-	}
+func FetchIssues(query string, limit int, pageInfo *PageInfo, host string) (IssuesResponse, error) {
+	c, err := getGraphQLClientForHost(host)
 
 	if err != nil {
 		return IssuesResponse{}, err
@@ -123,7 +120,7 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 		"endCursor": (*graphql.String)(endCursor),
 	}
 	log.Debug("Fetching issues", "query", query, "limit", limit, "endCursor", endCursor)
-	err = client.Query("SearchIssues", &queryResult, variables)
+	err = c.Query("SearchIssues", &queryResult, variables)
 	if err != nil {
 		return IssuesResponse{}, err
 	}

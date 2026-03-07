@@ -1,8 +1,10 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -33,7 +35,11 @@ const (
 	ReasonSecurityAlert   = "security_alert"
 )
 
-var restClient *gh.RESTClient
+var (
+	restClient     *gh.RESTClient
+	hostRESTClients   = make(map[string]*gh.RESTClient)
+	hostRESTClientsMu sync.Mutex
+)
 
 type NotificationSubject struct {
 	Title            string `json:"title"`
@@ -109,6 +115,23 @@ func getRESTClient() (*gh.RESTClient, error) {
 	return restClient, err
 }
 
+func getRESTClientForHost(host string) (*gh.RESTClient, error) {
+	if host == "" {
+		return getRESTClient()
+	}
+	hostRESTClientsMu.Lock()
+	defer hostRESTClientsMu.Unlock()
+	if c, ok := hostRESTClients[host]; ok {
+		return c, nil
+	}
+	c, err := gh.NewRESTClient(gh.ClientOptions{Host: host})
+	if err != nil {
+		return nil, err
+	}
+	hostRESTClients[host] = c
+	return c, nil
+}
+
 // NotificationReadState represents the read state filter for notifications
 type NotificationReadState string
 
@@ -118,8 +141,8 @@ const (
 	NotificationStateAll    NotificationReadState = "all"    // Both read and unread
 )
 
-func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo) (NotificationsResponse, error) {
-	client, err := getRESTClient()
+func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo, host string) (NotificationsResponse, error) {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return NotificationsResponse{}, err
 	}
@@ -210,8 +233,8 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 // FetchNotificationByThreadId fetches a single notification by its thread ID.
 // This is useful for fetching bookmarked or session-marked-read notifications
 // that may not appear in the regular notifications list.
-func FetchNotificationByThreadId(threadId string) (*NotificationData, error) {
-	client, err := getRESTClient()
+func FetchNotificationByThreadId(threadId string, host string) (*NotificationData, error) {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return nil, err
 	}
@@ -228,8 +251,8 @@ func FetchNotificationByThreadId(threadId string) (*NotificationData, error) {
 	return &notification, nil
 }
 
-func MarkNotificationDone(threadId string) error {
-	client, err := getRESTClient()
+func MarkNotificationDone(threadId string, host string) error {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return err
 	}
@@ -246,8 +269,8 @@ func MarkNotificationDone(threadId string) error {
 	return nil
 }
 
-func MarkNotificationRead(threadId string) error {
-	client, err := getRESTClient()
+func MarkNotificationRead(threadId string, host string) error {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return err
 	}
@@ -265,8 +288,8 @@ func MarkNotificationRead(threadId string) error {
 	return nil
 }
 
-func UnsubscribeFromThread(threadId string) error {
-	client, err := getRESTClient()
+func UnsubscribeFromThread(threadId string, host string) error {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return err
 	}
@@ -284,8 +307,8 @@ func UnsubscribeFromThread(threadId string) error {
 	return nil
 }
 
-func MarkAllNotificationsRead() error {
-	client, err := getRESTClient()
+func MarkAllNotificationsRead(host string) error {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return err
 	}
@@ -327,27 +350,29 @@ type WorkflowRunsResponse struct {
 
 // FetchCommentAuthor fetches the author of a comment from its API URL
 // apiUrl is like: https://api.github.com/repos/owner/repo/issues/comments/123456
-func FetchCommentAuthor(apiUrl string) (string, error) {
+func FetchCommentAuthor(apiUrl string, host string) (string, error) {
 	if apiUrl == "" {
 		return "", nil
 	}
 
-	client, err := getRESTClient()
+	// Get an authenticated HTTP client for this host
+	httpClient, err := gh.NewHTTPClient(gh.ClientOptions{Host: host})
 	if err != nil {
 		return "", err
 	}
 
-	// Extract the path from the full URL
-	const apiPrefix = "https://api.github.com/"
-	path := apiUrl
-	if len(apiUrl) > len(apiPrefix) && apiUrl[:len(apiPrefix)] == apiPrefix {
-		path = apiUrl[len(apiPrefix):]
-	}
-
-	var response CommentResponse
-	err = client.Get(path, &response)
+	// Fetch the URL directly - no path manipulation needed
+	resp, err := httpClient.Get(apiUrl)
 	if err != nil {
 		log.Debug("Failed to fetch comment author", "url", apiUrl, "err", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var response CommentResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		log.Debug("Failed to decode comment response", "url", apiUrl, "err", err)
 		return "", err
 	}
 
@@ -391,8 +416,8 @@ func FindBestWorkflowRunMatch(runs []WorkflowRun, notificationUpdatedAt time.Tim
 // based on the notification's updated_at timestamp. Returns the HTML URL of the matching run.
 // The title parameter is the notification subject title (e.g., "CI / build (push)")
 // which may help identify the correct workflow run.
-func FetchRecentWorkflowRun(repo string, notificationUpdatedAt time.Time, title string) (string, error) {
-	client, err := getRESTClient()
+func FetchRecentWorkflowRun(repo string, notificationUpdatedAt time.Time, title string, host string) (string, error) {
+	client, err := getRESTClientForHost(host)
 	if err != nil {
 		return "", err
 	}

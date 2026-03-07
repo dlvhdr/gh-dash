@@ -84,6 +84,7 @@ const (
 type SectionConfig struct {
 	Title   string
 	Filters string
+	Host    string    `yaml:"host,omitempty"`
 	Limit   *int      `yaml:"limit,omitempty"`
 	Type    *ViewType `yaml:"type,omitempty"`
 }
@@ -91,6 +92,7 @@ type SectionConfig struct {
 type PrsSectionConfig struct {
 	Title   string
 	Filters string
+	Host    string          `yaml:"host,omitempty"`
 	Limit   *int            `yaml:"limit,omitempty"`
 	Layout  PrsLayoutConfig `yaml:"layout,omitempty"`
 	Type    *ViewType       `yaml:"type,omitempty"`
@@ -99,6 +101,7 @@ type PrsSectionConfig struct {
 type IssuesSectionConfig struct {
 	Title   string
 	Filters string
+	Host    string             `yaml:"host,omitempty"`
 	Limit   *int               `yaml:"limit,omitempty"`
 	Layout  IssuesLayoutConfig `yaml:"layout,omitempty"`
 }
@@ -106,7 +109,8 @@ type IssuesSectionConfig struct {
 type NotificationsSectionConfig struct {
 	Title   string
 	Filters string
-	Limit   *int `yaml:"limit,omitempty"`
+	Host    string `yaml:"host,omitempty"`
+	Limit   *int   `yaml:"limit,omitempty"`
 }
 
 type PreviewConfig struct {

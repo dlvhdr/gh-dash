@@ -29,6 +29,7 @@ func (m *Model) markAsDone() tea.Cmd {
 
 	notificationId := notification.GetId()
 	updatedAt := notification.Notification.UpdatedAt
+	host := m.Config.Host
 	taskId := fmt.Sprintf("notification_done_%s", notificationId)
 	task := context.Task{
 		Id:           taskId,
@@ -39,7 +40,7 @@ func (m *Model) markAsDone() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := markNotificationDoneFunc(notificationId)
+		err := markNotificationDoneFunc(notificationId, host)
 		if err == nil {
 			// Persist to done store so it stays hidden across sessions
 			data.GetDoneStore().MarkDone(notificationId, updatedAt)
@@ -66,6 +67,7 @@ func (m *Model) markAllAsDone() tea.Cmd {
 	}
 
 	count := len(m.Notifications)
+	host := m.Config.Host
 	taskId := "notification_done_all"
 	task := context.Task{
 		Id:           taskId,
@@ -90,7 +92,7 @@ func (m *Model) markAllAsDone() tea.Cmd {
 		doneStore := data.GetDoneStore()
 		var lastErr error
 		for _, e := range entries {
-			if err := data.MarkNotificationDone(e.id); err != nil {
+			if err := markNotificationDoneFunc(e.id, host); err != nil {
 				lastErr = err
 			} else {
 				// Persist to done store so it stays hidden across sessions
@@ -119,6 +121,7 @@ func (m *Model) markAllAsDone() tea.Cmd {
 }
 
 func (m *Model) markAllAsRead() tea.Cmd {
+	host := m.Config.Host
 	taskId := "notification_read_all"
 	task := context.Task{
 		Id:           taskId,
@@ -129,7 +132,7 @@ func (m *Model) markAllAsRead() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := data.MarkAllNotificationsRead()
+		err := data.MarkAllNotificationsRead(host)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   m.Id,
@@ -168,6 +171,7 @@ func (m *Model) markAsRead() tea.Cmd {
 	}
 
 	notificationId := notification.GetId()
+	host := m.Config.Host
 	taskId := fmt.Sprintf("notification_read_%s", notificationId)
 	task := context.Task{
 		Id:           taskId,
@@ -178,7 +182,7 @@ func (m *Model) markAsRead() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := data.MarkNotificationRead(notificationId)
+		err := data.MarkNotificationRead(notificationId, host)
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
 			SectionType: SectionType,
@@ -199,6 +203,7 @@ func (m *Model) unsubscribe() tea.Cmd {
 	}
 
 	notificationId := notification.GetId()
+	host := m.Config.Host
 	taskId := fmt.Sprintf("notification_unsubscribe_%s", notificationId)
 	task := context.Task{
 		Id:           taskId,
@@ -209,7 +214,7 @@ func (m *Model) unsubscribe() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := data.UnsubscribeFromThread(notificationId)
+		err := data.UnsubscribeFromThread(notificationId, host)
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
 			SectionType: SectionType,
@@ -242,10 +247,11 @@ func (m *Model) openInBrowser() tea.Cmd {
 
 	notificationId := notification.GetId()
 	notificationUrl := notification.GetUrl()
+	host := m.Config.Host
 
 	return tea.Batch(
 		func() tea.Msg {
-			_ = data.MarkNotificationRead(notificationId)
+			_ = data.MarkNotificationRead(notificationId, host)
 			return UpdateNotificationReadStateMsg{
 				Id:     notificationId,
 				Unread: false,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -467,6 +468,8 @@ type PullRequestsResponse struct {
 var (
 	client       *gh.GraphQLClient
 	cachedClient *gh.GraphQLClient
+	hostGraphQLClients   = make(map[string]*gh.GraphQLClient)
+	hostGraphQLClientsMu sync.Mutex
 )
 
 func SetClient(c *gh.GraphQLClient) {
@@ -486,17 +489,46 @@ func IsEnrichmentCacheCleared() bool {
 	return cachedClient == nil
 }
 
-func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
-	var err error
-	if client == nil {
+// getGraphQLClientForHost returns a cached GraphQL client for the given host,
+// or the default client when host is empty.
+func getGraphQLClientForHost(host string) (*gh.GraphQLClient, error) {
+	if host == "" {
+		if client != nil {
+			return client, nil
+		}
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
 			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
-		} else {
-			client, err = gh.DefaultGraphQLClient()
+			c, err := gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+			if err != nil {
+				return nil, err
+			}
+			client = c
+			return client, nil
 		}
+		c, err := gh.DefaultGraphQLClient()
+		if err != nil {
+			return nil, err
+		}
+		client = c
+		return client, nil
 	}
+
+	hostGraphQLClientsMu.Lock()
+	defer hostGraphQLClientsMu.Unlock()
+	if c, ok := hostGraphQLClients[host]; ok {
+		return c, nil
+	}
+	c, err := gh.NewGraphQLClient(gh.ClientOptions{Host: host})
+	if err != nil {
+		return nil, err
+	}
+	hostGraphQLClients[host] = c
+	return c, nil
+}
+
+func FetchPullRequests(query string, limit int, pageInfo *PageInfo, host string) (PullRequestsResponse, error) {
+	c, err := getGraphQLClientForHost(host)
 
 	if err != nil {
 		return PullRequestsResponse{}, err
@@ -521,7 +553,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 		"endCursor": (*graphql.String)(endCursor),
 	}
 	log.Debug("Fetching PRs", "query", query, "limit", limit, "endCursor", endCursor)
-	err = client.Query("SearchPullRequests", &queryResult, variables)
+	err = c.Query("SearchPullRequests", &queryResult, variables)
 	if err != nil {
 		return PullRequestsResponse{}, err
 	}
