@@ -1,9 +1,11 @@
 package common_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -105,4 +107,51 @@ func TestRenderLabels(t *testing.T) {
 			require.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestRenderLabelsWithLimit(t *testing.T) {
+	got := common.RenderLabelsWithLimit(
+		12,
+		1,
+		[]data.Label{
+			{Name: "bug"},
+			{Name: "fix"},
+			{Name: "chore"},
+		},
+		defaultStyle,
+	)
+
+	require.Equal(t, " bug   +2 ", ansi.Strip(got))
+}
+
+func TestRenderLabelsWithLimitUsesUpstreamRendering(t *testing.T) {
+	got := common.RenderLabelsWithLimit(
+		12,
+		1,
+		[]data.Label{
+			{Name: "bug", Color: "ff0000"},
+			{Name: "fix", Color: "00ff00"},
+		},
+		lipgloss.NewStyle(),
+	)
+
+	require.NotEmpty(t, got)
+	require.Contains(t, ansi.Strip(got), "bug")
+	require.NotContains(t, ansi.Strip(got), "[")
+}
+
+func TestRenderLabelsWithLimit_oversized_first_label_respects_max_rows(t *testing.T) {
+	got := common.RenderLabelsWithLimit(
+		8,
+		1,
+		[]data.Label{
+			{Name: "verylonglabel"},
+			{Name: "bug"},
+		},
+		defaultStyle,
+	)
+
+	stripped := ansi.Strip(got)
+	require.Equal(t, 0, strings.Count(stripped, "\n"))
+	require.NotContains(t, stripped, "+")
 }

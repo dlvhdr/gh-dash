@@ -28,6 +28,7 @@ schematize:
       1. [sref:`repo`] with a width of 15 columns.
       1. [sref:`title`], set to grow to fill available space.
       1. [sref:`author`] with a width of 10 columns.
+      1. [sref:`labels`] with a width of 22 columns, hidden by default.
       1. [sref:`reviewStatus`] with a width of 3 columns.
       1. [sref:`ci`] with a width of 3 columns.
       1. [sref:`lines`] with a width of 16 columns.
@@ -48,6 +49,7 @@ schematize:
       [sref:`repo`]:         layout.pr.repo
       [sref:`title`]:        layout.pr.title
       [sref:`author`]:       layout.pr.author
+      [sref:`labels`]:       layout.pr.labels
       [sref:`reviewStatus`]: layout.pr.reviewStatus
       [sref:`ci`]:           layout.pr.ci
       [sref:`lines`]:        layout.pr.lines
@@ -58,6 +60,9 @@ default:
     width: 15
   author:
     width: 15
+  labels:
+    width: 22
+    hidden: true
   assignees:
     width: 20
     hidden: true
@@ -183,6 +188,23 @@ properties:
       format: yaml
       details: |
         This setting affects display of the role icon for the person who created the PR.
+  labels:
+    title: PR Labels Column
+    description: Defines options for the labels column in a PR section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    schematize:
+      weight: 7
+      skip_schema_render: true
+      format: yaml
+      details: |
+        This column displays the labels assigned to a PR as colored pills.
+
+        The heading for this column is ![styled:`󰌖`]().
+    default:
+      width: 22
+      hidden: true
   assignees:
     title: PR Assignees Column
     description: Defines options for the assignees column in a PR section.
@@ -190,7 +212,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 7
+      weight: 8
       skip_schema_render: true
       format: yaml
       details: |
@@ -207,7 +229,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 8
+      weight: 9
       skip_schema_render: true
       format: yaml
       details: |
@@ -224,7 +246,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 9
+      weight: 10
       skip_schema_render: true
       format: yaml
       details: |
@@ -249,7 +271,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 10
+      weight: 11
       skip_schema_render: true
       format: yaml
       details: |
@@ -274,7 +296,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 11
+      weight: 13
       skip_schema_render: true
       format: yaml
       details: |
