@@ -45,34 +45,41 @@ func newTestModelForAction(t *testing.T) Model {
 func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 	testCases := []struct {
 		name           string
-		keyBinding     string
+		keyBindingText rune
 		expectedAction PRActionType
 	}{
-		{"approve key", "v", PRActionApprove},
-		{"assign key", "a", PRActionAssign},
-		{"unassign key", "A", PRActionUnassign},
-		{"comment key", "c", PRActionComment},
-		{"diff key", "d", PRActionDiff},
-		{"checkout key C", "C", PRActionCheckout},
-		{"checkout key space", " ", PRActionCheckout},
-		{"close key", "x", PRActionClose},
-		{"ready key", "W", PRActionReady},
-		{"reopen key", "X", PRActionReopen},
-		{"merge key", "m", PRActionMerge},
-		{"update key", "u", PRActionUpdate},
-		{"summary view more key", "e", PRActionSummaryViewMore},
-		{"approve workflows key", "V", PRActionApproveWorkflows},
+		{"approve key", 'v', PRActionApprove},
+		{"assign key", 'a', PRActionAssign},
+		{"unassign key", 'A', PRActionUnassign},
+		{"comment key", 'c', PRActionComment},
+		{"diff key", 'd', PRActionDiff},
+		{"checkout key C", 'C', PRActionCheckout},
+		{"checkout key space", tea.KeySpace, PRActionCheckout},
+		{"close key", 'x', PRActionClose},
+		{"ready key", 'W', PRActionReady},
+		{"reopen key", 'X', PRActionReopen},
+		{"merge key", 'm', PRActionMerge},
+		{"update key", 'u', PRActionUpdate},
+		{"summary view more key", 'e', PRActionSummaryViewMore},
+		{"approve workflows key", 'V', PRActionApproveWorkflows},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg := tea.KeyPressMsg{Text: tc.keyBinding}
+			msg := tea.KeyPressMsg{Code: tc.keyBindingText}
 
 			action := MsgToAction(msg)
 
-			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
-			require.Equal(t, tc.expectedAction, action.Type,
-				"expected action type %v for key %q, got %v", tc.expectedAction, tc.keyBinding, action.Type)
+			require.NotNil(t, action, "expected action for key %q", tc.keyBindingText)
+			require.Equal(
+				t,
+				tc.expectedAction,
+				action.Type,
+				"expected action type %v for key %q, got %v",
+				tc.expectedAction,
+				tc.keyBindingText,
+				action.Type,
+			)
 		})
 	}
 }
@@ -89,28 +96,44 @@ func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isCommenting = true
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in commenting mode")
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in commenting mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isApproving = true
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in approving mode")
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in approving mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isAssigning = true
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in assigning mode")
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in assigning mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isUnassigning = true
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in unassigning mode")
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in unassigning mode",
+	)
 }
 
 func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {

@@ -23,7 +23,7 @@ type BranchKeyMap struct {
 
 var BranchKeys = BranchKeyMap{
 	Checkout: key.NewBinding(
-		key.WithKeys("C", " "),
+		key.WithKeys("C", "space"),
 		key.WithHelp("C/space", "checkout"),
 	),
 	New: key.NewBinding(

@@ -1,9 +1,11 @@
 package theme
 
 import (
+	"image/color"
 	"testing"
 
 	"charm.land/log/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -36,7 +38,11 @@ func TestTheme(t *testing.T) {
 		}
 
 		parsed := ParseTheme(&cfg)
-		require.Equal(t, "#FF0000", parsed.PrimaryText.Dark)
+		require.Equal(
+			t,
+			color.RGBA{R: 0xff, G: 0x0, B: 0x0, A: 0xff},
+			parsed.PrimaryText.Dark,
+		)
 	})
 
 	t.Run("Should use ANSI color indices", func(t *testing.T) {
@@ -55,7 +61,7 @@ func TestTheme(t *testing.T) {
 		}
 
 		parsed := ParseTheme(&cfg)
-		require.Equal(t, "12", parsed.PrimaryText.Light)
-		require.Equal(t, "12", parsed.PrimaryText.Dark)
+		require.Equal(t, ansi.BasicColor(12), parsed.PrimaryText.Light)
+		require.Equal(t, ansi.BasicColor(12), parsed.PrimaryText.Dark)
 	})
 }

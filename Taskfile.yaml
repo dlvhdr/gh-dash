@@ -83,7 +83,7 @@ tasks:
 
   test:
     cmds:
-      - prism test -v ./...
+      - prism test {{.CLI_ARGS}} ./...
     desc: Run tests
 
   fmt:
