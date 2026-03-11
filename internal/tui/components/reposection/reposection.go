@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -74,13 +74,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case tea.KeyMsg:
 
 		if m.IsSearchFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
 				return m, blinkCmd
 
-			case tea.KeyEnter:
+			case "enter":
 				m.Table.ResetCurrItem()
 				m.SetIsSearching(false)
 				m.SearchValue = m.SearchBar.Value()
@@ -92,13 +92,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
 				return m, cmd
 
-			case tea.KeyEnter:
+			case "enter":
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				branch := m.getCurrBranch().Data.Name

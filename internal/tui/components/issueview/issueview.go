@@ -2,14 +2,15 @@ package issueview
 
 import (
 	"fmt"
+	"image/color"
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -124,8 +125,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 
 	case tea.KeyMsg:
 		if m.isCommenting {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
 					cmd = tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, m.inputBox.Value())
@@ -134,7 +135,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				m.isCommenting = false
 				return m, cmd, nil
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				if !m.ShowConfirmCancel {
 					m.shouldCancelComment()
 				}
@@ -156,19 +157,25 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isLabeling {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes)
+					cmd = tasks.LabelIssue(
+						m.ctx,
+						sid,
+						m.issue.Data,
+						labels,
+						m.issue.Data.Labels.Nodes,
+					)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
 				m.ac.Hide()
 				return m, cmd, nil
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				m.inputBox.Blur()
 				m.isLabeling = false
 				m.ac.Hide()
@@ -199,8 +206,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				m.ac.Show(currentLabel, existingLabels)
 			}
 		} else if m.isAssigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
@@ -210,7 +217,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				m.isAssigning = false
 				return m, cmd, nil
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				m.inputBox.Blur()
 				m.isAssigning = false
 				return m, nil, nil
@@ -219,8 +226,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			m.inputBox, taCmd = m.inputBox.Update(msg)
 			cmds = append(cmds, cmd, taCmd)
 		} else if m.isUnassigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
+			switch msg.String() {
+			case "ctrl+d":
 				usernames := strings.Fields(m.inputBox.Value())
 				if len(usernames) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
@@ -230,7 +237,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				m.isUnassigning = false
 				return m, cmd, nil
 
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case "esc", "ctrl+c":
 				m.inputBox.Blur()
 				m.isUnassigning = false
 				return m, nil, nil
@@ -309,7 +316,7 @@ func (m *Model) renderTitle() string {
 }
 
 func (m *Model) renderStatusPill() string {
-	bgColor := ""
+	var bgColor color.Color
 	content := ""
 	switch m.issue.Data.State {
 	case "OPEN":
@@ -321,8 +328,8 @@ func (m *Model) renderStatusPill() string {
 	}
 
 	return m.ctx.Styles.PrView.PillStyle.
-		BorderForeground(lipgloss.Color(bgColor)).
-		Background(lipgloss.Color(bgColor)).
+		BorderForeground(bgColor).
+		Background(bgColor).
 		Render(content)
 }
 
@@ -340,7 +347,8 @@ func (m *Model) renderAuthor() string {
 			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
 			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.issue.Data.AuthorAssociation,
-				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+				m.ctx.Theme),
+				" ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
 }
@@ -353,7 +361,10 @@ func (m *Model) renderBody() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
+		return lipgloss.NewStyle().
+			Italic(true).
+			Foreground(m.ctx.Theme.FaintText).
+			Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
@@ -409,7 +420,9 @@ func (m *Model) GetIsCommenting() bool {
 
 func (m *Model) shouldCancelComment() bool {
 	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
+		m.inputBox.SetPrompt(
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
+		)
 		m.ShowConfirmCancel = true
 		return false
 	}

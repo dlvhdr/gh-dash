@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -200,7 +200,12 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	}))
 }
 
-func CreatePR(ctx *context.ProgramContext, section SectionIdentifier, branchName string, title string) tea.Cmd {
+func CreatePR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	branchName string,
+	title string,
+) tea.Cmd {
 	c := exec.Command(
 		"gh",
 		"pr",
@@ -257,7 +262,12 @@ func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 	})
 }
 
-func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+func AssignPR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+	usernames []string,
+) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
@@ -278,7 +288,10 @@ func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
 			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+				returnedAssignees.Nodes = append(
+					returnedAssignees.Nodes,
+					data.Assignee{Login: assignee},
+				)
 			}
 			return UpdatePRMsg{
 				PrNumber:       prNumber,
@@ -288,7 +301,12 @@ func AssignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 	})
 }
 
-func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, usernames []string) tea.Cmd {
+func UnassignPR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+	usernames []string,
+) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
@@ -309,7 +327,10 @@ func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
 			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+				returnedAssignees.Nodes = append(
+					returnedAssignees.Nodes,
+					data.Assignee{Login: assignee},
+				)
 			}
 			return UpdatePRMsg{
 				PrNumber:         prNumber,
@@ -319,7 +340,12 @@ func UnassignPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.
 	})
 }
 
-func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, body string) tea.Cmd {
+func CommentOnPR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+	body string,
+) tea.Cmd {
 	prNumber := pr.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: buildTaskId("pr_comment", prNumber),
@@ -348,7 +374,12 @@ func CommentOnPR(ctx *context.ProgramContext, section SectionIdentifier, pr data
 	})
 }
 
-func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData, comment string) tea.Cmd {
+func ApprovePR(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+	comment string,
+) tea.Cmd {
 	prNumber := pr.GetNumber()
 	args := []string{
 		"pr",
@@ -375,7 +406,11 @@ func ApprovePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.R
 	})
 }
 
-func ApproveWorkflows(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func ApproveWorkflows(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	pr data.RowData,
+) tea.Cmd {
 	prNumber := pr.GetNumber()
 	repo := pr.GetRepoNameWithOwner()
 	taskId := buildTaskId("pr_approve_workflows", prNumber)
@@ -442,7 +477,9 @@ func ApproveWorkflows(ctx *context.ProgramContext, section SectionIdentifier, pr
 			if err != nil {
 				outStr := string(output)
 				if strings.Contains(outStr, "not from a fork pull request") {
-					lastErr = fmt.Errorf("workflow not approvable via API (only fork PR workflows can be approved)")
+					lastErr = fmt.Errorf(
+						"workflow not approvable via API (only fork PR workflows can be approved)",
+					)
 				} else {
 					lastErr = fmt.Errorf("failed to approve run %s: %w", runId, err)
 				}

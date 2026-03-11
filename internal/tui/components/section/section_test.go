@@ -234,8 +234,14 @@ func TestGetSearchValue(t *testing.T) {
 					break
 				}
 			}
-			require.Equal(t, tt.wantContainsRepoFilter, hasExactRepoFilter,
-				"GetSearchValue() = %q, expected repo filter present = %v", got, tt.wantContainsRepoFilter)
+			require.Equal(
+				t,
+				tt.wantContainsRepoFilter,
+				hasExactRepoFilter,
+				"GetSearchValue() = %q, expected repo filter present = %v",
+				got,
+				tt.wantContainsRepoFilter,
+			)
 
 			if tt.wantContainsOtherFilters {
 				require.Contains(t, got, "is:open")
@@ -439,7 +445,13 @@ func TestGetPromptConfirmation(t *testing.T) {
 
 			result := m.GetPromptConfirmation()
 			if tt.wantNonEmpty {
-				require.NotEmpty(t, result, "GetPromptConfirmation() should return non-empty for action %q in view %v", tt.action, tt.view)
+				require.NotEmpty(
+					t,
+					result,
+					"GetPromptConfirmation() should return non-empty for action %q in view %v",
+					tt.action,
+					tt.view,
+				)
 			}
 		})
 	}

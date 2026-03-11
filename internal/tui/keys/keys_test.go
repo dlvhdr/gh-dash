@@ -3,7 +3,7 @@ package keys
 import (
 	"testing"
 
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
@@ -61,7 +61,9 @@ func TestFullHelpIncludesPRKeysForPRSubject(t *testing.T) {
 
 	found = findKeyByHelp(allKeys, "approve all workflows")
 	if !found {
-		t.Error("expected PR key 'approve all workflows' to be present when viewing PR notification")
+		t.Error(
+			"expected PR key 'approve all workflows' to be present when viewing PR notification",
+		)
 	}
 
 	// Clean up

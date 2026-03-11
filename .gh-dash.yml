@@ -44,6 +44,5 @@ defaults:
 
   preview:
     open: true
-    width: 84
   prsLimit: 20
   issuesLimit: 20

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/cli/go-gh/v2/pkg/browser"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -267,7 +267,9 @@ func (m *Model) openInBrowser() tea.Cmd {
 func CheckoutPR(ctx *context.ProgramContext, prNumber int, repoName string) (tea.Cmd, error) {
 	repoPath, ok := common.GetRepoLocalPath(repoName, ctx.Config.RepoPaths)
 	if !ok {
-		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
+		return nil, errors.New(
+			"local path to repo not specified, set one in your config.yml under repoPaths",
+		)
 	}
 
 	taskId := fmt.Sprintf("checkout_%d", prNumber)

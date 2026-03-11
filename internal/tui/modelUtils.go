@@ -11,9 +11,9 @@ import (
 	"text/template"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	log "github.com/charmbracelet/log"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -120,7 +120,13 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 			if keybinding.Key != key || keybinding.Command == "" {
 				continue
 			}
-			log.Debug("executing notification keybind", "key", keybinding.Key, "command", keybinding.Command)
+			log.Debug(
+				"executing notification keybind",
+				"key",
+				keybinding.Key,
+				"command",
+				keybinding.Command,
+			)
 			if nData, ok := currRowData.(*notificationrow.Data); ok {
 				return m.runCustomNotificationCommand(keybinding.Command, nData)
 			}
@@ -133,7 +139,13 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 					if keybinding.Key != key || keybinding.Command == "" {
 						continue
 					}
-					log.Debug("executing notification PR keybind", "key", keybinding.Key, "command", keybinding.Command)
+					log.Debug(
+						"executing notification PR keybind",
+						"key",
+						keybinding.Key,
+						"command",
+						keybinding.Command,
+					)
 					return m.runCustomNotificationPRCommand(keybinding.Command, nData)
 				}
 			case "Issue":
@@ -141,7 +153,13 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 					if keybinding.Key != key || keybinding.Command == "" {
 						continue
 					}
-					log.Debug("executing notification issue keybind", "key", keybinding.Key, "command", keybinding.Command)
+					log.Debug(
+						"executing notification issue keybind",
+						"key",
+						keybinding.Key,
+						"command",
+						keybinding.Command,
+					)
 					return m.runCustomNotificationIssueCommand(keybinding.Command, nData)
 				}
 			}
@@ -169,7 +187,10 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 
 	// Append in the local RepoPath only if it can be found
 	if input["RepoName"] != nil {
-		if repoPath, ok := common.GetRepoLocalPath(input["RepoName"].(string), m.ctx.Config.RepoPaths); ok {
+		if repoPath, ok := common.GetRepoLocalPath(
+			input["RepoName"].(string),
+			m.ctx.Config.RepoPaths,
+		); ok {
 			input["RepoPath"] = repoPath
 		}
 	}
@@ -239,7 +260,10 @@ func (m *Model) runCustomUniversalCommand(commandTemplate string) tea.Cmd {
 	return m.runCustomCommand(commandTemplate, &input)
 }
 
-func (m *Model) runCustomNotificationPRCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+func (m *Model) runCustomNotificationPRCommand(
+	commandTemplate string,
+	nData *notificationrow.Data,
+) tea.Cmd {
 	fields := map[string]any{
 		"RepoName": nData.GetRepoNameWithOwner(),
 		"PrNumber": nData.GetNumber(),
@@ -252,7 +276,10 @@ func (m *Model) runCustomNotificationPRCommand(commandTemplate string, nData *no
 	return m.runCustomCommand(commandTemplate, &fields)
 }
 
-func (m *Model) runCustomNotificationIssueCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+func (m *Model) runCustomNotificationIssueCommand(
+	commandTemplate string,
+	nData *notificationrow.Data,
+) tea.Cmd {
 	fields := map[string]any{
 		"RepoName":    nData.GetRepoNameWithOwner(),
 		"IssueNumber": nData.GetNumber(),
@@ -263,7 +290,10 @@ func (m *Model) runCustomNotificationIssueCommand(commandTemplate string, nData 
 	return m.runCustomCommand(commandTemplate, &fields)
 }
 
-func (m *Model) runCustomNotificationCommand(commandTemplate string, nData *notificationrow.Data) tea.Cmd {
+func (m *Model) runCustomNotificationCommand(
+	commandTemplate string,
+	nData *notificationrow.Data,
+) tea.Cmd {
 	fields := map[string]any{
 		"RepoName": nData.GetRepoNameWithOwner(),
 		"Number":   nData.GetNumber(),

@@ -97,8 +97,12 @@ func newTestModelForChecks(t *testing.T, opts checksTestOptions) Model {
 	// Set up the commit data
 	enriched.Commits.Nodes[0].Commit.CheckSuites = opts.checkSuites
 	enriched.Commits.Nodes[0].Commit.StatusCheckRollup.State = graphql.String(opts.rollupState)
-	enriched.Commits.Nodes[0].Commit.StatusCheckRollup.Contexts.TotalCount = graphql.Int(len(opts.checkRuns))
-	enriched.Commits.Nodes[0].Commit.StatusCheckRollup.Contexts.CheckRunCount = graphql.Int(len(opts.checkRuns))
+	enriched.Commits.Nodes[0].Commit.StatusCheckRollup.Contexts.TotalCount = graphql.Int(
+		len(opts.checkRuns),
+	)
+	enriched.Commits.Nodes[0].Commit.StatusCheckRollup.Contexts.CheckRunCount = graphql.Int(
+		len(opts.checkRuns),
+	)
 
 	// Build context nodes from check runs and aggregate counts by state
 	stateCounts := make(map[string]int)
@@ -284,8 +288,14 @@ func TestRenderChecks_RequiredButNotReported(t *testing.T) {
 	// Should NOT show "lint" in pending since it was reported
 	// Count occurrences - lint should only appear once (in the success section)
 	lintCount := strings.Count(got, "lint")
-	require.Equal(t, 1, lintCount,
-		"expected 'lint' to appear exactly once (not in pending), got %d occurrences in: %q", lintCount, got)
+	require.Equal(
+		t,
+		1,
+		lintCount,
+		"expected 'lint' to appear exactly once (not in pending), got %d occurrences in: %q",
+		lintCount,
+		got,
+	)
 }
 
 func TestRenderChecks_MixedStates(t *testing.T) {

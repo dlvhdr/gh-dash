@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	ghchecks "github.com/dlvhdr/x/gh-checks"
@@ -42,7 +42,10 @@ func (m *Model) renderChecksOverview() string {
 		borderColor = m.ctx.Theme.SuccessText
 	}
 
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(borderColor).Width(w)
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Width(w)
 	parts := make([]string, 0)
 	if review != "" {
 		parts = append(parts, review)
@@ -61,7 +64,12 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	checks := ""
 
 	if !m.pr.Data.IsEnriched {
-		return m.viewCheckCategory(m.ctx.Styles.Common.WaitingGlyph, "Loading...", "", false), statusWaiting
+		return m.viewCheckCategory(
+			m.ctx.Styles.Common.WaitingGlyph,
+			"Loading...",
+			"",
+			false,
+		), statusWaiting
 	}
 
 	stats := m.getChecksStats()
@@ -109,7 +117,11 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	}
 	if title != "" {
 		checksBar := m.viewChecksBar()
-		checksBottom := lipgloss.JoinVertical(lipgloss.Left, strings.Join(statStrs, ", "), checksBar)
+		checksBottom := lipgloss.JoinVertical(
+			lipgloss.Left,
+			strings.Join(statStrs, ", "),
+			checksBar,
+		)
 		checks = m.viewCheckCategory(icon, title, checksBottom, false)
 	}
 	return checks, status
@@ -150,7 +162,10 @@ func (m *Model) viewMergeStatus() (string, checkSectionStatus) {
 
 func (m *Model) viewMergedStatus() string {
 	w := m.getIndentedContentWidth()
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Styles.Colors.MergedPR).Width(w)
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.ctx.Styles.Colors.MergedPR).
+		Width(w)
 	return box.Render(m.viewCheckCategory(
 		m.ctx.Styles.Common.MergedGlyph,
 		"Pull request successfully merged and closed",
@@ -161,7 +176,10 @@ func (m *Model) viewMergedStatus() string {
 
 func (m *Model) viewClosedStatus() string {
 	w := m.getIndentedContentWidth()
-	box := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(m.ctx.Theme.FaintBorder).Width(w)
+	box := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		Width(w)
 	return box.Render(m.viewCheckCategory(
 		"",
 		"Closed with unmerged commits",
@@ -250,7 +268,11 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 	category := lipgloss.JoinHorizontal(lipgloss.Top, icon, " ", sTitle.Render(title))
 
 	if subtitle != "" {
-		category = lipgloss.JoinVertical(lipgloss.Left, category, sSub.MarginLeft(2).Render(subtitle))
+		category = lipgloss.JoinVertical(
+			lipgloss.Left,
+			category,
+			sSub.MarginLeft(2).Render(subtitle),
+		)
 	}
 	if category == "" {
 		return ""
@@ -261,7 +283,9 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 func (m *Model) viewChecksBar() string {
 	w := m.getIndentedContentWidth() - 4
 	stats := m.getChecksStats()
-	total := float64(stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress + stats.awaitingApproval)
+	total := float64(
+		stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress + stats.awaitingApproval,
+	)
 	numSections := 0
 	if stats.failed > 0 {
 		numSections++
@@ -357,7 +381,9 @@ func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory,
 	return CheckSuccess, m.ctx.Styles.Common.SuccessGlyph
 }
 
-func (m *Model) renderStatusContextConclusion(statusContext data.StatusContext) (CheckCategory, string) {
+func (m *Model) renderStatusContextConclusion(
+	statusContext data.StatusContext,
+) (CheckCategory, string) {
 	conclusionStr := string(statusContext.State)
 	if ghchecks.IsStatusWaiting(conclusionStr) {
 		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
@@ -388,7 +414,9 @@ func renderStatusContextName(statusContext data.StatusContext) string {
 }
 
 func (sidebar *Model) renderChecks() string {
-	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" All Checks")
+	title := sidebar.ctx.Styles.Common.MainTextStyle.MarginBottom(1).
+		Underline(true).
+		Render(" All Checks")
 
 	commits := sidebar.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
@@ -419,11 +447,21 @@ func (sidebar *Model) renderChecks() string {
 
 		if suite.Conclusion == "ACTION_REQUIRED" {
 			// Workflow requires approval before it can run
-			check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.ActionRequiredGlyph, " ", workflowName)
+			check := lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				sidebar.ctx.Styles.Common.ActionRequiredGlyph,
+				" ",
+				workflowName,
+			)
 			awaitingApproval = append(awaitingApproval, check)
 		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
 			// Workflow is queued/pending (will run automatically)
-			check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.WaitingGlyph, " ", workflowName)
+			check := lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				sidebar.ctx.Styles.Common.WaitingGlyph,
+				" ",
+				workflowName,
+			)
 			pending = append(pending, check)
 		}
 	}
@@ -448,7 +486,12 @@ func (sidebar *Model) renderChecks() string {
 			var status string
 			category, status = sidebar.renderStatusContextConclusion(statusContext)
 			checkName = string(statusContext.Context)
-			check = lipgloss.JoinHorizontal(lipgloss.Top, status, " ", renderStatusContextName(statusContext))
+			check = lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				status,
+				" ",
+				renderStatusContextName(statusContext),
+			)
 		}
 
 		reportedChecks[checkName] = true
@@ -470,7 +513,12 @@ func (sidebar *Model) renderChecks() string {
 			contextName := string(requiredContext)
 			if !reportedChecks[contextName] {
 				// Required check hasn't been reported yet
-				check := lipgloss.JoinHorizontal(lipgloss.Top, sidebar.ctx.Styles.Common.WaitingGlyph, " ", contextName)
+				check := lipgloss.JoinHorizontal(
+					lipgloss.Top,
+					sidebar.ctx.Styles.Common.WaitingGlyph,
+					" ",
+					contextName,
+				)
 				pending = append(pending, check)
 			}
 		}
@@ -566,8 +614,12 @@ func (m *Model) getChecksStats() checksStats {
 
 	lastCommit := commits[0]
 	allChecks := make([]data.ContextCountByState, 0)
-	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState...)
-	allChecks = append(allChecks, lastCommit.Commit.StatusCheckRollup.Contexts.StatusContextCountsByState...)
+	allChecks = append(
+		allChecks,
+		lastCommit.Commit.StatusCheckRollup.Contexts.CheckRunCountsByState...)
+	allChecks = append(
+		allChecks,
+		lastCommit.Commit.StatusCheckRollup.Contexts.StatusContextCountsByState...)
 
 	for _, count := range allChecks {
 		state := string(count.State)

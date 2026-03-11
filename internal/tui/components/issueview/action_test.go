@@ -3,7 +3,7 @@ package issueview
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -56,20 +56,27 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			m := newTestModelForAction(t)
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tc.keyBinding)}
+			msg := tea.KeyPressMsg{Text: tc.keyBinding}
 
 			_, _, action := m.Update(msg)
 
 			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
-			require.Equal(t, tc.expectedAction, action.Type,
-				"expected action type %v for key %q, got %v", tc.expectedAction, tc.keyBinding, action.Type)
+			require.Equal(
+				t,
+				tc.expectedAction,
+				action.Type,
+				"expected action type %v for key %q, got %v",
+				tc.expectedAction,
+				tc.keyBinding,
+				action.Type,
+			)
 		})
 	}
 }
 
 func TestUpdateReturnsNilActionForUnknownKeys(t *testing.T) {
 	m := newTestModelForAction(t)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")}
+	msg := tea.KeyPressMsg{Text: "z"}
 
 	_, _, action := m.Update(msg)
 
@@ -79,7 +86,7 @@ func TestUpdateReturnsNilActionForUnknownKeys(t *testing.T) {
 func TestUpdateReturnsNilActionWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isCommenting = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("L")} // label key
+	msg := tea.KeyPressMsg{Text: "L"} // label key
 
 	_, _, action := m.Update(msg)
 
@@ -89,7 +96,7 @@ func TestUpdateReturnsNilActionWhenCommenting(t *testing.T) {
 func TestUpdateReturnsNilActionWhenLabeling(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isLabeling = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")} // comment key
+	msg := tea.KeyPressMsg{Text: "c"} // comment key
 
 	_, _, action := m.Update(msg)
 
@@ -99,7 +106,7 @@ func TestUpdateReturnsNilActionWhenLabeling(t *testing.T) {
 func TestUpdateReturnsNilActionWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isAssigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")} // close key
+	msg := tea.KeyPressMsg{Text: "x"} // close key
 
 	_, _, action := m.Update(msg)
 
@@ -109,7 +116,7 @@ func TestUpdateReturnsNilActionWhenAssigning(t *testing.T) {
 func TestUpdateReturnsNilActionWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
 	m.isUnassigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("X")} // reopen key
+	msg := tea.KeyPressMsg{Text: "X"} // reopen key
 
 	_, _, action := m.Update(msg)
 
@@ -150,7 +157,7 @@ func TestUpdateWithReboundKeys(t *testing.T) {
 	}()
 
 	m := newTestModelForAction(t)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("l")}
+	msg := tea.KeyPressMsg{Text: "l"}
 
 	_, _, action := m.Update(msg)
 
@@ -249,7 +256,7 @@ func TestInputBoxTextNotReplacedByStaleAutocomplete(t *testing.T) {
 
 	// Step 5: Verify that Tab key does NOT trigger autocomplete selection
 	// because autocomplete was reset when entering comment mode
-	tabMsg := tea.KeyMsg{Type: tea.KeyTab}
+	tabMsg := tea.KeyPressMsg{Code: tea.KeyTab}
 	m.inputBox.Update(tabMsg)
 
 	// The text should remain unchanged (not replaced with "feature")

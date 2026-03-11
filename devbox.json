@@ -9,7 +9,7 @@
     "git": "latest",
     "gh": "latest",
     "go": "1.23",
-    "golangci-lint": "2.3.1",
+    "golangci-lint": "2.10.1",
     "gofumpt": "0.8.0",
     "go-task": "3.44.1",
     "nerdfix": "0.4.2",

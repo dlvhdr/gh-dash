@@ -3,11 +3,11 @@ package inputbox
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -35,8 +35,8 @@ type Model struct {
 }
 
 var inputKeys = []key.Binding{
-	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
-	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
+	key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "submit")),
+	key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Ctrl+c/esc", "cancel")),
 	autocomplete.ToggleSuggestions,
 }
 
@@ -45,15 +45,19 @@ func NewModel(ctx *context.ProgramContext) Model {
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
 	ta.CharLimit = 65536
-	ta.FocusedStyle.Base = lipgloss.NewStyle()
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
-		Background(ctx.Theme.FaintBorder).
-		Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
-	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	base := lipgloss.NewStyle()
+	ta.SetStyles(textarea.Styles{
+		Focused: textarea.StyleState{
+			Base:       base,
+			Text:       base.Foreground(ctx.Theme.PrimaryText),
+			LineNumber: base.Foreground(ctx.Theme.FaintText),
+			CursorLine: base.Background(ctx.Theme.FaintBorder).
+				Foreground(ctx.Theme.PrimaryText),
+			CursorLineNumber: base.Foreground(ctx.Theme.SecondaryText),
+			Placeholder:      base.Foreground(ctx.Theme.FaintText),
+			EndOfBuffer:      base.Foreground(ctx.Theme.FaintText),
+		},
+	})
 	ta.Focus()
 
 	h := help.New()
@@ -98,7 +102,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
-		if m.autocomplete != nil && (m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
+		if m.autocomplete != nil &&
+			(m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
 			switch {
 			case key.Matches(msg, autocomplete.PrevKey):
 				m.autocomplete.Prev()
@@ -111,9 +116,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if selected != "" && m.OnSuggestionSelected != nil {
 					currentValue := m.textArea.Value()
 					cursorPos := m.GetCursorPosition()
-					newValue, newCursorPos := m.OnSuggestionSelected(selected, cursorPos, currentValue)
+					newValue, newCursorPos := m.OnSuggestionSelected(
+						selected,
+						cursorPos,
+						currentValue,
+					)
 					m.textArea.SetValue(newValue)
-					m.textArea.SetCursor(newCursorPos)
+					m.textArea.SetCursorColumn(newCursorPos)
 				}
 				m.autocomplete.Hide()
 				return m, nil

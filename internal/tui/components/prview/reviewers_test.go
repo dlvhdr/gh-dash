@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -260,7 +261,7 @@ func TestRenderRequestedReviewers(t *testing.T) {
 			}
 
 			m := newTestModel(t, prData)
-			got := m.renderRequestedReviewers()
+			got := ansi.Strip(m.renderRequestedReviewers())
 
 			if len(tc.wantContains) == 0 {
 				require.Empty(t, got)
@@ -310,7 +311,7 @@ func TestRenderRequestedReviewersWrapping(t *testing.T) {
 
 	// Use a narrow width to force wrapping
 	m := newTestModelWithWidth(t, prData, 40)
-	got := m.renderRequestedReviewers()
+	got := ansi.Strip(m.renderRequestedReviewers())
 
 	// Should contain all reviewers
 	for _, name := range []string{"@alice", "@bob", "@charlie", "@david", "@eve"} {
@@ -349,7 +350,7 @@ func TestRenderRequestedReviewersLoading(t *testing.T) {
 		},
 	}
 
-	got := m.renderRequestedReviewers()
+	got := ansi.Strip(m.renderRequestedReviewers())
 
 	require.True(t, strings.Contains(got, "Reviewers"),
 		"expected output to contain 'Reviewers' title, got: %q", got)
@@ -397,7 +398,7 @@ func TestRenderSuggestedReviewers(t *testing.T) {
 		},
 	}
 
-	got := m.renderRequestedReviewers()
+	got := ansi.Strip(m.renderRequestedReviewers())
 
 	require.True(t, strings.Contains(got, "Reviewers"),
 		"expected output to contain 'Reviewers' title, got: %q", got)

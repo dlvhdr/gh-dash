@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 )
 
 // DoneStore persists notification IDs along with the timestamp at which they
@@ -63,7 +63,15 @@ func (s *DoneStore) load() error {
 		for id, raw := range tsMap {
 			t, err := time.Parse(time.RFC3339, raw)
 			if err != nil {
-				log.Warn("Skipping done entry with invalid timestamp", "id", id, "raw", raw, "err", err)
+				log.Warn(
+					"Skipping done entry with invalid timestamp",
+					"id",
+					id,
+					"raw",
+					raw,
+					"err",
+					err,
+				)
 				continue
 			}
 			s.entries[id] = t

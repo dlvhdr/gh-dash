@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -106,14 +106,10 @@ func (b *Branch) renderLines(isSelected bool) string {
 	if b.PR == nil {
 		return "-"
 	}
-	deletions := 0
-	if b.PR.Deletions > 0 {
-		deletions = b.PR.Deletions
-	}
+	deletions := max(b.PR.Deletions, 0)
 
-	var additionsFg, deletionsFg lipgloss.AdaptiveColor
-	additionsFg = b.Ctx.Theme.SuccessText
-	deletionsFg = b.Ctx.Theme.ErrorText
+	additionsFg := b.Ctx.Theme.SuccessText
+	deletionsFg := b.Ctx.Theme.ErrorText
 
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {
@@ -312,5 +308,8 @@ func (b *Branch) renderLastCommitMsg(isSelected bool, width int) string {
 	if b.Data.LastCommitMsg != nil {
 		title = *b.Data.LastCommitMsg
 	}
-	return baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
+	return baseStyle.Foreground(b.Ctx.Theme.SecondaryText).
+		Width(width).
+		MaxWidth(width).
+		Render(title)
 }

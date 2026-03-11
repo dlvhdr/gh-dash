@@ -26,10 +26,18 @@ func TestClearEnrichmentCache(t *testing.T) {
 		// Simulate having a cached client (we use an empty struct pointer
 		// since we can't create a real GraphQL client without credentials)
 		cachedClient = &gh.GraphQLClient{}
-		require.False(t, IsEnrichmentCacheCleared(), "cache should not be cleared when client is set")
+		require.False(
+			t,
+			IsEnrichmentCacheCleared(),
+			"cache should not be cleared when client is set",
+		)
 
 		ClearEnrichmentCache()
-		require.True(t, IsEnrichmentCacheCleared(), "cache should be cleared after ClearEnrichmentCache")
+		require.True(
+			t,
+			IsEnrichmentCacheCleared(),
+			"cache should be cleared after ClearEnrichmentCache",
+		)
 	})
 }
 

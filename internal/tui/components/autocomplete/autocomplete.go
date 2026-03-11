@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -32,11 +32,26 @@ func (s suggestionList) Len() int {
 }
 
 var (
-	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/Ctrl+n", "next"))
-	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String()), key.WithHelp("↑/Ctrl+p", "previous"))
-	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String(), tea.KeyCtrlY.String()), key.WithHelp("tab/enter/Ctrl+y", "select"))
-	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
-	ToggleSuggestions     = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
+	NextKey = key.NewBinding(
+		key.WithKeys("down", "ctrl+n"),
+		key.WithHelp("↓/Ctrl+n", "next"),
+	)
+	PrevKey = key.NewBinding(
+		key.WithKeys("up", "ctrl+p"),
+		key.WithHelp("↑/Ctrl+p", "previous"),
+	)
+	SelectKey = key.NewBinding(
+		key.WithKeys("tab", "enter", "ctrl+y"),
+		key.WithHelp("tab/enter/Ctrl+y", "select"),
+	)
+	RefreshSuggestionsKey = key.NewBinding(
+		key.WithKeys("ctrl+f"),
+		key.WithHelp("Ctrl+f", "refresh suggestions"),
+	)
+	ToggleSuggestions = key.NewBinding(
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("Ctrl+h", "toggle suggestions"),
+	)
 )
 
 var suggestionKeys = []key.Binding{
@@ -239,7 +254,11 @@ func (m *Model) View() string {
 		// Style based on selection
 		if i == m.selected {
 			// Selected row - use inverted colors
-			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + " " + label))
+			b.WriteString(
+				m.ctx.Styles.Autocomplete.SelectedStyle.Render(
+					constants.SelectionIcon + " " + label,
+				),
+			)
 		} else {
 			// Non-selected row
 			b.WriteString("  " + label)
@@ -253,11 +272,17 @@ func (m *Model) View() string {
 	var statusView string
 	switch m.fetchState {
 	case FetchStateLoading:
-		statusView = m.spinner.View() + m.ctx.Styles.Common.FaintTextStyle.Render("Fetching suggestions"+constants.Ellipsis)
+		statusView = m.spinner.View() + m.ctx.Styles.Common.FaintTextStyle.Render(
+			"Fetching suggestions"+constants.Ellipsis,
+		)
 	case FetchStateSuccess:
-		statusView = m.ctx.Styles.Common.SuccessGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(" Suggestions loaded")
+		statusView = m.ctx.Styles.Common.SuccessGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
+			" Suggestions loaded",
+		)
 	case FetchStateError:
-		errMsg := m.ctx.Styles.Common.FailureGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(" Failed to fetch suggestions")
+		errMsg := m.ctx.Styles.Common.FailureGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
+			" Failed to fetch suggestions",
+		)
 		if m.fetchError != nil {
 			errMsg = m.fetchError.Error()
 		}

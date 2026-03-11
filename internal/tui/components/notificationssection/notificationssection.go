@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -212,13 +212,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.IsSearchFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
 				return m, blinkCmd
 
-			case tea.KeyEnter:
+			case "enter":
 				m.SearchValue = m.SearchBar.Value()
 				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
@@ -230,13 +230,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
 				return m, cmd
 
-			case tea.KeyEnter:
+			case "enter":
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				if input == "" || input == "Y" || input == "y" {
@@ -625,7 +625,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		var lastPageInfo data.PageInfo
 		isFirstPage := pageInfo == nil
 		for {
-			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo)
+			res, err := data.FetchNotifications(
+				limit,
+				filters.RepoFilters,
+				readState,
+				currentPageInfo,
+			)
 			if err != nil {
 				return constants.TaskFinishedMsg{
 					SectionId:   m.Id,
@@ -706,7 +711,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 							continue
 						}
 						// Apply repo filter if set
-						if len(repoFilterMap) > 0 && !repoFilterMap[result.notification.Repository.FullName] {
+						if len(repoFilterMap) > 0 &&
+							!repoFilterMap[result.notification.Repository.FullName] {
 							continue
 						}
 						res.Notifications = append(res.Notifications, *result.notification)
@@ -751,7 +757,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 					notifications = append(notifications, notificationrow.Data{
 						Notification: n,
 						// Generate initial activity description (will be updated with actor later)
-						ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
+						ActivityDescription: notificationrow.GenerateActivityDescription(
+							n.Reason,
+							n.Subject.Type,
+							"",
+						),
 					})
 				}
 			}
@@ -935,7 +945,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 		lastReadAt := notif.Notification.LastReadAt
 		apiUrl := notif.Notification.Subject.Url
 
-		log.Debug("Processing notification", "id", notifId, "type", subjectType, "webUrl", subjectUrl, "apiUrl", apiUrl)
+		log.Debug(
+			"Processing notification",
+			"id",
+			notifId,
+			"type",
+			subjectType,
+			"webUrl",
+			subjectUrl,
+			"apiUrl",
+			apiUrl,
+		)
 
 		latestCommentUrl := notif.Notification.Subject.LatestCommentUrl
 
@@ -956,7 +976,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = pr.Author.Login
 				}
-				log.Debug("Got PR comment count", "id", id, "count", count, "state", pr.State, "actor", actor)
+				log.Debug(
+					"Got PR comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					pr.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,
@@ -980,7 +1010,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = issue.Author.Login
 				}
-				log.Debug("Got Issue comment count", "id", id, "count", count, "state", issue.State, "actor", actor)
+				log.Debug(
+					"Got Issue comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					issue.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,

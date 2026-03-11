@@ -3,9 +3,9 @@ package keys
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	log "github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
