@@ -49,6 +49,7 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 		{"assign key", "a", IssueActionAssign},
 		{"unassign key", "A", IssueActionUnassign},
 		{"comment key", "c", IssueActionComment},
+		{"checkout key", "C", IssueActionCheckout},
 		{"close key", "x", IssueActionClose},
 		{"reopen key", "X", IssueActionReopen},
 	}
@@ -139,6 +140,7 @@ func TestIssueActionTypes(t *testing.T) {
 		IssueActionAssign,
 		IssueActionUnassign,
 		IssueActionComment,
+		IssueActionCheckout,
 		IssueActionClose,
 		IssueActionReopen,
 	}
