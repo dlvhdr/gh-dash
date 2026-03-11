@@ -9,6 +9,7 @@ const (
 	IssueActionAssign
 	IssueActionUnassign
 	IssueActionComment
+	IssueActionCheckout
 	IssueActionClose
 	IssueActionReopen
 )
