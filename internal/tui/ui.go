@@ -91,9 +91,6 @@ func NewModel(location config.Location) Model {
 		Theme: *theme.DefaultTheme,
 	}
 
-	m.taskSpinner.Style = lipgloss.NewStyle().
-		Background(m.ctx.Theme.SelectedBackground)
-
 	m.footer = footer.NewModel(m.ctx)
 	m.prView = prview.NewModel(m.ctx)
 	m.issueSidebar = issueview.NewModel(m.ctx)
@@ -629,6 +626,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.RepoUrl = msg.RepoUrl
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
+		m.taskSpinner.Style = lipgloss.NewStyle().
+			Background(m.ctx.Theme.SelectedBackground)
+
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
@@ -1565,14 +1565,12 @@ func (m *Model) renderRunningTask() string {
 	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		currTaskStatus = lipgloss.NewStyle().
-			Background(m.ctx.Theme.SelectedBackground).
-			Render(
-				fmt.Sprintf(
-					"%s%s",
-					m.taskSpinner.View(),
-					task.StartText,
-				))
+		currTaskStatus = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.taskSpinner.View(),
+			lipgloss.NewStyle().
+				Background(m.ctx.Theme.SelectedBackground).Render(task.StartText),
+		)
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.ErrorText).

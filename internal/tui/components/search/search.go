@@ -6,7 +6,6 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -56,7 +55,6 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	}
 
 	w := m.getInputWidth(m.ctx)
-	log.Debug("setting initial width", "w", w)
 	m.textInput.SetWidth(w)
 
 	return m
@@ -97,7 +95,6 @@ func (m *Model) SetValue(val string) {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	oldWidth := m.textInput.Width()
 	newWidth := m.getInputWidth(ctx)
-	log.Debug("setting new width", "w", newWidth)
 	m.textInput.SetWidth(newWidth)
 	if m.textInput.Width() != oldWidth {
 		m.textInput.CursorEnd()
