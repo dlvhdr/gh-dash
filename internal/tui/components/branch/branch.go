@@ -109,9 +109,8 @@ func (b *Branch) renderLines(isSelected bool) string {
 	}
 	deletions := max(b.PR.Deletions, 0)
 
-	var additionsFg, deletionsFg compat.AdaptiveColor
-	additionsFg = b.Ctx.Theme.SuccessText
-	deletionsFg = b.Ctx.Theme.ErrorText
+	var additionsFg compat.AdaptiveColor = b.Ctx.Theme.SuccessText
+	deletionsFg := b.Ctx.Theme.ErrorText
 
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {
@@ -310,5 +309,8 @@ func (b *Branch) renderLastCommitMsg(isSelected bool, width int) string {
 	if b.Data.LastCommitMsg != nil {
 		title = *b.Data.LastCommitMsg
 	}
-	return baseStyle.Foreground(b.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Render(title)
+	return baseStyle.Foreground(b.Ctx.Theme.SecondaryText).
+		Width(width).
+		MaxWidth(width).
+		Render(title)
 }

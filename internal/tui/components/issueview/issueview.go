@@ -162,7 +162,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 				labels := allLabels(m.inputBox.Value())
 				if len(labels) > 0 {
 					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes)
+					cmd = tasks.LabelIssue(
+						m.ctx,
+						sid,
+						m.issue.Data,
+						labels,
+						m.issue.Data.Labels.Nodes,
+					)
 				}
 				m.inputBox.Blur()
 				m.isLabeling = false
@@ -341,7 +347,8 @@ func (m *Model) renderAuthor() string {
 			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
 			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.issue.Data.AuthorAssociation,
-				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+				m.ctx.Theme),
+				" ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
 }
@@ -354,7 +361,10 @@ func (m *Model) renderBody() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
+		return lipgloss.NewStyle().
+			Italic(true).
+			Foreground(m.ctx.Theme.FaintText).
+			Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
@@ -410,7 +420,9 @@ func (m *Model) GetIsCommenting() bool {
 
 func (m *Model) shouldCancelComment() bool {
 	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
+		m.inputBox.SetPrompt(
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
+		)
 		m.ShowConfirmCancel = true
 		return false
 	}

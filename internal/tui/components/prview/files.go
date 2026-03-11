@@ -36,11 +36,14 @@ func (m *Model) renderChangesOverview() string {
 					m.pr.RenderLines(false)),
 			),
 			commits.Render(
-				lipgloss.JoinHorizontal(lipgloss.Top,
+				lipgloss.JoinHorizontal(
+					lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
 					fmt.Sprintf("%d commits", m.pr.Data.Primary.Commits.TotalCount),
 					" ",
-					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(fmt.Sprintf("%s ago", time)),
+					lipgloss.NewStyle().
+						Foreground(m.ctx.Theme.FaintText).
+						Render(fmt.Sprintf("%s ago", time)),
 				),
 			),
 		),
@@ -58,8 +61,14 @@ func (m *Model) renderChangedFiles() string {
 
 func (m *Model) renderFile(file data.ChangedFile) string {
 	icon := m.renderChangeTypeIcon(file.ChangeType)
-	additions := lipgloss.NewStyle().Foreground(m.ctx.Theme.SuccessText).Width(5).Render(fmt.Sprintf("+%d", file.Additions))
-	deletions := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Width(5).Render(fmt.Sprintf("-%d", file.Deletions))
+	additions := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.SuccessText).
+		Width(5).
+		Render(fmt.Sprintf("+%d", file.Additions))
+	deletions := lipgloss.NewStyle().
+		Foreground(m.ctx.Theme.ErrorText).
+		Width(5).
+		Render(fmt.Sprintf("-%d", file.Deletions))
 	prefix := lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		lipgloss.JoinHorizontal(lipgloss.Top, additions, deletions),

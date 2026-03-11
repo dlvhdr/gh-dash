@@ -267,7 +267,9 @@ func (m *Model) openInBrowser() tea.Cmd {
 func CheckoutPR(ctx *context.ProgramContext, prNumber int, repoName string) (tea.Cmd, error) {
 	repoPath, ok := common.GetRepoLocalPath(repoName, ctx.Config.RepoPaths)
 	if !ok {
-		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
+		return nil, errors.New(
+			"local path to repo not specified, set one in your config.yml under repoPaths",
+		)
 	}
 
 	taskId := fmt.Sprintf("checkout_%d", prNumber)

@@ -242,7 +242,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Down):
 			prevRow := currSection.CurrRow()
 			nextRow := currSection.NextRow()
-			if prevRow != nextRow && nextRow == currSection.NumRows()-1 && m.ctx.View != config.RepoView {
+			if prevRow != nextRow && nextRow == currSection.NumRows()-1 &&
+				m.ctx.View != config.RepoView {
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
 			cmd = m.onViewedRowChanged()
@@ -601,7 +602,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, issueCmd)
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
-				cmds = append(cmds, m.updateSection(currSection.GetId(), currSection.GetType(), msg))
+				cmds = append(
+					cmds,
+					m.updateSection(currSection.GetId(), currSection.GetType(), msg),
+				)
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAllAsDone):
 				cmd = m.promptConfirmation(currSection, "done_all")

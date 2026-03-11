@@ -17,7 +17,12 @@ func (m *Model) renderCommits() string {
 	fainter := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder)
 
 	if !m.pr.Data.IsEnriched {
-		return lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.WaitingGlyph, " ", faint.Render("Loading..."))
+		return lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.ctx.Styles.Common.WaitingGlyph,
+			" ",
+			faint.Render("Loading..."),
+		)
 	}
 
 	commits := m.pr.Data.Enriched.AllCommits.Nodes

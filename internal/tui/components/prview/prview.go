@@ -229,11 +229,15 @@ func (m Model) View() string {
 
 		body.WriteString(m.renderSummary())
 		body.WriteString("\n\n")
-		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"))
+		body.WriteString(
+			m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"),
+		)
 		body.WriteString("\n")
 		body.WriteString(m.renderChangesOverview())
 		body.WriteString("\n\n")
-		body.WriteString(m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"))
+		body.WriteString(
+			m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"),
+		)
 		body.WriteString("\n")
 		body.WriteString(m.renderChecksOverview())
 
@@ -260,12 +264,24 @@ func (m Model) View() string {
 }
 
 func (m *Model) renderFullNameAndNumber() string {
-	return common.RenderPreviewHeader(m.ctx.Theme, m.width,
-		fmt.Sprintf("%s · #%d", m.pr.Data.Primary.GetRepoNameWithOwner(), m.pr.Data.Primary.GetNumber()))
+	return common.RenderPreviewHeader(
+		m.ctx.Theme,
+		m.width,
+		fmt.Sprintf(
+			"%s · #%d",
+			m.pr.Data.Primary.GetRepoNameWithOwner(),
+			m.pr.Data.Primary.GetNumber(),
+		),
+	)
 }
 
 func (m *Model) renderTitle() string {
-	return common.RenderPreviewTitle(m.ctx.Theme, m.ctx.Styles.Common, m.width, m.pr.Data.Primary.Title)
+	return common.RenderPreviewTitle(
+		m.ctx.Theme,
+		m.ctx.Styles.Common,
+		m.width,
+		m.pr.Data.Primary.Title,
+	)
 }
 
 func (m *Model) renderBranches() string {
@@ -327,7 +343,12 @@ func (m *Model) renderRequestedReviewers() string {
 			m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
 				fmt.Sprintf("%s Reviewers", constants.CodeReviewIcon)),
 			"",
-			lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.WaitingGlyph, " ", m.ctx.Styles.Common.FaintTextStyle.Render("Loading...")),
+			lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				m.ctx.Styles.Common.WaitingGlyph,
+				" ",
+				m.ctx.Styles.Common.FaintTextStyle.Render("Loading..."),
+			),
 		)
 	}
 
@@ -344,7 +365,8 @@ func (m *Model) renderRequestedReviewers() string {
 		login := review.Author.Login
 		existingState := reviewStates[login]
 		// Don't override APPROVED or CHANGES_REQUESTED with COMMENTED
-		if review.State == "COMMENTED" && (existingState == "APPROVED" || existingState == "CHANGES_REQUESTED") {
+		if review.State == "COMMENTED" &&
+			(existingState == "APPROVED" || existingState == "CHANGES_REQUESTED") {
 			continue
 		}
 		reviewStates[login] = review.State
@@ -495,7 +517,8 @@ func (m *Model) renderAuthor() string {
 			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
 			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.pr.Data.Primary.AuthorAssociation,
-				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+				m.ctx.Theme),
+				" ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
 }
@@ -535,10 +558,15 @@ func (m *Model) renderSummary() string {
 			rendered,
 			"",
 			lipgloss.PlaceHorizontal(m.getIndentedContentWidth(), lipgloss.Center,
-				lipgloss.JoinHorizontal(lipgloss.Top,
+				lipgloss.JoinHorizontal(
+					lipgloss.Top,
 					lipgloss.NewStyle().Bold(true).Italic(true).Render("Press "),
-					lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground).Foreground(m.ctx.Theme.PrimaryText).Render("e"),
-					lipgloss.NewStyle().Bold(true).Italic(true).Render(" to read more...")),
+					lipgloss.NewStyle().
+						Background(m.ctx.Theme.SelectedBackground).
+						Foreground(m.ctx.Theme.PrimaryText).
+						Render("e"),
+					lipgloss.NewStyle().Bold(true).Italic(true).Render(" to read more..."),
+				),
 			),
 		)
 	}
@@ -614,7 +642,9 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func (m *Model) shouldCancelComment() bool {
 	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
+		m.inputBox.SetPrompt(
+			lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
+		)
 		m.ShowConfirmCancel = true
 		return false
 	}

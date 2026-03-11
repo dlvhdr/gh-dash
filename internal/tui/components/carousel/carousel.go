@@ -376,7 +376,11 @@ func (m *Model) renderItem(itemID int, maxWidth int) string {
 	}
 
 	if m.showSeparators && itemID != len(m.items)-1 {
-		return lipgloss.JoinHorizontal(lipgloss.Center, item, m.styles.Separator.Render(m.separator))
+		return lipgloss.JoinHorizontal(
+			lipgloss.Center,
+			item,
+			m.styles.Separator.Render(m.separator),
+		)
 	}
 
 	return item

@@ -491,8 +491,12 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
-			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			client, err = gh.NewGraphQLClient(
+				gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"},
+			)
 		} else {
 			client, err = gh.DefaultGraphQLClient()
 		}

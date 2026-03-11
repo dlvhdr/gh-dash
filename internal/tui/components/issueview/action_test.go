@@ -61,8 +61,15 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 			_, _, action := m.Update(msg)
 
 			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
-			require.Equal(t, tc.expectedAction, action.Type,
-				"expected action type %v for key %q, got %v", tc.expectedAction, tc.keyBinding, action.Type)
+			require.Equal(
+				t,
+				tc.expectedAction,
+				action.Type,
+				"expected action type %v for key %q, got %v",
+				tc.expectedAction,
+				tc.keyBinding,
+				action.Type,
+			)
 		})
 	}
 }

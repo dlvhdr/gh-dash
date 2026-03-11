@@ -129,7 +129,13 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !before
 			}
-			log.Debug("toggled smart filtering", "before", before, "after", m.IsFilteredByCurrentRemote)
+			log.Debug(
+				"toggled smart filtering",
+				"before",
+				before,
+				"after",
+				m.IsFilteredByCurrentRemote,
+			)
 			searchValue := m.GetSearchValue()
 			if m.SearchValue != searchValue {
 				m.SearchValue = searchValue

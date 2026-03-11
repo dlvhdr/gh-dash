@@ -3,6 +3,7 @@ package theme
 import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -37,76 +38,76 @@ type Theme struct {
 
 var DefaultTheme = &Theme{
 	PrimaryBorder: compat.AdaptiveColor{
-		Light: lipgloss.Color("008"),
-		Dark:  lipgloss.Color("008"),
+		Light: lipgloss.ANSIColor(8),
+		Dark:  lipgloss.ANSIColor(8),
 	},
 	SecondaryBorder: compat.AdaptiveColor{
-		Light: lipgloss.Color("008"),
-		Dark:  lipgloss.Color("007"),
+		Light: lipgloss.ANSIColor(8),
+		Dark:  lipgloss.ANSIColor(7),
 	},
 	SelectedBackground: compat.AdaptiveColor{
-		Light: lipgloss.Color("007"),
-		Dark:  lipgloss.Color("008"),
+		Light: lipgloss.ANSIColor(7),
+		Dark:  lipgloss.ANSIColor(236),
 	},
 	FaintBorder: compat.AdaptiveColor{
-		Light: lipgloss.Color("254"),
-		Dark:  lipgloss.Color("000"),
+		Light: lipgloss.ANSIColor(254),
+		Dark:  lipgloss.ANSIColor(234),
 	},
 	PrimaryText: compat.AdaptiveColor{
-		Light: lipgloss.Color("000"),
-		Dark:  lipgloss.Color("015"),
+		Light: lipgloss.ANSIColor(0),
+		Dark:  lipgloss.ANSIColor(15),
 	},
 	SecondaryText: compat.AdaptiveColor{
-		Light: lipgloss.Color("244"),
-		Dark:  lipgloss.Color("251"),
+		Light: lipgloss.ANSIColor(244),
+		Dark:  lipgloss.ANSIColor(251),
 	},
 	FaintText: compat.AdaptiveColor{
-		Light: lipgloss.Color("007"),
-		Dark:  lipgloss.Color("245"),
+		Light: lipgloss.ANSIColor(7),
+		Dark:  lipgloss.ANSIColor(245),
 	},
 	InvertedText: compat.AdaptiveColor{
-		Light: lipgloss.Color("015"),
-		Dark:  lipgloss.Color("236"),
+		Light: lipgloss.ANSIColor(15),
+		Dark:  lipgloss.ANSIColor(236),
 	},
 	SuccessText: compat.AdaptiveColor{
-		Light: lipgloss.Color("002"),
-		Dark:  lipgloss.Color("002"),
+		Light: lipgloss.ANSIColor(10),
+		Dark:  lipgloss.ANSIColor(10),
 	},
 	WarningText: compat.AdaptiveColor{
-		Light: lipgloss.Color("003"),
-		Dark:  lipgloss.Color("003"),
+		Light: lipgloss.ANSIColor(11),
+		Dark:  lipgloss.ANSIColor(11),
 	},
 	ErrorText: compat.AdaptiveColor{
-		Light: lipgloss.Color("001"),
-		Dark:  lipgloss.Color("001"),
+		Light: lipgloss.ANSIColor(1),
+		Dark:  lipgloss.ANSIColor(9),
 	},
 	ActorText: compat.AdaptiveColor{
-		Light: lipgloss.Color("244"),
-		Dark:  lipgloss.Color("251"),
+		Light: lipgloss.ANSIColor(244),
+		Dark:  lipgloss.ANSIColor(251),
 	}, // Same as SecondaryText
 	NewContributorIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("077"),
-		Dark:  lipgloss.Color("077"),
+		Light: lipgloss.ANSIColor(77),
+		Dark:  lipgloss.ANSIColor(77),
 	},
 	ContributorIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("075"),
-		Dark:  lipgloss.Color("075"),
+		Light: lipgloss.ANSIColor(75),
+		Dark:  lipgloss.ANSIColor(75),
 	},
 	CollaboratorIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("178"),
-		Dark:  lipgloss.Color("178"),
+		Light: lipgloss.ANSIColor(178),
+		Dark:  lipgloss.ANSIColor(178),
 	},
 	MemberIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("178"),
-		Dark:  lipgloss.Color("178"),
+		Light: lipgloss.ANSIColor(178),
+		Dark:  lipgloss.ANSIColor(178),
 	},
 	OwnerIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("178"),
-		Dark:  lipgloss.Color("178"),
+		Light: lipgloss.ANSIColor(178),
+		Dark:  lipgloss.ANSIColor(178),
 	},
 	UnknownRoleIconColor: compat.AdaptiveColor{
-		Light: lipgloss.Color("178"),
-		Dark:  lipgloss.Color("178"),
+		Light: lipgloss.ANSIColor(178),
+		Dark:  lipgloss.ANSIColor(178),
 	},
 	NewContributorIcon: constants.NewContributorIcon,
 	ContributorIcon:    constants.ContributorIcon,
@@ -121,6 +122,7 @@ func ParseTheme(cfg *config.Config) Theme {
 		if color == "" {
 			return fallback
 		}
+		log.Debug("parseTheme", "color", color)
 		return compat.AdaptiveColor{
 			Light: lipgloss.Color(string(color)),
 			Dark:  lipgloss.Color(string(color)),
@@ -173,6 +175,12 @@ func ParseTheme(cfg *config.Config) Theme {
 		DefaultTheme.WarningText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Warning,
 			DefaultTheme.WarningText,
+		)
+		log.Debug("error text",
+			"cfg",
+			cfg.Theme.Colors.Inline.Text.Error,
+			"default",
+			DefaultTheme.ErrorText,
 		)
 		DefaultTheme.ErrorText = _shimColor(
 			cfg.Theme.Colors.Inline.Text.Error,

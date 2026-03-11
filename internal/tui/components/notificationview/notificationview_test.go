@@ -293,7 +293,11 @@ func TestUpdate_NonKeyMsg(t *testing.T) {
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action for non-key messages")
-	require.True(t, newModel.HasPendingAction(), "pending action should remain for non-key messages")
+	require.True(
+		t,
+		newModel.HasPendingAction(),
+		"pending action should remain for non-key messages",
+	)
 }
 
 func TestUpdate_AllPRActions(t *testing.T) {

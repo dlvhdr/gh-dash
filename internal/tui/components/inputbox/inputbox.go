@@ -48,10 +48,11 @@ func NewModel(ctx *context.ProgramContext) Model {
 	base := lipgloss.NewStyle()
 	ta.SetStyles(textarea.Styles{
 		Focused: textarea.StyleState{
-			Base:             base,
-			Text:             base.Foreground(ctx.Theme.PrimaryText),
-			LineNumber:       base.Foreground(ctx.Theme.FaintText),
-			CursorLine:       base.Background(ctx.Theme.FaintBorder).Foreground(ctx.Theme.PrimaryText),
+			Base:       base,
+			Text:       base.Foreground(ctx.Theme.PrimaryText),
+			LineNumber: base.Foreground(ctx.Theme.FaintText),
+			CursorLine: base.Background(ctx.Theme.FaintBorder).
+				Foreground(ctx.Theme.PrimaryText),
 			CursorLineNumber: base.Foreground(ctx.Theme.SecondaryText),
 			Placeholder:      base.Foreground(ctx.Theme.FaintText),
 			EndOfBuffer:      base.Foreground(ctx.Theme.FaintText),
@@ -101,7 +102,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
-		if m.autocomplete != nil && (m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
+		if m.autocomplete != nil &&
+			(m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
 			switch {
 			case key.Matches(msg, autocomplete.PrevKey):
 				m.autocomplete.Prev()
@@ -114,7 +116,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if selected != "" && m.OnSuggestionSelected != nil {
 					currentValue := m.textArea.Value()
 					cursorPos := m.GetCursorPosition()
-					newValue, newCursorPos := m.OnSuggestionSelected(selected, cursorPos, currentValue)
+					newValue, newCursorPos := m.OnSuggestionSelected(
+						selected,
+						cursorPos,
+						currentValue,
+					)
 					m.textArea.SetValue(newValue)
 					m.textArea.SetCursorColumn(newCursorPos)
 				}

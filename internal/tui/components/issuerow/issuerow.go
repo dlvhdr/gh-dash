@@ -69,7 +69,12 @@ func (issue *Issue) renderRepoName() string {
 }
 
 func (issue *Issue) renderTitle() string {
-	return components.RenderIssueTitle(issue.Ctx, issue.Data.State, issue.Data.Title, issue.Data.Number)
+	return components.RenderIssueTitle(
+		issue.Ctx,
+		issue.Data.State,
+		issue.Data.Title,
+		issue.Data.Number,
+	)
 }
 
 func (issue *Issue) renderOpenedBy() string {

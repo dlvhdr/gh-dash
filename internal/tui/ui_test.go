@@ -385,7 +385,12 @@ func TestNotificationView_EnterKeyWorksAfterViewingPR(t *testing.T) {
 	}
 
 	// Create a notification section with a PR notification
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -451,7 +456,12 @@ func TestNotificationView_EnterKeyWorksAfterViewingIssue(t *testing.T) {
 	}
 
 	// Create a notification section with an Issue notification
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -517,7 +527,12 @@ func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t
 		tabs:             tabs.NewModel(ctx),
 	}
 
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -540,8 +555,16 @@ func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t
 
 	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	m = newModel.(Model)
-	require.Nil(t, m.notificationView.GetSubjectPR(), "PR subject should be cleared after pressing esc")
-	require.Empty(t, m.notificationView.GetSubjectId(), "subject ID should be cleared after pressing esc")
+	require.Nil(
+		t,
+		m.notificationView.GetSubjectPR(),
+		"PR subject should be cleared after pressing esc",
+	)
+	require.Empty(
+		t,
+		m.notificationView.GetSubjectId(),
+		"subject ID should be cleared after pressing esc",
+	)
 
 	newModel, _ = m.Update(tea.KeyPressMsg{Text: "m"})
 	m = newModel.(Model)
@@ -581,7 +604,12 @@ func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
 		tabs:             tabs.NewModel(ctx),
 	}
 
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -604,13 +632,25 @@ func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
 
 	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	m = newModel.(Model)
-	require.Nil(t, m.notificationView.GetSubjectIssue(), "Issue subject should be cleared after pressing esc")
-	require.Empty(t, m.notificationView.GetSubjectId(), "subject ID should be cleared after pressing esc")
+	require.Nil(
+		t,
+		m.notificationView.GetSubjectIssue(),
+		"Issue subject should be cleared after pressing esc",
+	)
+	require.Empty(
+		t,
+		m.notificationView.GetSubjectId(),
+		"subject ID should be cleared after pressing esc",
+	)
 }
 
 // executeCommandTemplate mimics the template execution logic from runCustomCommand
 // to allow testing template variable substitution without executing shell commands.
-func executeCommandTemplate(t *testing.T, commandTemplate string, input map[string]any) (string, error) {
+func executeCommandTemplate(
+	t *testing.T,
+	commandTemplate string,
+	input map[string]any,
+) (string, error) {
 	t.Helper()
 	cmd, err := template.New("test_command").Parse(commandTemplate)
 	if err != nil {
@@ -940,7 +980,11 @@ func TestPromptConfirmationForNotificationPR_NilSubject(t *testing.T) {
 	cmd := m.promptConfirmationForNotificationPR("close")
 
 	require.Nil(t, cmd, "should return nil when no PR subject")
-	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no PR subject")
+	require.Empty(
+		t,
+		m.notificationView.GetPendingAction(),
+		"should not set pending action when no PR subject",
+	)
 }
 
 func TestPromptConfirmationForNotificationIssue(t *testing.T) {
@@ -1157,7 +1201,11 @@ func TestPromptConfirmationForNotificationIssue_NilSubject(t *testing.T) {
 	cmd := m.promptConfirmationForNotificationIssue("close")
 
 	require.Nil(t, cmd, "should return nil when no Issue subject")
-	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no Issue subject")
+	require.Empty(
+		t,
+		m.notificationView.GetPendingAction(),
+		"should not set pending action when no Issue subject",
+	)
 }
 
 func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
@@ -1389,7 +1437,12 @@ func TestIsUserDefinedKeybinding_NotificationsView_PRNotification(t *testing.T) 
 	ctx.Styles = context.InitStyles(ctx.Theme)
 
 	// Create a notification section with a PR notification as the current row
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -1445,7 +1498,12 @@ func TestIsUserDefinedKeybinding_NotificationsView_IssueNotification(t *testing.
 	ctx.Styles = context.InitStyles(ctx.Theme)
 
 	// Create a notification section with an Issue notification as the current row
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -1495,7 +1553,12 @@ func TestIsUserDefinedKeybinding_NotificationsView_NonPRIssueNotification(t *tes
 	ctx.Styles = context.InitStyles(ctx.Theme)
 
 	// Create a notification section with a Release notification
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -1721,7 +1784,12 @@ func TestIsUserDefinedKeybinding_NotificationsView_NotificationKeybinding(t *tes
 	ctx.Styles = context.InitStyles(ctx.Theme)
 
 	// Create a notification section with a Release notification (not PR or Issue)
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{

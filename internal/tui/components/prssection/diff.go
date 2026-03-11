@@ -12,5 +12,9 @@ func (m Model) diff() tea.Cmd {
 		return nil
 	}
 
-	return common.DiffPR(currRowData.GetNumber(), currRowData.GetRepoNameWithOwner(), m.Ctx.Config.GetFullScreenDiffPagerEnv())
+	return common.DiffPR(
+		currRowData.GetNumber(),
+		currRowData.GetRepoNameWithOwner(),
+		m.Ctx.Config.GetFullScreenDiffPagerEnv(),
+	)
 }

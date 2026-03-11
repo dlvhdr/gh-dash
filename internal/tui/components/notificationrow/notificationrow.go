@@ -75,10 +75,14 @@ func (n *Notification) renderType() string {
 		}
 	case "Discussion":
 		icon = ""
-		style = style.Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")})
+		style = style.Foreground(
+			compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")},
+		)
 	case "Release":
 		icon = ""
-		style = style.Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#0969da"), Dark: lipgloss.Color("#58a6ff")})
+		style = style.Foreground(
+			compat.AdaptiveColor{Light: lipgloss.Color("#0969da"), Dark: lipgloss.Color("#58a6ff")},
+		)
 	case "Commit":
 		icon = ""
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)
@@ -145,7 +149,9 @@ func (n *Notification) renderTitleBlock() string {
 	}
 	// Add bookmark icon if bookmarked (using raw ANSI for warning color)
 	if data.GetBookmarkStore().IsBookmarked(n.Data.GetId()) {
-		bookmarkPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText))
+		bookmarkPrefix := utils.GetStylePrefix(
+			lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText),
+		)
 		line1 = line1 + " " + bookmarkPrefix + ""
 	}
 	line1Rendered := repoPrefix + line1
@@ -214,7 +220,10 @@ func (n *Notification) renderActivity() string {
 	// White foreground for count, green foreground for icon
 	white := "\x1b[97m" // Bright white
 	green := "\x1b[32m" // Green
-	return white + fmt.Sprintf("+%d ", n.Data.NewCommentsCount) + green + constants.CommentsIcon + "\n\n"
+	return white + fmt.Sprintf(
+		"+%d ",
+		n.Data.NewCommentsCount,
+	) + green + constants.CommentsIcon + "\n\n"
 }
 
 // renderUpdatedAt returns the time since last update

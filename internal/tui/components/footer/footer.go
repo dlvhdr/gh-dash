@@ -47,7 +47,8 @@ func (m Model) View() string {
 	var footer string
 
 	if m.ShowConfirmQuit {
-		footer = lipgloss.NewStyle().Render("Really quit? (Press y/enter to confirm, any other key to cancel)")
+		footer = lipgloss.NewStyle().
+			Render("Really quit? (Press y/enter to confirm, any other key to cancel)")
 	} else {
 		helpIndicator := lipgloss.NewStyle().
 			Background(m.ctx.Theme.FaintText).
@@ -141,7 +142,10 @@ func (m *Model) renderViewButton(view config.ViewType) string {
 		// Use gold for notifications bell, green for others
 		iconColor := m.ctx.Theme.SuccessText
 		if view == config.NotificationsView {
-			iconColor = compat.AdaptiveColor{Light: lipgloss.Color("#B8860B"), Dark: lipgloss.Color("#FFD700")} // Gold
+			iconColor = compat.AdaptiveColor{
+				Light: lipgloss.Color("#B8860B"),
+				Dark:  lipgloss.Color("#FFD700"),
+			} // Gold
 		}
 		activeStyle := lipgloss.NewStyle().
 			Foreground(iconColor).
@@ -174,7 +178,8 @@ func (m *Model) renderViewSwitcher(ctx *context.ProgramContext) string {
 
 	view := lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).Render(m.renderViewButton(config.NotificationsView)),
+		ctx.Styles.ViewSwitcher.ViewsSeparator.PaddingLeft(1).
+			Render(m.renderViewButton(config.NotificationsView)),
 		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(viewSeparator),
 		m.renderViewButton(config.PRsView),
 		ctx.Styles.ViewSwitcher.ViewsSeparator.Render(viewSeparator),

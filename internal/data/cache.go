@@ -14,9 +14,13 @@ var cache = Cache{}
 
 func New() Cache {
 	cache := otter.Must(&otter.Options[string, string]{
-		MaximumSize:       10_000,
-		ExpiryCalculator:  otter.ExpiryAccessing[string, string](time.Second),           // Reset timer on reads/writes
-		RefreshCalculator: otter.RefreshWriting[string, string](500 * time.Millisecond), // Refresh after writes
+		MaximumSize: 10_000,
+		ExpiryCalculator: otter.ExpiryAccessing[string, string](
+			time.Second,
+		), // Reset timer on reads/writes
+		RefreshCalculator: otter.RefreshWriting[string, string](
+			500 * time.Millisecond,
+		), // Refresh after writes
 	})
 
 	return Cache{

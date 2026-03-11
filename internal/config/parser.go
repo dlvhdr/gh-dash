@@ -245,23 +245,23 @@ func (c Color) IsZero() bool {
 }
 
 type ColorThemeIcon struct {
-	NewContributor Color `yaml:"newcontributor"   validate:"omitempty,color"`
-	Contributor    Color `yaml:"contributor"      validate:"omitempty,color"`
-	Collaborator   Color `yaml:"collaborator"     validate:"omitempty,color"`
-	Member         Color `yaml:"member"           validate:"omitempty,color"`
-	Owner          Color `yaml:"owner"            validate:"omitempty,color"`
-	UnknownRole    Color `yaml:"unknownrole"      validate:"omitempty,color"`
+	NewContributor Color `yaml:"newcontributor" validate:"omitempty,color"`
+	Contributor    Color `yaml:"contributor"    validate:"omitempty,color"`
+	Collaborator   Color `yaml:"collaborator"   validate:"omitempty,color"`
+	Member         Color `yaml:"member"         validate:"omitempty,color"`
+	Owner          Color `yaml:"owner"          validate:"omitempty,color"`
+	UnknownRole    Color `yaml:"unknownrole"    validate:"omitempty,color"`
 }
 
 type ColorThemeText struct {
-	Primary   Color `yaml:"primary,omitzero,omitempty"   validate:"omitzero,omitempty,color"`
-	Secondary Color `yaml:"secondary" validate:"omitempty,color"`
-	Inverted  Color `yaml:"inverted"  validate:"omitempty,color"`
-	Faint     Color `yaml:"faint"     validate:"omitempty,color"`
-	Warning   Color `yaml:"warning"   validate:"omitempty,color"`
-	Success   Color `yaml:"success"   validate:"omitempty,color"`
-	Error     Color `yaml:"error"     validate:"omitempty,color"`
-	Actor     Color `yaml:"actor"     validate:"omitempty,color"`
+	Primary   Color `yaml:"primary,omitzero,omitempty" validate:"omitzero,omitempty,color"`
+	Secondary Color `yaml:"secondary"                  validate:"omitempty,color"`
+	Inverted  Color `yaml:"inverted"                   validate:"omitempty,color"`
+	Faint     Color `yaml:"faint"                      validate:"omitempty,color"`
+	Warning   Color `yaml:"warning"                    validate:"omitempty,color"`
+	Success   Color `yaml:"success"                    validate:"omitempty,color"`
+	Error     Color `yaml:"error"                      validate:"omitempty,color"`
+	Actor     Color `yaml:"actor"                      validate:"omitempty,color"`
 }
 
 type ColorThemeBorder struct {
@@ -300,7 +300,7 @@ type IconThemeConfig struct {
 
 type TableUIThemeConfig struct {
 	ShowSeparator bool `yaml:"showSeparator" default:"true"`
-	Compact       bool `yaml:"compact" default:"false"`
+	Compact       bool `yaml:"compact"       default:"false"`
 }
 
 type UIThemeConfig struct {
@@ -311,7 +311,7 @@ type UIThemeConfig struct {
 type ThemeConfig struct {
 	Ui     UIThemeConfig     `yaml:"ui,omitempty"     validate:"omitempty"`
 	Colors *ColorThemeConfig `yaml:"colors,omitempty" validate:"omitempty"`
-	Icons  *IconThemeConfig  `yaml:"icons,omitempty" validate:"omitempty"`
+	Icons  *IconThemeConfig  `yaml:"icons,omitempty"  validate:"omitempty"`
 }
 
 type Config struct {
@@ -322,12 +322,12 @@ type Config struct {
 	Defaults                 Defaults                     `yaml:"defaults"`
 	Keybindings              Keybindings                  `yaml:"keybindings"`
 	RepoPaths                map[string]string            `yaml:"repoPaths"`
-	Theme                    *ThemeConfig                 `yaml:"theme,omitempty" validate:"omitempty"`
+	Theme                    *ThemeConfig                 `yaml:"theme,omitempty"           validate:"omitempty"`
 	Pager                    Pager                        `yaml:"pager"`
 	ConfirmQuit              bool                         `yaml:"confirmQuit"`
 	ShowAuthorIcons          bool                         `yaml:"showAuthorIcons,omitempty"`
-	SmartFilteringAtLaunch   bool                         `yaml:"smartFilteringAtLaunch" default:"true"`
-	IncludeReadNotifications bool                         `yaml:"includeReadNotifications" default:"true"`
+	SmartFilteringAtLaunch   bool                         `yaml:"smartFilteringAtLaunch"                         default:"true"`
+	IncludeReadNotifications bool                         `yaml:"includeReadNotifications"                       default:"true"`
 }
 
 type configError struct {
@@ -507,7 +507,10 @@ func (parser ConfigParser) getDefaultConfigYamlContents() (string, error) {
 func (e configError) Error() string {
 	content, err := e.parser.getDefaultConfigYamlContents()
 	if err != nil {
-		return fmt.Sprintf("encountered error while trying to generate default config yaml contents: %v", err)
+		return fmt.Sprintf(
+			"encountered error while trying to generate default config yaml contents: %v",
+			err,
+		)
 	}
 	return fmt.Sprintf(
 		`Couldn't find a config.yml or a config.yaml configuration file.
@@ -627,25 +630,29 @@ func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath strin
 		return Config{}, parsingError{err: err, path: globalCfgPath}
 	}
 	log.Info("Loaded global config", "path", globalCfgPath)
-	if err := parser.k.Load(file.Provider(userProvidedCfgPath), yaml.Parser(), koanf.WithMergeFunc(func(
-		overrides, dest map[string]any,
-	) error {
-		overridesCopy := maps.Copy(overrides)
+	if err := parser.k.Load(
+		file.Provider(userProvidedCfgPath),
+		yaml.Parser(),
+		koanf.WithMergeFunc(func(
+			overrides, dest map[string]any,
+		) error {
+			overridesCopy := maps.Copy(overrides)
 
-		universalKeybinds := mergeKeybindings(overrides, dest, "universal")
-		prsKeybinds := mergeKeybindings(overrides, dest, "prs")
-		issuesKeybinds := mergeKeybindings(overrides, dest, "issues")
+			universalKeybinds := mergeKeybindings(overrides, dest, "universal")
+			prsKeybinds := mergeKeybindings(overrides, dest, "prs")
+			issuesKeybinds := mergeKeybindings(overrides, dest, "issues")
 
-		maps.Merge(overrides, dest)
-		dest["keybindings"].(map[string]any)["universal"] = universalKeybinds
-		dest["keybindings"].(map[string]any)["prs"] = prsKeybinds
-		dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
-		dest["prSections"] = overridesCopy["prSections"]
-		dest["issuesSections"] = overridesCopy["issuesSections"]
-		dest["notificationsSections"] = overridesCopy["notificationsSections"]
+			maps.Merge(overrides, dest)
+			dest["keybindings"].(map[string]any)["universal"] = universalKeybinds
+			dest["keybindings"].(map[string]any)["prs"] = prsKeybinds
+			dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
+			dest["prSections"] = overridesCopy["prSections"]
+			dest["issuesSections"] = overridesCopy["issuesSections"]
+			dest["notificationsSections"] = overridesCopy["notificationsSections"]
 
-		return nil
-	})); err != nil {
+			return nil
+		}),
+	); err != nil {
 		return Config{}, parsingError{err: err, path: userProvidedCfgPath}
 	}
 	log.Info("Loaded user provided config", "path", userProvidedCfgPath)

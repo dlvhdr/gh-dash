@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -27,17 +28,21 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
 	base := lipgloss.NewStyle()
-	ts := ti.Styles().Focused
 	ti.SetStyles(textinput.Styles{
 		Focused: textinput.StyleState{
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
-			Text:        ts.Text.Faint(false),
+			Text:        base.Foreground(ctx.Theme.PrimaryText),
 		},
 		Blurred: textinput.StyleState{
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
 			Text:        lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
+		},
+		Cursor: textinput.CursorStyle{
+			Color: ctx.Theme.FaintText,
+			Shape: tea.CursorBar,
+			Blink: true,
 		},
 	})
 	ti.Prompt = prompt
@@ -50,7 +55,9 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 		initialValue: opts.InitialValue,
 	}
 
-	m.textInput.SetWidth(m.getInputWidth(m.ctx))
+	w := m.getInputWidth(m.ctx)
+	log.Debug("setting initial width", "w", w)
+	m.textInput.SetWidth(w)
 
 	return m
 }
@@ -68,15 +75,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
-		Width(ctx.MainContentWidth - 2).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.PrimaryBorder).
 		Render(m.textInput.View())
 }
 
-func (m *Model) Focus() {
+func (m *Model) Focus() tea.Cmd {
 	m.textInput.CursorEnd()
-	m.textInput.Focus()
+	return m.textInput.Focus()
 }
 
 func (m *Model) Blur() {
@@ -91,6 +97,7 @@ func (m *Model) SetValue(val string) {
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	oldWidth := m.textInput.Width()
 	newWidth := m.getInputWidth(ctx)
+	log.Debug("setting new width", "w", newWidth)
 	m.textInput.SetWidth(newWidth)
 	if m.textInput.Width() != oldWidth {
 		m.textInput.CursorEnd()

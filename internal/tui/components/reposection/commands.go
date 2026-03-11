@@ -251,7 +251,11 @@ func (m *Model) fetchPRsCmd() tea.Cmd {
 		if limit == nil {
 			limit = &m.Ctx.Config.Defaults.PrsLimit
 		}
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(m.Ctx.RepoUrl)), *limit, nil)
+		res, err := data.FetchPullRequests(
+			fmt.Sprintf("author:@me repo:%s", git.GetRepoShortName(m.Ctx.RepoUrl)),
+			*limit,
+			nil,
+		)
 		if err != nil {
 			return constants.TaskFinishedMsg{
 				SectionId:   0,
@@ -285,7 +289,11 @@ func (m *Model) fetchPRCmd(branch string) []tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return []tea.Cmd{startCmd, func() tea.Msg {
-		res, err := data.FetchPullRequests(fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(m.Ctx.RepoUrl), branch), 1, nil)
+		res, err := data.FetchPullRequests(
+			fmt.Sprintf("author:@me repo:%s head:%s", git.GetRepoShortName(m.Ctx.RepoUrl), branch),
+			1,
+			nil,
+		)
 		log.Debug("Fetching PRs", "res", res)
 		if err != nil {
 			return constants.TaskFinishedMsg{
@@ -341,15 +349,21 @@ func nextID() int {
 }
 
 func (m *Model) tickRefreshBranchesCmd() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(m.Ctx.Config.Repo.BranchesRefetchIntervalSeconds), func(t time.Time) tea.Msg {
-		return RefreshBranchesMsg{id: m.refreshId, time: t}
-	})
+	return tea.Tick(
+		time.Second*time.Duration(m.Ctx.Config.Repo.BranchesRefetchIntervalSeconds),
+		func(t time.Time) tea.Msg {
+			return RefreshBranchesMsg{id: m.refreshId, time: t}
+		},
+	)
 }
 
 func (m *Model) tickFetchPrsCmd() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(m.Ctx.Config.Repo.PrsRefetchIntervalSeconds), func(t time.Time) tea.Msg {
-		return RefreshPrsMsg{id: m.refreshId, time: t}
-	})
+	return tea.Tick(
+		time.Second*time.Duration(m.Ctx.Config.Repo.PrsRefetchIntervalSeconds),
+		func(t time.Time) tea.Msg {
+			return RefreshPrsMsg{id: m.refreshId, time: t}
+		},
+	)
 }
 
 func (m *Model) onRefreshBranchesMsg() []tea.Cmd {
@@ -415,7 +429,11 @@ func (m *Model) newBranch(name string) tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := gitm.Checkout(m.Ctx.RepoPath, name, gitm.CheckoutOptions{BaseBranch: m.repo.HeadBranchName})
+		err := gitm.Checkout(
+			m.Ctx.RepoPath,
+			name,
+			gitm.CheckoutOptions{BaseBranch: m.repo.HeadBranchName},
+		)
 		if err != nil {
 			return constants.TaskFinishedMsg{TaskId: taskId, Err: err}
 		}

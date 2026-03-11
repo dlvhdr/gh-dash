@@ -625,7 +625,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		var lastPageInfo data.PageInfo
 		isFirstPage := pageInfo == nil
 		for {
-			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo)
+			res, err := data.FetchNotifications(
+				limit,
+				filters.RepoFilters,
+				readState,
+				currentPageInfo,
+			)
 			if err != nil {
 				return constants.TaskFinishedMsg{
 					SectionId:   m.Id,
@@ -706,7 +711,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 							continue
 						}
 						// Apply repo filter if set
-						if len(repoFilterMap) > 0 && !repoFilterMap[result.notification.Repository.FullName] {
+						if len(repoFilterMap) > 0 &&
+							!repoFilterMap[result.notification.Repository.FullName] {
 							continue
 						}
 						res.Notifications = append(res.Notifications, *result.notification)
@@ -751,7 +757,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 					notifications = append(notifications, notificationrow.Data{
 						Notification: n,
 						// Generate initial activity description (will be updated with actor later)
-						ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
+						ActivityDescription: notificationrow.GenerateActivityDescription(
+							n.Reason,
+							n.Subject.Type,
+							"",
+						),
 					})
 				}
 			}
@@ -935,7 +945,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 		lastReadAt := notif.Notification.LastReadAt
 		apiUrl := notif.Notification.Subject.Url
 
-		log.Debug("Processing notification", "id", notifId, "type", subjectType, "webUrl", subjectUrl, "apiUrl", apiUrl)
+		log.Debug(
+			"Processing notification",
+			"id",
+			notifId,
+			"type",
+			subjectType,
+			"webUrl",
+			subjectUrl,
+			"apiUrl",
+			apiUrl,
+		)
 
 		latestCommentUrl := notif.Notification.Subject.LatestCommentUrl
 
@@ -956,7 +976,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = pr.Author.Login
 				}
-				log.Debug("Got PR comment count", "id", id, "count", count, "state", pr.State, "actor", actor)
+				log.Debug(
+					"Got PR comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					pr.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,
@@ -980,7 +1010,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = issue.Author.Login
 				}
-				log.Debug("Got Issue comment count", "id", id, "count", count, "state", issue.State, "actor", actor)
+				log.Debug(
+					"Got Issue comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					issue.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,

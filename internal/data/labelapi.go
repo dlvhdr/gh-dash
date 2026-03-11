@@ -27,7 +27,17 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 		return cachedLabels, nil
 	}
 
-	cmd := execCommand("gh", "label", "list", "-R", repoNameWithOwner, "--json", "name,color", "--limit", "300")
+	cmd := execCommand(
+		"gh",
+		"label",
+		"list",
+		"-R",
+		repoNameWithOwner,
+		"--json",
+		"name,color",
+		"--limit",
+		"300",
+	)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
