@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -109,7 +108,7 @@ func (b *Branch) renderLines(isSelected bool) string {
 	}
 	deletions := max(b.PR.Deletions, 0)
 
-	var additionsFg compat.AdaptiveColor = b.Ctx.Theme.SuccessText
+	additionsFg := b.Ctx.Theme.SuccessText
 	deletionsFg := b.Ctx.Theme.ErrorText
 
 	baseStyle := lipgloss.NewStyle()
