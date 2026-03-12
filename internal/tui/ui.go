@@ -891,7 +891,7 @@ func (m Model) View() tea.View {
 		s.WriteString(m.footer.View())
 	}
 
-	v.SetContent(s.String())
+	v.SetContent(zone.Scan(s.String()))
 	return v
 }
 
