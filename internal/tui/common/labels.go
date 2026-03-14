@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -36,7 +36,10 @@ func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Styl
 			rowContentsWidth += currentLabelWidth
 		} else {
 			currentRowLabels = append(currentRowLabels, "\n")
-			renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
+			renderedRows = append(
+				renderedRows,
+				lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...),
+			)
 
 			currentRowLabels = []string{currentLabel}
 			rowContentsWidth = currentLabelWidth

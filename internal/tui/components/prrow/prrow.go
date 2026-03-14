@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -77,7 +78,8 @@ func (pr *PullRequest) renderState() string {
 	switch pr.Data.Primary.State {
 	case "OPEN":
 		if pr.Data.Primary.IsInMergeQueue {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).Render(constants.MergeQueueIcon)
+			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).
+				Render(constants.MergeQueueIcon)
 		}
 		if pr.Data.Primary.IsDraft {
 			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
@@ -136,7 +138,7 @@ func (pr *PullRequest) RenderLines(isSelected bool) string {
 	}
 	deletions := max(pr.Data.Primary.Deletions, 0)
 
-	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	var additionsFg, deletionsFg compat.AdaptiveColor
 	additionsFg = pr.Ctx.Theme.SuccessText
 	deletionsFg = pr.Ctx.Theme.ErrorText
 
@@ -186,7 +188,8 @@ func (pr *PullRequest) renderTitle() string {
 func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {
-		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
+		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).
+			Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
 	author := baseStyle.Bold(true).Render(fmt.Sprintf("@%s",
@@ -206,7 +209,12 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
-	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
+	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).
+		Width(width).
+		MaxWidth(width).
+		Height(1).
+		MaxHeight(1).
+		Render(top)
 	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Bold(true).Width(width).MaxWidth(
 		width).Height(1).MaxHeight(1).Render(title)
 

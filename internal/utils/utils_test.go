@@ -3,7 +3,8 @@ package utils
 import (
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 )
 
 func TestGetStylePrefix(t *testing.T) {
@@ -81,12 +82,15 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 			style: lipgloss.NewStyle().Underline(true),
 		},
 		{
-			name:  "combined foreground and background",
-			style: lipgloss.NewStyle().Foreground(lipgloss.Color("red")).Background(lipgloss.Color("blue")),
+			name: "combined foreground and background",
+			style: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("red")).
+				Background(lipgloss.Color("blue")),
 		},
 		{
-			name:  "adaptive color",
-			style: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}),
+			name: "adaptive color",
+			style: lipgloss.NewStyle().
+				Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")}),
 		},
 		{
 			name:  "256 color",
@@ -112,7 +116,11 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 				// Only fail if the style would produce ANSI codes
 				rendered := tt.style.Render("")
 				if len(rendered) > 0 && rendered[0] == '\x1b' {
-					t.Errorf("GetStylePrefix for %s should start with escape, got: %q", tt.name, prefix)
+					t.Errorf(
+						"GetStylePrefix for %s should start with escape, got: %q",
+						tt.name,
+						prefix,
+					)
 				}
 			}
 		})

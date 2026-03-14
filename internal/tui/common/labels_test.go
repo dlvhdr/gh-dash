@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"

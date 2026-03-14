@@ -8,10 +8,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/go-sprout/sprout"
 	timeregistry "github.com/go-sprout/sprout/registry/time"
@@ -64,7 +64,9 @@ type NewSectionOptions struct {
 	CreatedAt   time.Time
 }
 
-func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(ctx *context.ProgramContext) string {
+func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
+	ctx *context.ProgramContext,
+) string {
 	searchValue := options.Config.Filters
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
@@ -196,7 +198,10 @@ type PromptConfirmation interface {
 
 func (m *BaseModel) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  max(0, m.Ctx.MainContentWidth-m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding()),
+		Width: max(
+			0,
+			m.Ctx.MainContentWidth-m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		),
 		Height: max(0, m.Ctx.MainContentHeight-common.SearchHeight),
 	}
 }
@@ -245,7 +250,10 @@ func (m *BaseModel) GetSearchValue() string {
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if token != currentCloneFilter {
-			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
+			searchValueWithoutCurrentCloneFilter = append(
+				searchValueWithoutCurrentCloneFilter,
+				token,
+			)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {
@@ -261,7 +269,10 @@ func (m *BaseModel) enrichSearchWithTemplateVars() string {
 		Now: time.Now(),
 	}
 	sl := slog.New(log.Default())
-	handler := sprout.New(sprout.WithRegistries(timeregistry.NewRegistry(), utils.NewRegistry()), sprout.WithLogger(sl))
+	handler := sprout.New(
+		sprout.WithRegistries(timeregistry.NewRegistry(), utils.NewRegistry()),
+		sprout.WithLogger(sl),
+	)
 	funcs := handler.Build()
 
 	tmpl, err := template.New("search").Funcs(funcs).Parse(searchValue)
@@ -339,8 +350,7 @@ func (m *BaseModel) GetIsLoading() bool {
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
-		m.SearchBar.Focus()
-		return m.SearchBar.Init()
+		return tea.Batch(m.SearchBar.Focus(), m.SearchBar.Init())
 	} else {
 		m.SearchBar.Blur()
 		return nil

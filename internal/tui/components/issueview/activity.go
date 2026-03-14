@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/glamour/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
@@ -63,16 +63,22 @@ func renderEmptyState() string {
 	return lipgloss.NewStyle().Italic(true).Render("No comments...")
 }
 
-func (m *Model) renderComment(comment data.IssueComment, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderComment(
+	comment data.IssueComment,
+	markdownRenderer glamour.TermRenderer,
+) (string, error) {
 	width := m.getIndentedContentWidth() - 2
 	header := lipgloss.NewStyle().
 		Width(width).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.FaintBorder).Render(
-		lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
 			m.ctx.Styles.Common.MainTextStyle.Render(comment.Author.Login),
 			" ",
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+			lipgloss.NewStyle().
+				Foreground(m.ctx.Theme.FaintText).
+				Render(utils.TimeElapsed(comment.UpdatedAt)),
 		))
 
 	body := lineCleanupRegex.ReplaceAllString(comment.Body, "")

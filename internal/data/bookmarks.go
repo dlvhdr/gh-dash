@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 )
 
 const (

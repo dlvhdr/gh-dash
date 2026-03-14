@@ -3,8 +3,8 @@ package keys
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
-	log "github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
@@ -60,7 +60,7 @@ var PRKeys = PRKeyMap{
 		key.WithHelp("d", "diff"),
 	),
 	Checkout: key.NewBinding(
-		key.WithKeys("C", " "),
+		key.WithKeys("C", "space"),
 		key.WithHelp("C/Space", "checkout"),
 	),
 	Close: key.NewBinding(

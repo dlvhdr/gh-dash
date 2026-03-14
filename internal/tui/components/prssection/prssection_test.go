@@ -3,7 +3,7 @@ package prssection
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -41,7 +41,7 @@ func TestConfirmation_AcceptWithEmptyInput(t *testing.T) {
 	// prompt says (Y/n) indicating Y is the default.
 	m := newTestModel("close")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	require.NotNil(t, cmd, "empty input (default Y) should execute the action")
@@ -53,7 +53,7 @@ func TestConfirmation_AcceptWithLowercaseY(t *testing.T) {
 	m := newTestModel("merge")
 	m.PromptConfirmationBox.SetValue("y")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	require.NotNil(t, cmd, "lowercase y should execute the action")
@@ -63,7 +63,7 @@ func TestConfirmation_AcceptWithUppercaseY(t *testing.T) {
 	m := newTestModel("reopen")
 	m.PromptConfirmationBox.SetValue("Y")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	require.NotNil(t, cmd, "uppercase Y should execute the action")
@@ -73,7 +73,7 @@ func TestConfirmation_RejectWithN(t *testing.T) {
 	m := newTestModel("close")
 	m.PromptConfirmationBox.SetValue("n")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	// cmd is a batch of (nil, blinkCmd) -- the nil means no action was taken.
@@ -86,7 +86,7 @@ func TestConfirmation_RejectWithN(t *testing.T) {
 func TestConfirmation_CancelWithEsc(t *testing.T) {
 	m := newTestModel("merge")
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	_, cmd := m.Update(msg)
 
 	require.False(t, m.IsPromptConfirmationShown,
@@ -97,7 +97,7 @@ func TestConfirmation_CancelWithEsc(t *testing.T) {
 func TestConfirmation_CancelWithCtrlC(t *testing.T) {
 	m := newTestModel("update")
 
-	msg := tea.KeyMsg{Type: tea.KeyCtrlC}
+	msg := tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
 	_, cmd := m.Update(msg)
 
 	require.False(t, m.IsPromptConfirmationShown,
@@ -112,7 +112,7 @@ func TestConfirmation_AllActions(t *testing.T) {
 		t.Run(action+"_empty_input", func(t *testing.T) {
 			m := newTestModel(action)
 
-			msg := tea.KeyMsg{Type: tea.KeyEnter}
+			msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 			_, cmd := m.Update(msg)
 
 			require.NotNil(t, cmd,
@@ -123,7 +123,7 @@ func TestConfirmation_AllActions(t *testing.T) {
 			m := newTestModel(action)
 			m.PromptConfirmationBox.SetValue("y")
 
-			msg := tea.KeyMsg{Type: tea.KeyEnter}
+			msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 			_, cmd := m.Update(msg)
 
 			require.NotNil(t, cmd,

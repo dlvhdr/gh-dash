@@ -3,9 +3,9 @@ package search
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -26,22 +26,38 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	prompt := fmt.Sprintf(" %s ", opts.Prefix)
 	ti := textinput.New()
 	ti.Placeholder = opts.Placeholder
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ti.Width = ctx.MainContentWidth - lipgloss.Width(prompt) - 6
-	ti.PromptStyle = ti.PromptStyle.Foreground(ctx.Theme.SecondaryText)
+	base := lipgloss.NewStyle()
+	ti.SetStyles(textinput.Styles{
+		Focused: textinput.StyleState{
+			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
+			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
+			Text:        base.Foreground(ctx.Theme.PrimaryText),
+		},
+		Blurred: textinput.StyleState{
+			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
+			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
+			Text:        lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
+		},
+		Cursor: textinput.CursorStyle{
+			Color: ctx.Theme.FaintText,
+			Shape: tea.CursorBar,
+			Blink: true,
+		},
+	})
 	ti.Prompt = prompt
-	ti.TextStyle = ti.TextStyle.Faint(true)
-	ti.Cursor.Style = ti.Cursor.Style.Faint(true)
-	ti.Cursor.TextStyle = ti.Cursor.TextStyle.Faint(true)
 	ti.Blur()
 	ti.SetValue(opts.InitialValue)
 	ti.CursorStart()
-
-	return Model{
+	m := Model{
 		ctx:          ctx,
 		textInput:    ti,
 		initialValue: opts.InitialValue,
 	}
+
+	w := m.getInputWidth(m.ctx)
+	m.textInput.SetWidth(w)
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
@@ -51,27 +67,23 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	m.textInput.Width = m.getInputWidth(m.ctx)
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
 }
 
 func (m Model) View(ctx *context.ProgramContext) string {
 	return lipgloss.NewStyle().
-		Width(ctx.MainContentWidth - 4).
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.PrimaryBorder).
 		Render(m.textInput.View())
 }
 
-func (m *Model) Focus() {
-	m.textInput.TextStyle = m.textInput.TextStyle.Faint(false)
+func (m *Model) Focus() tea.Cmd {
 	m.textInput.CursorEnd()
-	m.textInput.Focus()
+	return m.textInput.Focus()
 }
 
 func (m *Model) Blur() {
-	m.textInput.TextStyle = m.textInput.TextStyle.Faint(true)
 	m.textInput.CursorStart()
 	m.textInput.Blur()
 }
@@ -81,9 +93,10 @@ func (m *Model) SetValue(val string) {
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldWidth := m.textInput.Width
-	m.textInput.Width = m.getInputWidth(ctx)
-	if m.textInput.Width != oldWidth {
+	oldWidth := m.textInput.Width()
+	newWidth := m.getInputWidth(ctx)
+	m.textInput.SetWidth(newWidth)
+	if m.textInput.Width() != oldWidth {
 		m.textInput.CursorEnd()
 	}
 }
@@ -93,7 +106,10 @@ func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
 	// - deduce 4 - 2 for the padding, 2 for the borders
 	// - deduce 1 for the cursor
 	// - deduce 1 for the spacing between the prompt and text
-	return max(2, ctx.MainContentWidth-lipgloss.Width(m.textInput.Prompt)-4-1-1) // borders + cursor
+	return max(
+		2,
+		ctx.MainContentWidth-lipgloss.Width(m.textInput.Prompt)-4-1-1,
+	) // borders + cursor
 }
 
 func (m Model) Value() string {

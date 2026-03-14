@@ -183,7 +183,8 @@ func TestParseCheckSuiteStatus(t *testing.T) {
 
 			isFailed := strings.Contains(titleLower, "failed")
 			isSuccess := strings.Contains(titleLower, "succeeded")
-			isCancelled := strings.Contains(titleLower, "cancelled") || strings.Contains(titleLower, "canceled")
+			isCancelled := strings.Contains(titleLower, "cancelled") ||
+				strings.Contains(titleLower, "canceled")
 			isSkipped := strings.Contains(titleLower, "skipped")
 
 			if tt.expectsFailed && !isFailed {
@@ -369,7 +370,11 @@ func TestActivityDescriptionFallback(t *testing.T) {
 			// When ActivityDescription is set, it should be used
 			if tt.activityDescription != "" {
 				if d.ActivityDescription != tt.activityDescription {
-					t.Errorf("ActivityDescription = %q, want %q", d.ActivityDescription, tt.activityDescription)
+					t.Errorf(
+						"ActivityDescription = %q, want %q",
+						d.ActivityDescription,
+						tt.activityDescription,
+					)
 				}
 			}
 		})

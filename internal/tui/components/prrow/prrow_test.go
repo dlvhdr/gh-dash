@@ -4,7 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	graphql "github.com/cli/shurcooL-graphql"
 	checks "github.com/dlvhdr/x/gh-checks"
 
@@ -308,9 +309,9 @@ func TestRenderLabels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.pr.Ctx.Theme.SelectedBackground = lipgloss.AdaptiveColor{
-				Light: "7",
-				Dark:  "7",
+			tt.pr.Ctx.Theme.SelectedBackground = compat.AdaptiveColor{
+				Light: lipgloss.Color("7"),
+				Dark:  lipgloss.Color("7"),
 			}
 			result := tt.pr.renderLabels(tt.isSelected)
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -196,7 +196,9 @@ func TestMarkAsDoneStoresCorrectTimestamp(t *testing.T) {
 	// only if the stored timestamp is exactly t1.
 	justAfterT1 := t1.Add(1 * time.Second)
 	if store.IsDone("notif-A", justAfterT1) {
-		t.Error("notif-A should resurface for activity after t1 (stored timestamp should be exactly t1)")
+		t.Error(
+			"notif-A should resurface for activity after t1 (stored timestamp should be exactly t1)",
+		)
 	}
 	// That is the critical assertion: if the pointer-aliasing bug were present,
 	// t2 would be stored, and activity at justAfterT1 would _not_ resurface

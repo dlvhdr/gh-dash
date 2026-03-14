@@ -48,7 +48,11 @@ func GetRepoLocalPath(repoName string, cfgPaths map[string]string) (string, bool
 	}
 
 	if template, ok := cfgPaths[":owner/:repo"]; ok {
-		return strings.ReplaceAll(strings.ReplaceAll(template, ":owner", owner), ":repo", repo), true
+		return strings.ReplaceAll(
+			strings.ReplaceAll(template, ":owner", owner),
+			":repo",
+			repo,
+		), true
 	}
 
 	return "", false
