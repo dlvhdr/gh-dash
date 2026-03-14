@@ -11,6 +11,14 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 )
 
+func renderLabelPill(label data.Label, pillStyle lipgloss.Style, suffix string) string {
+	c := lipgloss.Color("#" + label.Color)
+	return pillStyle.
+		BorderForeground(c).
+		Background(c).
+		Render(label.Name) + suffix
+}
+
 func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Style) string {
 	width := sidebarWidth
 
@@ -20,11 +28,7 @@ func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Styl
 	currentRowLabels := []string{}
 
 	for _, l := range labels {
-		c := lipgloss.Color("#" + l.Color)
-		currentLabel := pillStyle.
-			BorderForeground(c).
-			Background(c).
-			Render(l.Name)
+		currentLabel := renderLabelPill(l, pillStyle, "")
 
 		currentLabelWidth := lipgloss.Width(currentLabel)
 
@@ -89,11 +93,7 @@ func RenderLabelsWithLimitAndRowStyle(
 	rowCount := 0
 
 	for idx, label := range labels {
-		c := lipgloss.Color("#" + label.Color)
-		currentLabel := pillStyle.
-			BorderForeground(c).
-			Background(c).
-			Render(label.Name) + rowStylePrefix
+		currentLabel := renderLabelPill(label, pillStyle, rowStylePrefix)
 		currentLabelWidth := lipgloss.Width(currentLabel)
 
 		if rowContentsWidth > 0 && rowContentsWidth+1+currentLabelWidth > sidebarWidth {
