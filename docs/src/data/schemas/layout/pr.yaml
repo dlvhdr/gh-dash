@@ -194,14 +194,6 @@ properties:
     type: object
     oneOf:
       - $ref: ./options.yaml
-    schematize:
-      weight: 7
-      skip_schema_render: true
-      format: yaml
-      details: |
-        This column displays the labels assigned to a PR as colored pills.
-
-        The heading for this column is ![styled:`󰌖`]().
     default:
       width: 22
       hidden: true
@@ -212,7 +204,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 8
+      weight: 7
       skip_schema_render: true
       format: yaml
       details: |
@@ -229,7 +221,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 9
+      weight: 8
       skip_schema_render: true
       format: yaml
       details: |
@@ -246,7 +238,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 10
+      weight: 9
       skip_schema_render: true
       format: yaml
       details: |
@@ -271,7 +263,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 11
+      weight: 10
       skip_schema_render: true
       format: yaml
       details: |
@@ -296,7 +288,7 @@ properties:
     oneOf:
       - $ref: ./options.yaml
     schematize:
-      weight: 13
+      weight: 11
       skip_schema_render: true
       format: yaml
       details: |
