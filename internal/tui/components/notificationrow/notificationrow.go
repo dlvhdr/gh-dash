@@ -166,13 +166,24 @@ func (n *Notification) renderTitleBlock() string {
 	line2Rendered := titlePrefix + title
 
 	// Line 3: Activity description (no ANSI reset)
-	activityPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
 	line3 := n.Data.ActivityDescription
 	if line3 == "" {
 		// Fallback to reason-based description
 		line3 = n.getReasonDescription()
 	}
-	line3Rendered := activityPrefix + line3
+	activityPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
+	var line3Rendered string
+	if strings.HasPrefix(line3, "@") {
+		// Style the @username with ActorText for better contrast
+		actorPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.ActorText))
+		if idx := strings.Index(line3, " "); idx > 0 {
+			line3Rendered = actorPrefix + line3[:idx] + activityPrefix + line3[idx:]
+		} else {
+			line3Rendered = actorPrefix + line3
+		}
+	} else {
+		line3Rendered = activityPrefix + line3
+	}
 
 	return line1Rendered + "\n" + line2Rendered + "\n" + line3Rendered
 }
