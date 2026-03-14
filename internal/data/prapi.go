@@ -107,18 +107,6 @@ type PullRequestData struct {
 	IsDraft          bool
 	IsInMergeQueue   bool
 	AutoMergeRequest *AutoMergeRequest
-	// AutoMergeEnabled is a local UI flag set when the user enables auto-merge
-	// via the TUI.  It is NOT fetched from the API; it mirrors the same field
-	// on prrow.Data so that the branch section can show the auto-merge icon
-	// immediately without waiting for a full refresh.
-	//
-	// Note: this field lives on the data-layer struct for pragmatic reasons —
-	// branch.Branch holds *data.PullRequestData directly, so there is no
-	// UI-wrapper type here to carry the flag.  The graphql:"-" tag prevents
-	// shurcooL-graphql from including it in the GitHub API query.
-	// A cleaner home would be a dedicated UI-wrapper type for PullRequestData
-	// (analogous to prrow.Data), which is left as a future refactor.
-	AutoMergeEnabled bool             `graphql:"-"`
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`

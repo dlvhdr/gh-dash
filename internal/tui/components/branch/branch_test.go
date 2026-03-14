@@ -17,8 +17,8 @@ func newTestBranch(prState string, autoMergeRequest *data.AutoMergeRequest, auto
 		PR: &data.PullRequestData{
 			State:            prState,
 			AutoMergeRequest: autoMergeRequest,
-			AutoMergeEnabled: autoMergeEnabled,
 		},
+		AutoMergeEnabled: autoMergeEnabled,
 	}
 }
 
