@@ -133,7 +133,18 @@ func RenderLabels(labels []data.Label, opts LabelOpts) string {
 	}
 
 	if remainingLabels > 0 {
-		overflowLabel := opts.PillStyle.Render("+"+strconv.Itoa(remainingLabels)) + rowStylePrefix
+		overflowPillStyle := opts.PillStyle.
+			BorderForeground(lipgloss.ANSIColor(244)).
+			Background(lipgloss.ANSIColor(244))
+		if rowBackground := opts.RowStyle.GetBackground(); rowBackground != nil {
+			overflowPillStyle = overflowPillStyle.
+				BorderLeftBackground(rowBackground).
+				BorderRightBackground(rowBackground)
+		}
+
+		overflowLabel := overflowPillStyle.Render(
+			"+"+strconv.Itoa(remainingLabels),
+		) + rowStylePrefix
 		overflowWidth := lipgloss.Width(overflowLabel)
 		for {
 			if rowContentsWidth == 0 {
@@ -162,7 +173,7 @@ func RenderLabels(labels []data.Label, opts LabelOpts) string {
 				rowContentsWidth = 0
 			}
 
-			overflowLabel = opts.PillStyle.Render(
+			overflowLabel = overflowPillStyle.Render(
 				"+"+strconv.Itoa(remainingLabels),
 			) + rowStylePrefix
 			overflowWidth = lipgloss.Width(overflowLabel)
