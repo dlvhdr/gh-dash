@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/yuin/goldmark-emoji/definition"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -24,8 +24,10 @@ func renderLabelPill(label data.Label, pillStyle lipgloss.Style, suffix string) 
 		Render(renderLabelName(label.Name)) + suffix
 }
 
-var githubEmojis = definition.Github()
-var labelEmojiPattern = regexp.MustCompile(`:[[:alnum:]_+-]+:`)
+var (
+	githubEmojis      = definition.Github()
+	labelEmojiPattern = regexp.MustCompile(`:[[:alnum:]_+-]+:`)
+)
 
 func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Style) string {
 	width := sidebarWidth
@@ -118,7 +120,10 @@ func RenderLabelsWithLimitAndRowStyle(
 
 		if rowContentsWidth == 0 && currentLabelWidth > sidebarWidth {
 			rowCount++
-			currentRowLabels = append(currentRowLabels, truncateStyled(currentLabel, sidebarWidth, rowStylePrefix))
+			currentRowLabels = append(
+				currentRowLabels,
+				truncateStyled(currentLabel, sidebarWidth, rowStylePrefix),
+			)
 			renderedRows = append(renderedRows, strings.Join(currentRowLabels, " "))
 			currentRowLabels = []string{}
 			rowContentsWidth = 0
@@ -146,7 +151,9 @@ func RenderLabelsWithLimitAndRowStyle(
 		for {
 			if rowContentsWidth == 0 {
 				if overflowWidth > sidebarWidth {
-					currentRowLabels = []string{truncateStyled(overflowLabel, sidebarWidth, rowStylePrefix)}
+					currentRowLabels = []string{
+						truncateStyled(overflowLabel, sidebarWidth, rowStylePrefix),
+					}
 				} else {
 					currentRowLabels = []string{overflowLabel}
 				}

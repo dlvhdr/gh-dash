@@ -316,7 +316,9 @@ func TestRenderLabels(t *testing.T) {
 			result := tt.pr.renderLabels(tt.isSelected)
 
 			// For nil/empty cases, expect empty string
-			if tt.pr.Data == nil || tt.pr.Data.Primary == nil || len(tt.pr.Data.Primary.Labels.Nodes) == 0 {
+			if tt.pr.Data == nil ||
+				tt.pr.Data.Primary == nil ||
+				len(tt.pr.Data.Primary.Labels.Nodes) == 0 {
 				if result != "" {
 					t.Errorf("renderLabels() = %q, want empty string", result)
 				}
@@ -324,11 +326,18 @@ func TestRenderLabels(t *testing.T) {
 			}
 
 			if result == "" {
-				t.Errorf("renderLabels() returned empty string for %d labels", len(tt.pr.Data.Primary.Labels.Nodes))
+				t.Errorf(
+					"renderLabels() returned empty string for %d labels",
+					len(tt.pr.Data.Primary.Labels.Nodes),
+				)
 			}
 
 			if strings.Count(result, "\n") != tt.wantNewlines {
-				t.Errorf("renderLabels() newline count = %d, want %d", strings.Count(result, "\n"), tt.wantNewlines)
+				t.Errorf(
+					"renderLabels() newline count = %d, want %d",
+					strings.Count(result, "\n"),
+					tt.wantNewlines,
+				)
 			}
 
 			for _, want := range tt.wantContains {
