@@ -20,6 +20,12 @@ func InitializeMarkdownStyle(hasDarkBackground bool) {
 }
 
 func GetMarkdownRenderer(width int) glamour.TermRenderer {
+	if markdownStyle == nil {
+		// BackgroundColorMsg has not arrived yet (e.g. the sidebar is rendered
+		// before the terminal reports its background colour).  Fall back to the
+		// dark style so rendering does not panic.
+		InitializeMarkdownStyle(true)
+	}
 	markdownRenderer, err := glamour.NewTermRenderer(
 		glamour.WithStyles(*markdownStyle),
 		glamour.WithWordWrap(width),
