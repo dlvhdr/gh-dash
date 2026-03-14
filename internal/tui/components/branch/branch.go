@@ -57,6 +57,9 @@ func (b *Branch) renderState() string {
 
 	switch b.PR.State {
 	case "OPEN":
+		if b.PR.AutoMergeRequest != nil || b.PR.AutoMergeEnabled {
+			return mergeCellStyle.Foreground(b.Ctx.Theme.WarningText).Render(constants.AutoMergeIcon)
+		}
 		if b.PR.IsDraft {
 			return mergeCellStyle.Foreground(b.Ctx.Theme.FaintText).Render(constants.DraftIcon)
 		} else {
@@ -207,8 +210,14 @@ func (b *Branch) renderBaseName() string {
 }
 
 func (b *Branch) RenderState() string {
+	if b.PR == nil {
+		return ""
+	}
 	switch b.PR.State {
 	case "OPEN":
+		if b.PR.AutoMergeRequest != nil || b.PR.AutoMergeEnabled {
+			return constants.AutoMergeIcon + " Auto-merge"
+		}
 		if b.PR.IsDraft {
 			return constants.DraftIcon + " Draft"
 		} else {
