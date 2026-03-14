@@ -500,6 +500,7 @@ func IsEnrichmentCacheCleared() bool {
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
+	clientMu.Lock()
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
@@ -513,6 +514,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 			client, err = gh.DefaultGraphQLClient()
 		}
 	}
+	clientMu.Unlock()
 
 	if err != nil {
 		return PullRequestsResponse{}, err
@@ -557,12 +559,15 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
+	clientMu.Lock()
 	if client == nil {
 		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
+			clientMu.Unlock()
 			return EnrichedPullRequestData{}, err
 		}
 	}
+	clientMu.Unlock()
 
 	var queryResult struct {
 		Resource struct {

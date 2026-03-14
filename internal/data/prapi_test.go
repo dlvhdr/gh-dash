@@ -315,3 +315,45 @@ func TestMergePullRequest_Behind_EnablesAutoMerge(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, status.HasAutoMerge)
 }
+
+// TestClientInit_ConcurrentCallsAreSafe verifies that concurrent calls to
+// FetchPullRequests, FetchPullRequest, and MergePullRequest do not race on the
+// package-level client variable.  With -race this test will fail unless every
+// lazy-init path is protected by clientMu.
+//
+// The test intentionally leaves client == nil so each goroutine tries to
+// initialise it.  With FF_MOCK_DATA unset the real gh.DefaultGraphQLClient()
+// is called, which will return an error (no credentials in CI) — that is fine;
+// we only care that the race detector does not fire.
+func TestClientInit_ConcurrentCallsAreSafe(t *testing.T) {
+	// Reset to nil so every goroutine races to initialise.
+	originalClient := client
+	client = nil
+	t.Cleanup(func() { client = originalClient })
+
+	const goroutines = 8
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		errs := make(chan error, goroutines*3)
+		for i := range goroutines {
+			go func(i int) {
+				_, err := FetchPullRequests("repo:test/test", 1, nil)
+				errs <- err
+			}(i)
+			go func(i int) {
+				_, err := FetchPullRequest("https://github.com/test/test/pull/1")
+				errs <- err
+			}(i)
+			go func(i int) {
+				_, err := MergePullRequest("PR_race", "CLEAN",
+					Repository{AllowMergeCommit: true})
+				errs <- err
+			}(i)
+		}
+		for range goroutines * 3 {
+			<-errs
+		}
+	}()
+	<-done
+}
