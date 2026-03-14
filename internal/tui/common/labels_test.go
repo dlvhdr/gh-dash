@@ -104,7 +104,7 @@ func TestRenderLabels(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			got := common.RenderLabels(tc.width, tc.labels, tc.baseStyle)
-			require.Equal(t, tc.want, got)
+			require.Equal(t, tc.want, ansi.Strip(got))
 		})
 	}
 }

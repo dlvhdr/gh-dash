@@ -12,9 +12,12 @@ import (
 )
 
 func renderLabelPill(label data.Label, pillStyle lipgloss.Style, suffix string) string {
-	c := lipgloss.Color("#" + label.Color)
+	base := lipgloss.Color("#" + label.Color)
+	c := lipgloss.Darken(base, 0.3)
+
 	return pillStyle.
 		BorderForeground(c).
+		Foreground(lipgloss.Lighten(c, 0.5)).
 		Background(c).
 		Render(label.Name) + suffix
 }
