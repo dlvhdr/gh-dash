@@ -1,11 +1,13 @@
 package common
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
 	"charm.land/lipgloss/v2"
+	"github.com/yuin/goldmark-emoji/definition"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -19,8 +21,11 @@ func renderLabelPill(label data.Label, pillStyle lipgloss.Style, suffix string) 
 		BorderForeground(c).
 		Foreground(lipgloss.Lighten(c, 0.5)).
 		Background(c).
-		Render(label.Name) + suffix
+		Render(renderLabelName(label.Name)) + suffix
 }
+
+var githubEmojis = definition.Github()
+var labelEmojiPattern = regexp.MustCompile(`:[[:alnum:]_+-]+:`)
 
 func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Style) string {
 	width := sidebarWidth
@@ -191,4 +196,15 @@ func stylePrefix(style lipgloss.Style) string {
 
 func truncateStyled(value string, width int, stylePrefix string) string {
 	return ansi.Truncate(value, width, constants.Ellipsis) + stylePrefix
+}
+
+func renderLabelName(name string) string {
+	return labelEmojiPattern.ReplaceAllStringFunc(name, func(token string) string {
+		emoji, ok := githubEmojis.Get(token[1 : len(token)-1])
+		if !ok || !emoji.IsUnicode() {
+			return token
+		}
+
+		return string(emoji.Unicode)
+	})
 }

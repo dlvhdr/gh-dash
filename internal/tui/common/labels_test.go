@@ -99,6 +99,36 @@ func TestRenderLabels(t *testing.T) {
 			},
 			want: " l-1   l-2  ",
 		},
+		"emoji shortcode": {
+			width:     20,
+			baseStyle: defaultStyle,
+			labels: []data.Label{
+				{
+					Name: ":chicken:",
+				},
+			},
+			want: " 🐔  ",
+		},
+		"mixed emoji shortcode text": {
+			width:     20,
+			baseStyle: defaultStyle,
+			labels: []data.Label{
+				{
+					Name: "team :rocket:",
+				},
+			},
+			want: " team 🚀  ",
+		},
+		"unknown shortcode stays raw": {
+			width:     24,
+			baseStyle: defaultStyle,
+			labels: []data.Label{
+				{
+					Name: ":not-real:",
+				},
+			},
+			want: " :not-real:  ",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -140,7 +170,7 @@ func TestRenderLabelsWithLimitUsesUpstreamRendering(t *testing.T) {
 	require.NotContains(t, ansi.Strip(got), "[")
 }
 
-func TestRenderLabelsWithLimit_oversized_first_label_respects_max_rows(t *testing.T) {
+func TestRenderLabelsWithLimitOversizedFirstLabelRespectsMaxRows(t *testing.T) {
 	got := common.RenderLabelsWithLimit(
 		8,
 		1,
@@ -154,4 +184,20 @@ func TestRenderLabelsWithLimit_oversized_first_label_respects_max_rows(t *testin
 	stripped := ansi.Strip(got)
 	require.Equal(t, 0, strings.Count(stripped, "\n"))
 	require.NotContains(t, stripped, "+")
+}
+
+func TestRenderLabelsWithLimitRendersEmojiShortcodes(t *testing.T) {
+	got := common.RenderLabelsWithLimit(
+		16,
+		1,
+		[]data.Label{
+			{Name: ":chicken:", Color: "ff0000"},
+			{Name: ":rocket:", Color: "00ff00"},
+		},
+		defaultStyle,
+	)
+
+	require.Contains(t, ansi.Strip(got), "🐔")
+	require.Contains(t, ansi.Strip(got), "🚀")
+	require.NotContains(t, ansi.Strip(got), ":chicken:")
 }
