@@ -279,12 +279,14 @@ func (pr *PullRequest) renderLabels(isSelected bool) string {
 			BorderRightBackground(pr.Ctx.Theme.SelectedBackground)
 	}
 
-	return common.RenderLabelsWithLimitAndRowStyle(
-		labelsWidth-2,
-		maxRows,
+	return common.RenderLabels(
 		pr.Data.Primary.Labels.Nodes,
-		pillStyle,
-		rowStyle,
+		common.LabelOpts{
+			Width:     labelsWidth - 2,
+			MaxRows:   maxRows,
+			PillStyle: pillStyle,
+			RowStyle:  rowStyle,
+		},
 	)
 }
 

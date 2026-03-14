@@ -133,36 +133,43 @@ func TestRenderLabels(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			got := common.RenderLabels(tc.width, tc.labels, tc.baseStyle)
+			got := common.RenderLabels(tc.labels, common.LabelOpts{
+				Width:     tc.width,
+				PillStyle: tc.baseStyle,
+			})
 			require.Equal(t, tc.want, ansi.Strip(got))
 		})
 	}
 }
 
-func TestRenderLabelsWithLimit(t *testing.T) {
-	got := common.RenderLabelsWithLimit(
-		12,
-		1,
+func TestRenderLabelsRespectsMaxRows(t *testing.T) {
+	got := common.RenderLabels(
 		[]data.Label{
 			{Name: "bug"},
 			{Name: "fix"},
 			{Name: "chore"},
 		},
-		defaultStyle,
+		common.LabelOpts{
+			Width:     12,
+			MaxRows:   1,
+			PillStyle: defaultStyle,
+		},
 	)
 
 	require.Equal(t, " bug   +2 ", ansi.Strip(got))
 }
 
-func TestRenderLabelsWithLimitUsesUpstreamRendering(t *testing.T) {
-	got := common.RenderLabelsWithLimit(
-		12,
-		1,
+func TestRenderLabelsUsesUpstreamRendering(t *testing.T) {
+	got := common.RenderLabels(
 		[]data.Label{
 			{Name: "bug", Color: "ff0000"},
 			{Name: "fix", Color: "00ff00"},
 		},
-		lipgloss.NewStyle(),
+		common.LabelOpts{
+			Width:     12,
+			MaxRows:   1,
+			PillStyle: lipgloss.NewStyle(),
+		},
 	)
 
 	require.NotEmpty(t, got)
@@ -170,15 +177,17 @@ func TestRenderLabelsWithLimitUsesUpstreamRendering(t *testing.T) {
 	require.NotContains(t, ansi.Strip(got), "[")
 }
 
-func TestRenderLabelsWithLimitOversizedFirstLabelRespectsMaxRows(t *testing.T) {
-	got := common.RenderLabelsWithLimit(
-		8,
-		1,
+func TestRenderLabelsOversizedFirstLabelRespectsMaxRows(t *testing.T) {
+	got := common.RenderLabels(
 		[]data.Label{
 			{Name: "verylonglabel"},
 			{Name: "bug"},
 		},
-		defaultStyle,
+		common.LabelOpts{
+			Width:     8,
+			MaxRows:   1,
+			PillStyle: defaultStyle,
+		},
 	)
 
 	stripped := ansi.Strip(got)
@@ -186,15 +195,17 @@ func TestRenderLabelsWithLimitOversizedFirstLabelRespectsMaxRows(t *testing.T) {
 	require.NotContains(t, stripped, "+")
 }
 
-func TestRenderLabelsWithLimitRendersEmojiShortcodes(t *testing.T) {
-	got := common.RenderLabelsWithLimit(
-		16,
-		1,
+func TestRenderLabelsRendersEmojiShortcodes(t *testing.T) {
+	got := common.RenderLabels(
 		[]data.Label{
 			{Name: ":chicken:", Color: "ff0000"},
 			{Name: ":rocket:", Color: "00ff00"},
 		},
-		defaultStyle,
+		common.LabelOpts{
+			Width:     16,
+			MaxRows:   1,
+			PillStyle: defaultStyle,
+		},
 	)
 
 	require.Contains(t, ansi.Strip(got), "🐔")

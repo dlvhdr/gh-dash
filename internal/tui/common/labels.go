@@ -29,86 +29,71 @@ var (
 	labelEmojiPattern = regexp.MustCompile(`:[[:alnum:]_+-]+:`)
 )
 
-func RenderLabels(sidebarWidth int, labels []data.Label, pillStyle lipgloss.Style) string {
-	width := sidebarWidth
-
-	renderedRows := []string{}
-
-	rowContentsWidth := 0
-	currentRowLabels := []string{}
-
-	for _, l := range labels {
-		currentLabel := renderLabelPill(l, pillStyle, "")
-
-		currentLabelWidth := lipgloss.Width(currentLabel)
-
-		if rowContentsWidth+currentLabelWidth <= width {
-			currentRowLabels = append(
-				currentRowLabels,
-				currentLabel,
-			)
-			rowContentsWidth += currentLabelWidth
-		} else {
-			currentRowLabels = append(currentRowLabels, "\n")
-			renderedRows = append(
-				renderedRows,
-				lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...),
-			)
-
-			currentRowLabels = []string{currentLabel}
-			rowContentsWidth = currentLabelWidth
-		}
-
-		// +1 for the space between labels
-		currentRowLabels = append(currentRowLabels, " ")
-		rowContentsWidth += 1
-	}
-
-	renderedRows = append(renderedRows, lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...))
-
-	return lipgloss.JoinVertical(lipgloss.Left, renderedRows...)
+type LabelOpts struct {
+	Width     int
+	MaxRows   int
+	PillStyle lipgloss.Style
+	RowStyle  lipgloss.Style
 }
 
-func RenderLabelsWithLimit(
-	sidebarWidth int,
-	maxRows int,
-	labels []data.Label,
-	pillStyle lipgloss.Style,
-) string {
-	return RenderLabelsWithLimitAndRowStyle(
-		sidebarWidth,
-		maxRows,
-		labels,
-		pillStyle,
-		lipgloss.NewStyle(),
-	)
-}
-
-func RenderLabelsWithLimitAndRowStyle(
-	sidebarWidth int,
-	maxRows int,
-	labels []data.Label,
-	pillStyle lipgloss.Style,
-	rowStyle lipgloss.Style,
-) string {
-	if sidebarWidth <= 0 || len(labels) == 0 {
+func RenderLabels(labels []data.Label, opts LabelOpts) string {
+	if opts.Width <= 0 || len(labels) == 0 {
 		return ""
 	}
 
-	rowStylePrefix := stylePrefix(rowStyle)
-	renderedRows := make([]string, 0, maxRows)
+	if opts.MaxRows <= 0 {
+		renderedRows := []string{}
+		rowContentsWidth := 0
+		currentRowLabels := []string{}
+
+		for _, l := range labels {
+			currentLabel := renderLabelPill(l, opts.PillStyle, "")
+			currentLabelWidth := lipgloss.Width(currentLabel)
+
+			if rowContentsWidth+currentLabelWidth <= opts.Width {
+				currentRowLabels = append(
+					currentRowLabels,
+					currentLabel,
+				)
+				rowContentsWidth += currentLabelWidth
+			} else {
+				currentRowLabels = append(currentRowLabels, "\n")
+				renderedRows = append(
+					renderedRows,
+					lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...),
+				)
+
+				currentRowLabels = []string{currentLabel}
+				rowContentsWidth = currentLabelWidth
+			}
+
+			// +1 for the space between labels
+			currentRowLabels = append(currentRowLabels, " ")
+			rowContentsWidth += 1
+		}
+
+		renderedRows = append(
+			renderedRows,
+			lipgloss.JoinHorizontal(lipgloss.Top, currentRowLabels...),
+		)
+
+		return lipgloss.JoinVertical(lipgloss.Left, renderedRows...)
+	}
+
+	rowStylePrefix := stylePrefix(opts.RowStyle)
+	renderedRows := make([]string, 0, opts.MaxRows)
 	rowContentsWidth := 0
 	currentRowLabels := []string{}
 	remainingLabels := 0
 	rowCount := 0
 
 	for idx, label := range labels {
-		currentLabel := renderLabelPill(label, pillStyle, rowStylePrefix)
+		currentLabel := renderLabelPill(label, opts.PillStyle, rowStylePrefix)
 		currentLabelWidth := lipgloss.Width(currentLabel)
 
-		if rowContentsWidth > 0 && rowContentsWidth+1+currentLabelWidth > sidebarWidth {
+		if rowContentsWidth > 0 && rowContentsWidth+1+currentLabelWidth > opts.Width {
 			rowCount++
-			if maxRows > 0 && rowCount >= maxRows {
+			if rowCount >= opts.MaxRows {
 				remainingLabels = len(labels) - idx
 				break
 			}
@@ -118,16 +103,16 @@ func RenderLabelsWithLimitAndRowStyle(
 			rowContentsWidth = 0
 		}
 
-		if rowContentsWidth == 0 && currentLabelWidth > sidebarWidth {
+		if rowContentsWidth == 0 && currentLabelWidth > opts.Width {
 			rowCount++
 			currentRowLabels = append(
 				currentRowLabels,
-				truncateStyled(currentLabel, sidebarWidth, rowStylePrefix),
+				truncateStyled(currentLabel, opts.Width, rowStylePrefix),
 			)
 			renderedRows = append(renderedRows, strings.Join(currentRowLabels, " "))
 			currentRowLabels = []string{}
 			rowContentsWidth = 0
-			if maxRows > 0 && rowCount >= maxRows {
+			if rowCount >= opts.MaxRows {
 				remainingLabels = len(labels) - idx - 1
 				break
 			}
@@ -141,18 +126,20 @@ func RenderLabelsWithLimitAndRowStyle(
 		rowContentsWidth += currentLabelWidth
 	}
 
-	if remainingLabels > 0 && maxRows > 0 && rowCount >= maxRows && len(currentRowLabels) == 0 {
+	if remainingLabels > 0 &&
+		rowCount >= opts.MaxRows &&
+		len(currentRowLabels) == 0 {
 		return strings.Join(renderedRows, "\n")
 	}
 
 	if remainingLabels > 0 {
-		overflowLabel := pillStyle.Render("+"+strconv.Itoa(remainingLabels)) + rowStylePrefix
+		overflowLabel := opts.PillStyle.Render("+"+strconv.Itoa(remainingLabels)) + rowStylePrefix
 		overflowWidth := lipgloss.Width(overflowLabel)
 		for {
 			if rowContentsWidth == 0 {
-				if overflowWidth > sidebarWidth {
+				if overflowWidth > opts.Width {
 					currentRowLabels = []string{
-						truncateStyled(overflowLabel, sidebarWidth, rowStylePrefix),
+						truncateStyled(overflowLabel, opts.Width, rowStylePrefix),
 					}
 				} else {
 					currentRowLabels = []string{overflowLabel}
@@ -160,7 +147,7 @@ func RenderLabelsWithLimitAndRowStyle(
 				break
 			}
 
-			if rowContentsWidth+1+overflowWidth <= sidebarWidth {
+			if rowContentsWidth+1+overflowWidth <= opts.Width {
 				currentRowLabels = append(currentRowLabels, overflowLabel)
 				break
 			}
@@ -175,7 +162,9 @@ func RenderLabelsWithLimitAndRowStyle(
 				rowContentsWidth = 0
 			}
 
-			overflowLabel = pillStyle.Render("+"+strconv.Itoa(remainingLabels)) + rowStylePrefix
+			overflowLabel = opts.PillStyle.Render(
+				"+"+strconv.Itoa(remainingLabels),
+			) + rowStylePrefix
 			overflowWidth = lipgloss.Width(overflowLabel)
 		}
 	}
