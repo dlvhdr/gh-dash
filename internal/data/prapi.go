@@ -731,6 +731,13 @@ func MergePullRequest(prNodeID string, mergeStateStatus MergeStateStatus, repo R
 		return enableAutoMerge(prNodeID, mergeMethod)
 
 	case "UNKNOWN":
+		// UNKNOWN is returned by GitHub when the merge state cannot be
+		// determined (e.g. checks are still pending or the state is
+		// temporarily unavailable).  We optimistically attempt to enable
+		// auto-merge so that the PR merges automatically once the
+		// blocking condition clears.  The warning is intentionally
+		// log-only; surfacing it to the user is left as a future
+		// enhancement (see: https://github.com/dlvhdr/gh-dash/discussions/546).
 		log.Warn("Unknown merge state status, attempting auto-merge", "status", mergeStateStatus)
 		mergeMethod, err := mergeMethodForRepo(repo)
 		if err != nil {
@@ -739,6 +746,12 @@ func MergePullRequest(prNodeID string, mergeStateStatus MergeStateStatus, repo R
 		return enableAutoMerge(prNodeID, mergeMethod)
 
 	default:
+		// Any future MergeStateStatus values not listed above fall here.
+		// We apply the same optimistic enableAutoMerge strategy rather
+		// than hard-failing, so that newly-introduced GitHub statuses
+		// don't silently break the merge workflow.  As with UNKNOWN,
+		// the warning is log-only for now; a user-visible notification
+		// is a future enhancement.
 		log.Warn("Unrecognised merge state status, attempting auto-merge", "status", mergeStateStatus)
 		mergeMethod, err := mergeMethodForRepo(repo)
 		if err != nil {
