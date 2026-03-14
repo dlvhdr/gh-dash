@@ -107,6 +107,11 @@ type PullRequestData struct {
 	IsDraft          bool
 	IsInMergeQueue   bool
 	AutoMergeRequest *AutoMergeRequest
+	// AutoMergeEnabled is a local UI flag set when the user enables auto-merge
+	// via the TUI.  It is NOT fetched from the API; it mirrors the same field
+	// on prrow.Data so that the branch section can show the auto-merge icon
+	// immediately without waiting for a full refresh.
+	AutoMergeEnabled bool
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`

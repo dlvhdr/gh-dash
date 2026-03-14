@@ -178,6 +178,11 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 				m.Prs[i].State = "MERGED"
 				m.Prs[i].Mergeable = ""
 			}
+			if msg.AutoMergeEnabled != nil && *msg.AutoMergeEnabled {
+				// Set a local flag so the auto-merge icon renders immediately
+				// without waiting for a full refresh.
+				m.Prs[i].AutoMergeEnabled = true
+			}
 			m.Table.SetRows(m.BuildRows())
 			break
 		}
