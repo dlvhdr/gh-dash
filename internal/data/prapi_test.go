@@ -220,7 +220,6 @@ func TestMergePullRequest_DirectMerge_Clean(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "MERGED", status.State)
-	assert.False(t, status.IsInMergeQueue)
 	assert.False(t, status.HasAutoMerge)
 }
 
@@ -234,7 +233,6 @@ func TestMergePullRequest_DirectMerge_Unstable(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "MERGED", status.State)
-	assert.False(t, status.IsInMergeQueue)
 	assert.False(t, status.HasAutoMerge)
 }
 
@@ -249,7 +247,6 @@ func TestMergePullRequest_Blocked_EnablesAutoMerge(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "OPEN", status.State)
 	assert.True(t, status.HasAutoMerge)
-	assert.False(t, status.IsInMergeQueue)
 }
 
 func TestMergePullRequest_AutoMergeEnabled(t *testing.T) {
@@ -263,7 +260,6 @@ func TestMergePullRequest_AutoMergeEnabled(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, status.HasAutoMerge)
-	assert.False(t, status.IsInMergeQueue)
 }
 
 // TestMergePullRequest_MockDataFlag_UsesLocalServer verifies that when the
@@ -305,7 +301,6 @@ func TestMergePullRequest_DirectMerge_HasHooks(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "MERGED", status.State)
-	assert.False(t, status.IsInMergeQueue)
 	assert.False(t, status.HasAutoMerge)
 }
 
@@ -319,5 +314,4 @@ func TestMergePullRequest_Behind_EnablesAutoMerge(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, status.HasAutoMerge)
-	assert.False(t, status.IsInMergeQueue)
 }

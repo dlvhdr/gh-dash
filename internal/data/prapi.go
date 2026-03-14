@@ -586,11 +586,10 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	return queryResult.Resource.PullRequest, nil
 }
 
-// PRMergeStatus represents the merge/queue state of a PR
+// PRMergeStatus represents the outcome of a merge action.
 type PRMergeStatus struct {
-	State          string // OPEN, CLOSED, MERGED
-	IsInMergeQueue bool   // TODO: not yet populated; reserved for future merge-queue mutation support
-	HasAutoMerge   bool
+	State        string // OPEN, CLOSED, MERGED
+	HasAutoMerge bool
 }
 
 // mergeMethodForRepo returns the GraphQL merge method string to use based on
