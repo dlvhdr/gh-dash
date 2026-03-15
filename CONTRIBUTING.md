@@ -8,7 +8,7 @@ In this guide you will get an overview of the contribution workflow from opening
 
 - The most important rule: you must understand your code. If you can't explain what your changes do and how they interact with the greater system without the aid of AI tools, do not contribute to this project.
 - The second most important rule: when you submit a PR you must be willing to address comments and maintain this code. Dot not submit drive-by PRs that solve your own issue without the willingness to iterate on it. Keep these in your own fork.
-- Using AI to write code is fine. You can gain understanding by interrogating an agent with access to the codebase until you grasp all edge cases and effects of your changes. What's not fine is submitting agent-generated slop without that understanding. Be sure to read the AI Usage Policy.
+- Using AI to write code is fine. You can gain understanding by interrogating an agent with access to the codebase until you grasp all edge cases and effects of your changes. What's not fine is submitting agent-generated slop without that understanding. Be sure to read the [AI Usage Policy](AI_POLICY.md).
 
 ## AI Usage
 
