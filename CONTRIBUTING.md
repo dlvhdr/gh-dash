@@ -88,23 +88,20 @@ To navigate our codebase with confidence, familiarize yourself with:
 
 ### Debugging
 
-- Pass the debug flag: `go run gh-dash.go --debug`
-- Write to the log by using Go's builtin `log` package
-- View the log by running `tail -f debug.log`
+- Write to the log by using Charm's `log` package
+- Tail the log by running `task logs`
+- Run `dash` in debug mode with `task debug` in another terminal window / pane
 
-```golang
-import "log"
+```go
+import "charm.land/log/v2"
 
 // more code...
 
-log.Printf("Some message with a variable %v\n", someVariable)
+log.Debug("some message", "someVariable", someVariable)
 ```
 
 ### Running the Docs Locally
 
-- Check the current Hugo version in the [workflow file](./.github/workflows/hugo.yaml)
-- Install correct Hugo Extended version using the [official installation guide](https://gohugo.io/getting-started/installing/)
-- Check the Hugo version using `hugo version`
-- Go to the `docs/` directory using `cd docs`
-- Install the Hugo mods using `hugo mod get`
-- Run the Hugo server using `hugo server`
+- Run the docs site by running `task docs`
+
+* Go to `localhost:4321` to view them
