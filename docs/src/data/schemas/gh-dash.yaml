@@ -169,6 +169,63 @@ properties:
             If the key for an `repoPath` entry doesn't have a wildcard (`*`), its value must not
             have a wildcard. If a key ends without a wildcard but the value does, `gh-dash` won't
             be able to correctly map repositories to folders.
+  worktreePaths:
+    title: Worktree Path Map
+    description: Key-value pairs that match repositories to parent directories for linked worktree checkouts.
+    schematize:
+      weight: 5
+      details: |
+        You can use the `worktreePaths` setting to map repository names (as keys) to local
+        parent directories (as values) for linked worktree checkouts. When a repository
+        matches a `worktreePaths` entry, pressing checkout creates a linked worktree
+        (via `git worktree add`) named after the PR branch, instead of switching branches
+        in the main worktree.
+
+        The path mappings use the same syntax as `repoPaths`: exact matches, wildcard matches
+        (`owner/*`), and template matches (`:owner/:repo`).
+
+        `worktreePaths` requires `repoPaths` to also be configured for the same repository.
+        `repoPaths` points to the main worktree (the clone), which is where
+        `git worktree add` runs. `worktreePaths` specifies a parent directory where linked
+        worktrees are created as subdirectories.
+
+        If a repository matches both `repoPaths` and `worktreePaths`, the checkout creates
+        a linked worktree instead of switching branches in the main worktree.
+
+        The linked worktree-path is copied to the clipboard on success.
+      skip_schema_render: true
+      example_format: yaml
+    type: object
+    examples:
+      - schematize:
+          title: Worktree Paths
+          details: |
+            In this example, the first key uses a wildcard to create worktrees for any repository
+            in the `torvalds` namespace under `~/worktrees/torvalds/`. The second key uses the
+            `:owner/:repo` template as a catch-all for any repository.
+        torvalds/*: ~/worktrees/torvalds/*
+        :owner/:repo: ~/worktrees/:owner/:repo
+    patternProperties:
+      '\*$':
+        type: string
+        pattern: '\*$'
+        title: With a Wildcard
+        description: >-
+          If the repo name (key) includes an asterisk, the path (value) must too.
+        schematize:
+          href: worktree-ends-with-wildcard
+          no_pattern_in_heading: true
+          weight: 1
+      '^[^\*]+$':
+        type: string
+        pattern: '^[^\*]+$'
+        title: Without a Wildcard
+        description: >-
+          If the repo name (key) doesn't include an asterisk, the path (value) can't either.
+        schematize:
+          href: worktree-no-asterisks
+          no_pattern_in_heading: true
+          weight: 2
   keybindings:
     title: Keybindings
     description: Define keybindings to run shell commands.
