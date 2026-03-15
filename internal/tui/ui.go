@@ -453,6 +453,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.IssueKeys.Comment):
 				return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
+			case key.Matches(msg, keys.IssueKeys.Checkout):
+				cmd, err := m.issueSidebar.Checkout()
+				if err != nil {
+					m.ctx.Error = err
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.IssueKeys.Close):
 				if currRowData != nil {
 					cmd = m.promptConfirmation(currSection, "close")
@@ -578,6 +585,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					case issueview.IssueActionComment:
 						return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
+
+					case issueview.IssueActionCheckout:
+						cmd, err := m.issueSidebar.Checkout()
+						if err != nil {
+							m.ctx.Error = err
+						}
+						return m, cmd
 
 					case issueview.IssueActionClose:
 						cmd = m.promptConfirmationForNotificationIssue("close")
