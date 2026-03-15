@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"charm.land/log/v2"
@@ -16,6 +17,14 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
+
+type AutoMergeRequest struct {
+	EnabledAt   time.Time `graphql:"enabledAt"`
+	MergeMethod string    `graphql:"mergeMethod"`
+	EnabledBy   struct {
+		Login string `graphql:"login"`
+	} `graphql:"enabledBy"`
+}
 
 type SuggestedReviewer struct {
 	IsAuthor    bool
@@ -64,6 +73,7 @@ type EnrichedPullRequestData struct {
 }
 
 type PullRequestData struct {
+	ID     string
 	Number int
 	Title  string
 	Body   string
@@ -96,6 +106,7 @@ type PullRequestData struct {
 	Files            ChangedFiles   `graphql:"files(first: 5)"`
 	IsDraft          bool
 	IsInMergeQueue   bool
+	AutoMergeRequest *AutoMergeRequest
 	Commits          Commits          `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
@@ -465,6 +476,7 @@ type PullRequestsResponse struct {
 }
 
 var (
+	clientMu     sync.Mutex
 	client       *gh.GraphQLClient
 	cachedClient *gh.GraphQLClient
 )
@@ -488,6 +500,7 @@ func IsEnrichmentCacheCleared() bool {
 
 func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequestsResponse, error) {
 	var err error
+	clientMu.Lock()
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
@@ -501,6 +514,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 			client, err = gh.DefaultGraphQLClient()
 		}
 	}
+	clientMu.Unlock()
 
 	if err != nil {
 		return PullRequestsResponse{}, err
@@ -545,12 +559,15 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 
 func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	var err error
+	clientMu.Lock()
 	if client == nil {
 		client, err = gh.DefaultGraphQLClient()
 		if err != nil {
+			clientMu.Unlock()
 			return EnrichedPullRequestData{}, err
 		}
 	}
+	clientMu.Unlock()
 
 	var queryResult struct {
 		Resource struct {
@@ -572,4 +589,169 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 	log.Info("Successfully fetched PR", "url", prUrl)
 
 	return queryResult.Resource.PullRequest, nil
+}
+
+// PRMergeStatus represents the outcome of a merge action.
+type PRMergeStatus struct {
+	State        string // OPEN, CLOSED, MERGED
+	HasAutoMerge bool
+}
+
+// mergeMethodForRepo returns the GraphQL merge method string to use based on
+// which methods the repository allows, in priority order: MERGE > SQUASH > REBASE.
+//
+// NOTE: Future enhancement — when multiple merge methods are allowed, consider:
+//   - Prompting the user to select from the available options before merging
+//   - Splitting MergePR into separate MergePR / SquashPR / RebasePR task functions
+//     so the user can invoke them with explicit keybindings
+func mergeMethodForRepo(repo Repository) (graphql.String, error) {
+	switch {
+	case repo.AllowMergeCommit:
+		return "MERGE", nil
+	case repo.AllowSquashMerge:
+		return "SQUASH", nil
+	case repo.AllowRebaseMerge:
+		return "REBASE", nil
+	default:
+		return "", fmt.Errorf("repository has no allowed merge methods")
+	}
+}
+
+// enableAutoMerge calls the enablePullRequestAutoMerge GraphQL mutation and
+// returns the resulting PRMergeStatus.
+func enableAutoMerge(prNodeID string, mergeMethod graphql.String) (PRMergeStatus, error) {
+	var mutation struct {
+		EnablePullRequestAutoMerge struct {
+			PullRequest struct {
+				State            string `graphql:"state"`
+				AutoMergeRequest *struct {
+					EnabledAt time.Time `graphql:"enabledAt"`
+				} `graphql:"autoMergeRequest"`
+			} `graphql:"pullRequest"`
+		} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+	}
+	type EnablePullRequestAutoMergeInput struct {
+		PullRequestID string         `json:"pullRequestId"`
+		MergeMethod   graphql.String `json:"mergeMethod"`
+	}
+	variables := map[string]any{
+		"input": EnablePullRequestAutoMergeInput{
+			PullRequestID: prNodeID,
+			MergeMethod:   mergeMethod,
+		},
+	}
+	if err := client.Mutate("EnablePullRequestAutoMerge", &mutation, variables); err != nil {
+		return PRMergeStatus{}, err
+	}
+	hasAutoMerge := mutation.EnablePullRequestAutoMerge.PullRequest.AutoMergeRequest != nil
+	log.Info("Auto-merge enabled for PR", "nodeID", prNodeID, "hasAutoMerge", hasAutoMerge)
+	return PRMergeStatus{
+		State:        mutation.EnablePullRequestAutoMerge.PullRequest.State,
+		HasAutoMerge: hasAutoMerge,
+	}, nil
+}
+
+// MergePullRequest performs the appropriate merge action via a single GraphQL
+// mutation, returning the outcome directly from the mutation response without
+// a follow-up query.
+//
+// The mutation chosen depends on the PR's current mergeStateStatus
+// https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+//   - CLEAN, UNSTABLE, or HAS_HOOKS → mergePullRequest
+//   - BLOCKED                       → enablePullRequestAutoMerge
+//   - BEHIND                        → enablePullRequestAutoMerge
+//   - DIRTY                         → error
+//   - UNKNOWN                       → log warning, attempt enablePullRequestAutoMerge
+//
+// Note: draft PRs are not handled here; callers should check IsDraft before
+// invoking this function.
+func MergePullRequest(prNodeID string, mergeStateStatus MergeStateStatus, repo Repository) (PRMergeStatus, error) {
+	clientMu.Lock()
+	if client == nil {
+		var err error
+		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
+			log.Info("using mock data", "server", "https://localhost:3000")
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+		} else {
+			client, err = gh.DefaultGraphQLClient()
+		}
+		if err != nil {
+			clientMu.Unlock()
+			return PRMergeStatus{}, err
+		}
+	}
+	clientMu.Unlock()
+
+	log.Debug("Performing PR merge via GraphQL", "nodeID", prNodeID, "mergeStateStatus", mergeStateStatus)
+
+	switch mergeStateStatus {
+	case "CLEAN", "UNSTABLE", "HAS_HOOKS":
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
+			return PRMergeStatus{}, err
+		}
+
+		var mutation struct {
+			MergePullRequest struct {
+				PullRequest struct {
+					State string `graphql:"state"`
+				} `graphql:"pullRequest"`
+			} `graphql:"mergePullRequest(input: $input)"`
+		}
+		type MergePullRequestInput struct {
+			PullRequestID string         `json:"pullRequestId"`
+			MergeMethod   graphql.String `json:"mergeMethod"`
+		}
+		variables := map[string]any{
+			"input": MergePullRequestInput{
+				PullRequestID: prNodeID,
+				MergeMethod:   mergeMethod,
+			},
+		}
+		if err := client.Mutate("MergePullRequest", &mutation, variables); err != nil {
+			return PRMergeStatus{}, err
+		}
+		log.Info("PR merged directly", "nodeID", prNodeID, "state", mutation.MergePullRequest.PullRequest.State)
+		return PRMergeStatus{State: mutation.MergePullRequest.PullRequest.State}, nil
+
+	case "DIRTY":
+		return PRMergeStatus{}, fmt.Errorf("PR has merge conflicts, please resolve locally")
+
+	case "BLOCKED", "BEHIND":
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
+			return PRMergeStatus{}, err
+		}
+		return enableAutoMerge(prNodeID, mergeMethod)
+
+	case "UNKNOWN":
+		// UNKNOWN is returned by GitHub when the merge state cannot be
+		// determined (e.g. checks are still pending or the state is
+		// temporarily unavailable).  We optimistically attempt to enable
+		// auto-merge so that the PR merges automatically once the
+		// blocking condition clears.  The warning is intentionally
+		// log-only; surfacing it to the user is left as a future
+		// enhancement (see: https://github.com/dlvhdr/gh-dash/discussions/546).
+		log.Warn("Unknown merge state status, attempting auto-merge", "status", mergeStateStatus)
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
+			return PRMergeStatus{}, err
+		}
+		return enableAutoMerge(prNodeID, mergeMethod)
+
+	default:
+		// Any future MergeStateStatus values not listed above fall here.
+		// We apply the same optimistic enableAutoMerge strategy rather
+		// than hard-failing, so that newly-introduced GitHub statuses
+		// don't silently break the merge workflow.  As with UNKNOWN,
+		// the warning is log-only for now; a user-visible notification
+		// is a future enhancement.
+		log.Warn("Unrecognised merge state status, attempting auto-merge", "status", mergeStateStatus)
+		mergeMethod, err := mergeMethodForRepo(repo)
+		if err != nil {
+			return PRMergeStatus{}, err
+		}
+		return enableAutoMerge(prNodeID, mergeMethod)
+	}
 }
