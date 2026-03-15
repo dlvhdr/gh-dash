@@ -9,6 +9,7 @@ import (
 	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -235,6 +236,60 @@ func (pr *PullRequest) renderAssignees() string {
 	return pr.getTextStyle().Render(strings.Join(assignees, ","))
 }
 
+func (pr *PullRequest) renderLabels(isSelected bool) string {
+	if pr.Data == nil || pr.Data.Primary == nil || len(pr.Data.Primary.Labels.Nodes) == 0 {
+		return ""
+	}
+
+	labelsWidth := 0
+	for _, column := range pr.Columns {
+		if column.Title != constants.LabelsIcon {
+			continue
+		}
+
+		labelsWidth = column.ComputedWidth
+		if labelsWidth == 0 && column.Width != nil {
+			labelsWidth = *column.Width
+		}
+		break
+	}
+
+	if labelsWidth <= 2 {
+		return ""
+	}
+
+	maxRows := 2
+	if pr.Ctx != nil &&
+		pr.Ctx.Config != nil &&
+		pr.Ctx.Config.Theme != nil &&
+		pr.Ctx.Config.Theme.Ui.Table.Compact {
+		maxRows = 1
+	}
+
+	pillStyle := pr.getTextStyle()
+	if pr.Ctx != nil {
+		pillStyle = pr.Ctx.Styles.PrView.PillStyle
+	}
+
+	rowStyle := lipgloss.NewStyle()
+	if isSelected && pr.Ctx != nil {
+		rowStyle = rowStyle.Background(pr.Ctx.Theme.SelectedBackground)
+		pillStyle = pillStyle.
+			BorderLeftBackground(pr.Ctx.Theme.SelectedBackground).
+			BorderRightBackground(pr.Ctx.Theme.SelectedBackground)
+	}
+
+	return common.RenderLabels(
+		pr.Data.Primary.Labels.Nodes,
+		common.LabelOpts{
+			Width:     labelsWidth - 2,
+			MaxRows:   maxRows,
+			PillStyle: pillStyle,
+			RowStyle:  rowStyle,
+		},
+	)
+}
+
 func (pr *PullRequest) renderRepoName() string {
 	repoName := ""
 	if !pr.Ctx.Config.Theme.Ui.Table.Compact {
@@ -334,6 +389,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		return table.Row{
 			pr.renderState(),
 			pr.renderExtendedTitle(isSelected),
+			pr.renderLabels(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
 			pr.renderNumComments(),
@@ -350,6 +406,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderRepoName(),
 		pr.renderTitle(),
 		pr.renderAuthor(),
+		pr.renderLabels(isSelected),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
 		pr.renderNumComments(),

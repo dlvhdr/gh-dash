@@ -266,6 +266,7 @@ func GetSectionColumns(
 	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
+	labelsLayout := config.MergeColumnConfigs(dLayout.Labels, sLayout.Labels)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
 
 	if !ctx.Config.Theme.Ui.Table.Compact {
@@ -279,6 +280,11 @@ func GetSectionColumns(
 				Title:  "Title",
 				Grow:   utils.BoolPtr(true),
 				Hidden: titleLayout.Hidden,
+			},
+			{
+				Title:  constants.LabelsIcon,
+				Width:  labelsLayout.Width,
+				Hidden: labelsLayout.Hidden,
 			},
 			{
 				Title:  "Assignees",
@@ -344,6 +350,11 @@ func GetSectionColumns(
 			Title:  "Author",
 			Width:  authorLayout.Width,
 			Hidden: authorLayout.Hidden,
+		},
+		{
+			Title:  constants.LabelsIcon,
+			Width:  labelsLayout.Width,
+			Hidden: labelsLayout.Hidden,
 		},
 		{
 			Title:  "Assignees",
