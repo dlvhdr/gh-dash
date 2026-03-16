@@ -122,7 +122,9 @@ func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	c, _, _, handled := c.Update(RepoUsersFetchedMsg{Users: []data.User{{Login: "alice", Name: "Alice"}}})
+	c, _, _, handled := c.Update(
+		RepoUsersFetchedMsg{Users: []data.User{{Login: "alice", Name: "Alice"}}},
+	)
 	require.True(t, handled)
 	require.Len(t, c.repoUsers, 1)
 	require.Equal(t, "alice", c.repoUsers[0].Login)
@@ -142,7 +144,9 @@ func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	c, _, _, handled := c.Update(RepoLabelsFetchedMsg{Labels: []data.Label{{Name: "bug", Description: "Bug"}}})
+	c, _, _, handled := c.Update(
+		RepoLabelsFetchedMsg{Labels: []data.Label{{Name: "bug", Description: "Bug"}}},
+	)
 	require.True(t, handled)
 	require.Len(t, c.repoLabels, 1)
 	require.Equal(t, "bug", c.repoLabels[0].Name)

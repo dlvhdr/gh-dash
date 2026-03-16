@@ -348,7 +348,9 @@ func (c *Controller) restorePrompt() {
 }
 
 func (c *Controller) setDiscardPrompt() {
-	c.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(c.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
+	c.inputBox.SetPrompt(
+		lipgloss.NewStyle().Foreground(c.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
+	)
 	c.showConfirmCancel = true
 }
 

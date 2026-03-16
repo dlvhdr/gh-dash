@@ -220,7 +220,11 @@ func TestIsTextInputBoxFocusedWhenLabeling(t *testing.T) {
 	cmd := m.SetIsLabeling(true)
 
 	require.NotNil(t, cmd)
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in labeling mode")
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in labeling mode",
+	)
 }
 
 func TestGetIsLabeling(t *testing.T) {

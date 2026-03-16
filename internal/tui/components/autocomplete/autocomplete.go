@@ -261,13 +261,25 @@ func (m *Model) computeColumnLayout(numVisible, totalContentWidth int) columnLay
 		return layout
 	}
 
-	layout.gapWidth = min(constants.AutocompleteColumnGap, max(0, totalContentWidth-constants.AutocompleteMinDetailWidth))
-	maxValueForDetails := max(0, totalContentWidth-layout.gapWidth-constants.AutocompleteMinDetailWidth)
+	layout.gapWidth = min(
+		constants.AutocompleteColumnGap,
+		max(0, totalContentWidth-constants.AutocompleteMinDetailWidth),
+	)
+	maxValueForDetails := max(
+		0,
+		totalContentWidth-layout.gapWidth-constants.AutocompleteMinDetailWidth,
+	)
 	if maxValueForDetails <= 0 {
 		return layout
 	}
 
-	preferredValueWidth := min(maxValueWidth, max(constants.AutocompleteMinValueWidth, (totalContentWidth*constants.AutocompletePreferredValueRatioNum)/constants.AutocompletePreferredValueRatioDen))
+	preferredValueWidth := min(
+		maxValueWidth,
+		max(
+			constants.AutocompleteMinValueWidth,
+			(totalContentWidth*constants.AutocompletePreferredValueRatioNum)/constants.AutocompletePreferredValueRatioDen,
+		),
+	)
 	layout.valueWidth = max(1, min(preferredValueWidth, maxValueForDetails))
 	layout.detailWidth = max(0, totalContentWidth-layout.valueWidth-layout.gapWidth)
 
@@ -298,7 +310,9 @@ func (m *Model) View() string {
 	totalContentWidth := max(0, maxLabelWidth-maxPrefixWidth)
 	layout := m.computeColumnLayout(numVisible, totalContentWidth)
 	valueColumnStyle := lipgloss.NewStyle().Width(layout.valueWidth)
-	detailColumnStyle := lipgloss.NewStyle().Width(layout.detailWidth).Foreground(m.ctx.Theme.FaintText)
+	detailColumnStyle := lipgloss.NewStyle().
+		Width(layout.detailWidth).
+		Foreground(m.ctx.Theme.FaintText)
 	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
 
 	for i := 0; i < numRows; i++ {
@@ -310,10 +324,18 @@ func (m *Model) View() string {
 		detail := suggestion.Detail
 
 		if layout.valueWidth > 0 && lipgloss.Width(value) > layout.valueWidth {
-			value = ansi.Truncate(value, max(0, layout.valueWidth-ellipsisWidth), constants.Ellipsis)
+			value = ansi.Truncate(
+				value,
+				max(0, layout.valueWidth-ellipsisWidth),
+				constants.Ellipsis,
+			)
 		}
 		if layout.detailWidth > 0 && lipgloss.Width(detail) > layout.detailWidth {
-			detail = ansi.Truncate(detail, max(0, layout.detailWidth-ellipsisWidth), constants.Ellipsis)
+			detail = ansi.Truncate(
+				detail,
+				max(0, layout.detailWidth-ellipsisWidth),
+				constants.Ellipsis,
+			)
 		}
 
 		rowText := value

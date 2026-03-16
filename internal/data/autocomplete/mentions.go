@@ -44,7 +44,12 @@ func (UserMentionSource) ExtractContext(input string, cursorPos int) Context {
 	}
 }
 
-func (UserMentionSource) InsertSuggestion(input string, suggestion string, contextStart int, contextEnd int) (newInput string, newCursorPos int) {
+func (UserMentionSource) InsertSuggestion(
+	input string,
+	suggestion string,
+	contextStart int,
+	contextEnd int,
+) (newInput string, newCursorPos int) {
 	runes := []rune(input)
 	replacement := "@" + suggestion + " "
 	newValue := string(runes[:contextStart]) + replacement + string(runes[contextEnd:])
@@ -61,5 +66,17 @@ func isWhitespace(r rune) bool {
 }
 
 func isWordBoundary(r rune) bool {
-	return isWhitespace(r) || r == ',' || r == '.' || r == '!' || r == '?' || r == ';' || r == ':' || r == '(' || r == ')' || r == '[' || r == ']' || r == '{' || r == '}' || r == '<' || r == '>' || r == '"' || r == '\'' || r == '`'
+	return isWhitespace(r) || r == ',' || r == '.' || r == '!' || r == '?' || r == ';' ||
+		r == ':' ||
+		r == '(' ||
+		r == ')' ||
+		r == '[' ||
+		r == ']' ||
+		r == '{' ||
+		r == '}' ||
+		r == '<' ||
+		r == '>' ||
+		r == '"' ||
+		r == '\'' ||
+		r == '`'
 }

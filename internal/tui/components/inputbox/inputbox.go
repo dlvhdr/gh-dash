@@ -116,7 +116,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				if selected != "" && m.autocompleteSource != nil {
 					currentValue := m.textArea.Value()
 					currentContext := m.CurrentAutocompleteContext()
-					newValue, newCursorPos := m.autocompleteSource.InsertSuggestion(currentValue, selected, currentContext.Start, currentContext.End)
+					newValue, newCursorPos := m.autocompleteSource.InsertSuggestion(
+						currentValue,
+						selected,
+						currentContext.Start,
+						currentContext.End,
+					)
 					m.textArea.SetValue(newValue)
 					m.textArea.SetCursorColumn(newCursorPos)
 					// Refresh autocomplete to exclude the newly-added item

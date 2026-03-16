@@ -79,7 +79,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 		case detailedit.ModeLabel:
 			labels := dataautocomplete.CurrentLabels(submit.Value)
 			if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
-				return m, tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes), nil
+				return m, tasks.LabelIssue(
+					m.ctx,
+					sid,
+					m.issue.Data,
+					labels,
+					m.issue.Data.Labels.Nodes,
+				), nil
 			}
 			return m, nil, nil
 		}

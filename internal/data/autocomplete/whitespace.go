@@ -21,7 +21,12 @@ func (WhitespaceSource) ExtractContext(input string, cursorPos int) Context {
 	}
 }
 
-func (WhitespaceSource) InsertSuggestion(input string, suggestion string, contextStart int, contextEnd int) (newInput string, newCursorPos int) {
+func (WhitespaceSource) InsertSuggestion(
+	input string,
+	suggestion string,
+	contextStart int,
+	contextEnd int,
+) (newInput string, newCursorPos int) {
 	runes := []rune(input)
 	replacement := suggestion + " "
 	newValue := string(runes[:contextStart]) + replacement + string(runes[contextEnd:])

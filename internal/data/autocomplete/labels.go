@@ -24,7 +24,12 @@ func (LabelSource) ExtractContext(input string, cursorPos int) Context {
 	}
 }
 
-func (LabelSource) InsertSuggestion(input string, suggestion string, contextStart int, contextEnd int) (newInput string, newCursorPos int) {
+func (LabelSource) InsertSuggestion(
+	input string,
+	suggestion string,
+	contextStart int,
+	contextEnd int,
+) (newInput string, newCursorPos int) {
 	labelInfo := ExtractLabelAtCursor(input, contextStart)
 	runes := []rune(input)
 
