@@ -51,6 +51,14 @@ To submit the comment on the issue, press <kbd>Ctrl</kbd>+<kbd>d</kbd>. To cance
 
 <kbd>Ctrl</kbd>+<kbd>c</kbd> or <kbd>Esc</kbd>.
 
+## `C` - Checkout Issue Branch
+
+Press <kbd>C</kbd> to create and checkout a local branch for the issue. When you do, the dashboard
+runs `gh issue develop --checkout` in the repository's local path.
+
+The local path for the repository must be configured in your `config.yml` under `repoPaths`.
+If no local path is configured for the repository, the command will fail with an error.
+
 ## `x` - Close Issue
 
 Press <kbd>x</kbd> to close the issue. When you do, the dashboard uses the `gh issue close` command
