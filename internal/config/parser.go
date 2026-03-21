@@ -154,6 +154,7 @@ type PrsLayoutConfig struct {
 	Repo         ColumnConfig `yaml:"repo,omitempty"`
 	Author       ColumnConfig `yaml:"author,omitempty"`
 	AuthorIcon   ColumnConfig `yaml:"authorIcon,omitempty"`
+	Labels       ColumnConfig `yaml:"labels,omitempty"`
 	Assignees    ColumnConfig `yaml:"assignees,omitempty"`
 	Title        ColumnConfig `yaml:"title,omitempty"`
 	Base         ColumnConfig `yaml:"base,omitempty"`
@@ -369,6 +370,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					AuthorIcon: ColumnConfig{
 						Hidden: utils.BoolPtr(false),
+					},
+					Labels: ColumnConfig{
+						Width:  utils.IntPtr(22),
+						Hidden: utils.BoolPtr(true),
 					},
 					Assignees: ColumnConfig{
 						Width:  utils.IntPtr(20),

@@ -28,6 +28,7 @@ schematize:
       1. [sref:`repo`] with a width of 15 columns.
       1. [sref:`title`], set to grow to fill available space.
       1. [sref:`author`] with a width of 10 columns.
+      1. [sref:`labels`] with a width of 22 columns, hidden by default.
       1. [sref:`reviewStatus`] with a width of 3 columns.
       1. [sref:`ci`] with a width of 3 columns.
       1. [sref:`lines`] with a width of 16 columns.
@@ -48,6 +49,7 @@ schematize:
       [sref:`repo`]:         layout.pr.repo
       [sref:`title`]:        layout.pr.title
       [sref:`author`]:       layout.pr.author
+      [sref:`labels`]:       layout.pr.labels
       [sref:`reviewStatus`]: layout.pr.reviewStatus
       [sref:`ci`]:           layout.pr.ci
       [sref:`lines`]:        layout.pr.lines
@@ -58,6 +60,9 @@ default:
     width: 15
   author:
     width: 15
+  labels:
+    width: 22
+    hidden: true
   assignees:
     width: 20
     hidden: true
@@ -183,6 +188,15 @@ properties:
       format: yaml
       details: |
         This setting affects display of the role icon for the person who created the PR.
+  labels:
+    title: PR Labels Column
+    description: Defines options for the labels column in a PR section.
+    type: object
+    oneOf:
+      - $ref: ./options.yaml
+    default:
+      width: 22
+      hidden: true
   assignees:
     title: PR Assignees Column
     description: Defines options for the assignees column in a PR section.

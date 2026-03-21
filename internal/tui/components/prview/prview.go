@@ -256,7 +256,10 @@ func (m *Model) renderLabels() string {
 		m.ctx.Styles.Common.MainTextStyle.Underline(true).Bold(true).Render(
 			fmt.Sprintf("%s Labels", constants.LabelsIcon)),
 		"",
-		common.RenderLabels(width, labels, style),
+		common.RenderLabels(labels, common.LabelOpts{
+			Width:     width,
+			PillStyle: style,
+		}),
 	)
 }
 
