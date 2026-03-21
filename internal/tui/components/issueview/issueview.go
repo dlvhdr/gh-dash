@@ -385,7 +385,10 @@ func (m *Model) renderLabels() string {
 	labels := m.issue.Data.Labels.Nodes
 	style := m.ctx.Styles.PrView.PillStyle
 
-	return common.RenderLabels(width, labels, style)
+	return common.RenderLabels(labels, common.LabelOpts{
+		Width:     width,
+		PillStyle: style,
+	})
 }
 
 func (m *Model) getIndentedContentWidth() int {

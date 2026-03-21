@@ -27,6 +27,7 @@ By default, PR views display the following columns in the order they're listed:
 1. [`repo`] with a width of 15 columns.
 1. [`title`], set to grow to fill available space.
 1. [`author`] with a width of 10 columns.
+1. [`labels`] with a width of 22 columns, hidden by default.
 1. [`numComments`] with a width of 3 columns.
 1. [`reviewStatus`] with a width of 3 columns.
 1. [`ci`] with a width of 3 columns.
@@ -46,6 +47,7 @@ By default, PR views display the following columns in the order they're listed:
 [`repo`]:         #pr-repo-column
 [`title`]:        #pr-title-column
 [`author`]:       #pr-author-column
+[`labels`]:       #pr-labels-column
 [`numComments`]: #pr-number-of-comments-column
 [`reviewStatus`]: #pr-review-status-column
 [`ci`]:           #pr-continuous-integration-column
@@ -60,6 +62,9 @@ title:
   grow: true
 author:
   width: 15
+labels:
+  width: 22
+  hidden: true
 assignees:
   width: 20
   hidden: true
@@ -226,6 +231,17 @@ The heading for this column is <NerdFontIcon icon="nf-oct-checklist"/>
 [`theme.colors.text.faint`]: /configuration/theme#faint-text-color
 [`theme.colors.text.primary`]: /configuration/theme#primary-text-color
 [`theme.colors.text.warning`]: /configuration/theme#warning-text-color
+
+## PR Labels Column
+
+| Property | Type | Default                                                           |
+| :------- | :--- | :---------------------------------------------------------------- |
+| `labels` | yaml | <Code code={`width: 22\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the labels assigned to a PR as colored pills.
+Up to 6 labels per PR are fetched and displayed.
+
+The heading for this column is <NerdFontIcon icon="nf-md-label_multiple_outline"/>.
 
 # PR Lines Column
 
