@@ -57,6 +57,12 @@ const (
 	OpenIcon           = ""
 	SelectionIcon      = "❯"
 
+	AutocompleteColumnGap              = 2
+	AutocompleteMinValueWidth          = 8
+	AutocompleteMinDetailWidth         = 10
+	AutocompletePreferredValueRatioNum = 2
+	AutocompletePreferredValueRatioDen = 3
+
 	// New contributors: users who created a PR for the repo for the first time
 	NewContributorIcon = "󰎔" // \udb80\udf94 nf-md-new_box
 

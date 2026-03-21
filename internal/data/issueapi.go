@@ -50,8 +50,9 @@ type IssueReactions struct {
 }
 
 type Label struct {
-	Color string
-	Name  string
+	Color       string
+	Name        string
+	Description string
 }
 
 type IssueLabels struct {
@@ -72,6 +73,10 @@ func (data IssueData) GetTitle() string {
 
 func (data IssueData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
+}
+
+func (data IssueData) GetRepoNameAndOwner() (owner, repoName string) {
+	return data.Repository.Owner.Login, data.Repository.Name
 }
 
 func (data IssueData) GetNumber() int {

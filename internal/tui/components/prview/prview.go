@@ -7,14 +7,14 @@ import (
 	"strings"
 
 	"charm.land/bubbles/v2/key"
-	"charm.land/bubbles/v2/textarea"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/detailedit"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -32,163 +32,91 @@ var (
 )
 
 type Model struct {
-	ctx       *context.ProgramContext
-	sectionId int
-	pr        *prrow.PullRequest
-	width     int
-	carousel  carousel.Model
-
-	ShowConfirmCancel bool
-	isCommenting      bool
-	isApproving       bool
-	isAssigning       bool
-	isUnassigning     bool
-	summaryViewMore   bool
-
-	inputBox inputbox.Model
+	ctx             *context.ProgramContext
+	sectionId       int
+	pr              *prrow.PullRequest
+	width           int
+	carousel        carousel.Model
+	editor          detailedit.Controller
+	summaryViewMore bool
 }
 
 var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
 func NewModel(ctx *context.ProgramContext) Model {
-	inputBox := inputbox.NewModel(ctx)
-	inputBox.SetHeight(common.InputBoxHeight)
-
 	c := carousel.New(
 		carousel.WithItems(tabs),
 		carousel.WithWidth(ctx.MainContentWidth),
 	)
 
 	return Model{
-		pr: nil,
-
-		isCommenting:  false,
-		isApproving:   false,
-		isAssigning:   false,
-		isUnassigning: false,
-		carousel:      c,
-
-		inputBox: inputBox,
+		pr:       nil,
+		carousel: c,
+		editor:   detailedit.New(ctx),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var (
-		cmds  []tea.Cmd
-		cmd   tea.Cmd
-		taCmd tea.Cmd
-	)
+	editor, cmd, submit, handled := m.editor.Update(msg)
+	m.editor = editor
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if m.isCommenting {
-			switch msg.String() {
-			case "ctrl+d":
-				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, m.inputBox.Value())
-				}
-				m.inputBox.Blur()
-				m.isCommenting = false
-				return m, cmd
+	if submit != nil {
+		if m.pr == nil {
+			return m, nil
+		}
 
-			case "esc", "ctrl+c":
-				if !m.ShowConfirmCancel {
-					m.shouldCancelComment()
-				}
+		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
 
-			default:
-				if msg.String() == "Y" || msg.String() == "y" {
-					if m.shouldCancelComment() {
-						return m, nil
-					}
-				}
-				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(constants.CommentPrompt)
-					m.ShowConfirmCancel = false
-					return m, nil
-				}
-				m.inputBox.SetPrompt(constants.CommentPrompt)
-				m.ShowConfirmCancel = false
+		switch submit.Mode {
+		case detailedit.ModeComment:
+			if len(strings.TrimSpace(submit.Value)) != 0 {
+				return m, tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, submit.Value)
 			}
+			return m, nil
 
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isApproving {
-			switch msg.String() {
-			case "ctrl+d":
-				comment := ""
-				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					comment = m.inputBox.Value()
-				}
-				sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-				cmd = tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
-				m.inputBox.Blur()
-				m.isApproving = false
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				if m.shouldCancelComment() {
-					return m, nil
-				}
-			default:
-				m.inputBox.SetPrompt(constants.ApprovalPrompt)
-				m.ShowConfirmCancel = false
+		case detailedit.ModeApprove:
+			comment := ""
+			if len(strings.TrimSpace(submit.Value)) != 0 {
+				comment = submit.Value
 			}
+			return m, tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
 
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isAssigning {
-			switch msg.String() {
-			case "ctrl+d":
-				usernames := strings.Fields(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
-				}
-				m.inputBox.Blur()
-				m.isAssigning = false
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				m.inputBox.Blur()
-				m.isAssigning = false
-				return m, nil
+		case detailedit.ModeAssign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
+			return m, nil
 
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isUnassigning {
-			switch msg.String() {
-			case "ctrl+d":
-				usernames := strings.Fields(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
-					cmd = tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
-				}
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, cmd
-
-			case "esc", "ctrl+c":
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, nil
+		case detailedit.ModeUnassign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
+			return m, nil
 
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else {
-			switch {
-			case key.Matches(msg, keys.PRKeys.PrevSidebarTab):
-				m.carousel.MoveLeft()
-			case key.Matches(msg, keys.PRKeys.NextSidebarTab):
-				m.carousel.MoveRight()
+		case detailedit.ModeLabel:
+			labels := dataautocomplete.CurrentLabels(submit.Value)
+			if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
+				return m, m.label(labels)
 			}
+			return m, nil
+		}
+	}
+	if handled {
+		return m, cmd
+	}
+
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch {
+		case key.Matches(keyMsg, keys.PRKeys.PrevSidebarTab):
+			m.carousel.MoveLeft()
+		case key.Matches(keyMsg, keys.PRKeys.NextSidebarTab):
+			m.carousel.MoveRight()
 		}
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, cmd
 }
 
 func (m Model) View() string {
@@ -241,8 +169,8 @@ func (m Model) View() string {
 		body.WriteString("\n")
 		body.WriteString(m.renderChecksOverview())
 
-		if m.isCommenting || m.isApproving || m.isAssigning || m.isUnassigning {
-			body.WriteString(m.inputBox.View())
+		if editorView := m.editor.View(); editorView != "" {
+			body.WriteString(editorView)
 		}
 
 	case tabs[1]:
@@ -621,20 +549,20 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.carousel.SetWidth(width)
-	m.inputBox.SetWidth(width)
+	m.editor.SetWidth(width)
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isApproving || m.isUnassigning
+	return m.editor.Active()
 }
 
 func (m *Model) GetIsCommenting() bool {
-	return m.isCommenting
+	return m.editor.Mode() == detailedit.ModeComment
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.inputBox.UpdateProgramContext(ctx)
+	m.editor.UpdateProgramContext(ctx)
 	m.carousel.SetStyles(
 		carousel.Styles{
 			Item:     lipgloss.NewStyle().Padding(0, 1).Foreground(m.ctx.Theme.FaintText),
@@ -643,36 +571,30 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	)
 }
 
-func (m *Model) shouldCancelComment() bool {
-	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"),
-		)
-		m.ShowConfirmCancel = true
-		return false
-	}
-	m.inputBox.Blur()
-	m.isCommenting = false
-	m.isApproving = false
-	m.ShowConfirmCancel = false
-	return true
-}
-
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	if m.pr == nil {
 		return nil
 	}
 
-	if !m.isCommenting && isCommenting {
-		m.inputBox.Reset()
+	if !isCommenting {
+		if m.editor.Mode() == detailedit.ModeComment {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt(constants.CommentPrompt)
 
-	if isCommenting {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeComment,
+		Prompt:                           constants.CommentPrompt,
+		Source:                           dataautocomplete.UserMentionSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: true,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) getIndentedContentWidth() int {
@@ -680,7 +602,7 @@ func (m *Model) getIndentedContentWidth() int {
 }
 
 func (m *Model) GetIsApproving() bool {
-	return m.isApproving
+	return m.editor.Mode() == detailedit.ModeApprove
 }
 
 func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
@@ -688,21 +610,30 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isApproving && isApproving {
-		m.inputBox.Reset()
+	if !isApproving {
+		if m.editor.Mode() == detailedit.ModeApprove {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isApproving = isApproving
-	m.inputBox.SetPrompt(constants.ApprovalPrompt)
-	m.inputBox.SetValue(m.ctx.Config.Defaults.PrApproveComment)
 
-	if isApproving {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeApprove,
+		Prompt:                           constants.ApprovalPrompt,
+		InitialValue:                     m.ctx.Config.Defaults.PrApproveComment,
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) GetIsAssigning() bool {
-	return m.isAssigning
+	return m.editor.Mode() == detailedit.ModeAssign
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
@@ -710,19 +641,30 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isAssigning && isAssigning {
-		m.inputBox.Reset()
-	}
-	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt(constants.AssignPrompt)
-	if !m.userAssignedToPr(m.ctx.User) {
-		m.inputBox.SetValue(m.ctx.User)
+	if !isAssigning {
+		if m.editor.Mode() == detailedit.ModeAssign {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
 
-	if isAssigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	initialValue := ""
+	if !m.userAssignedToPr(m.ctx.User) {
+		initialValue = m.ctx.User
 	}
-	return nil
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeAssign,
+		Prompt:                           constants.AssignPrompt,
+		InitialValue:                     initialValue,
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) userAssignedToPr(login string) bool {
@@ -735,7 +677,7 @@ func (m *Model) userAssignedToPr(login string) bool {
 }
 
 func (m *Model) GetIsUnassigning() bool {
-	return m.isUnassigning
+	return m.editor.Mode() == detailedit.ModeUnassign
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
@@ -743,17 +685,21 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isUnassigning && isUnassigning {
-		m.inputBox.Reset()
+	if !isUnassigning {
+		if m.editor.Mode() == detailedit.ModeUnassign {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt(constants.UnassignPrompt)
-	m.inputBox.SetValue(strings.Join(m.prAssignees(), "\n"))
 
-	if isUnassigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:         detailedit.ModeUnassign,
+		Prompt:       constants.UnassignPrompt,
+		InitialValue: strings.Join(m.prAssignees(), "\n"),
+		Repo:         m.repoRef(),
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) prAssignees() []string {
@@ -788,5 +734,51 @@ func (m *Model) SetEnrichedPR(data data.EnrichedPullRequestData) {
 	if m.pr.Data.Primary.Url == data.Url {
 		m.pr.Data.Enriched = data
 		m.pr.Data.IsEnriched = true
+	}
+}
+
+func (m *Model) GetIsLabeling() bool {
+	return m.editor.Mode() == detailedit.ModeLabel
+}
+
+// SetIsLabeling enters or exits labeling mode
+func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
+	if m.pr == nil {
+		return nil
+	}
+
+	if !isLabeling {
+		if m.editor.Mode() == detailedit.ModeLabel {
+			m.editor = m.editor.Exit()
+		}
+		return nil
+	}
+
+	labels := make([]string, 0, len(m.pr.Data.Primary.Labels.Nodes)+1)
+	for _, label := range m.pr.Data.Primary.Labels.Nodes {
+		labels = append(labels, label.Name)
+	}
+	labels = append(labels, "")
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeLabel,
+		Prompt:                           constants.LabelPrompt,
+		InitialValue:                     strings.Join(labels, ", "),
+		Source:                           dataautocomplete.LabelSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionLabels,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
+}
+
+func (m *Model) repoRef() detailedit.RepoRef {
+	owner, repo := m.pr.Data.Primary.GetRepoNameAndOwner()
+	return detailedit.RepoRef{
+		NameWithOwner: m.pr.Data.Primary.GetRepoNameWithOwner(),
+		Owner:         owner,
+		Name:          repo,
 	}
 }

@@ -322,10 +322,12 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 	sidebarModel.UpdateProgramContext(ctx)
 
 	m := Model{
-		ctx:     ctx,
-		keys:    keys.Keys,
-		prView:  prview.NewModel(ctx),
-		sidebar: sidebarModel,
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prView:           prview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
 	}
 
 	// Set up a PR notification subject so GetSubjectPR() returns non-nil

@@ -94,8 +94,9 @@ func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isCommenting = true
+	cmd := m.SetIsCommenting(true)
 
+	require.NotNil(t, cmd)
 	require.True(
 		t,
 		m.IsTextInputBoxFocused(),
@@ -105,8 +106,9 @@ func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isApproving = true
+	cmd := m.SetIsApproving(true)
 
+	require.NotNil(t, cmd)
 	require.True(
 		t,
 		m.IsTextInputBoxFocused(),
@@ -116,8 +118,9 @@ func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isAssigning = true
+	cmd := m.SetIsAssigning(true)
 
+	require.NotNil(t, cmd)
 	require.True(
 		t,
 		m.IsTextInputBoxFocused(),
@@ -127,8 +130,9 @@ func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isUnassigning = true
+	cmd := m.SetIsUnassigning(true)
 
+	require.NotNil(t, cmd)
 	require.True(
 		t,
 		m.IsTextInputBoxFocused(),
@@ -169,6 +173,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionApprove,
 		PRActionAssign,
 		PRActionUnassign,
+		PRActionLabel,
 		PRActionComment,
 		PRActionDiff,
 		PRActionCheckout,
@@ -208,4 +213,39 @@ func TestMsgToActionWithReboundKeys(t *testing.T) {
 
 	require.NotNil(t, action, "expected action for rebound key")
 	require.Equal(t, PRActionApprove, action.Type, "expected approve action for rebound key")
+}
+
+func TestIsTextInputBoxFocusedWhenLabeling(t *testing.T) {
+	m := newTestModelForAction(t)
+	cmd := m.SetIsLabeling(true)
+
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in labeling mode",
+	)
+}
+
+func TestGetIsLabeling(t *testing.T) {
+	t.Run("returns false initially", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		require.False(t, m.GetIsLabeling(), "expected GetIsLabeling to return false initially")
+	})
+
+	t.Run("returns true when labeling", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		cmd := m.SetIsLabeling(true)
+		require.NotNil(t, cmd)
+		require.True(t, m.GetIsLabeling(), "expected GetIsLabeling to return true when labeling")
+	})
+}
+
+func TestSetIsLabelingWithNilPR(t *testing.T) {
+	m := newTestModelForAction(t)
+	m.pr = nil
+
+	cmd := m.SetIsLabeling(true)
+
+	require.Nil(t, cmd, "expected nil command when PR is nil")
 }
