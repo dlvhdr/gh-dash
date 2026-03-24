@@ -436,13 +436,15 @@ func (m *BaseModel) GetMainContent() string {
 
 func (m *BaseModel) View() string {
 	search := m.SearchBar.View(m.Ctx)
-	return m.Ctx.Styles.Section.ContainerStyle.Render(
-		lipgloss.JoinVertical(
-			lipgloss.Left,
-			search,
-			m.GetMainContent(),
-		),
-	)
+	return m.Ctx.Styles.Section.ContainerStyle.
+		Width(m.Ctx.MainContentWidth).
+		Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				search,
+				m.GetMainContent(),
+			),
+		)
 }
 
 func (m *BaseModel) ResetRows() {

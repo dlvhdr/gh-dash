@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
+	"charm.land/lipgloss/v2"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prompt"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/search"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 func currentRepoFilter(t *testing.T) string {
@@ -452,6 +458,54 @@ func TestGetPromptConfirmation(t *testing.T) {
 					tt.action,
 					tt.view,
 				)
+			}
+		})
+	}
+}
+
+func TestViewRendersAtMainContentWidth(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	thm := theme.ParseTheme(&cfg)
+	styles := context.InitStyles(thm)
+
+	widths := []int{80, 120, 200}
+	for _, targetWidth := range widths {
+		t.Run(fmt.Sprintf("width_%d", targetWidth), func(t *testing.T) {
+			ctx := &context.ProgramContext{
+				Config:            &cfg,
+				MainContentWidth:  targetWidth,
+				MainContentHeight: 20,
+				Theme:             thm,
+				Styles:            styles,
+			}
+			m := BaseModel{
+				Ctx:       ctx,
+				SearchBar: search.NewModel(ctx, search.SearchOptions{}),
+				Table: table.NewModel(
+					*ctx,
+					constants.Dimensions{Width: targetWidth, Height: 10},
+					time.Now(),
+					time.Now(),
+					nil,
+					nil,
+					"pr",
+					nil,
+					"Loading...",
+					false,
+				),
+			}
+
+			view := m.View()
+			lines := strings.Split(view, "\n")
+			for i, line := range lines {
+				w := lipgloss.Width(line)
+				require.Equal(t, targetWidth, w,
+					"line %d rendered at width %d, expected %d", i, w, targetWidth)
 			}
 		})
 	}
