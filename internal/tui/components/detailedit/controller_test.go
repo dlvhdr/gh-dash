@@ -338,3 +338,56 @@ func TestUnassignModeDoesNotUseAutocomplete(t *testing.T) {
 
 	require.False(t, c.usesAutocomplete())
 }
+
+func TestPasteInCommentMode(t *testing.T) {
+	data.ClearUserCache()
+	c := newTestController(t)
+	c, _ = c.Enter(EnterOptions{
+		Mode:                             ModeComment,
+		Prompt:                           "comment",
+		Source:                           dataautocomplete.UserMentionSource{},
+		Repo:                             testRepo(),
+		SuggestionKind:                   SuggestionUsers,
+		EnterFetch:                       FetchNone,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: true,
+	})
+
+	msg := tea.PasteMsg{Content: "pasted text"}
+	c, _, _, handled := c.Update(msg)
+
+	require.True(t, handled)
+	require.Contains(t, c.inputBox.Value(), "pasted text",
+		"pasted text should appear in the inputbox")
+}
+
+func TestPasteInAssignMode(t *testing.T) {
+	data.ClearUserCache()
+	c := newTestController(t)
+	c, _ = c.Enter(EnterOptions{
+		Mode:                             ModeAssign,
+		Prompt:                           "assign",
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             testRepo(),
+		SuggestionKind:                   SuggestionUsers,
+		EnterFetch:                       FetchNone,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+
+	msg := tea.PasteMsg{Content: "alice bob"}
+	c, _, _, handled := c.Update(msg)
+
+	require.True(t, handled)
+	require.Contains(t, c.inputBox.Value(), "alice bob",
+		"pasted text should appear in the inputbox during assignment")
+}
+
+func TestPasteIgnoredWhenInactive(t *testing.T) {
+	c := newTestController(t)
+
+	msg := tea.PasteMsg{Content: "should not appear"}
+	_, _, _, handled := c.Update(msg)
+
+	require.False(t, handled,
+		"paste should not be handled when controller is inactive")
+}

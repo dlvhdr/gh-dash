@@ -201,6 +201,14 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 	)
 
 	switch msg := msg.(type) {
+	case tea.PasteMsg:
+		if c.Active() {
+			c.inputBox, taCmd = c.inputBox.Update(msg)
+			cmds = append(cmds, taCmd)
+			return c, tea.Batch(cmds...), nil, true
+		}
+		return c, nil, nil, false
+
 	case RepoLabelsFetchedMsg:
 		c.repoLabels = msg.Labels
 		c.ac.SetSuggestions(labelSuggestions(msg.Labels))
