@@ -237,40 +237,50 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Down):
-			prevRow := currSection.CurrRow()
-			nextRow := currSection.NextRow()
-			if prevRow != nextRow && nextRow == currSection.NumRows()-1 &&
-				m.ctx.View != config.RepoView {
-				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				prevRow := currSection.CurrRow()
+				nextRow := currSection.NextRow()
+				if prevRow != nextRow && nextRow == currSection.NumRows()-1 &&
+					m.ctx.View != config.RepoView {
+					cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+				}
+				cmd = m.onViewedRowChanged()
 			}
-			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Up):
-			currSection.PrevRow()
-			cmd = m.onViewedRowChanged()
+			if currSection != nil {
+				currSection.PrevRow()
+				cmd = m.onViewedRowChanged()
+			}
 
 		case key.Matches(msg, m.keys.FirstLine):
-			currSection.FirstItem()
-			cmd = m.onViewedRowChanged()
+			if currSection != nil {
+				currSection.FirstItem()
+				cmd = m.onViewedRowChanged()
+			}
 
 		case key.Matches(msg, m.keys.LastLine):
-			if currSection.CurrRow()+1 < currSection.NumRows() {
-				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				if currSection.CurrRow()+1 < currSection.NumRows() {
+					cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+				}
+				currSection.LastItem()
+				cmd = m.onViewedRowChanged()
 			}
-			currSection.LastItem()
-			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
 
 		case key.Matches(msg, m.keys.Refresh):
-			data.ClearEnrichmentCache()
-			currSection.ResetFilters()
-			currSection.ResetRows()
-			m.syncSidebar()
-			currSection.SetIsLoading(true)
-			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				data.ClearEnrichmentCache()
+				currSection.ResetFilters()
+				currSection.ResetRows()
+				m.syncSidebar()
+				currSection.SetIsLoading(true)
+				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			}
 
 		case key.Matches(msg, m.keys.RefreshAll):
 			data.ClearEnrichmentCache()

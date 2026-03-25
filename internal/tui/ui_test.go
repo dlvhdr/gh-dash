@@ -646,6 +646,54 @@ func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
 	)
 }
 
+func TestNavigationKeysWithNilSection(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.IssuesView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:          ctx,
+		keys:         keys.Keys,
+		footer:       footer.NewModel(ctx),
+		prView:       prview.NewModel(ctx),
+		issueSidebar: issueview.NewModel(ctx),
+		sidebar:      sidebarModel,
+		tabs:         tabs.NewModel(ctx),
+	}
+	// No sections added — currSection will be nil
+
+	navKeys := []struct {
+		name string
+		msg  tea.KeyPressMsg
+	}{
+		{"down", tea.KeyPressMsg{Text: "j"}},
+		{"up", tea.KeyPressMsg{Text: "k"}},
+		{"firstLine", tea.KeyPressMsg{Text: "g"}},
+		{"lastLine", tea.KeyPressMsg{Text: "G"}},
+		{"refresh", tea.KeyPressMsg{Text: "r"}},
+	}
+
+	for _, tc := range navKeys {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				m.Update(tc.msg)
+			}, "pressing %s with nil section should not panic", tc.name)
+		})
+	}
+}
+
 // executeCommandTemplate mimics the template execution logic from runCustomCommand
 // to allow testing template variable substitution without executing shell commands.
 func executeCommandTemplate(
