@@ -60,6 +60,7 @@ func TestParser(t *testing.T) {
 		defer func() {
 			os.Unsetenv("XDG_CONFIG_HOME")
 		}()
+		t.Setenv("GH_DASH_CONFIG", "")
 
 		parsed, err := ParseConfig(Location{})
 		testutils.AssertNoError(t, err)
