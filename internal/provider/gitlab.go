@@ -134,17 +134,17 @@ type glabMergeRequest struct {
 	Reviewers []struct {
 		Username string `json:"username"`
 	} `json:"reviewers"`
-	Labels               []string `json:"labels"`
-	UserNotesCount       int      `json:"user_notes_count"`
-	MergeStatus          string   `json:"merge_status"`
-	HasConflicts         bool     `json:"has_conflicts"`
-	BlockingDiscussions  int      `json:"blocking_discussions_resolved_count"`
-	ChangesCount         string   `json:"changes_count"`
-	DiffRefs             struct{} `json:"diff_refs"`
-	ProjectID            int      `json:"project_id"`
-	SourceProjectID      int      `json:"source_project_id"`
-	TargetProjectID      int      `json:"target_project_id"`
-	References           struct {
+	Labels              []string `json:"labels"`
+	UserNotesCount      int      `json:"user_notes_count"`
+	MergeStatus         string   `json:"merge_status"`
+	HasConflicts        bool     `json:"has_conflicts"`
+	BlockingDiscussions int      `json:"blocking_discussions_resolved_count"`
+	ChangesCount        string   `json:"changes_count"`
+	DiffRefs            struct{} `json:"diff_refs"`
+	ProjectID           int      `json:"project_id"`
+	SourceProjectID     int      `json:"source_project_id"`
+	TargetProjectID     int      `json:"target_project_id"`
+	References          struct {
 		Full string `json:"full"`
 	} `json:"references"`
 	Pipeline *struct {
@@ -213,15 +213,21 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 		args = append(args, "--repo", project)
 	}
 
+	// glab mr list uses --closed and --merged flags (no flag = opened by default)
 	if state, ok := filters["state"]; ok {
-		args = append(args, "--state", state)
-	} else if strings.Contains(query, "is:open") {
-		args = append(args, "--state", "opened")
+		switch state {
+		case "closed":
+			args = append(args, "--closed")
+		case "merged":
+			args = append(args, "--merged")
+			// "opened" is the default, no flag needed
+		}
 	} else if strings.Contains(query, "is:closed") {
-		args = append(args, "--state", "closed")
+		args = append(args, "--closed")
 	} else if strings.Contains(query, "is:merged") {
-		args = append(args, "--state", "merged")
+		args = append(args, "--merged")
 	}
+	// Note: "is:open" maps to default opened state, no flag needed
 
 	if author, ok := filters["author"]; ok {
 		if author == "@me" {
@@ -319,11 +325,12 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 	}
 
 	state := mr.State
-	if state == "opened" {
+	switch state {
+	case "opened":
 		state = "OPEN"
-	} else if state == "merged" {
+	case "merged":
 		state = "MERGED"
-	} else if state == "closed" {
+	case "closed":
 		state = "CLOSED"
 	}
 
@@ -417,10 +424,10 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 	comments := CommentsWithBody{TotalCount: mr.UserNotesCount}
 	if err == nil && len(notesOutput) > 0 {
 		var notes []struct {
-			Body      string    `json:"body"`
+			Body      string                    `json:"body"`
 			Author    struct{ Username string } `json:"author"`
-			CreatedAt time.Time `json:"created_at"`
-			System    bool      `json:"system"` // Filter out system notes
+			CreatedAt time.Time                 `json:"created_at"`
+			System    bool                      `json:"system"` // Filter out system notes
 		}
 		if json.Unmarshal(notesOutput, &notes) == nil {
 			for _, note := range notes {
@@ -598,12 +605,18 @@ func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo
 		args = append(args, "--repo", project)
 	}
 
+	// glab issue list uses --closed and --opened flags (no flag = all issues)
 	if state, ok := filters["state"]; ok {
-		args = append(args, "--state", state)
+		switch state {
+		case "closed":
+			args = append(args, "--closed")
+		case "opened":
+			args = append(args, "--opened")
+		}
 	} else if strings.Contains(query, "is:open") {
-		args = append(args, "--state", "opened")
+		args = append(args, "--opened")
 	} else if strings.Contains(query, "is:closed") {
-		args = append(args, "--state", "closed")
+		args = append(args, "--closed")
 	}
 
 	if author, ok := filters["author"]; ok {
@@ -679,9 +692,10 @@ func (g *GitLabProvider) convertGitLabIssue(issue glabIssue) IssueData {
 	}
 
 	state := issue.State
-	if state == "opened" {
+	switch state {
+	case "opened":
 		state = "OPEN"
-	} else if state == "closed" {
+	case "closed":
 		state = "CLOSED"
 	}
 
@@ -710,20 +724,27 @@ func (g *GitLabProvider) GetCurrentUser() (string, error) {
 	}
 
 	// Parse the auth status output to get username
-	// Output format includes "Logged in to ... as USERNAME"
+	// Output format includes "Logged in to <host> as <user>" with optional leading checkmark
 	lines := strings.Split(string(output), "\n")
+	linePattern := regexp.MustCompile(`^\s*(?:[✓✔]\s*)?Logged in to\s+\S+\s+as\s+([^\s]+)(?:\s+\(.*\))?\s*$`)
 	for _, line := range lines {
-		if strings.Contains(line, "Logged in to") && strings.Contains(line, " as ") {
-			parts := strings.Split(line, " as ")
-			if len(parts) >= 2 {
-				// Clean up the username
-				username := strings.TrimSpace(parts[1])
-				// Remove any trailing info in parentheses
-				if idx := strings.Index(username, " ("); idx > 0 {
-					username = username[:idx]
-				}
+		matches := linePattern.FindStringSubmatch(line)
+		if len(matches) == 2 {
+			username := strings.TrimSpace(matches[1])
+			if username != "" {
 				return username, nil
 			}
+		}
+	}
+
+	// Fallback to the GitLab API
+	userOutput, err := g.runGlab("api", "user")
+	if err == nil && len(userOutput) > 0 {
+		var user struct {
+			Username string `json:"username"`
+		}
+		if json.Unmarshal(userOutput, &user) == nil && user.Username != "" {
+			return user.Username, nil
 		}
 	}
 
@@ -787,10 +808,10 @@ func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, er
 	var comments []IssueComment
 	if len(notesOutput) > 0 {
 		var notes []struct {
-			Body      string    `json:"body"`
+			Body      string                    `json:"body"`
 			Author    struct{ Username string } `json:"author"`
-			CreatedAt time.Time `json:"created_at"`
-			System    bool      `json:"system"`
+			CreatedAt time.Time                 `json:"created_at"`
+			System    bool                      `json:"system"`
 		}
 		if err := json.Unmarshal(notesOutput, &notes); err != nil {
 			return nil, err

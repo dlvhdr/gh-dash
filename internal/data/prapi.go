@@ -600,7 +600,7 @@ func convertProviderPRToData(pr provider.PullRequestData) PullRequestData {
 	reviews := make([]Review, len(pr.Reviews.Nodes))
 	for i, r := range pr.Reviews.Nodes {
 		reviews[i] = Review{
-			Author: struct{ Login string }{Login: r.Author.Login},
+			Author:    struct{ Login string }{Login: r.Author.Login},
 			Body:      r.Body,
 			State:     r.State,
 			UpdatedAt: r.UpdatedAt,
@@ -608,10 +608,10 @@ func convertProviderPRToData(pr provider.PullRequestData) PullRequestData {
 	}
 
 	return PullRequestData{
-		Number: pr.Number,
-		Title:  pr.Title,
-		Body:   pr.Body,
-		Author: struct{ Login string }{Login: pr.Author.Login},
+		Number:            pr.Number,
+		Title:             pr.Title,
+		Body:              pr.Body,
+		Author:            struct{ Login string }{Login: pr.Author.Login},
 		AuthorAssociation: pr.AuthorAssociation,
 		UpdatedAt:         pr.UpdatedAt,
 		CreatedAt:         pr.CreatedAt,
@@ -718,10 +718,10 @@ func fetchPullRequestFromGitLab(prUrl string) (EnrichedPullRequestData, error) {
 	for _, c := range resp.Commits {
 		node := struct {
 			Commit struct {
-				AbbreviatedOid    string
-				CommittedDate     time.Time
-				MessageHeadline   string
-				Author            struct {
+				AbbreviatedOid  string
+				CommittedDate   time.Time
+				MessageHeadline string
+				Author          struct {
 					Name string
 					User struct{ Login string }
 				}
@@ -792,5 +792,3 @@ func convertChangedFiles(providerFiles []provider.ChangedFile) ChangedFiles {
 		Nodes:      files,
 	}
 }
-
-

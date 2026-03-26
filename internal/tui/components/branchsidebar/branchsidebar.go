@@ -46,13 +46,13 @@ func (m Model) View() string {
 		}
 
 		for _, file := range m.status.Added {
-			s.WriteString(fmt.Sprintf("\nA %s", file))
+			fmt.Fprintf(&s, "\nA %s", file)
 		}
 		for _, file := range m.status.Removed {
-			s.WriteString(fmt.Sprintf("\nD %s", file))
+			fmt.Fprintf(&s, "\nD %s", file)
 		}
 		for _, file := range m.status.Modified {
-			s.WriteString(fmt.Sprintf("\nM %s", file))
+			fmt.Fprintf(&s, "\nM %s", file)
 		}
 	}
 
@@ -69,7 +69,7 @@ func (m Model) View() string {
 	s.WriteString(m.branch.Data.Name)
 	if m.branch.PR != nil {
 		s.WriteString("\n")
-		s.WriteString(fmt.Sprintf("#%d %s", m.branch.PR.GetNumber(), m.branch.PR.Title))
+		fmt.Fprintf(&s, "#%d %s", m.branch.PR.GetNumber(), m.branch.PR.Title)
 	}
 
 	return s.String()

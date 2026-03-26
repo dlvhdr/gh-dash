@@ -203,11 +203,11 @@ func convertProviderIssueToData(issue provider.IssueData) IssueData {
 	}
 
 	return IssueData{
-		Number: issue.Number,
-		Title:  issue.Title,
-		Body:   issue.Body,
-		State:  issue.State,
-		Author: struct{ Login string }{Login: issue.Author.Login},
+		Number:            issue.Number,
+		Title:             issue.Title,
+		Body:              issue.Body,
+		State:             issue.State,
+		Author:            struct{ Login string }{Login: issue.Author.Login},
 		AuthorAssociation: issue.AuthorAssociation,
 		UpdatedAt:         issue.UpdatedAt,
 		CreatedAt:         issue.CreatedAt,
