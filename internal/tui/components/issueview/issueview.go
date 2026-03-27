@@ -104,6 +104,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			return m, nil, &IssueAction{Type: IssueActionUnassign}
 		case key.Matches(keyMsg, keys.IssueKeys.Comment):
 			return m, nil, &IssueAction{Type: IssueActionComment}
+		case key.Matches(keyMsg, keys.IssueKeys.Checkout):
+			return m, nil, &IssueAction{Type: IssueActionCheckout}
 		case key.Matches(keyMsg, keys.IssueKeys.Close):
 			return m, nil, &IssueAction{Type: IssueActionClose}
 		case key.Matches(keyMsg, keys.IssueKeys.Reopen):

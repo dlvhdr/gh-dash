@@ -95,6 +95,11 @@ func TestFullHelpIncludesIssueKeysForIssueSubject(t *testing.T) {
 		t.Error("expected Issue key 'label' to be present when viewing Issue notification")
 	}
 
+	found = findKeyByHelp(allKeys, "checkout")
+	if !found {
+		t.Error("expected Issue key 'checkout' to be present when viewing Issue notification")
+	}
+
 	found = findKeyByHelp(allKeys, "close")
 	if !found {
 		t.Error("expected Issue key 'close' to be present when viewing Issue notification")
