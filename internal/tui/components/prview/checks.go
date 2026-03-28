@@ -72,6 +72,47 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 		), statusWaiting
 	}
 
+	// For GitLab, use pipeline jobs
+	if len(m.pr.Data.Enriched.PipelineJobs) > 0 {
+		stats := m.getGitLabChecksStats()
+		var icon, title string
+		var status checkSectionStatus
+
+		if stats.failed > 0 {
+			icon = m.ctx.Styles.Common.FailureGlyph
+			title = "Some checks were not successful"
+			status = statusFailure
+		} else if stats.inProgress > 0 {
+			icon = m.ctx.Styles.Common.WaitingGlyph
+			title = "Some checks haven't completed yet"
+			status = statusWaiting
+		} else if stats.succeeded > 0 {
+			icon = m.ctx.Styles.Common.SuccessGlyph
+			title = "All checks have passed"
+			status = statusSuccess
+		} else {
+			return "", statusWaiting
+		}
+
+		statStrs := make([]string, 0)
+		if stats.failed > 0 {
+			statStrs = append(statStrs, fmt.Sprintf("%d failing", stats.failed))
+		}
+		if stats.inProgress > 0 {
+			statStrs = append(statStrs, fmt.Sprintf("%d in progress", stats.inProgress))
+		}
+		if stats.succeeded > 0 {
+			statStrs = append(statStrs, fmt.Sprintf("%d successful", stats.succeeded))
+		}
+		if stats.skipped > 0 {
+			statStrs = append(statStrs, fmt.Sprintf("%d skipped", stats.skipped))
+		}
+
+		checks = m.viewCheckCategory(icon, title, strings.Join(statStrs, ", "), true)
+		return checks, status
+	}
+
+	// For GitHub, use StatusCheckRollup
 	stats := m.getChecksStats()
 	var icon, title string
 	var status checkSectionStatus
@@ -105,6 +146,9 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 	}
 	if stats.inProgress > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d in progress", stats.inProgress))
+	}
+	if stats.succeeded > 0 {
+		statStrs = append(statStrs, fmt.Sprintf("%d successful", stats.succeeded))
 	}
 	if stats.skipped > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d skipped", stats.skipped))
@@ -189,75 +233,94 @@ func (m *Model) viewClosedStatus() string {
 }
 
 func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
-	pr := m.pr
-	if pr.Data == nil {
-		return "", statusWaiting
+	w := m.getIndentedContentWidth() - 2
+
+	if !m.pr.Data.IsEnriched {
+		return m.viewCheckCategory(m.ctx.Styles.Common.WaitingGlyph, "Loading...", "", false), statusWaiting
 	}
 
-	var icon, title, subtitle string
+	reviewRequests := m.pr.Data.Enriched.ReviewRequests.Nodes
+	reviews := m.pr.Data.Enriched.Reviews.Nodes
+
+	var icon, title string
 	var status checkSectionStatus
-	numReviewOwners := m.numRequestedReviewOwners()
 
-	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
+	changesRequested := 0
+	approved := 0
+	pending := len(reviewRequests)
 
-	for _, node := range pr.Data.Primary.Reviews.Nodes {
-		switch node.State {
-		case "APPROVED":
-			numApproving++
-		case "CHANGES_REQUESTED":
-			numChangesRequested++
-		case "PENDING":
-			numPending++
-		case "COMMENTED":
-			numCommented++
+	for _, review := range reviews {
+		if review.State == "APPROVED" {
+			approved++
+		}
+		if review.State == "CHANGES_REQUESTED" {
+			changesRequested++
 		}
 	}
 
-	switch pr.Data.Primary.ReviewDecision {
-	case "APPROVED":
-		icon = m.ctx.Styles.Common.SuccessGlyph
-		title = "Changes approved"
-		subtitle = fmt.Sprintf("%d approving reviews", numApproving)
-		status = statusSuccess
-	case "CHANGES_REQUESTED":
+	if changesRequested > 0 {
 		icon = m.ctx.Styles.Common.FailureGlyph
 		title = "Changes requested"
-		subtitle = fmt.Sprintf("%d requested changes", numChangesRequested)
 		status = statusFailure
-	case "REVIEW_REQUIRED":
-		icon = pr.Ctx.Styles.Common.WaitingGlyph
-		title = "Review Required"
-
-		branchRules := m.pr.Data.Primary.Repository.BranchProtectionRules.Nodes
-		if len(branchRules) > 0 && branchRules[0].RequiresCodeOwnerReviews && numApproving < 1 {
-			subtitle = "Code owner review required"
-			status = statusFailure
-		} else if numApproving < numReviewOwners {
-			subtitle = "Code owner review required"
-			status = statusFailure
-		} else if len(branchRules) > 0 && numApproving <
-			branchRules[0].RequiredApprovingReviewCount {
-			subtitle = fmt.Sprintf("Need %d more approval",
-				branchRules[0].RequiredApprovingReviewCount-numApproving)
-			status = statusWaiting
-		} else if numCommented > 0 {
-			subtitle = fmt.Sprintf("%d reviewers left comments", numCommented)
-			status = statusWaiting
+	} else if approved > 0 {
+		icon = m.ctx.Styles.Common.SuccessGlyph
+		title = fmt.Sprintf("%d approving review", approved)
+		if approved > 1 {
+			title += "s"
 		}
-	default:
-		icon = pr.Ctx.Styles.Common.PersonGlyph
-		title = "Reviews"
-		subtitle = "Non requested"
-		status = statusNonRequested
+		status = statusSuccess
+	} else if pending > 0 {
+		icon = m.ctx.Styles.Common.WaitingGlyph
+		title = "Review required"
+		status = statusWaiting
+	} else {
+		return "", statusNonRequested
 	}
 
-	return m.viewCheckCategory(icon, title, subtitle, false), status
-}
+	subs := make([]string, 0)
+	if pending > 0 {
+		for _, reviewRequest := range reviewRequests {
+			name := ""
+			if reviewRequest.RequestedReviewer.User.Login != "" {
+				name = reviewRequest.RequestedReviewer.User.Login
+			}
+			if reviewRequest.RequestedReviewer.Team.Name != "" {
+				name = reviewRequest.RequestedReviewer.Team.Name
+			}
+			if reviewRequest.RequestedReviewer.Team.Slug != "" {
+				name = reviewRequest.RequestedReviewer.Team.Slug
+			}
+			subs = append(subs, fmt.Sprintf("%s Review pending from %s", m.ctx.Styles.Common.WaitingGlyph, name))
+		}
+	}
 
-func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) string {
-	w := m.getIndentedContentWidth()
-	part := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), false, false, !isLast, false).
+	for _, review := range reviews {
+		if review.State == "APPROVED" {
+			subs = append(subs, fmt.Sprintf("%s %s approved", m.ctx.Styles.Common.SuccessGlyph, review.Author.Login))
+		}
+		if review.State == "CHANGES_REQUESTED" {
+			subs = append(subs, fmt.Sprintf("%s %s requested changes", m.ctx.Styles.Common.FailureGlyph, review.Author.Login))
+		}
+	}
+
+	content := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		" ",
+		icon,
+		" ",
+		lipgloss.NewStyle().Width(w).Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				m.ctx.Styles.Common.MainTextStyle.Render(title),
+				lipgloss.NewStyle().MarginLeft(2).Width(w).Foreground(m.ctx.Theme.FaintText).Render(
+					lipgloss.JoinVertical(lipgloss.Left, subs...),
+				),
+			),
+		),
+	)
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), false, false, true).
 		BorderForeground(m.ctx.Theme.FaintBorder).
 		Width(w).
 		Padding(1)
@@ -355,30 +418,18 @@ func renderCheckRunName(checkRun data.CheckRun) string {
 		parts = append(parts, name)
 	}
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		strings.Join(parts, "/"),
-	)
-}
-
-type CheckCategory int
-
-const (
-	CheckWaiting CheckCategory = iota
-	CheckFailure
-	CheckSuccess
-)
-
-func (m *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory, string) {
-	if ghchecks.IsStatusWaiting(string(checkRun.Status)) {
-		return CheckWaiting, m.ctx.Styles.Common.WaitingGlyph
+	if m.pr.Data.Primary.Mergeable == "MERGEABLE" {
+		if m.pr.Data.Primary.MergeStateStatus == "BLOCKED" {
+			return m.viewCheckCategory(m.ctx.Styles.Common.WaitingGlyph, "Merging is blocked", "", false), statusWaiting
+		}
+		return m.viewCheckCategory(m.ctx.Styles.Common.SuccessGlyph, "This branch has no conflicts with the base branch", "Merging can be performed automatically", false), statusSuccess
 	}
 
-	if ghchecks.IsConclusionAFailure(string(checkRun.Conclusion)) {
-		return CheckFailure, m.ctx.Styles.Common.FailureGlyph
+	if m.pr.Data.Primary.Mergeable == "CONFLICTING" {
+		return m.viewCheckCategory(m.ctx.Styles.Common.FailureGlyph, "This branch has conflicts that must be resolved", "", false), statusFailure
 	}
 
-	return CheckSuccess, m.ctx.Styles.Common.SuccessGlyph
+	return m.viewCheckCategory(m.ctx.Styles.Common.WaitingGlyph, "Checking for ability to merge automatically", "", false), statusWaiting
 }
 
 func (m *Model) renderStatusContextConclusion(
@@ -396,21 +447,15 @@ func (m *Model) renderStatusContextConclusion(
 	return CheckSuccess, m.ctx.Styles.Common.SuccessGlyph
 }
 
-func renderStatusContextName(statusContext data.StatusContext) string {
-	var parts []string
-	creator := strings.TrimSpace(string(statusContext.Creator.Login))
-	if creator != "" {
-		parts = append(parts, creator)
-	}
-
-	context := strings.TrimSpace(string(statusContext.Context))
-	if context != "" && context != "/" {
-		parts = append(parts, context)
-	}
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		strings.Join(parts, "/"),
-	)
+func (m *Model) viewClosedStatus() string {
+	w := m.getIndentedContentWidth()
+	closed := lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render(" Closed")
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.ctx.Theme.ErrorText).
+		Width(w).
+		Padding(1).
+		Render(closed)
 }
 
 func (sidebar *Model) renderChecks() string {
@@ -582,34 +627,17 @@ type checksStats struct {
 }
 
 func (m *Model) getStatusCheckRollupStats(rollup data.StatusCheckRollupStats) checksStats {
-	var res checksStats
 	allChecks := make([]data.ContextCountByState, 0)
 	allChecks = append(allChecks, rollup.Contexts.CheckRunCountsByState...)
 	allChecks = append(allChecks, rollup.Contexts.StatusContextCountsByState...)
 
-	for _, count := range allChecks {
-		state := string(count.State)
-		if ghchecks.IsStatusWaiting(state) {
-			res.inProgress += int(count.Count)
-		} else if ghchecks.IsConclusionAFailure(state) {
-			res.failed += int(count.Count)
-		} else if ghchecks.IsConclusionASkip(state) {
-			res.skipped += int(count.Count)
-		} else if ghchecks.IsConclusionNeutral(state) {
-			res.neutral += int(count.Count)
-		} else if ghchecks.IsConclusionASuccess(state) {
-			res.succeeded += int(count.Count)
-		}
-	}
-
-	return res
+	return m.getStatsFromChecks(allChecks)
 }
 
 func (m *Model) getChecksStats() checksStats {
-	var res checksStats
 	commits := m.pr.Data.Enriched.Commits.Nodes
 	if len(commits) == 0 {
-		return res
+		return checksStats{}
 	}
 
 	lastCommit := commits[0]
@@ -621,20 +649,28 @@ func (m *Model) getChecksStats() checksStats {
 		allChecks,
 		lastCommit.Commit.StatusCheckRollup.Contexts.StatusContextCountsByState...)
 
-	for _, count := range allChecks {
-		state := string(count.State)
-		if ghchecks.IsStatusWaiting(state) {
-			res.inProgress += int(count.Count)
-		} else if ghchecks.IsConclusionAFailure(state) {
-			res.failed += int(count.Count)
-		} else if ghchecks.IsConclusionASkip(state) {
-			res.skipped += int(count.Count)
-		} else if ghchecks.IsConclusionNeutral(state) {
-			res.neutral += int(count.Count)
-		} else if ghchecks.IsConclusionASuccess(state) {
-			res.succeeded += int(count.Count)
+	return m.getStatsFromChecks(allChecks)
+}
+
+// getGitLabChecksStats calculates stats from GitLab pipeline jobs
+func (m *Model) getGitLabChecksStats() checksStats {
+	stats := checksStats{}
+	for _, job := range m.pr.Data.Enriched.PipelineJobs {
+		switch job.Status {
+		case "success":
+			stats.succeeded++
+		case "failed":
+			stats.failed++
+		case "running", "pending", "created":
+			stats.inProgress++
+		case "skipped":
+			stats.skipped++
+		case "canceled":
+			stats.failed++
 		}
 	}
+	return stats
+}
 
 	// Count check suites that don't appear in statusCheckRollup
 	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
@@ -648,14 +684,73 @@ func (m *Model) getChecksStats() checksStats {
 	return res
 }
 
-func (m *Model) numRequestedReviewOwners() int {
-	numOwners := 0
+type CheckCategory int
 
-	for _, node := range m.pr.Data.Primary.ReviewRequests.Nodes {
-		if node.AsCodeOwner {
-			numOwners++
-		}
+const (
+	CheckSuccess CheckCategory = iota
+	CheckFailure
+	CheckWaiting
+)
+
+func (sidebar *Model) renderCheckRunConclusion(checkRun data.CheckRun) (CheckCategory, string) {
+	switch checkRun.Conclusion {
+	case ghchecks.CheckRunStateSuccess:
+		return CheckSuccess, sidebar.ctx.Styles.Common.SuccessGlyph
+	case ghchecks.CheckRunStateFailure:
+		return CheckFailure, sidebar.ctx.Styles.Common.FailureGlyph
+	case ghchecks.CheckRunStateStartupFailure:
+		return CheckFailure, sidebar.ctx.Styles.Common.FailureGlyph
+	case ghchecks.CheckRunStateSkipped:
+		skipped := lipgloss.NewStyle().Foreground(sidebar.ctx.Theme.FaintText).Render("⊘")
+		return CheckSuccess, skipped
+	case ghchecks.CheckRunStateStale:
+		return CheckWaiting, sidebar.ctx.Styles.Common.WaitingGlyph
+	case ghchecks.CheckRunStateNeutral:
+		neutral := lipgloss.NewStyle().Foreground(sidebar.ctx.Theme.FaintText).Render("◦")
+		return CheckSuccess, neutral
+	case ghchecks.CheckRunStateCancelled:
+		cancelled := lipgloss.NewStyle().Foreground(sidebar.ctx.Theme.FaintText).Render("⊘")
+		return CheckFailure, cancelled
+	case ghchecks.CheckRunStateActionRequired:
+		return CheckWaiting, sidebar.ctx.Styles.Common.WaitingGlyph
+	case ghchecks.CheckRunStateTimedOut:
+		return CheckFailure, sidebar.ctx.Styles.Common.FailureGlyph
 	}
 
-	return numOwners
+	return CheckWaiting, sidebar.ctx.Styles.Common.WaitingGlyph
+}
+
+func (sidebar *Model) renderStatusContextConclusion(statusContext data.StatusContext) (CheckCategory, string) {
+	state := string(statusContext.State)
+	switch strings.ToUpper(state) {
+	case "SUCCESS":
+		return CheckSuccess, sidebar.ctx.Styles.Common.SuccessGlyph
+	case "FAILURE", "ERROR":
+		return CheckFailure, sidebar.ctx.Styles.Common.FailureGlyph
+	}
+
+	return CheckWaiting, sidebar.ctx.Styles.Common.WaitingGlyph
+}
+
+func renderCheckRunName(checkRun data.CheckRun) string {
+	if checkRun.CheckSuite.WorkflowRun.Workflow.Name != "" {
+		return fmt.Sprintf("%s / %s", checkRun.CheckSuite.WorkflowRun.Workflow.Name, checkRun.Name)
+	}
+
+	if checkRun.CheckSuite.Creator.Login != "" {
+		return fmt.Sprintf("%s (%s)", checkRun.Name, checkRun.CheckSuite.Creator.Login)
+	}
+
+	return string(checkRun.Name)
+}
+
+func renderStatusContextName(statusContext data.StatusContext) string {
+	if statusContext.Creator.Login != "" {
+		return fmt.Sprintf("%s (%s)", statusContext.Context, statusContext.Creator.Login)
+	}
+	return string(statusContext.Context)
+}
+
+func sizePerSection(total, size int) int {
+	return int(math.Max(1, math.Floor(float64(total)/float64(size))))
 }

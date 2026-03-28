@@ -19,10 +19,8 @@ func (cfg Config) GetFullScreenDiffPagerEnv() []string {
 	env = append(
 		env,
 		"LESS=CRX",
-		fmt.Sprintf(
-			"GH_PAGER=%s",
-			diff,
-		),
+		fmt.Sprintf("GH_PAGER=%s", diff),
+		fmt.Sprintf("GLAB_PAGER=%s", diff), // For GitLab CLI
 	)
 
 	return env

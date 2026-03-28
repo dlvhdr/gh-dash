@@ -188,14 +188,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.prView.IsTextInputBoxFocused() {
 			m.prView, cmd = m.prView.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.issueSidebar.IsTextInputBoxFocused() {
 			m.issueSidebar, cmd, _ = m.issueSidebar.Update(msg)
-			m.syncSidebar()
-			return m, cmd
+			syncCmd := m.syncSidebar()
+			return m, tea.Batch(cmd, syncCmd)
 		}
 
 		if m.footer.ShowConfirmQuit && (msg.String() == "y" || msg.String() == "enter") {
@@ -271,6 +271,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
 			m.syncMainContentWidth()
+			if m.sidebar.IsOpen {
+				cmd = m.syncSidebar()
+				cmds = append(cmds, cmd)
+			}
 
 		case key.Matches(msg, m.keys.Refresh):
 			if currSection != nil {
@@ -771,6 +775,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case notificationssection.UpdateNotificationCommentsMsg:
 		cmds = append(cmds, m.updateNotificationSections(msg))
+
+	case issueview.IssueCommentsMsg:
+		log.Info("IssueCommentsMsg received", "url", msg.IssueUrl, "comments", len(msg.Comments), "err", msg.Err)
+		if msg.Err == nil {
+			m.issueSidebar.SetIssueComments(msg.IssueUrl, msg.Comments)
+			// Just update the sidebar content, don't call syncSidebar which would overwrite
+			m.sidebar.SetContent(m.issueSidebar.View())
+		} else {
+			log.Error("failed fetching issue comments", "err", msg.Err)
+		}
 
 	case spinner.TickMsg:
 		if len(m.tasks) > 0 {

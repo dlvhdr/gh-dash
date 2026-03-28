@@ -3,11 +3,13 @@ package tasks
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
@@ -33,7 +35,7 @@ func CloseIssue(
 			"issue",
 			"close",
 			fmt.Sprint(issueNumber),
-			"-R",
+			repoFlag(),
 			issue.GetRepoNameWithOwner(),
 		},
 		Section:      section,
@@ -60,7 +62,7 @@ func ReopenIssue(
 			"issue",
 			"reopen",
 			fmt.Sprint(issueNumber),
-			"-R",
+			repoFlag(),
 			issue.GetRepoNameWithOwner(),
 		},
 		Section:      section,
@@ -82,15 +84,28 @@ func AssignIssue(
 	usernames []string,
 ) tea.Cmd {
 	issueNumber := issue.GetNumber()
-	args := []string{
-		"issue",
-		"edit",
-		fmt.Sprint(issueNumber),
-		"-R",
-		issue.GetRepoNameWithOwner(),
-	}
-	for _, assignee := range usernames {
-		args = append(args, "--add-assignee", assignee)
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"issue",
+			"update",
+			fmt.Sprint(issueNumber),
+			"--repo",
+			issue.GetRepoNameWithOwner(),
+			"--assignee",
+			strings.Join(usernames, ","),
+		}
+	} else {
+		args = []string{
+			"issue",
+			"edit",
+			fmt.Sprint(issueNumber),
+			"-R",
+			issue.GetRepoNameWithOwner(),
+		}
+		for _, assignee := range usernames {
+			args = append(args, "--add-assignee", assignee)
+		}
 	}
 	return fireTask(ctx, GitHubTask{
 		Id:           fmt.Sprintf("issue_assign_%d", issueNumber),
@@ -121,15 +136,27 @@ func UnassignIssue(
 	usernames []string,
 ) tea.Cmd {
 	issueNumber := issue.GetNumber()
-	args := []string{
-		"issue",
-		"edit",
-		fmt.Sprint(issueNumber),
-		"-R",
-		issue.GetRepoNameWithOwner(),
-	}
-	for _, assignee := range usernames {
-		args = append(args, "--remove-assignee", assignee)
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"issue",
+			"update",
+			fmt.Sprint(issueNumber),
+			"--repo",
+			issue.GetRepoNameWithOwner(),
+			"--unassign",
+		}
+	} else {
+		args = []string{
+			"issue",
+			"edit",
+			fmt.Sprint(issueNumber),
+			"-R",
+			issue.GetRepoNameWithOwner(),
+		}
+		for _, assignee := range usernames {
+			args = append(args, "--remove-assignee", assignee)
+		}
 	}
 	return fireTask(ctx, GitHubTask{
 		Id:           fmt.Sprintf("issue_unassign_%d", issueNumber),
@@ -160,9 +187,19 @@ func CommentOnIssue(
 	body string,
 ) tea.Cmd {
 	issueNumber := issue.GetNumber()
-	return fireTask(ctx, GitHubTask{
-		Id: fmt.Sprintf("issue_comment_%d", issueNumber),
-		Args: []string{
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"issue",
+			"note",
+			fmt.Sprint(issueNumber),
+			"--repo",
+			issue.GetRepoNameWithOwner(),
+			"-m",
+			body,
+		}
+	} else {
+		args = []string{
 			"issue",
 			"comment",
 			fmt.Sprint(issueNumber),
@@ -170,7 +207,11 @@ func CommentOnIssue(
 			issue.GetRepoNameWithOwner(),
 			"-b",
 			body,
-		},
+		}
+	}
+	return fireTask(ctx, GitHubTask{
+		Id:           fmt.Sprintf("issue_comment_%d", issueNumber),
+		Args:         args,
 		Section:      section,
 		StartText:    fmt.Sprintf("Commenting on issue #%d", issueNumber),
 		FinishedText: fmt.Sprintf("Commented on issue #%d", issueNumber),
@@ -195,13 +236,6 @@ func LabelIssue(
 	existingLabels []data.Label,
 ) tea.Cmd {
 	issueNumber := issue.GetNumber()
-	args := []string{
-		"issue",
-		"edit",
-		fmt.Sprint(issueNumber),
-		"-R",
-		issue.GetRepoNameWithOwner(),
-	}
 
 	labelsMap := make(map[string]bool)
 	for _, label := range labels {
@@ -213,14 +247,38 @@ func LabelIssue(
 		existingLabelsColorMap[label.Name] = label.Color
 	}
 
-	for _, label := range existingLabels {
-		if _, ok := labelsMap[label.Name]; !ok {
-			args = append(args, "--remove-label", label.Name)
+	var args []string
+	if provider.IsGitLab() {
+		args = []string{
+			"issue",
+			"update",
+			fmt.Sprint(issueNumber),
+			"--repo",
+			issue.GetRepoNameWithOwner(),
+			"--label",
+			strings.Join(labels, ","),
 		}
-	}
-
-	for _, label := range labels {
-		args = append(args, "--add-label", label)
+		for _, label := range existingLabels {
+			if _, ok := labelsMap[label.Name]; !ok {
+				args = append(args, "--unlabel", label.Name)
+			}
+		}
+	} else {
+		args = []string{
+			"issue",
+			"edit",
+			fmt.Sprint(issueNumber),
+			"-R",
+			issue.GetRepoNameWithOwner(),
+		}
+		for _, label := range existingLabels {
+			if _, ok := labelsMap[label.Name]; !ok {
+				args = append(args, "--remove-label", label.Name)
+			}
+		}
+		for _, label := range labels {
+			args = append(args, "--add-label", label)
+		}
 	}
 
 	return fireTask(ctx, GitHubTask{

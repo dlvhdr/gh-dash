@@ -22,6 +22,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	dctx "github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -35,16 +36,17 @@ var (
 )
 
 var (
-	cfgFlag string
+	cfgFlag    string
+	gitlabHost string
 
 	logo = lipgloss.NewStyle().Foreground(dctx.LogoColor).MarginBottom(1).SetString(constants.Logo)
 
 	rootCmd = &cobra.Command{
 		Use: "gh dash",
 		Long: lipgloss.JoinVertical(lipgloss.Left, logo.Render(),
-			"A rich terminal UI for GitHub that doesn't break your flow.",
+			"A rich terminal UI for GitHub/GitLab that doesn't break your flow.",
 			"Visit https://gh-dash.dev for the docs."),
-		Short:   "A rich terminal UI for GitHub that doesn't break your flow.",
+		Short:   "A rich terminal UI for GitHub/GitLab that doesn't break your flow.",
 		Version: "",
 		Example: `
 # Running without arguments will either:
@@ -57,6 +59,9 @@ gh dash --config /path/to/configuration/file.yml
 
 # Run with debug logging to debug.log
 gh dash --debug
+
+# Connect to a GitLab instance
+gh dash --gitlab gitlab.example.com
 
 # Print version
 gh dash -v
@@ -182,7 +187,22 @@ func init() {
 		"help for gh-dash",
 	)
 
+	rootCmd.Flags().StringVar(
+		&gitlabHost,
+		"gitlab",
+		"",
+		"GitLab hostname (e.g., gitlab.example.com) - enables GitLab mode",
+	)
+
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
+		// Set up the provider based on flags
+		gitlabHostFlag, _ := rootCmd.Flags().GetString("gitlab")
+		if gitlabHostFlag != "" {
+			log.Info("Using GitLab provider", "host", gitlabHostFlag)
+			provider.SetProvider(provider.NewGitLabProvider(gitlabHostFlag))
+		} else {
+			provider.SetProvider(provider.NewGitHubProvider())
+		}
 		var repo string
 		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {
