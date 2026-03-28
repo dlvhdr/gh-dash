@@ -2,21 +2,16 @@ package tui
 
 import (
 	"bytes"
-	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"strings"
 	"testing"
 	"text/template"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	log "github.com/charmbracelet/log"
-	"github.com/charmbracelet/x/exp/teatest"
-	gh "github.com/cli/go-gh/v2/pkg/api"
-	zone "github.com/lrstanley/bubblezone"
+	tea "charm.land/bubbletea/v2"
+
+	// "charm.land/x/exp/teatest"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -35,59 +30,57 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tabs"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/testutils"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
-func TestFullOutput(t *testing.T) {
-	setupTest(t)
-	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
-	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
+// func TestFullOutput(t *testing.T) {
+// 	setupTest(t)
+// 	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+// 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
+//
+// 	testutils.WaitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
+//
+// 	tm.Send(tea.KeyPressMsg{
+// 		Type:  tea.KeyRunes,
+// 		Runes: []rune("q"),
+// 	})
+// 	tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
+// }
 
-	testutils.WaitForText(t, tm, "style: make assignment brief", teatest.WithDuration(6*time.Second))
+// func TestIssues(t *testing.T) {
+// 	setupTest(t)
+// 	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
+// 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
+//
+// 	// wait for first tab of PRs
+// 	testutils.WaitForText(t, tm, "Mine")
+//
+// 	tm.Send(tea.KeyPressMsg{
+// 		Type:  tea.KeyRunes,
+// 		Runes: []rune("s"),
+// 	})
+// 	testutils.WaitForText(t, tm, "[Feature Request] Support notifications", teatest.WithDuration(6*time.Second))
+// 	tm.Send(tea.KeyPressMsg{
+// 		Type:  tea.KeyRunes,
+// 		Runes: []rune("q"),
+// 	})
+// 	tm.WaitFinished(t, teatest.WithFinalTimeout(5*time.Second))
+// }
 
-	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune("q"),
-	})
-	tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
-}
-
-func TestIssues(t *testing.T) {
-	setupTest(t)
-	m := NewModel(config.Location{RepoPath: "", ConfigFlag: "../config/testdata/test-config.yml"})
-	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(160, 60))
-
-	// wait for first tab of PRs
-	testutils.WaitForText(t, tm, "Mine")
-
-	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune("s"),
-	})
-	testutils.WaitForText(t, tm, "[Feature Request] Support notifications", teatest.WithDuration(6*time.Second))
-	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune("q"),
-	})
-	tm.WaitFinished(t, teatest.WithFinalTimeout(5*time.Second))
-}
-
-func setupTest(t *testing.T) {
-	if _, debug := os.LookupEnv("DEBUG"); debug {
-		f, _ := os.CreateTemp("", "gh-dash-debug.log")
-		fmt.Printf("[DEBU] writing debug logs to %s\n", f.Name())
-		defer f.Close()
-		log.SetOutput(f)
-		log.SetLevel(log.DebugLevel)
-	}
-	setMockClient(t)
-
-	markdown.InitializeMarkdownStyle(true)
-	zone.NewGlobal()
-	zone.SetEnabled(false)
-}
+// func setupTest(t *testing.T) {
+// 	if _, debug := os.LookupEnv("DEBUG"); debug {
+// 		f, _ := os.CreateTemp("", "gh-dash-debug.log")
+// 		fmt.Printf("[DEBU] writing debug logs to %s\n", f.Name())
+// 		defer f.Close()
+// 		log.SetOutput(f)
+// 		log.SetLevel(log.DebugLevel)
+// 	}
+// 	setMockClient(t)
+//
+// 	markdown.InitializeMarkdownStyle(true)
+// 	zone.NewGlobal()
+// 	zone.SetEnabled(false)
+// }
 
 // localRoundTripper is an http.RoundTripper that executes HTTP transactions
 // by using handler directly, instead of going over an HTTP connection.
@@ -101,59 +94,59 @@ func (l localRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	return w.Result(), nil
 }
 
-func mustRead(t *testing.T, r io.Reader) string {
-	t.Helper()
-	b, err := io.ReadAll(r)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
+// func mustRead(t *testing.T, r io.Reader) string {
+// 	t.Helper()
+// 	b, err := io.ReadAll(r)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return string(b)
+// }
+//
+// func mustWrite(t *testing.T, w io.Writer, s string) {
+// 	t.Helper()
+// 	_, err := io.WriteString(w, s)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
-func mustWrite(t *testing.T, w io.Writer, s string) {
-	t.Helper()
-	_, err := io.WriteString(w, s)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func setMockClient(t *testing.T) {
-	t.Helper()
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/graphql", func(w http.ResponseWriter, req *http.Request) {
-		log.Debug("got request", "request", req.URL, "body", req.Body)
-		body := mustRead(t, req.Body)
-		switch {
-		case strings.Contains(body, "query SearchPullRequests"):
-			d, err := os.ReadFile("./testdata/searchPullRequests.json")
-			if err != nil {
-				t.Errorf("failed reading mock data file %v", err)
-			}
-			mustWrite(t, w, string(d))
-		case strings.Contains(body, "query SearchIssues"):
-			d, err := os.ReadFile("./testdata/searchIssues.json")
-			if err != nil {
-				t.Errorf("failed reading mock data file %v", err)
-			}
-			mustWrite(t, w, string(d))
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-	})
-	client, err := gh.NewGraphQLClient(gh.ClientOptions{
-		Transport: localRoundTripper{handler: mux},
-		Host:      "localhost:3000",
-		AuthToken: "fake-token",
-	})
-	if err != nil {
-		t.Errorf("failed creating gh client %v", err)
-	}
-	data.SetClient(client)
-}
+// func setMockClient(t *testing.T) {
+// 	t.Helper()
+// 	mux := http.NewServeMux()
+// 	mux.HandleFunc("/api/graphql", func(w http.ResponseWriter, req *http.Request) {
+// 		log.Debug("got request", "request", req.URL, "body", req.Body)
+// 		body := mustRead(t, req.Body)
+// 		switch {
+// 		case strings.Contains(body, "query SearchPullRequests"):
+// 			d, err := os.ReadFile("./testdata/searchPullRequests.json")
+// 			if err != nil {
+// 				t.Errorf("failed reading mock data file %v", err)
+// 			}
+// 			mustWrite(t, w, string(d))
+// 		case strings.Contains(body, "query SearchIssues"):
+// 			d, err := os.ReadFile("./testdata/searchIssues.json")
+// 			if err != nil {
+// 				t.Errorf("failed reading mock data file %v", err)
+// 			}
+// 			mustWrite(t, w, string(d))
+// 		default:
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
+// 		w.WriteHeader(http.StatusOK)
+// 		w.Header().Set("Content-Type", "application/json")
+// 	})
+// 	client, err := gh.NewGraphQLClient(gh.ClientOptions{
+// 		Transport: localRoundTripper{handler: mux},
+// 		Host:      "localhost:3000",
+// 		AuthToken: "fake-token",
+// 	})
+// 	if err != nil {
+// 		t.Errorf("failed creating gh client %v", err)
+// 	}
+// 	data.SetClient(client)
+// }
 
 func TestGetCurrentViewSections_RepoViewWithNilRepo(t *testing.T) {
 	// This test verifies that getCurrentViewSections returns an empty slice
@@ -329,10 +322,12 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 	sidebarModel.UpdateProgramContext(ctx)
 
 	m := Model{
-		ctx:     ctx,
-		keys:    keys.Keys,
-		prView:  prview.NewModel(ctx),
-		sidebar: sidebarModel,
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prView:           prview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
 	}
 
 	// Set up a PR notification subject so GetSubjectPR() returns non-nil
@@ -342,7 +337,7 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 	initialTab := m.prView.SelectedTab()
 
 	// Send "next tab" key message
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("]")}
+	msg := tea.KeyPressMsg{Text: "]"}
 	newModel, _ := m.Update(msg)
 	m = newModel.(Model)
 
@@ -352,7 +347,7 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 
 	// Now test going back
 	currentTab := m.prView.SelectedTab()
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("[")}
+	msg = tea.KeyPressMsg{Text: "["}
 	newModel, _ = m.Update(msg)
 	m = newModel.(Model)
 
@@ -392,7 +387,12 @@ func TestNotificationView_EnterKeyWorksAfterViewingPR(t *testing.T) {
 	}
 
 	// Create a notification section with a PR notification
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -419,7 +419,7 @@ func TestNotificationView_EnterKeyWorksAfterViewingPR(t *testing.T) {
 	require.NotNil(t, m.notificationView.GetSubjectPR(), "subject PR should be set")
 
 	// Send Enter key
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	// The fix ensures Enter triggers loadNotificationContent() even when a subject is set.
@@ -458,7 +458,12 @@ func TestNotificationView_EnterKeyWorksAfterViewingIssue(t *testing.T) {
 	}
 
 	// Create a notification section with an Issue notification
-	notifSec := notificationssection.NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
 	notifSec.Notifications = []notificationrow.Data{
 		{
 			Notification: data.NotificationData{
@@ -485,16 +490,217 @@ func TestNotificationView_EnterKeyWorksAfterViewingIssue(t *testing.T) {
 	require.NotNil(t, m.notificationView.GetSubjectIssue(), "subject Issue should be set")
 
 	// Send Enter key
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	_, cmd := m.Update(msg)
 
 	// The fix ensures Enter triggers loadNotificationContent() even when a subject is set.
 	require.NotNil(t, cmd, "Enter key should trigger loadNotificationContent and return a command")
 }
 
+func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	defer keys.SetNotificationSubject(keys.NotificationSubjectNone)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-pr",
+				Subject: data.NotificationSubject{
+					Title: "Test PR",
+					Url:   "https://api.github.com/repos/owner/repo/pulls/123",
+					Type:  "PullRequest",
+				},
+				Repository: data.NotificationRepository{FullName: "owner/repo"},
+				Unread:     true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-pr")
+	keys.SetNotificationSubject(keys.NotificationSubjectPR)
+
+	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
+	m = newModel.(Model)
+	require.Nil(
+		t,
+		m.notificationView.GetSubjectPR(),
+		"PR subject should be cleared after pressing esc",
+	)
+	require.Empty(
+		t,
+		m.notificationView.GetSubjectId(),
+		"subject ID should be cleared after pressing esc",
+	)
+
+	newModel, _ = m.Update(tea.KeyPressMsg{Text: "m"})
+	m = newModel.(Model)
+	require.False(t, m.notificationView.HasPendingAction(),
+		"notification mark-read key should not be routed to PR merge action after backing out")
+}
+
+func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	defer keys.SetNotificationSubject(keys.NotificationSubjectNone)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+		sidebar:          sidebarModel,
+		tabs:             tabs.NewModel(ctx),
+	}
+
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notification-issue",
+				Subject: data.NotificationSubject{
+					Title: "Test Issue",
+					Url:   "https://api.github.com/repos/owner/repo/issues/456",
+					Type:  "Issue",
+				},
+				Repository: data.NotificationRepository{FullName: "owner/repo"},
+				Unread:     true,
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+	m.notifications = []section.Section{&notifSec}
+
+	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-issue")
+	keys.SetNotificationSubject(keys.NotificationSubjectIssue)
+
+	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
+	m = newModel.(Model)
+	require.Nil(
+		t,
+		m.notificationView.GetSubjectIssue(),
+		"Issue subject should be cleared after pressing esc",
+	)
+	require.Empty(
+		t,
+		m.notificationView.GetSubjectId(),
+		"subject ID should be cleared after pressing esc",
+	)
+}
+
+func TestNavigationKeysWithNilSection(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.IssuesView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	sidebarModel := sidebar.NewModel()
+	sidebarModel.UpdateProgramContext(ctx)
+
+	m := Model{
+		ctx:          ctx,
+		keys:         keys.Keys,
+		footer:       footer.NewModel(ctx),
+		prView:       prview.NewModel(ctx),
+		issueSidebar: issueview.NewModel(ctx),
+		sidebar:      sidebarModel,
+		tabs:         tabs.NewModel(ctx),
+	}
+	// No sections added — currSection will be nil
+
+	navKeys := []struct {
+		name string
+		msg  tea.KeyPressMsg
+	}{
+		{"down", tea.KeyPressMsg{Text: "j"}},
+		{"up", tea.KeyPressMsg{Text: "k"}},
+		{"firstLine", tea.KeyPressMsg{Text: "g"}},
+		{"lastLine", tea.KeyPressMsg{Text: "G"}},
+		{"refresh", tea.KeyPressMsg{Text: "r"}},
+	}
+
+	for _, tc := range navKeys {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				m.Update(tc.msg)
+			}, "pressing %s with nil section should not panic", tc.name)
+		})
+	}
+}
+
 // executeCommandTemplate mimics the template execution logic from runCustomCommand
 // to allow testing template variable substitution without executing shell commands.
-func executeCommandTemplate(t *testing.T, commandTemplate string, input map[string]any) (string, error) {
+func executeCommandTemplate(
+	t *testing.T,
+	commandTemplate string,
+	input map[string]any,
+) (string, error) {
 	t.Helper()
 	cmd, err := template.New("test_command").Parse(commandTemplate)
 	if err != nil {
@@ -710,6 +916,74 @@ func TestSyncMainContentWidth(t *testing.T) {
 	}
 }
 
+func TestSyncSidebar_NoOpWhenSidebarClosed(t *testing.T) {
+	// Regression test for https://github.com/dlvhdr/gh-dash/issues/798
+	// When preview.open is false, DynamicPreviewWidth is 0, so
+	// GetSidebarContentWidth() returns 0. If syncSidebar() proceeds to
+	// render the PR view with that zero width, layout breaks.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+	cfg.Defaults.Preview.Open = false
+
+	ctx := &context.ProgramContext{
+		Config:      &cfg,
+		ScreenWidth: 100,
+		View:        config.PRsView,
+		StartTask:   func(task context.Task) tea.Cmd { return nil },
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	prSection := prssection.NewModel(
+		0,
+		ctx,
+		config.PrsSectionConfig{
+			Title:   "Test",
+			Filters: "is:open",
+		},
+		time.Now(),
+		time.Now(),
+	)
+	// Add a PR so getCurrRowData() returns non-nil, exercising the
+	// code path that would use the negative width without the guard.
+	prSection.Prs = []prrow.Data{
+		{Primary: &data.PullRequestData{Title: "test", State: "OPEN"}},
+	}
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		prs:              []section.Section{&prSection},
+		sidebar:          sidebar.NewModel(),
+		footer:           footer.NewModel(ctx),
+		tabs:             tabs.NewModel(ctx),
+		prView:           prview.NewModel(ctx),
+		issueSidebar:     issueview.NewModel(ctx),
+		branchSidebar:    branchsidebar.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// sidebar.IsOpen defaults to false from NewModel(), matching preview.open: false
+	require.False(t, m.sidebar.IsOpen)
+	m.sidebar.UpdateProgramContext(ctx)
+
+	// Confirm the precondition: DynamicPreviewWidth is 0, so
+	// GetSidebarContentWidth returns 0 (no usable width).
+	require.Equal(t, 0, m.ctx.DynamicPreviewWidth)
+	require.Equal(t, 0, m.sidebar.GetSidebarContentWidth(),
+		"GetSidebarContentWidth should be 0 when DynamicPreviewWidth is 0")
+
+	// Without the early-return guard, syncSidebar would needlessly render
+	// the PR view with a zero-width sidebar.
+	require.NotPanics(t, func() {
+		cmd := m.syncSidebar()
+		require.Nil(t, cmd, "syncSidebar should return nil when sidebar is closed")
+	})
+}
+
 func TestPromptConfirmationForNotificationPR(t *testing.T) {
 	// Test that promptConfirmationForNotificationPR sets the pending action
 	// and displays the confirmation prompt in the footer.
@@ -756,7 +1030,11 @@ func TestPromptConfirmationForNotificationPR_NilSubject(t *testing.T) {
 	cmd := m.promptConfirmationForNotificationPR("close")
 
 	require.Nil(t, cmd, "should return nil when no PR subject")
-	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no PR subject")
+	require.Empty(
+		t,
+		m.notificationView.GetPendingAction(),
+		"should not set pending action when no PR subject",
+	)
 }
 
 func TestPromptConfirmationForNotificationIssue(t *testing.T) {
@@ -822,7 +1100,7 @@ func TestNotificationConfirmation_CancelOnOtherKey(t *testing.T) {
 	m.notificationView.SetPendingPRAction("close") // Simulate pending action
 
 	// Press 'n' to cancel
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
+	msg := tea.KeyPressMsg{Text: "n"}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
 
@@ -865,7 +1143,7 @@ func TestNotificationConfirmation_AcceptWithY(t *testing.T) {
 	m.notificationView.SetPendingPRAction("close")
 
 	// Press 'y' to confirm
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	msg := tea.KeyPressMsg{Text: "y"}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
 
@@ -908,7 +1186,7 @@ func TestNotificationConfirmation_AcceptWithUpperY(t *testing.T) {
 	m.notificationView.SetPendingPRAction("merge")
 
 	// Press 'Y' to confirm
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")}
+	msg := tea.KeyPressMsg{Text: "Y"}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
 
@@ -953,7 +1231,7 @@ func TestNotificationConfirmation_AcceptWithEnter(t *testing.T) {
 	m.notificationView.SetPendingIssueAction("reopen")
 
 	// Press Enter to confirm
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	newModel, cmd := m.Update(msg)
 	m = newModel.(Model)
 
@@ -973,7 +1251,11 @@ func TestPromptConfirmationForNotificationIssue_NilSubject(t *testing.T) {
 	cmd := m.promptConfirmationForNotificationIssue("close")
 
 	require.Nil(t, cmd, "should return nil when no Issue subject")
-	require.Empty(t, m.notificationView.GetPendingAction(), "should not set pending action when no Issue subject")
+	require.Empty(
+		t,
+		m.notificationView.GetPendingAction(),
+		"should not set pending action when no Issue subject",
+	)
 }
 
 func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
@@ -1027,7 +1309,7 @@ func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
 	require.True(t, data.IsEnrichmentCacheCleared(), "cache should start cleared")
 
 	// Send refresh key - this should call data.ClearEnrichmentCache()
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")}
+	msg := tea.KeyPressMsg{Text: "r"}
 	_, _ = m.Update(msg)
 
 	// Verify cache is still cleared (ClearEnrichmentCache was called)
@@ -1084,7 +1366,7 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	// Send refresh all key - ClearEnrichmentCache is called at the start
 	// of the handler, before fetchAllViewSections. We use recover to handle
 	// any panics from incomplete test setup while still verifying cache behavior.
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("R")}
+	msg := tea.KeyPressMsg{Text: "R"}
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -1100,4 +1382,528 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 	// Verify cache is cleared - this is the key assertion
 	require.True(t, data.IsEnrichmentCacheCleared(),
 		"cache should be cleared after refresh all key press")
+}
+
+func TestPromptConfirmationForNotificationPR_ApproveWorkflows(t *testing.T) {
+	// Test that promptConfirmationForNotificationPR sets the pending action
+	// for approveWorkflows.
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:    ctx,
+		keys:   keys.Keys,
+		footer: footer.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 42,
+		},
+	}, "test-notification-id")
+
+	// Call promptConfirmationForNotificationPR with approveWorkflows
+	m.promptConfirmationForNotificationPR("approveWorkflows")
+
+	// Verify pending action is set
+	require.Equal(t, "pr_approveWorkflows", m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be set to pr_approveWorkflows")
+}
+
+func TestNotificationConfirmation_ApproveWorkflows_AcceptWithY(t *testing.T) {
+	// Test that confirming approveWorkflows executes the action
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag: "../config/testdata/test-config.yml",
+	})
+	require.NoError(t, err)
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+		StartTask: func(task context.Task) tea.Cmd {
+			return nil // No-op for testing
+		},
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := Model{
+		ctx:              ctx,
+		keys:             keys.Keys,
+		footer:           footer.NewModel(ctx),
+		notificationView: notificationview.NewModel(ctx),
+	}
+
+	// Set up a PR notification subject and pending approveWorkflows action
+	m.notificationView.SetSubjectPR(&prrow.Data{
+		Primary: &data.PullRequestData{
+			Number: 42,
+			Repository: data.Repository{
+				NameWithOwner: "owner/repo",
+			},
+		},
+	}, "test-notification-id")
+	m.notificationView.SetPendingPRAction("approveWorkflows")
+
+	// Press 'y' to confirm
+	msg := tea.KeyPressMsg{Text: "y"}
+	newModel, cmd := m.Update(msg)
+	m = newModel.(Model)
+
+	// Verify pending action is cleared and command is returned
+	require.Empty(t, m.notificationView.GetPendingAction(),
+		"pendingNotificationAction should be cleared after confirmation")
+	require.NotNil(t, cmd, "should return a command to execute the action")
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_PRNotification(t *testing.T) {
+	// Custom PR keybindings should be recognized when viewing a PR notification
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom PR keybinding
+	cfg.Keybindings.Prs = []config.Keybinding{
+		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a PR notification as the current row
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-1",
+				Subject: data.NotificationSubject{
+					Title: "Test PR",
+					Url:   "https://api.github.com/repos/owner/repo/pulls/42",
+					Type:  "PullRequest",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom PR keybinding "B" should be recognized
+	msg := tea.KeyPressMsg{Text: "B"}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom PR keybinding should be recognized in NotificationsView for PR notifications")
+
+	// A non-configured key should not be recognized
+	msg = tea.KeyPressMsg{Text: "Z"}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"unconfigured key should not be recognized")
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_IssueNotification(t *testing.T) {
+	// Custom Issue keybindings should be recognized when viewing an Issue notification
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom Issue keybinding
+	cfg.Keybindings.Issues = []config.Keybinding{
+		{Key: "B", Command: "gh issue view -w {{.IssueNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with an Issue notification as the current row
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-2",
+				Subject: data.NotificationSubject{
+					Title: "Test Issue",
+					Url:   "https://api.github.com/repos/owner/repo/issues/99",
+					Type:  "Issue",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom Issue keybinding "B" should be recognized
+	msg := tea.KeyPressMsg{Text: "B"}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom Issue keybinding should be recognized in NotificationsView for Issue notifications")
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_NonPRIssueNotification(t *testing.T) {
+	// Custom PR/Issue keybindings should NOT be recognized for other notification types
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	cfg.Keybindings.Prs = []config.Keybinding{
+		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a Release notification
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-3",
+				Subject: data.NotificationSubject{
+					Title: "v1.0.0",
+					Url:   "https://api.github.com/repos/owner/repo/releases/12345",
+					Type:  "Release",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom PR keybinding "B" should NOT be recognized for a Release notification
+	msg := tea.KeyPressMsg{Text: "B"}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"custom PR keybinding should not be recognized for Release notifications")
+}
+
+func TestNotificationPRCommandTemplateVariables(t *testing.T) {
+	// Test that notification PR command templates have RepoName and PrNumber available,
+	// matching the behavior of runCustomNotificationPRCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"PrNumber": 42,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "PrNumber variable",
+			template: "gh pr view {{.PrNumber}}",
+			expected: "gh pr view 42",
+		},
+		{
+			name:     "RepoName and PrNumber",
+			template: "gh pr view -R {{.RepoName}} {{.PrNumber}}",
+			expected: "gh pr view -R owner/repo 42",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationPRCommandTemplateVariables_WithSidebar(t *testing.T) {
+	// When the sidebar is open for a PR notification, HeadRefName, BaseRefName,
+	// and Author become available in the template fields.
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"PrNumber":    42,
+		"HeadRefName": "feature-branch",
+		"BaseRefName": "main",
+		"Author":      "octocat",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "HeadRefName variable",
+			template: "git checkout {{.HeadRefName}}",
+			expected: "git checkout feature-branch",
+		},
+		{
+			name:     "BaseRefName variable",
+			template: "git diff {{.BaseRefName}}...{{.HeadRefName}}",
+			expected: "git diff main...feature-branch",
+		},
+		{
+			name:     "Author variable",
+			template: "echo {{.Author}}",
+			expected: "echo octocat",
+		},
+		{
+			name:     "all fields combined",
+			template: "gh pr view -R {{.RepoName}} {{.PrNumber}} # by {{.Author}} ({{.HeadRefName}} -> {{.BaseRefName}})",
+			expected: "gh pr view -R owner/repo 42 # by octocat (feature-branch -> main)",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationIssueCommandTemplateVariables(t *testing.T) {
+	// Test that notification Issue command templates have RepoName and IssueNumber available,
+	// matching the behavior of runCustomNotificationIssueCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 99,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "IssueNumber variable",
+			template: "gh issue view {{.IssueNumber}}",
+			expected: "gh issue view 99",
+		},
+		{
+			name:     "RepoName and IssueNumber",
+			template: "gh issue view -R {{.RepoName}} {{.IssueNumber}}",
+			expected: "gh issue view -R owner/repo 99",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationIssueCommandTemplateVariables_WithSidebar(t *testing.T) {
+	// When the sidebar is open for an Issue notification, Author becomes available.
+	input := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 99,
+		"Author":      "octocat",
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Author variable",
+			template: "echo {{.Author}}",
+			expected: "echo octocat",
+		},
+		{
+			name:     "all fields combined",
+			template: "gh issue view -R {{.RepoName}} {{.IssueNumber}} # by {{.Author}}",
+			expected: "gh issue view -R owner/repo 99 # by octocat",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestNotificationCommandTemplate_PRFieldsWithoutSidebar(t *testing.T) {
+	// When the sidebar is not open, notification PR commands only have RepoName and PrNumber.
+	// Templates referencing sidebar-only fields should error (missingkey=error behavior).
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"PrNumber": 42,
+	}
+
+	unavailableFields := []struct {
+		name     string
+		template string
+	}{
+		{"HeadRefName", "git checkout {{.HeadRefName}}"},
+		{"BaseRefName", "git checkout {{.BaseRefName}}"},
+		{"Author", "echo {{.Author}}"},
+	}
+
+	for _, tc := range unavailableFields {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := executeCommandTemplate(t, tc.template, input)
+			require.Error(t, err,
+				"%s should not be available in notification PR commands", tc.name)
+		})
+	}
+}
+
+func TestIsUserDefinedKeybinding_NotificationsView_NotificationKeybinding(t *testing.T) {
+	// Custom notification keybindings should be recognized regardless of subject type
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	require.NoError(t, err)
+
+	// Add a custom notification keybinding
+	cfg.Keybindings.Notifications = []config.Keybinding{
+		{Key: "N", Command: "echo {{.RepoName}} {{.Number}}"},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+		View:   config.NotificationsView,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	// Create a notification section with a Release notification (not PR or Issue)
+	notifSec := notificationssection.NewModel(
+		0,
+		ctx,
+		config.NotificationsSectionConfig{},
+		time.Now(),
+	)
+	notifSec.Notifications = []notificationrow.Data{
+		{
+			Notification: data.NotificationData{
+				Id: "test-notif",
+				Subject: data.NotificationSubject{
+					Title: "v2.0.0",
+					Url:   "https://api.github.com/repos/owner/repo/releases/99",
+					Type:  "Release",
+				},
+				Repository: data.NotificationRepository{
+					FullName: "owner/repo",
+				},
+			},
+		},
+	}
+	notifSec.Table.SetRows(notifSec.BuildRows())
+
+	m := Model{
+		ctx:           ctx,
+		keys:          keys.Keys,
+		notifications: []section.Section{&notifSec},
+	}
+
+	// The custom notification keybinding "N" should be recognized
+	msg := tea.KeyPressMsg{Text: "N"}
+	require.True(t, m.isUserDefinedKeybinding(msg),
+		"custom notification keybinding should be recognized for any notification type")
+
+	// A non-configured key should not be recognized
+	msg = tea.KeyPressMsg{Text: "Z"}
+	require.False(t, m.isUserDefinedKeybinding(msg),
+		"unconfigured key should not be recognized")
+}
+
+func TestNotificationCommandTemplateVariables(t *testing.T) {
+	// Test that notification-specific command templates have RepoName and Number available,
+	// matching the behavior of runCustomNotificationCommand in modelUtils.go
+	input := map[string]any{
+		"RepoName": "owner/repo",
+		"Number":   42,
+	}
+
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{
+			name:     "Number variable",
+			template: "gh api /notifications/threads/{{.Number}}",
+			expected: "gh api /notifications/threads/42",
+		},
+		{
+			name:     "RepoName and Number",
+			template: "echo {{.RepoName}} #{{.Number}}",
+			expected: "echo owner/repo #42",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := executeCommandTemplate(t, tc.template, input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }

@@ -125,7 +125,9 @@ func GetRepo(dir string) (*Repo, error) {
 	}
 	headBranch, _ = strings.CutPrefix(headBranch, gitm.RefsHeads)
 
-	remotes, err := repo.Remotes(gitm.RemotesOptions{CommandOptions: gitm.CommandOptions{Args: []string{"show"}}})
+	remotes, err := repo.Remotes(
+		gitm.RemotesOptions{CommandOptions: gitm.CommandOptions{Args: []string{"show"}}},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +182,9 @@ func FetchRepo(dir string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = repo.Fetch(gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--all"}}})
+	err = repo.Fetch(
+		gitm.FetchOptions{CommandOptions: gitm.CommandOptions{Args: []string{"--all"}}},
+	)
 	if err != nil {
 		return nil, err
 	}

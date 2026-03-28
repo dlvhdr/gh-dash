@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -96,15 +96,21 @@ func parseReasonFilters(search string) []string {
 	return reasons
 }
 
-// parseNotificationFilters extracts all notification filters from search string
-func parseNotificationFilters(search string) NotificationFilters {
+// parseNotificationFilters extracts all notification filters from search string.
+// When includeRead is true (the default config), the default read state is "all"
+// instead of "unread", matching GitHub's default behavior.
+func parseNotificationFilters(search string, includeRead bool) NotificationFilters {
+	defaultReadState := data.NotificationStateUnread
+	if includeRead {
+		defaultReadState = data.NotificationStateAll
+	}
 	filters := NotificationFilters{
 		RepoFilters:       parseRepoFilters(search),
 		ReasonFilters:     parseReasonFilters(search),
-		ReadState:         data.NotificationStateUnread, // Default to unread
+		ReadState:         defaultReadState,
 		IsDone:            false,
 		ExplicitUnread:    false,
-		IncludeBookmarked: true, // Default view includes bookmarked items
+		IncludeBookmarked: !includeRead, // Only auto-include bookmarks when filtering to unread
 	}
 
 	matches := stateFilterRegex.FindAllStringSubmatch(search, -1)
@@ -206,14 +212,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.IsSearchFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
 				return m, blinkCmd
 
-			case tea.KeyEnter:
+			case "enter":
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
@@ -223,16 +230,16 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
 				return m, cmd
 
-			case tea.KeyEnter:
+			case "enter":
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
-				if input == "Y" || input == "y" {
+				if input == "" || input == "Y" || input == "y" {
 					switch action {
 					case "done":
 						cmd = m.markAsDone()
@@ -293,7 +300,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, keys.NotificationKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
 				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
 			}
 			searchValue := m.GetSearchValue()
@@ -340,7 +347,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case UpdateNotificationCommentsMsg:
 		// Update the notification with fetched data
-		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+		log.Debug("UpdateNotificationCommentsMsg received", "id", msg.Id, "count",
+			msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 		for i := range m.Notifications {
 			if m.Notifications[i].GetId() == msg.Id {
 				m.Notifications[i].NewCommentsCount = msg.NewCommentsCount
@@ -354,7 +362,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 					msg.Actor,
 				)
 				m.Table.SetRows(m.BuildRows())
-				log.Debug("Updated notification", "id", msg.Id, "count", msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
+				log.Debug("Updated notification", "id", msg.Id, "count",
+					msg.NewCommentsCount, "state", msg.SubjectState, "actor", msg.Actor)
 				break
 			}
 		}
@@ -393,12 +402,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case ClearAllNotificationsMsg:
-		// Clear all notifications after marking all as done
+		// Clear all notifications after marking all as done, then refetch
 		m.Notifications = []notificationrow.Data{}
 		m.TotalCount = 0
-		m.SetIsLoading(false)
+		m.PageInfo = nil
+		m.sessionMarkedDone = make(map[string]bool)
+		m.SetIsLoading(true)
 		m.Table.SetRows(m.BuildRows())
 		m.UpdateTotalItemsCount(0)
+		cmd = tea.Batch(m.FetchNextPageSectionRows()...)
 
 	case MarkAllAsReadMsg:
 		// Mark all notifications as read (update their state)
@@ -537,7 +549,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	var cmds []tea.Cmd
 
 	// Parse filters from search value (includes repo filter if smartFilteringAtLaunch is enabled)
-	filters := parseNotificationFilters(m.GetSearchValue())
+	filters := parseNotificationFilters(m.GetSearchValue(), m.Ctx.Config.IncludeReadNotifications)
 
 	// Handle is:done filter - these notifications cannot be retrieved
 	if filters.IsDone {
@@ -613,7 +625,12 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		var lastPageInfo data.PageInfo
 		isFirstPage := pageInfo == nil
 		for {
-			res, err := data.FetchNotifications(limit, filters.RepoFilters, readState, currentPageInfo)
+			res, err := data.FetchNotifications(
+				limit,
+				filters.RepoFilters,
+				readState,
+				currentPageInfo,
+			)
 			if err != nil {
 				return constants.TaskFinishedMsg{
 					SectionId:   m.Id,
@@ -694,7 +711,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 							continue
 						}
 						// Apply repo filter if set
-						if len(repoFilterMap) > 0 && !repoFilterMap[result.notification.Repository.FullName] {
+						if len(repoFilterMap) > 0 &&
+							!repoFilterMap[result.notification.Repository.FullName] {
 							continue
 						}
 						res.Notifications = append(res.Notifications, *result.notification)
@@ -706,7 +724,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 			for _, n := range res.Notifications {
 				// Skip notifications marked as done (GitHub API still returns them with all=true)
 				// Check both persistent store and session state
-				if doneStore.IsDone(n.Id) || sessionMarkedDone[n.Id] {
+				if doneStore.IsDone(n.Id, n.UpdatedAt) || sessionMarkedDone[n.Id] {
 					continue
 				}
 
@@ -739,7 +757,11 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 					notifications = append(notifications, notificationrow.Data{
 						Notification: n,
 						// Generate initial activity description (will be updated with actor later)
-						ActivityDescription: notificationrow.GenerateActivityDescription(n.Reason, n.Subject.Type, ""),
+						ActivityDescription: notificationrow.GenerateActivityDescription(
+							n.Reason,
+							n.Subject.Type,
+							"",
+						),
 					})
 				}
 			}
@@ -923,7 +945,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 		lastReadAt := notif.Notification.LastReadAt
 		apiUrl := notif.Notification.Subject.Url
 
-		log.Debug("Processing notification", "id", notifId, "type", subjectType, "webUrl", subjectUrl, "apiUrl", apiUrl)
+		log.Debug(
+			"Processing notification",
+			"id",
+			notifId,
+			"type",
+			subjectType,
+			"webUrl",
+			subjectUrl,
+			"apiUrl",
+			apiUrl,
+		)
 
 		latestCommentUrl := notif.Notification.Subject.LatestCommentUrl
 
@@ -944,7 +976,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = pr.Author.Login
 				}
-				log.Debug("Got PR comment count", "id", id, "count", count, "state", pr.State, "actor", actor)
+				log.Debug(
+					"Got PR comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					pr.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,
@@ -968,7 +1010,17 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 				if actor == "" {
 					actor = issue.Author.Login
 				}
-				log.Debug("Got Issue comment count", "id", id, "count", count, "state", issue.State, "actor", actor)
+				log.Debug(
+					"Got Issue comment count",
+					"id",
+					id,
+					"count",
+					count,
+					"state",
+					issue.State,
+					"actor",
+					actor,
+				)
 				return UpdateNotificationCommentsMsg{
 					Id:               id,
 					NewCommentsCount: count,

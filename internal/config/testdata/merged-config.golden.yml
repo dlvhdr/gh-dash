@@ -57,6 +57,9 @@ defaults:
       base:
         width: 15
         hidden: true
+      labels:
+        width: 22
+        hidden: true
       lines:
         width: 15
     issues:
@@ -141,3 +144,4 @@ pager:
 confirmQuit: true
 showAuthorIcons: true
 smartFilteringAtLaunch: true
+includeReadNotifications: true

@@ -13,12 +13,11 @@ import (
 	"runtime/pprof"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/charmbracelet/fang"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
-	zone "github.com/lrstanley/bubblezone"
-	"github.com/muesli/termenv"
+	zone "github.com/lrstanley/bubblezone/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -27,7 +26,6 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	dctx "github.com/dlvhdr/gh-dash/v4/internal/tui/context"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
 var (
@@ -73,8 +71,13 @@ gh dash -v
 )
 
 func Execute() {
-	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(rootCmd.Version),
-		fang.WithoutCompletions(), fang.WithoutManpage()); err != nil {
+	if err := fang.Execute(
+		context.Background(),
+		rootCmd,
+		fang.WithVersion(rootCmd.Version),
+		fang.WithoutCompletions(),
+		fang.WithoutManpage(),
+	); err != nil {
 		os.Exit(1)
 	}
 }
@@ -133,7 +136,12 @@ func buildVersion(version, commit, date, builtBy string) string {
 	}
 	result = fmt.Sprintf("%s\ngoos: %s\ngoarch: %s", result, runtime.GOOS, runtime.GOARCH)
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
-		result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
+		result = fmt.Sprintf(
+			"%s\nmodule version: %s, checksum: %s",
+			result,
+			info.Main.Version,
+			info.Main.Sum,
+		)
 	}
 
 	return result
@@ -214,10 +222,6 @@ func init() {
 
 		zone.NewGlobal()
 
-		// see https://github.com/charmbracelet/lipgloss/issues/73
-		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
-		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
-
 		model, logger := createModel(config.Location{RepoPath: repo, ConfigFlag: cfgFlag}, debug)
 		if logger != nil {
 			defer logger.Close()
@@ -236,12 +240,7 @@ func init() {
 			defer pprof.StopCPUProfile()
 		}
 
-		p := tea.NewProgram(
-			model,
-			tea.WithAltScreen(),
-			tea.WithReportFocus(),
-			tea.WithMouseCellMotion(),
-		)
+		p := tea.NewProgram(model)
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)
 		}

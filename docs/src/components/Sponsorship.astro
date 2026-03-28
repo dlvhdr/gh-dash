@@ -1,8 +1,5 @@
 ---
 import { getSponsorshipGoal } from "../data/sponsorshipGoal";
-import { Icon } from "@astrojs/starlight/components";
-
-const { variant } = Astro.props;
 
 const response = await getSponsorshipGoal();
 const current = response.data.user.monthlyEstimatedSponsorsIncomeInCents / 100;

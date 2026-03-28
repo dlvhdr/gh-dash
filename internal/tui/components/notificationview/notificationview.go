@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -92,10 +92,17 @@ func (m *Model) SetPendingPRAction(action string) string {
 	m.pendingAction = "pr_" + action
 
 	actionDisplay := action
-	if action == "ready" {
+	switch action {
+	case "ready":
 		actionDisplay = "mark as ready"
+	case "approveWorkflows":
+		actionDisplay = "approve all workflows for"
 	}
-	return fmt.Sprintf("Are you sure you want to %s PR #%d? (y/N)", actionDisplay, m.subjectPR.GetNumber())
+	return fmt.Sprintf(
+		"Are you sure you want to %s PR #%d? (y/N)",
+		actionDisplay,
+		m.subjectPR.GetNumber(),
+	)
 }
 
 // SetPendingIssueAction sets a pending Issue action and returns the confirmation prompt.
@@ -107,7 +114,11 @@ func (m *Model) SetPendingIssueAction(action string) string {
 	}
 	m.pendingAction = "issue_" + action
 
-	return fmt.Sprintf("Are you sure you want to %s Issue #%d? (y/N)", action, m.subjectIssue.Number)
+	return fmt.Sprintf(
+		"Are you sure you want to %s Issue #%d? (y/N)",
+		action,
+		m.subjectIssue.Number,
+	)
 }
 
 // HasPendingAction returns true if there is a pending action awaiting confirmation.
@@ -133,8 +144,8 @@ func (m Model) Update(msg tea.Msg) (Model, string) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.String() == "y" || msg.String() == "Y" || msg.Type == tea.KeyEnter {
+	case tea.KeyPressMsg:
+		if msg.String() == "y" || msg.String() == "Y" || msg.Code == tea.KeyEnter {
 			action := m.pendingAction
 			m.pendingAction = ""
 			return m, action
@@ -155,7 +166,12 @@ func (m Model) View() string {
 	notification := m.row.Notification
 
 	// Title - using common preview styling
-	titleBlock := common.RenderPreviewTitle(m.ctx.Theme, m.ctx.Styles.Common, m.width, notification.Subject.Title)
+	titleBlock := common.RenderPreviewTitle(
+		m.ctx.Theme,
+		m.ctx.Styles.Common,
+		m.width,
+		notification.Subject.Title,
+	)
 
 	labelStyle := lipgloss.NewStyle().
 		Foreground(m.ctx.Theme.FaintText).

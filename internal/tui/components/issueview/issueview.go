@@ -2,19 +2,18 @@ package issueview
 
 import (
 	"fmt"
+	"image/color"
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/detailedit"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -30,241 +29,91 @@ var (
 	lineCleanupRegex = regexp.MustCompile(`((\n)+|^)([^\r\n]*\|[^\r\n]*(\n)?)+`)
 )
 
-type RepoLabelsFetchedMsg struct {
-	Labels []data.Label
-}
-
-type RepoLabelsFetchFailedMsg struct {
-	Err error
-}
-
 type Model struct {
 	ctx       *context.ProgramContext
 	issue     *issuerow.Issue
 	sectionId int
 	width     int
-
-	ShowConfirmCancel bool
-	isCommenting      bool
-	isLabeling        bool
-	isAssigning       bool
-	isUnassigning     bool
-
-	inputBox   inputbox.Model
-	ac         *autocomplete.Model
-	repoLabels []data.Label
+	editor    detailedit.Controller
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
-	inputBox := inputbox.NewModel(ctx)
-	linesToAdjust := 5
-	inputBox.SetHeight(common.InputBoxHeight - linesToAdjust)
-
-	inputBox.OnSuggestionSelected = handleLabelSelection
-	inputBox.CurrentContext = labelAtCursor
-	inputBox.SuggestionsToExclude = allLabels
-
-	ac := autocomplete.NewModel(ctx)
-	inputBox.SetAutocomplete(&ac)
-
 	return Model{
-		issue: nil,
-
-		isCommenting:  false,
-		isLabeling:    false,
-		isAssigning:   false,
-		isUnassigning: false,
-
-		inputBox:   inputBox,
-		ac:         &ac,
-		repoLabels: nil,
+		issue:  nil,
+		editor: detailedit.New(ctx),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
-	var (
-		cmds  []tea.Cmd
-		cmd   tea.Cmd
-		taCmd tea.Cmd
-	)
+	editor, cmd, submit, handled := m.editor.Update(msg)
+	m.editor = editor
 
-	switch msg := msg.(type) {
-	case RepoLabelsFetchedMsg:
-		clearCmd := m.ac.SetFetchSuccess()
-		m.repoLabels = msg.Labels
-		labelNames := data.GetLabelNames(msg.Labels)
-		m.ac.SetSuggestions(labelNames)
-		if m.isLabeling {
-			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
-			existingLabels := allLabels(m.inputBox.Value())
-			m.ac.Show(currentLabel, existingLabels)
+	if submit != nil {
+		if m.issue == nil {
+			return m, nil, nil
 		}
-		return m, clearCmd, nil
 
-	case RepoLabelsFetchFailedMsg:
-		clearCmd := m.ac.SetFetchError(msg.Err)
-		return m, clearCmd, nil
+		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
 
-	case autocomplete.FetchSuggestionsRequestedMsg:
-		// Only fetch when we're in labeling mode (where labels are relevant)
-		if m.isLabeling {
-			// If this is a forced refresh (e.g., via Ctrl+F), clear the cached labels
-			// for this repo so FetchRepoLabels will actually call the gh CLI.
-			if msg.Force {
-				if m.issue != nil {
-					repoName := m.issue.Data.GetRepoNameWithOwner()
-					data.ClearRepoLabelCache(repoName)
-				}
+		switch submit.Mode {
+		case detailedit.ModeComment:
+			if len(strings.TrimSpace(submit.Value)) != 0 {
+				return m, tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, submit.Value), nil
 			}
-			cmd := m.fetchLabels()
-			return m, cmd, nil
-		}
-		return m, nil, nil
+			return m, nil, nil
 
-	case tea.KeyMsg:
-		if m.isCommenting {
-			switch msg.Type {
-			case tea.KeyCtrlD:
-				if len(strings.Trim(m.inputBox.Value(), " ")) != 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, m.inputBox.Value())
-				}
-				m.inputBox.Blur()
-				m.isCommenting = false
-				return m, cmd, nil
-
-			case tea.KeyEsc, tea.KeyCtrlC:
-				if !m.ShowConfirmCancel {
-					m.shouldCancelComment()
-				}
-			default:
-				if msg.String() == "Y" || msg.String() == "y" {
-					if m.shouldCancelComment() {
-						return m, nil, nil
-					}
-				}
-				if m.ShowConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
-					m.inputBox.SetPrompt(constants.CommentPrompt)
-					m.ShowConfirmCancel = false
-					return m, nil, nil
-				}
-				m.inputBox.SetPrompt(constants.CommentPrompt)
-				m.ShowConfirmCancel = false
+		case detailedit.ModeAssign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
+			return m, nil, nil
 
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isLabeling {
-			switch msg.Type {
-			case tea.KeyCtrlD:
-				labels := allLabels(m.inputBox.Value())
-				if len(labels) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.LabelIssue(m.ctx, sid, m.issue.Data, labels, m.issue.Data.Labels.Nodes)
-				}
-				m.inputBox.Blur()
-				m.isLabeling = false
-				m.ac.Hide()
-				return m, cmd, nil
-
-			case tea.KeyEsc, tea.KeyCtrlC:
-				m.inputBox.Blur()
-				m.isLabeling = false
-				m.ac.Hide()
-				return m, nil, nil
+		case detailedit.ModeUnassign:
+			usernames := dataautocomplete.AllWords(submit.Value)
+			if len(usernames) > 0 {
+				return m, tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
+			return m, nil, nil
 
-			if key.Matches(msg, autocomplete.RefreshSuggestionsKey) {
-				if m.issue != nil {
-					repoName := m.issue.Data.GetRepoNameWithOwner()
-					data.ClearRepoLabelCache(repoName)
-				}
-				cmds = append(cmds, m.fetchLabels())
-			}
-
-			previousCursorPos := m.inputBox.GetCursorPosition()
-			previousValue := m.inputBox.Value()
-			previousLabel := labelAtCursor(previousCursorPos, previousValue)
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-
-			currentCursorPos := m.inputBox.GetCursorPosition()
-			currentValue := m.inputBox.Value()
-			currentLabel := labelAtCursor(currentCursorPos, currentValue)
-
-			if currentLabel != previousLabel {
-				existingLabels := allLabels(currentValue)
-				m.ac.Show(currentLabel, existingLabels)
-			}
-		} else if m.isAssigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
-				usernames := strings.Fields(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames)
-				}
-				m.inputBox.Blur()
-				m.isAssigning = false
-				return m, cmd, nil
-
-			case tea.KeyEsc, tea.KeyCtrlC:
-				m.inputBox.Blur()
-				m.isAssigning = false
-				return m, nil, nil
-			}
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else if m.isUnassigning {
-			switch msg.Type {
-			case tea.KeyCtrlD:
-				usernames := strings.Fields(m.inputBox.Value())
-				if len(usernames) > 0 {
-					sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
-					cmd = tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames)
-				}
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, cmd, nil
-
-			case tea.KeyEsc, tea.KeyCtrlC:
-				m.inputBox.Blur()
-				m.isUnassigning = false
-				return m, nil, nil
-			}
-
-			m.inputBox, taCmd = m.inputBox.Update(msg)
-			cmds = append(cmds, cmd, taCmd)
-		} else {
-			switch {
-			case key.Matches(msg, keys.IssueKeys.Label):
-				return m, nil, &IssueAction{Type: IssueActionLabel}
-			case key.Matches(msg, keys.IssueKeys.Assign):
-				return m, nil, &IssueAction{Type: IssueActionAssign}
-			case key.Matches(msg, keys.IssueKeys.Unassign):
-				return m, nil, &IssueAction{Type: IssueActionUnassign}
-			case key.Matches(msg, keys.IssueKeys.Comment):
-				return m, nil, &IssueAction{Type: IssueActionComment}
-			case key.Matches(msg, keys.IssueKeys.Close):
-				return m, nil, &IssueAction{Type: IssueActionClose}
-			case key.Matches(msg, keys.IssueKeys.Reopen):
-				return m, nil, &IssueAction{Type: IssueActionReopen}
+		case detailedit.ModeLabel:
+			labels := dataautocomplete.CurrentLabels(submit.Value)
+			if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
+				return m, tasks.LabelIssue(
+					m.ctx,
+					sid,
+					m.issue.Data,
+					labels,
+					m.issue.Data.Labels.Nodes,
+				), nil
 			}
 			return m, nil, nil
 		}
 	}
-
-	switch msg.(type) {
-	case spinner.TickMsg, autocomplete.ClearFetchStatusMsg:
-		var acCmd tea.Cmd
-		*m.ac, acCmd = m.ac.Update(msg)
-		cmds = append(cmds, acCmd)
+	if handled {
+		return m, cmd, nil
 	}
 
-	return m, tea.Batch(cmds...), nil
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch {
+		case key.Matches(keyMsg, keys.IssueKeys.Label):
+			return m, nil, &IssueAction{Type: IssueActionLabel}
+		case key.Matches(keyMsg, keys.IssueKeys.Assign):
+			return m, nil, &IssueAction{Type: IssueActionAssign}
+		case key.Matches(keyMsg, keys.IssueKeys.Unassign):
+			return m, nil, &IssueAction{Type: IssueActionUnassign}
+		case key.Matches(keyMsg, keys.IssueKeys.Comment):
+			return m, nil, &IssueAction{Type: IssueActionComment}
+		case key.Matches(keyMsg, keys.IssueKeys.Checkout):
+			return m, nil, &IssueAction{Type: IssueActionCheckout}
+		case key.Matches(keyMsg, keys.IssueKeys.Close):
+			return m, nil, &IssueAction{Type: IssueActionClose}
+		case key.Matches(keyMsg, keys.IssueKeys.Reopen):
+			return m, nil, &IssueAction{Type: IssueActionReopen}
+		}
+	}
+
+	return m, cmd, nil
 }
 
 func (m Model) View() string {
@@ -290,10 +139,8 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if m.isCommenting || m.isAssigning || m.isUnassigning {
-		s.WriteString(m.inputBox.View())
-	} else if m.isLabeling {
-		s.WriteString(m.inputBox.ViewWithAutocomplete())
+	if editorView := m.editor.View(); editorView != "" {
+		s.WriteString(editorView)
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
@@ -309,7 +156,7 @@ func (m *Model) renderTitle() string {
 }
 
 func (m *Model) renderStatusPill() string {
-	bgColor := ""
+	var bgColor color.Color
 	content := ""
 	switch m.issue.Data.State {
 	case "OPEN":
@@ -321,8 +168,8 @@ func (m *Model) renderStatusPill() string {
 	}
 
 	return m.ctx.Styles.PrView.PillStyle.
-		BorderForeground(lipgloss.Color(bgColor)).
-		Background(lipgloss.Color(bgColor)).
+		BorderForeground(bgColor).
+		Background(bgColor).
 		Render(content)
 }
 
@@ -340,7 +187,8 @@ func (m *Model) renderAuthor() string {
 			lipgloss.JoinHorizontal(lipgloss.Top, " ⋅ ", time, " ago", " ⋅ ")),
 		lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(
 			lipgloss.JoinHorizontal(lipgloss.Top, data.GetAuthorRoleIcon(m.issue.Data.AuthorAssociation,
-				m.ctx.Theme), " ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
+				m.ctx.Theme),
+				" ", lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(strings.ToLower(authorAssociation))),
 		),
 	)
 }
@@ -353,7 +201,10 @@ func (m *Model) renderBody() string {
 
 	body = strings.TrimSpace(body)
 	if body == "" {
-		return lipgloss.NewStyle().Italic(true).Foreground(m.ctx.Theme.FaintText).Render("No description provided.")
+		return lipgloss.NewStyle().
+			Italic(true).
+			Foreground(m.ctx.Theme.FaintText).
+			Render("No description provided.")
 	}
 
 	markdownRenderer := markdown.GetMarkdownRenderer(width)
@@ -374,7 +225,10 @@ func (m *Model) renderLabels() string {
 	labels := m.issue.Data.Labels.Nodes
 	style := m.ctx.Styles.PrView.PillStyle
 
-	return common.RenderLabels(width, labels, style)
+	return common.RenderLabels(labels, common.LabelOpts{
+		Width:     width,
+		PillStyle: style,
+	})
 }
 
 func (m *Model) getIndentedContentWidth() int {
@@ -383,8 +237,7 @@ func (m *Model) getIndentedContentWidth() int {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
-	m.inputBox.SetWidth(width)
-	m.ac.SetWidth(width - 4)
+	m.editor.SetWidth(width)
 }
 
 func (m *Model) SetSectionId(id int) {
@@ -435,23 +288,11 @@ func (m *Model) SetIssueComments(issueUrl string, comments []data.IssueComment) 
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
-	return m.isCommenting || m.isAssigning || m.isUnassigning || m.isLabeling
+	return m.editor.Active()
 }
 
 func (m *Model) GetIsCommenting() bool {
-	return m.isCommenting
-}
-
-func (m *Model) shouldCancelComment() bool {
-	if !m.ShowConfirmCancel {
-		m.inputBox.SetPrompt(lipgloss.NewStyle().Foreground(m.ctx.Theme.ErrorText).Render("Discard comment? (y/N)"))
-		m.ShowConfirmCancel = true
-		return false
-	}
-	m.inputBox.Blur()
-	m.isCommenting = false
-	m.ShowConfirmCancel = false
-	return true
+	return m.editor.Mode() == detailedit.ModeComment
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
@@ -459,21 +300,29 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isCommenting && isCommenting {
-		m.inputBox.Reset()
-		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
+	if !isCommenting {
+		if m.editor.Mode() == detailedit.ModeComment {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isCommenting = isCommenting
-	m.inputBox.SetPrompt(constants.CommentPrompt)
 
-	if isCommenting {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeComment,
+		Prompt:                           constants.CommentPrompt,
+		Source:                           dataautocomplete.UserMentionSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: true,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) GetIsAssigning() bool {
-	return m.isAssigning
+	return m.editor.Mode() == detailedit.ModeAssign
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
@@ -481,20 +330,30 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isAssigning && isAssigning {
-		m.inputBox.Reset()
-		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
-	}
-	m.isAssigning = isAssigning
-	m.inputBox.SetPrompt(constants.AssignPrompt)
-	if !m.userAssignedToIssue(m.ctx.User) {
-		m.inputBox.SetValue(m.ctx.User)
+	if !isAssigning {
+		if m.editor.Mode() == detailedit.ModeAssign {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
 
-	if isAssigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
+	initialValue := ""
+	if !m.userAssignedToIssue(m.ctx.User) {
+		initialValue = m.ctx.User
 	}
-	return nil
+
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeAssign,
+		Prompt:                           constants.AssignPrompt,
+		InitialValue:                     initialValue,
+		Source:                           dataautocomplete.WhitespaceSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionUsers,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
@@ -502,57 +361,31 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isLabeling && isLabeling {
-		m.inputBox.Reset()
+	if !isLabeling {
+		if m.editor.Mode() == detailedit.ModeLabel {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isLabeling = isLabeling
-	m.inputBox.SetPrompt(constants.LabelPrompt)
 
-	labels := make([]string, 0)
+	labels := make([]string, 0, len(m.issue.Data.Labels.Nodes)+1)
 	for _, label := range m.issue.Data.Labels.Nodes {
 		labels = append(labels, label.Name)
 	}
 	labels = append(labels, "")
-	m.inputBox.SetValue(strings.Join(labels, ", "))
 
-	// Reset autocomplete
-	m.ac.Hide()
-	m.ac.SetSuggestions(nil)
-
-	// Trigger label fetching for autocomplete
-	if isLabeling {
-		repoName := m.issue.Data.GetRepoNameWithOwner()
-		if labels, ok := data.GetCachedRepoLabels(repoName); ok {
-			// Use cached labels
-			m.repoLabels = labels
-			m.ac.SetSuggestions(data.GetLabelNames(labels))
-			cursorPos := m.inputBox.GetCursorPosition()
-			currentLabel := labelAtCursor(cursorPos, m.inputBox.Value())
-			existingLabels := allLabels(m.inputBox.Value())
-			m.ac.Show(currentLabel, existingLabels)
-			return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-		} else {
-			// Fetch labels asynchronously
-			return tea.Sequence(m.fetchLabels(), textarea.Blink, m.inputBox.Focus())
-		}
-	}
-	return nil
-}
-
-// fetchLabels returns a command to fetch repository labels
-func (m *Model) fetchLabels() tea.Cmd {
-	spinnerTickCmd := m.ac.SetFetchLoading()
-
-	fetchCmd := func() tea.Msg {
-		repoName := m.issue.Data.GetRepoNameWithOwner()
-		labels, err := data.FetchRepoLabels(repoName)
-		if err != nil {
-			return RepoLabelsFetchFailedMsg{Err: err}
-		}
-		return RepoLabelsFetchedMsg{Labels: labels}
-	}
-
-	return tea.Batch(spinnerTickCmd, fetchCmd)
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:                             detailedit.ModeLabel,
+		Prompt:                           constants.LabelPrompt,
+		InitialValue:                     strings.Join(labels, ", "),
+		Source:                           dataautocomplete.LabelSource{},
+		Repo:                             m.repoRef(),
+		SuggestionKind:                   detailedit.SuggestionLabels,
+		EnterFetch:                       detailedit.FetchSilent,
+		HideAutocompleteWhenContextEmpty: false,
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) userAssignedToIssue(login string) bool {
@@ -565,7 +398,7 @@ func (m *Model) userAssignedToIssue(login string) bool {
 }
 
 func (m *Model) GetIsUnassigning() bool {
-	return m.isUnassigning
+	return m.editor.Mode() == detailedit.ModeUnassign
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
@@ -573,18 +406,21 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 		return nil
 	}
 
-	if !m.isUnassigning && isUnassigning {
-		m.inputBox.Reset()
-		m.ac.Reset() // Clear any stale autocomplete state (e.g., from labeling)
+	if !isUnassigning {
+		if m.editor.Mode() == detailedit.ModeUnassign {
+			m.editor = m.editor.Exit()
+		}
+		return nil
 	}
-	m.isUnassigning = isUnassigning
-	m.inputBox.SetPrompt(constants.UnassignPrompt)
-	m.inputBox.SetValue(strings.Join(m.issueAssignees(), "\n"))
 
-	if isUnassigning {
-		return tea.Sequence(textarea.Blink, m.inputBox.Focus())
-	}
-	return nil
+	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
+		Mode:         detailedit.ModeUnassign,
+		Prompt:       constants.UnassignPrompt,
+		InitialValue: strings.Join(m.issueAssignees(), "\n"),
+		Repo:         m.repoRef(),
+	})
+	m.editor = editor
+	return cmd
 }
 
 func (m *Model) issueAssignees() []string {
@@ -597,8 +433,14 @@ func (m *Model) issueAssignees() []string {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.inputBox.UpdateProgramContext(ctx)
-	if m.ac != nil {
-		m.ac.UpdateProgramContext(ctx)
+	m.editor.UpdateProgramContext(ctx)
+}
+
+func (m *Model) repoRef() detailedit.RepoRef {
+	owner, repo := m.issue.Data.GetRepoNameAndOwner()
+	return detailedit.RepoRef{
+		NameWithOwner: m.issue.Data.GetRepoNameWithOwner(),
+		Owner:         owner,
+		Name:          repo,
 	}
 }

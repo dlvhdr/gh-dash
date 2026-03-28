@@ -3,9 +3,9 @@ package tabs
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -30,7 +30,11 @@ type Model struct {
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
-	c := carousel.New(carousel.WithHeight(1), carousel.WithOverflowIndicators("←", "→"), carousel.WithSeparators())
+	c := carousel.New(
+		carousel.WithHeight(1),
+		carousel.WithOverflowIndicators("←", "→"),
+		carousel.WithSeparators(),
+	)
 	m := Model{
 		carousel: c,
 	}
@@ -43,7 +47,7 @@ func (m Model) Init() tea.Cmd {
 	return m.fetchHasNewVersion()
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmds := make([]tea.Cmd, 0)
 	switch msg := msg.(type) {
 	case latestVersionMsg:
@@ -149,19 +153,25 @@ func (m *Model) UpdateTabTitles() {
 func (m *Model) viewLogo() string {
 	version := lipgloss.NewStyle().Foreground(m.ctx.Theme.SecondaryText).Render(m.ctx.Version)
 	if m.latestVersion != "" && m.ctx.Version != "dev" && m.ctx.Version != m.latestVersion {
-		version = lipgloss.JoinVertical(lipgloss.Left,
+		version = lipgloss.JoinVertical(
+			lipgloss.Left,
 			version,
-			lipgloss.NewStyle().Foreground(m.ctx.Styles.Colors.SuccessText).Render(" Update available!"),
+			lipgloss.NewStyle().
+				Foreground(m.ctx.Styles.Colors.SuccessText).
+				Render(" Update available!"),
 		)
 	} else {
 		version = lipgloss.PlaceVertical(2, lipgloss.Bottom, version)
 	}
 
-	return lipgloss.NewStyle().Padding(0, 1, 0, 2).Height(2).Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
-		lipgloss.NewStyle().Foreground(context.LogoColor).Render(constants.Logo),
-		" ",
-		version,
-	))
+	return lipgloss.NewStyle().
+		Padding(0, 1, 0, 2).
+		Height(2).
+		Render(lipgloss.JoinHorizontal(lipgloss.Bottom,
+			lipgloss.NewStyle().Foreground(context.LogoColor).Render(constants.Logo),
+			" ",
+			version,
+		))
 }
 
 func (m *Model) SetAllLoading() []tea.Cmd {

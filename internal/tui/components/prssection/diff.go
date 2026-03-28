@@ -1,7 +1,7 @@
 package prssection
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 )
@@ -12,5 +12,9 @@ func (m Model) diff() tea.Cmd {
 		return nil
 	}
 
-	return common.DiffPR(currRowData.GetNumber(), currRowData.GetRepoNameWithOwner(), m.Ctx.Config.GetFullScreenDiffPagerEnv())
+	return common.DiffPR(
+		currRowData.GetNumber(),
+		currRowData.GetRepoNameWithOwner(),
+		m.Ctx.Config.GetFullScreenDiffPagerEnv(),
+	)
 }

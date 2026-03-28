@@ -8,10 +8,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/go-sprout/sprout"
 	timeregistry "github.com/go-sprout/sprout/registry/time"
@@ -64,7 +64,9 @@ type NewSectionOptions struct {
 	CreatedAt   time.Time
 }
 
-func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(ctx *context.ProgramContext) string {
+func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
+	ctx *context.ProgramContext,
+) string {
 	searchValue := options.Config.Filters
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
@@ -86,6 +88,17 @@ func NewModel(
 	options NewSectionOptions,
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
+	isFilteredByCurrentRemote := false
+	repo, err := repository.Current()
+	if err == nil {
+		currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+		for token := range strings.FieldsSeq(filters) {
+			if token == currentCloneFilter {
+				isFilteredByCurrentRemote = true
+				break
+			}
+		}
+	}
 	m := BaseModel{
 		Ctx:          ctx,
 		Id:           options.Id,
@@ -101,14 +114,11 @@ func NewModel(
 		}),
 		SearchValue:               filters,
 		IsSearching:               false,
-		IsFilteredByCurrentRemote: filters != options.Config.Filters,
+		IsFilteredByCurrentRemote: isFilteredByCurrentRemote,
 		TotalCount:                0,
 		PageInfo:                  nil,
 		PromptConfirmationBox:     prompt.NewModel(ctx),
 		ShowAuthorIcon:            ctx.Config.ShowAuthorIcons,
-	}
-	if !ctx.Config.SmartFilteringAtLaunch {
-		m.IsFilteredByCurrentRemote = false
 	}
 	m.Table = table.NewModel(
 		*ctx,
@@ -176,7 +186,6 @@ type Search interface {
 	ResetFilters()
 	GetFilters() string
 	ResetPageInfo()
-	IsFilteringByClone() bool
 }
 
 type PromptConfirmation interface {
@@ -189,7 +198,10 @@ type PromptConfirmation interface {
 
 func (m *BaseModel) GetDimensions() constants.Dimensions {
 	return constants.Dimensions{
-		Width:  max(0, m.Ctx.MainContentWidth-m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding()),
+		Width: max(
+			0,
+			m.Ctx.MainContentWidth-m.Ctx.Styles.Section.ContainerStyle.GetHorizontalPadding(),
+		),
 		Height: max(0, m.Ctx.MainContentHeight-common.SearchHeight),
 	}
 }
@@ -199,13 +211,32 @@ func (m *BaseModel) GetConfig() config.SectionConfig {
 }
 
 func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
-	filters := m.Config.Filters
+	filters := m.SearchValue
 	for token := range strings.FieldsSeq(filters) {
 		if strings.HasPrefix(token, "repo:") {
 			return true
 		}
 	}
 	return false
+}
+
+func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
+	filters := m.SearchValue
+	repo, err := repository.Current()
+	if err != nil {
+		return false
+	}
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	for token := range strings.FieldsSeq(filters) {
+		if token == currentCloneFilter {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *BaseModel) SyncSmartFilterWithSearchValue() {
+	m.IsFilteredByCurrentRemote = m.HasCurrentRepoNameInConfiguredFilter()
 }
 
 func (m *BaseModel) GetSearchValue() string {
@@ -215,14 +246,14 @@ func (m *BaseModel) GetSearchValue() string {
 		return searchValue
 	}
 
-	if m.HasRepoNameInConfiguredFilter() {
-		return searchValue
-	}
 	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
-		if !strings.HasPrefix(token, currentCloneFilter) {
-			searchValueWithoutCurrentCloneFilter = append(searchValueWithoutCurrentCloneFilter, token)
+		if token != currentCloneFilter {
+			searchValueWithoutCurrentCloneFilter = append(
+				searchValueWithoutCurrentCloneFilter,
+				token,
+			)
 		}
 	}
 	if m.IsFilteredByCurrentRemote {
@@ -238,7 +269,10 @@ func (m *BaseModel) enrichSearchWithTemplateVars() string {
 		Now: time.Now(),
 	}
 	sl := slog.New(log.Default())
-	handler := sprout.New(sprout.WithRegistries(timeregistry.NewRegistry(), utils.NewRegistry()), sprout.WithLogger(sl))
+	handler := sprout.New(
+		sprout.WithRegistries(timeregistry.NewRegistry(), utils.NewRegistry()),
+		sprout.WithLogger(sl),
+	)
 	funcs := handler.Build()
 
 	tmpl, err := template.New("search").Funcs(funcs).Parse(searchValue)
@@ -316,8 +350,7 @@ func (m *BaseModel) GetIsLoading() bool {
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
-		m.SearchBar.Focus()
-		return m.SearchBar.Init()
+		return tea.Batch(m.SearchBar.Focus(), m.SearchBar.Init())
 	} else {
 		m.SearchBar.Blur()
 		return nil
@@ -378,10 +411,6 @@ func (m *BaseModel) MakeSectionCmd(cmd tea.Cmd) tea.Cmd {
 
 func (m *BaseModel) GetFilters() string {
 	return m.GetSearchValue()
-}
-
-func (m *BaseModel) IsFilteringByClone() bool {
-	return m.IsFilteredByCurrentRemote
 }
 
 func (m *BaseModel) GetMainContent() string {
@@ -453,6 +482,9 @@ func (m *BaseModel) GetPromptConfirmation() string {
 		case m.PromptConfirmationAction == "update" && m.Ctx.View == config.PRsView:
 			prompt = "Are you sure you want to update this PR? (Y/n) "
 
+		case m.PromptConfirmationAction == "approveWorkflows" && m.Ctx.View == config.PRsView:
+			prompt = "Are you sure you want to approve all workflows? (Y/n) "
+
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.IssuesView:
 			prompt = "Are you sure you want to close this issue? (Y/n) "
 
@@ -464,6 +496,8 @@ func (m *BaseModel) GetPromptConfirmation() string {
 			prompt = "Enter branch name: "
 		case m.PromptConfirmationAction == "create_pr" && m.Ctx.View == config.RepoView:
 			prompt = "Enter PR title: "
+		case m.PromptConfirmationAction == "done_all" && m.Ctx.View == config.NotificationsView:
+			prompt = "Are you sure you want to mark all as done? (Y/n) "
 		}
 
 		m.PromptConfirmationBox.SetPrompt(prompt)

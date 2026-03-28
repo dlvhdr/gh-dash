@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/provider"
@@ -23,7 +23,11 @@ type UpdateIssueMsg struct {
 	RemovedAssignees *data.Assignees
 }
 
-func CloseIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData) tea.Cmd {
+func CloseIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: fmt.Sprintf("issue_close_%d", issueNumber),
@@ -46,7 +50,11 @@ func CloseIssue(ctx *context.ProgramContext, section SectionIdentifier, issue da
 	})
 }
 
-func ReopenIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData) tea.Cmd {
+func ReopenIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	return fireTask(ctx, GitHubTask{
 		Id: fmt.Sprintf("issue_reopen_%d", issueNumber),
@@ -69,7 +77,12 @@ func ReopenIssue(ctx *context.ProgramContext, section SectionIdentifier, issue d
 	})
 }
 
-func AssignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, usernames []string) tea.Cmd {
+func AssignIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+	usernames []string,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	var args []string
 	if provider.IsGitLab() {
@@ -103,7 +116,10 @@ func AssignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue d
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
 			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+				returnedAssignees.Nodes = append(
+					returnedAssignees.Nodes,
+					data.Assignee{Login: assignee},
+				)
 			}
 			return UpdateIssueMsg{
 				IssueNumber:    issueNumber,
@@ -113,7 +129,12 @@ func AssignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue d
 	})
 }
 
-func UnassignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, usernames []string) tea.Cmd {
+func UnassignIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+	usernames []string,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	var args []string
 	if provider.IsGitLab() {
@@ -146,7 +167,10 @@ func UnassignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			returnedAssignees := data.Assignees{Nodes: []data.Assignee{}}
 			for _, assignee := range usernames {
-				returnedAssignees.Nodes = append(returnedAssignees.Nodes, data.Assignee{Login: assignee})
+				returnedAssignees.Nodes = append(
+					returnedAssignees.Nodes,
+					data.Assignee{Login: assignee},
+				)
 			}
 			return UpdateIssueMsg{
 				IssueNumber:      issueNumber,
@@ -156,7 +180,12 @@ func UnassignIssue(ctx *context.ProgramContext, section SectionIdentifier, issue
 	})
 }
 
-func CommentOnIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, body string) tea.Cmd {
+func CommentOnIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+	body string,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 	var args []string
 	if provider.IsGitLab() {
@@ -199,7 +228,13 @@ func CommentOnIssue(ctx *context.ProgramContext, section SectionIdentifier, issu
 	})
 }
 
-func LabelIssue(ctx *context.ProgramContext, section SectionIdentifier, issue data.RowData, labels []string, existingLabels []data.Label) tea.Cmd {
+func LabelIssue(
+	ctx *context.ProgramContext,
+	section SectionIdentifier,
+	issue data.RowData,
+	labels []string,
+	existingLabels []data.Label,
+) tea.Cmd {
 	issueNumber := issue.GetNumber()
 
 	labelsMap := make(map[string]bool)

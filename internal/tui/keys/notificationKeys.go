@@ -1,11 +1,17 @@
 package keys
 
 import (
-	"github.com/charmbracelet/bubbles/key"
+	"fmt"
+
+	"charm.land/bubbles/v2/key"
+	log "charm.land/log/v2"
+
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
 
 type NotificationKeyMap struct {
 	View                 key.Binding
+	BackToNotification   key.Binding
 	MarkAsDone           key.Binding
 	MarkAllAsDone        key.Binding
 	MarkAsRead           key.Binding
@@ -22,6 +28,10 @@ var NotificationKeys = NotificationKeyMap{
 	View: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "view notification"),
+	),
+	BackToNotification: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "back to notification"),
 	),
 	MarkAsDone: key.NewBinding(
 		key.WithKeys("D"),
@@ -68,6 +78,7 @@ var NotificationKeys = NotificationKeyMap{
 func NotificationFullHelp() []key.Binding {
 	return []key.Binding{
 		NotificationKeys.View,
+		NotificationKeys.BackToNotification,
 		NotificationKeys.MarkAsDone,
 		NotificationKeys.MarkAllAsDone,
 		NotificationKeys.MarkAsRead,
@@ -79,4 +90,69 @@ func NotificationFullHelp() []key.Binding {
 		NotificationKeys.SwitchToPRs,
 		NotificationKeys.ToggleSmartFiltering,
 	}
+}
+
+func rebindNotificationKeys(keys []config.Keybinding) error {
+	CustomNotificationBindings = []key.Binding{}
+
+	for _, notifKey := range keys {
+		if notifKey.Builtin == "" {
+			// Handle custom commands
+			if notifKey.Command != "" {
+				name := notifKey.Name
+				if notifKey.Name == "" {
+					name = config.TruncateCommand(notifKey.Command)
+				}
+
+				customBinding := key.NewBinding(
+					key.WithKeys(notifKey.Key),
+					key.WithHelp(notifKey.Key, name),
+				)
+
+				CustomNotificationBindings = append(CustomNotificationBindings, customBinding)
+			}
+			continue
+		}
+
+		log.Debug("Rebinding notification key", "builtin", notifKey.Builtin, "key", notifKey.Key)
+
+		var key *key.Binding
+
+		switch notifKey.Builtin {
+		case "view":
+			key = &NotificationKeys.View
+		case "markAsDone":
+			key = &NotificationKeys.MarkAsDone
+		case "markAllAsDone":
+			key = &NotificationKeys.MarkAllAsDone
+		case "markAsRead":
+			key = &NotificationKeys.MarkAsRead
+		case "markAllAsRead":
+			key = &NotificationKeys.MarkAllAsRead
+		case "unsubscribe":
+			key = &NotificationKeys.Unsubscribe
+		case "toggleBookmark":
+			key = &NotificationKeys.ToggleBookmark
+		case "open":
+			key = &NotificationKeys.Open
+		case "sortByRepo":
+			key = &NotificationKeys.SortByRepo
+		case "switchToPRs":
+			key = &NotificationKeys.SwitchToPRs
+		case "toggleSmartFiltering":
+			key = &NotificationKeys.ToggleSmartFiltering
+		default:
+			return fmt.Errorf("unknown built-in notification key: '%s'", notifKey.Builtin)
+		}
+
+		key.SetKeys(notifKey.Key)
+
+		helpDesc := key.Help().Desc
+		if notifKey.Name != "" {
+			helpDesc = notifKey.Name
+		}
+		key.SetHelp(notifKey.Key, helpDesc)
+	}
+
+	return nil
 }

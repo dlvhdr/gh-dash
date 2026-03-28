@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -76,7 +78,8 @@ func (pr *PullRequest) renderState() string {
 	switch pr.Data.Primary.State {
 	case "OPEN":
 		if pr.Data.Primary.IsInMergeQueue {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).Render(constants.MergeQueueIcon)
+			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).
+				Render(constants.MergeQueueIcon)
 		}
 		if pr.Data.Primary.IsDraft {
 			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
@@ -135,7 +138,7 @@ func (pr *PullRequest) RenderLines(isSelected bool) string {
 	}
 	deletions := max(pr.Data.Primary.Deletions, 0)
 
-	var additionsFg, deletionsFg lipgloss.AdaptiveColor
+	var additionsFg, deletionsFg compat.AdaptiveColor
 	additionsFg = pr.Ctx.Theme.SuccessText
 	deletionsFg = pr.Ctx.Theme.ErrorText
 
@@ -185,7 +188,8 @@ func (pr *PullRequest) renderTitle() string {
 func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 	baseStyle := lipgloss.NewStyle()
 	if isSelected {
-		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Background(pr.Ctx.Theme.SelectedBackground)
+		baseStyle = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).
+			Background(pr.Ctx.Theme.SelectedBackground)
 	}
 
 	author := baseStyle.Bold(true).Render(fmt.Sprintf("@%s",
@@ -205,7 +209,12 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 		}
 	}
 	width := titleColumn.ComputedWidth - 2
-	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).Width(width).MaxWidth(width).Height(1).MaxHeight(1).Render(top)
+	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).
+		Width(width).
+		MaxWidth(width).
+		Height(1).
+		MaxHeight(1).
+		Render(top)
 	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Bold(true).Width(width).MaxWidth(
 		width).Height(1).MaxHeight(1).Render(title)
 
@@ -225,6 +234,60 @@ func (pr *PullRequest) renderAssignees() string {
 		assignees = append(assignees, assignee.Login)
 	}
 	return pr.getTextStyle().Render(strings.Join(assignees, ","))
+}
+
+func (pr *PullRequest) renderLabels(isSelected bool) string {
+	if pr.Data == nil || pr.Data.Primary == nil || len(pr.Data.Primary.Labels.Nodes) == 0 {
+		return ""
+	}
+
+	labelsWidth := 0
+	for _, column := range pr.Columns {
+		if column.Title != constants.LabelsIcon {
+			continue
+		}
+
+		labelsWidth = column.ComputedWidth
+		if labelsWidth == 0 && column.Width != nil {
+			labelsWidth = *column.Width
+		}
+		break
+	}
+
+	if labelsWidth <= 2 {
+		return ""
+	}
+
+	maxRows := 2
+	if pr.Ctx != nil &&
+		pr.Ctx.Config != nil &&
+		pr.Ctx.Config.Theme != nil &&
+		pr.Ctx.Config.Theme.Ui.Table.Compact {
+		maxRows = 1
+	}
+
+	pillStyle := pr.getTextStyle()
+	if pr.Ctx != nil {
+		pillStyle = pr.Ctx.Styles.PrView.PillStyle
+	}
+
+	rowStyle := lipgloss.NewStyle()
+	if isSelected && pr.Ctx != nil {
+		rowStyle = rowStyle.Background(pr.Ctx.Theme.SelectedBackground)
+		pillStyle = pillStyle.
+			BorderLeftBackground(pr.Ctx.Theme.SelectedBackground).
+			BorderRightBackground(pr.Ctx.Theme.SelectedBackground)
+	}
+
+	return common.RenderLabels(
+		pr.Data.Primary.Labels.Nodes,
+		common.LabelOpts{
+			Width:     labelsWidth - 2,
+			MaxRows:   maxRows,
+			PillStyle: pillStyle,
+			RowStyle:  rowStyle,
+		},
+	)
 }
 
 func (pr *PullRequest) renderRepoName() string {
@@ -326,6 +389,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		return table.Row{
 			pr.renderState(),
 			pr.renderExtendedTitle(isSelected),
+			pr.renderLabels(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
 			pr.renderNumComments(),
@@ -342,6 +406,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderRepoName(),
 		pr.renderTitle(),
 		pr.renderAuthor(),
+		pr.renderLabels(isSelected),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
 		pr.renderNumComments(),

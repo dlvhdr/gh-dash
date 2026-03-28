@@ -3,7 +3,7 @@ package prview
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -45,39 +45,47 @@ func newTestModelForAction(t *testing.T) Model {
 func TestMsgToActionReturnsCorrectActions(t *testing.T) {
 	testCases := []struct {
 		name           string
-		keyBinding     string
+		keyBindingText rune
 		expectedAction PRActionType
 	}{
-		{"approve key", "v", PRActionApprove},
-		{"assign key", "a", PRActionAssign},
-		{"unassign key", "A", PRActionUnassign},
-		{"comment key", "c", PRActionComment},
-		{"diff key", "d", PRActionDiff},
-		{"checkout key C", "C", PRActionCheckout},
-		{"checkout key space", " ", PRActionCheckout},
-		{"close key", "x", PRActionClose},
-		{"ready key", "W", PRActionReady},
-		{"reopen key", "X", PRActionReopen},
-		{"merge key", "m", PRActionMerge},
-		{"update key", "u", PRActionUpdate},
-		{"summary view more key", "e", PRActionSummaryViewMore},
+		{"approve key", 'v', PRActionApprove},
+		{"assign key", 'a', PRActionAssign},
+		{"unassign key", 'A', PRActionUnassign},
+		{"comment key", 'c', PRActionComment},
+		{"diff key", 'd', PRActionDiff},
+		{"checkout key C", 'C', PRActionCheckout},
+		{"checkout key space", tea.KeySpace, PRActionCheckout},
+		{"close key", 'x', PRActionClose},
+		{"ready key", 'W', PRActionReady},
+		{"reopen key", 'X', PRActionReopen},
+		{"merge key", 'm', PRActionMerge},
+		{"update key", 'u', PRActionUpdate},
+		{"summary view more key", 'e', PRActionSummaryViewMore},
+		{"approve workflows key", 'V', PRActionApproveWorkflows},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tc.keyBinding)}
+			msg := tea.KeyPressMsg{Code: tc.keyBindingText}
 
 			action := MsgToAction(msg)
 
-			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
-			require.Equal(t, tc.expectedAction, action.Type,
-				"expected action type %v for key %q, got %v", tc.expectedAction, tc.keyBinding, action.Type)
+			require.NotNil(t, action, "expected action for key %q", tc.keyBindingText)
+			require.Equal(
+				t,
+				tc.expectedAction,
+				action.Type,
+				"expected action type %v for key %q, got %v",
+				tc.expectedAction,
+				tc.keyBindingText,
+				action.Type,
+			)
 		})
 	}
 }
 
 func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")}
+	msg := tea.KeyPressMsg{Text: "z"}
 
 	action := MsgToAction(msg)
 
@@ -86,30 +94,50 @@ func TestMsgToActionReturnsNilForUnknownKeys(t *testing.T) {
 
 func TestIsTextInputBoxFocusedWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isCommenting = true
+	cmd := m.SetIsCommenting(true)
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in commenting mode")
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in commenting mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenApproving(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isApproving = true
+	cmd := m.SetIsApproving(true)
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in approving mode")
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in approving mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isAssigning = true
+	cmd := m.SetIsAssigning(true)
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in assigning mode")
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in assigning mode",
+	)
 }
 
 func TestIsTextInputBoxFocusedWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isUnassigning = true
+	cmd := m.SetIsUnassigning(true)
 
-	require.True(t, m.IsTextInputBoxFocused(), "expected text input box focused when in unassigning mode")
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in unassigning mode",
+	)
 }
 
 func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
@@ -119,7 +147,7 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		m.carousel.MoveRight()
 		initialTab := m.carousel.SelectedItem()
 
-		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("[")}
+		msg := tea.KeyPressMsg{Text: "["}
 		m, _ = m.Update(msg)
 
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
@@ -130,7 +158,7 @@ func TestUpdateHandlesSidebarTabNavigation(t *testing.T) {
 		m := newTestModelForAction(t)
 		initialTab := m.carousel.SelectedItem()
 
-		msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("]")}
+		msg := tea.KeyPressMsg{Text: "]"}
 		m, _ = m.Update(msg)
 
 		require.NotEqual(t, initialTab, m.carousel.SelectedItem(),
@@ -145,6 +173,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionApprove,
 		PRActionAssign,
 		PRActionUnassign,
+		PRActionLabel,
 		PRActionComment,
 		PRActionDiff,
 		PRActionCheckout,
@@ -154,6 +183,7 @@ func TestPRActionTypes(t *testing.T) {
 		PRActionMerge,
 		PRActionUpdate,
 		PRActionSummaryViewMore,
+		PRActionApproveWorkflows,
 	}
 
 	seen := make(map[PRActionType]bool)
@@ -177,10 +207,45 @@ func TestMsgToActionWithReboundKeys(t *testing.T) {
 		keys.PRKeys.Approve.SetKeys(originalApproveKeys...)
 	}()
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("V")}
+	msg := tea.KeyPressMsg{Text: "V"}
 
 	action := MsgToAction(msg)
 
 	require.NotNil(t, action, "expected action for rebound key")
 	require.Equal(t, PRActionApprove, action.Type, "expected approve action for rebound key")
+}
+
+func TestIsTextInputBoxFocusedWhenLabeling(t *testing.T) {
+	m := newTestModelForAction(t)
+	cmd := m.SetIsLabeling(true)
+
+	require.NotNil(t, cmd)
+	require.True(
+		t,
+		m.IsTextInputBoxFocused(),
+		"expected text input box focused when in labeling mode",
+	)
+}
+
+func TestGetIsLabeling(t *testing.T) {
+	t.Run("returns false initially", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		require.False(t, m.GetIsLabeling(), "expected GetIsLabeling to return false initially")
+	})
+
+	t.Run("returns true when labeling", func(t *testing.T) {
+		m := newTestModelForAction(t)
+		cmd := m.SetIsLabeling(true)
+		require.NotNil(t, cmd)
+		require.True(t, m.GetIsLabeling(), "expected GetIsLabeling to return true when labeling")
+	})
+}
+
+func TestSetIsLabelingWithNilPR(t *testing.T) {
+	m := newTestModelForAction(t)
+	m.pr = nil
+
+	cmd := m.SetIsLabeling(true)
+
+	require.Nil(t, cmd, "expected nil command when PR is nil")
 }

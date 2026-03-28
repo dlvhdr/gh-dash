@@ -44,5 +44,9 @@ formatters:
   enable:
     - gofumpt
     - goimports
+    - golines
+  settings:
+    golines:
+      chain-split-dots: true
   exclusions:
     generated: lax

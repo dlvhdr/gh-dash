@@ -6,8 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/cli/go-gh/v2/pkg/browser"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -16,6 +17,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
+// markNotificationDoneFunc is the function used to mark a notification as done
+// via the GitHub API. It is a variable so tests can override it.
+var markNotificationDoneFunc = data.MarkNotificationDone
+
 func (m *Model) markAsDone() tea.Cmd {
 	notification := m.GetCurrNotification()
 	if notification == nil {
@@ -23,6 +28,7 @@ func (m *Model) markAsDone() tea.Cmd {
 	}
 
 	notificationId := notification.GetId()
+	updatedAt := notification.Notification.UpdatedAt
 	taskId := fmt.Sprintf("notification_done_%s", notificationId)
 	task := context.Task{
 		Id:           taskId,
@@ -33,10 +39,10 @@ func (m *Model) markAsDone() tea.Cmd {
 	}
 	startCmd := m.Ctx.StartTask(task)
 	return tea.Batch(startCmd, func() tea.Msg {
-		err := data.MarkNotificationDone(notificationId)
+		err := markNotificationDoneFunc(notificationId)
 		if err == nil {
 			// Persist to done store so it stays hidden across sessions
-			data.GetDoneStore().MarkDone(notificationId)
+			data.GetDoneStore().MarkDone(notificationId, updatedAt)
 		}
 		return constants.TaskFinishedMsg{
 			SectionId:   m.Id,
@@ -69,9 +75,13 @@ func (m *Model) markAllAsDone() tea.Cmd {
 		Error:        nil,
 	}
 
-	notificationIds := make([]string, 0, count)
+	type doneEntry struct {
+		id        string
+		updatedAt time.Time
+	}
+	entries := make([]doneEntry, 0, count)
 	for _, n := range m.Notifications {
-		notificationIds = append(notificationIds, n.GetId())
+		entries = append(entries, doneEntry{n.GetId(), n.Notification.UpdatedAt})
 	}
 
 	startCmd := m.Ctx.StartTask(task)
@@ -79,12 +89,12 @@ func (m *Model) markAllAsDone() tea.Cmd {
 		// Mark each notification as done (delete it)
 		doneStore := data.GetDoneStore()
 		var lastErr error
-		for _, id := range notificationIds {
-			if err := data.MarkNotificationDone(id); err != nil {
+		for _, e := range entries {
+			if err := data.MarkNotificationDone(e.id); err != nil {
 				lastErr = err
 			} else {
 				// Persist to done store so it stays hidden across sessions
-				doneStore.MarkDone(id)
+				doneStore.MarkDone(e.id, e.updatedAt)
 			}
 		}
 
@@ -257,7 +267,9 @@ func (m *Model) openInBrowser() tea.Cmd {
 func CheckoutPR(ctx *context.ProgramContext, prNumber int, repoName string) (tea.Cmd, error) {
 	repoPath, ok := common.GetRepoLocalPath(repoName, ctx.Config.RepoPaths)
 	if !ok {
-		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
+		return nil, errors.New(
+			"local path to repo not specified, set one in your config.yml under repoPaths",
+		)
 	}
 
 	taskId := fmt.Sprintf("checkout_%d", prNumber)

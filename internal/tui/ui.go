@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	log "charm.land/log/v2"
 	"github.com/atotto/clipboard"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	log "github.com/charmbracelet/log"
 	"github.com/cli/go-gh/v2/pkg/browser"
-	zone "github.com/lrstanley/bubblezone"
+	zone "github.com/lrstanley/bubblezone/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -41,6 +41,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
@@ -87,10 +88,8 @@ func NewModel(location config.Location) Model {
 			m.tasks[task.Id] = task
 			return m.taskSpinner.Tick
 		},
+		Theme: *theme.DefaultTheme,
 	}
-
-	m.taskSpinner.Style = lipgloss.NewStyle().
-		Background(m.ctx.Theme.SelectedBackground)
 
 	m.footer = footer.NewModel(m.ctx)
 	m.prView = prview.NewModel(m.ctx)
@@ -127,7 +126,9 @@ func (m *Model) initScreen() tea.Msg {
 			)
 	}
 
-	cfg, err := config.ParseConfig(config.Location{RepoPath: m.ctx.RepoPath, ConfigFlag: m.ctx.ConfigFlag})
+	cfg, err := config.ParseConfig(
+		config.Location{RepoPath: m.ctx.RepoPath, ConfigFlag: m.ctx.ConfigFlag},
+	)
 	if err != nil {
 		showError(err)
 		return initMsg{Config: cfg}
@@ -148,6 +149,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Issues,
 		cfg.Keybindings.Prs,
 		cfg.Keybindings.Branches,
+		cfg.Keybindings.Notifications,
 	)
 	if err != nil {
 		showError(err)
@@ -157,7 +159,7 @@ func (m *Model) initScreen() tea.Msg {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.initScreen, tea.EnterAltScreen)
+	return tea.Batch(tea.RequestBackgroundColor, m.initScreen)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -235,27 +237,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Down):
-			prevRow := currSection.CurrRow()
-			nextRow := currSection.NextRow()
-			if prevRow != nextRow && nextRow == currSection.NumRows()-1 && m.ctx.View != config.RepoView {
-				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				prevRow := currSection.CurrRow()
+				nextRow := currSection.NextRow()
+				if prevRow != nextRow && nextRow == currSection.NumRows()-1 &&
+					m.ctx.View != config.RepoView {
+					cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+				}
+				cmd = m.onViewedRowChanged()
 			}
-			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.Up):
-			currSection.PrevRow()
-			cmd = m.onViewedRowChanged()
+			if currSection != nil {
+				currSection.PrevRow()
+				cmd = m.onViewedRowChanged()
+			}
 
 		case key.Matches(msg, m.keys.FirstLine):
-			currSection.FirstItem()
-			cmd = m.onViewedRowChanged()
+			if currSection != nil {
+				currSection.FirstItem()
+				cmd = m.onViewedRowChanged()
+			}
 
 		case key.Matches(msg, m.keys.LastLine):
-			if currSection.CurrRow()+1 < currSection.NumRows() {
-				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				if currSection.CurrRow()+1 < currSection.NumRows() {
+					cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+				}
+				currSection.LastItem()
+				cmd = m.onViewedRowChanged()
 			}
-			currSection.LastItem()
-			cmd = m.onViewedRowChanged()
 
 		case key.Matches(msg, m.keys.TogglePreview):
 			m.sidebar.IsOpen = !m.sidebar.IsOpen
@@ -266,12 +277,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case key.Matches(msg, m.keys.Refresh):
-			data.ClearEnrichmentCache()
-			currSection.ResetFilters()
-			currSection.ResetRows()
-			m.syncSidebar()
-			currSection.SetIsLoading(true)
-			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			if currSection != nil {
+				data.ClearEnrichmentCache()
+				currSection.ResetFilters()
+				currSection.ResetRows()
+				m.syncSidebar()
+				currSection.SetIsLoading(true)
+				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
+			}
 
 		case key.Matches(msg, m.keys.RefreshAll):
 			data.ClearEnrichmentCache()
@@ -280,9 +293,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.Redraw):
-			// can't find a way to just ask to send bubbletea's internal repaintMsg{},
-			// so this seems like the lightest-weight alternative
-			return m, tea.Batch(tea.ExitAltScreen, tea.EnterAltScreen)
+		// TODO: this doesn't exist in bubbletea v2
+		// can't find a way to just ask to send bubbletea's internal repaintMsg{},
+		// so this seems like the lightest-weight alternative
+		// return m, tea.Batch(tea.ExitAltScreen, tea.EnterAltScreen)
 
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
@@ -389,6 +403,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.PRKeys.Unassign):
 				return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
 
+			case key.Matches(msg, keys.PRKeys.Label):
+				return m, m.openSidebarForPRInput(m.prView.SetIsLabeling)
+
 			case key.Matches(msg, keys.PRKeys.Comment):
 				return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
 
@@ -422,6 +439,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, cmd
 
+			case key.Matches(msg, keys.PRKeys.ApproveWorkflows):
+				if currRowData != nil {
+					cmd = m.promptConfirmation(currSection, "approveWorkflows")
+				}
+				return m, cmd
+
 			case key.Matches(msg, keys.PRKeys.ViewIssues):
 				cmds = append(cmds, m.switchSelectedView())
 
@@ -446,6 +469,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case key.Matches(msg, keys.IssueKeys.Comment):
 				return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
+
+			case key.Matches(msg, keys.IssueKeys.Checkout):
+				cmd, err := m.issueSidebar.Checkout()
+				if err != nil {
+					m.ctx.Error = err
+				}
+				return m, cmd
 
 			case key.Matches(msg, keys.IssueKeys.Close):
 				if currRowData != nil {
@@ -473,6 +503,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, keys.NotificationKeys.View):
 				cmds = append(cmds, m.loadNotificationContent())
 
+			// Return from PR/Issue detail back to the default notification prompt
+			case key.Matches(msg, keys.NotificationKeys.BackToNotification):
+				return m, m.backToNotification()
+
 			// PR keybindings when viewing a PR notification
 			case m.notificationView.GetSubjectPR() != nil:
 				// Check for PR actions first (before updating prView)
@@ -488,6 +522,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionUnassign:
 							return m, m.openSidebarForPRInput(m.prView.SetIsUnassigning)
+
+						case prview.PRActionLabel:
+							return m, m.openSidebarForPRInput(m.prView.SetIsLabeling)
 
 						case prview.PRActionComment:
 							return m, m.openSidebarForPRInput(m.prView.SetIsCommenting)
@@ -524,6 +561,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 						case prview.PRActionUpdate:
 							cmd = m.promptConfirmationForNotificationPR("update")
+							return m, cmd
+
+						case prview.PRActionApproveWorkflows:
+							cmd = m.promptConfirmationForNotificationPR("approveWorkflows")
 							return m, cmd
 
 						case prview.PRActionSummaryViewMore:
@@ -565,6 +606,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case issueview.IssueActionComment:
 						return m, m.openSidebarForInput(m.issueSidebar.SetIsCommenting)
 
+					case issueview.IssueActionCheckout:
+						cmd, err := m.issueSidebar.Checkout()
+						if err != nil {
+							m.ctx.Error = err
+						}
+						return m, cmd
+
 					case issueview.IssueActionClose:
 						cmd = m.promptConfirmationForNotificationIssue("close")
 						return m, cmd
@@ -585,7 +633,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, issueCmd)
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAsDone):
-				cmds = append(cmds, m.updateSection(currSection.GetId(), currSection.GetType(), msg))
+				cmds = append(
+					cmds,
+					m.updateSection(currSection.GetId(), currSection.GetType(), msg),
+				)
 
 			case key.Matches(msg, keys.NotificationKeys.MarkAllAsDone):
 				cmd = m.promptConfirmation(currSection, "done_all")
@@ -609,6 +660,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ctx.RepoUrl = msg.RepoUrl
 		m.ctx.Theme = theme.ParseTheme(m.ctx.Config)
 		m.ctx.Styles = context.InitStyles(m.ctx.Theme)
+		m.taskSpinner.Style = lipgloss.NewStyle().
+			Background(m.ctx.Theme.SelectedBackground)
+
 		m.ctx.View = m.ctx.Config.Defaults.View
 		m.currSectionId = m.getCurrentViewDefaultSection()
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
@@ -757,8 +811,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 		}
 
-	case tea.MouseMsg:
-		if msg.Action != tea.MouseActionRelease || msg.Button != tea.MouseButtonLeft {
+	case tea.MouseClickMsg:
+		if msg.Button != tea.MouseLeft {
 			return m, nil
 		}
 		if zone.Get("donate").InBounds(msg) {
@@ -776,6 +830,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.onWindowSizeChanged(msg)
+
+	case tea.BackgroundColorMsg:
+		markdown.InitializeMarkdownStyle(msg.IsDark())
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
@@ -813,7 +870,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	tm, tabsCmd := m.tabs.Update(msg)
-	m.tabs = tm.(tabs.Model)
+	m.tabs = tm
 
 	sectionCmd := m.updateCurrentSection(msg)
 	cmds = append(
@@ -830,9 +887,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true
+	v.ReportFocus = true
+	v.MouseMode = tea.MouseModeCellMotion
+
 	if m.ctx.Config == nil {
-		return lipgloss.Place(m.ctx.ScreenWidth, m.ctx.ScreenHeight, lipgloss.Center, lipgloss.Center, "Reading config...")
+		v.Content = lipgloss.Place(
+			m.ctx.ScreenWidth,
+			m.ctx.ScreenHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			"Reading config...",
+		)
+		return v
 	}
 
 	s := strings.Builder{}
@@ -866,7 +935,8 @@ func (m Model) View() string {
 		s.WriteString(m.footer.View())
 	}
 
-	return zone.Scan(s.String())
+	v.SetContent(zone.Scan(s.String()))
+	return v
 }
 
 type initMsg struct {
@@ -921,6 +991,7 @@ func (m *Model) onViewedRowChanged() tea.Cmd {
 	enrichCmd := m.prView.EnrichCurrRow()
 	m.sidebar.ScrollToTop()
 	m.notificationView.ResetSubject()
+	keys.SetNotificationSubject(keys.NotificationSubjectNone)
 	return tea.Batch(sidebarCmd, enrichCmd)
 }
 
@@ -1019,6 +1090,17 @@ func (m *Model) openSidebarForInput(setFunc func(bool) tea.Cmd) tea.Cmd {
 	return cmd
 }
 
+func (m *Model) backToNotification() tea.Cmd {
+	if m.notificationView.GetSubjectPR() == nil && m.notificationView.GetSubjectIssue() == nil {
+		return nil
+	}
+
+	m.notificationView.ClearSubject()
+	keys.SetNotificationSubject(keys.NotificationSubjectNone)
+	m.sidebar.ScrollToTop()
+	return m.syncSidebar()
+}
+
 func (m *Model) promptConfirmation(currSection section.Section, action string) tea.Cmd {
 	if currSection != nil {
 		currSection.SetPromptConfirmationAction(action)
@@ -1028,6 +1110,10 @@ func (m *Model) promptConfirmation(currSection section.Section, action string) t
 }
 
 func (m *Model) syncSidebar() tea.Cmd {
+	if !m.sidebar.IsOpen {
+		return nil
+	}
+
 	currRowData := m.getCurrRowData()
 	width := m.sidebar.GetSidebarContentWidth()
 	var cmd tea.Cmd
@@ -1046,13 +1132,19 @@ func (m *Model) syncSidebar() tea.Cmd {
 		m.prView.SetRow(row)
 		m.prView.SetWidth(width)
 		m.sidebar.SetContent(m.prView.View())
+		// Scroll to bottom if in input mode to keep inputbox visible
+		if m.prView.IsTextInputBoxFocused() {
+			m.sidebar.ScrollToBottom()
+		}
 	case *data.IssueData:
 		m.issueSidebar.SetSectionId(m.currSectionId)
 		m.issueSidebar.SetRow(row)
 		m.issueSidebar.SetWidth(width)
 		m.sidebar.SetContent(m.issueSidebar.View())
-		// Fetch comments for GitLab issues
-		cmd = m.issueSidebar.EnrichIssueComments()
+		// Scroll to bottom if in input mode to keep inputbox visible
+		if m.issueSidebar.IsTextInputBoxFocused() {
+			m.sidebar.ScrollToBottom()
+		}
 	case *notificationrow.Data:
 		notifId := row.GetId()
 
@@ -1064,11 +1156,19 @@ func (m *Model) syncSidebar() tea.Cmd {
 				m.prView.SetRow(m.notificationView.GetSubjectPR())
 				m.prView.SetWidth(width)
 				m.sidebar.SetContent(m.prView.View())
+				// Scroll to bottom if in input mode to keep inputbox visible
+				if m.prView.IsTextInputBoxFocused() {
+					m.sidebar.ScrollToBottom()
+				}
 			} else if m.notificationView.GetSubjectIssue() != nil {
 				m.issueSidebar.SetSectionId(0)
 				m.issueSidebar.SetRow(m.notificationView.GetSubjectIssue())
 				m.issueSidebar.SetWidth(width)
 				m.sidebar.SetContent(m.issueSidebar.View())
+				// Scroll to bottom if in input mode to keep inputbox visible
+				if m.issueSidebar.IsTextInputBoxFocused() {
+					m.sidebar.ScrollToBottom()
+				}
 			}
 			return nil
 		}
@@ -1076,15 +1176,16 @@ func (m *Model) syncSidebar() tea.Cmd {
 		// Clear cached subject when navigating to a different notification
 		// so key dispatch doesn't route keys to the wrong subject's handler.
 		m.notificationView.ClearSubject()
+		keys.SetNotificationSubject(keys.NotificationSubjectNone)
 		// Show prompt to view notification (don't auto-fetch)
 		// User must press Enter to view content and mark as read
-		m.sidebar.SetContent(m.renderNotificationPrompt(row, width))
+		m.sidebar.SetContent(m.renderNotificationPrompt(row))
 	}
 
 	return cmd
 }
 
-func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) string {
+func (m *Model) renderNotificationPrompt(row *notificationrow.Data) string {
 	var content strings.Builder
 
 	subjectType := row.GetSubjectType()
@@ -1166,13 +1267,20 @@ func (m *Model) renderNotificationPrompt(row *notificationrow.Data, width int) s
 		content.WriteString("\n")
 	}
 
-	// Add Enter at the end
+	// Add Enter and Esc at the end
 	content.WriteString(leftMargin)
 	padding := strings.Repeat(" ", keyWidth-len("Enter"))
 	content.WriteString(padding)
 	content.WriteString(keyStyle.Render("Enter"))
 	content.WriteString("  ")
 	content.WriteString(actionStyle.Render(enterAction))
+	content.WriteString("\n")
+	content.WriteString(leftMargin)
+	escPadding := strings.Repeat(" ", keyWidth-len("Esc"))
+	content.WriteString(escPadding)
+	content.WriteString(keyStyle.Render("Esc"))
+	content.WriteString("  ")
+	content.WriteString(actionStyle.Render("go back"))
 
 	return content.String()
 }
@@ -1322,7 +1430,8 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		s := make([]section.Section, 0)
 		if missingSearchSection {
 			// Check if we have an existing search section to preserve
-			if len(m.notifications) > 0 && m.notifications[0] != nil && m.notifications[0].GetId() == 0 {
+			if len(m.notifications) > 0 && m.notifications[0] != nil &&
+				m.notifications[0].GetId() == 0 {
 				// Preserve existing search section with its filter state
 				s = append(s, m.notifications[0])
 			} else {
@@ -1344,7 +1453,8 @@ func (m *Model) setCurrentViewSections(newSections []section.Section) {
 		return
 	}
 
-	missingSearchSection := len(newSections) == 0 || (len(newSections) > 0 && newSections[0].GetId() != 0)
+	missingSearchSection := len(newSections) == 0 ||
+		(len(newSections) > 0 && newSections[0].GetId() != 0)
 	s := make([]section.Section, 0)
 	if m.ctx.View == config.PRsView {
 		if missingSearchSection {
@@ -1463,6 +1573,32 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 		}
 	}
 
+	if m.ctx.View == config.NotificationsView {
+		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
+			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+				return true
+			}
+		}
+
+		currRowData := m.getCurrRowData()
+		if nData, ok := currRowData.(*notificationrow.Data); ok {
+			switch nData.Notification.Subject.Type {
+			case "PullRequest":
+				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			case "Issue":
+				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
+					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+						return true
+					}
+				}
+			}
+		}
+	}
+
 	return false
 }
 
@@ -1489,14 +1625,12 @@ func (m *Model) renderRunningTask() string {
 	var currTaskStatus string
 	switch task.State {
 	case context.TaskStart:
-		currTaskStatus = lipgloss.NewStyle().
-			Background(m.ctx.Theme.SelectedBackground).
-			Render(
-				fmt.Sprintf(
-					"%s%s",
-					m.taskSpinner.View(),
-					task.StartText,
-				))
+		currTaskStatus = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.taskSpinner.View(),
+			lipgloss.NewStyle().
+				Background(m.ctx.Theme.SelectedBackground).Render(task.StartText),
+		)
 	case context.TaskError:
 		currTaskStatus = lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.ErrorText).
@@ -1627,6 +1761,10 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	case "pr_update":
 		if pr != nil {
 			return tasks.UpdatePR(m.ctx, sid, pr)
+		}
+	case "pr_approveWorkflows":
+		if pr != nil {
+			return tasks.ApproveWorkflows(m.ctx, sid, pr)
 		}
 	case "issue_close":
 		if issue != nil {

@@ -3,7 +3,7 @@ package notificationview
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -53,6 +53,13 @@ func TestSetPendingPRAction(t *testing.T) {
 			prNumber:       200,
 			expectedAction: "pr_update",
 			expectedPrompt: "Are you sure you want to update PR #200? (y/N)",
+		},
+		{
+			name:           "approveWorkflows action displays as approve all workflows for",
+			action:         "approveWorkflows",
+			prNumber:       300,
+			expectedAction: "pr_approveWorkflows",
+			expectedPrompt: "Are you sure you want to approve all workflows for PR #300? (y/N)",
 		},
 	}
 
@@ -168,7 +175,7 @@ func TestUpdate_NoPendingAction(t *testing.T) {
 	// When there's no pending action, Update should return early with no action
 	m := NewModel(&context.ProgramContext{})
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	msg := tea.KeyPressMsg{Text: "y"}
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action when no pending action")
@@ -182,7 +189,7 @@ func TestUpdate_ConfirmWithLowercaseY(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	msg := tea.KeyPressMsg{Text: "y"}
 	newModel, action := m.Update(msg)
 
 	require.Equal(t, "pr_close", action, "should return the confirmed action")
@@ -196,7 +203,7 @@ func TestUpdate_ConfirmWithUppercaseY(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("merge")
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Y")}
+	msg := tea.KeyPressMsg{Text: "Y"}
 	newModel, action := m.Update(msg)
 
 	require.Equal(t, "pr_merge", action, "should return the confirmed action")
@@ -208,7 +215,7 @@ func TestUpdate_ConfirmWithEnter(t *testing.T) {
 	m.SetSubjectIssue(&data.IssueData{Number: 789}, "notif-id")
 	m.SetPendingIssueAction("reopen")
 
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
+	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	newModel, action := m.Update(msg)
 
 	require.Equal(t, "issue_reopen", action, "should return the confirmed action")
@@ -222,7 +229,7 @@ func TestUpdate_CancelWithN(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}
+	msg := tea.KeyPressMsg{Text: "n"}
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action on cancel")
@@ -236,7 +243,7 @@ func TestUpdate_CancelWithEscape(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("ready")
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEsc}
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action on escape")
@@ -251,7 +258,7 @@ func TestUpdate_CancelWithRandomKey(t *testing.T) {
 	m.SetPendingPRAction("update")
 
 	// Press a random key like 'x'
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")}
+	msg := tea.KeyPressMsg{Text: "x"}
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action on random key")
@@ -266,7 +273,7 @@ func TestUpdate_ConfirmReturnsAction(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	msg := tea.KeyPressMsg{Text: "y"}
 	newModel, action := m.Update(msg)
 
 	require.Equal(t, "pr_close", action, "should return the confirmed action")
@@ -286,12 +293,16 @@ func TestUpdate_NonKeyMsg(t *testing.T) {
 	newModel, action := m.Update(msg)
 
 	require.Empty(t, action, "should return empty action for non-key messages")
-	require.True(t, newModel.HasPendingAction(), "pending action should remain for non-key messages")
+	require.True(
+		t,
+		newModel.HasPendingAction(),
+		"pending action should remain for non-key messages",
+	)
 }
 
 func TestUpdate_AllPRActions(t *testing.T) {
 	// Test that all PR action types work correctly
-	actions := []string{"close", "reopen", "ready", "merge", "update"}
+	actions := []string{"close", "reopen", "ready", "merge", "update", "approveWorkflows"}
 
 	for _, action := range actions {
 		t.Run(action, func(t *testing.T) {
@@ -301,7 +312,7 @@ func TestUpdate_AllPRActions(t *testing.T) {
 			}, "notif-id")
 			m.SetPendingPRAction(action)
 
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+			msg := tea.KeyPressMsg{Text: "y"}
 			newModel, confirmedAction := m.Update(msg)
 
 			require.Equal(t, "pr_"+action, confirmedAction)
@@ -320,7 +331,7 @@ func TestUpdate_AllIssueActions(t *testing.T) {
 			m.SetSubjectIssue(&data.IssueData{Number: 456}, "notif-id")
 			m.SetPendingIssueAction(action)
 
-			msg := tea.KeyMsg{Type: tea.KeyEnter}
+			msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 			newModel, confirmedAction := m.Update(msg)
 
 			require.Equal(t, "issue_"+action, confirmedAction)
@@ -336,7 +347,7 @@ func TestUpdate_ReturnsActionOnConfirm(t *testing.T) {
 	}, "notif-id")
 	m.SetPendingPRAction("close")
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}
+	msg := tea.KeyPressMsg{Text: "y"}
 	_, action := m.Update(msg)
 
 	require.Equal(t, "pr_close", action, "should return the action on confirm")

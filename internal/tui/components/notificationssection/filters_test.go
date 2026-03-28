@@ -110,7 +110,7 @@ func TestParseNotificationFilters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filters := parseNotificationFilters(tt.search)
+			filters := parseNotificationFilters(tt.search, false)
 
 			if filters.ReadState != tt.wantReadState {
 				t.Errorf("ReadState = %v, want %v", filters.ReadState, tt.wantReadState)
@@ -119,13 +119,25 @@ func TestParseNotificationFilters(t *testing.T) {
 				t.Errorf("IsDone = %v, want %v", filters.IsDone, tt.wantIsDone)
 			}
 			if filters.ExplicitUnread != tt.wantExplicitUnread {
-				t.Errorf("ExplicitUnread = %v, want %v", filters.ExplicitUnread, tt.wantExplicitUnread)
+				t.Errorf(
+					"ExplicitUnread = %v, want %v",
+					filters.ExplicitUnread,
+					tt.wantExplicitUnread,
+				)
 			}
 			if filters.IncludeBookmarked != tt.wantIncludeBookmarked {
-				t.Errorf("IncludeBookmarked = %v, want %v", filters.IncludeBookmarked, tt.wantIncludeBookmarked)
+				t.Errorf(
+					"IncludeBookmarked = %v, want %v",
+					filters.IncludeBookmarked,
+					tt.wantIncludeBookmarked,
+				)
 			}
 			if len(filters.RepoFilters) != tt.wantRepoCount {
-				t.Errorf("RepoFilters count = %d, want %d", len(filters.RepoFilters), tt.wantRepoCount)
+				t.Errorf(
+					"RepoFilters count = %d, want %d",
+					len(filters.RepoFilters),
+					tt.wantRepoCount,
+				)
 			}
 		})
 	}
@@ -206,7 +218,12 @@ func TestParseReasonFilters(t *testing.T) {
 			result := parseReasonFilters(tt.search)
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("parseReasonFilters(%q) returned %d items, want %d", tt.search, len(result), len(tt.expected))
+				t.Errorf(
+					"parseReasonFilters(%q) returned %d items, want %d",
+					tt.search,
+					len(result),
+					len(tt.expected),
+				)
 				t.Errorf("got: %v", result)
 				t.Errorf("want: %v", tt.expected)
 				return
@@ -214,7 +231,13 @@ func TestParseReasonFilters(t *testing.T) {
 
 			for i, want := range tt.expected {
 				if result[i] != want {
-					t.Errorf("parseReasonFilters(%q)[%d] = %q, want %q", tt.search, i, result[i], want)
+					t.Errorf(
+						"parseReasonFilters(%q)[%d] = %q, want %q",
+						tt.search,
+						i,
+						result[i],
+						want,
+					)
 				}
 			}
 		})
@@ -251,9 +274,13 @@ func TestParseNotificationFiltersWithReasons(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filters := parseNotificationFilters(tt.search)
+			filters := parseNotificationFilters(tt.search, false)
 			if len(filters.ReasonFilters) != tt.wantReasonCount {
-				t.Errorf("ReasonFilters count = %d, want %d", len(filters.ReasonFilters), tt.wantReasonCount)
+				t.Errorf(
+					"ReasonFilters count = %d, want %d",
+					len(filters.ReasonFilters),
+					tt.wantReasonCount,
+				)
 			}
 		})
 	}
@@ -307,13 +334,24 @@ func TestParseRepoFilters(t *testing.T) {
 			result := parseRepoFilters(tt.search)
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("parseRepoFilters(%q) returned %d items, want %d", tt.search, len(result), len(tt.expected))
+				t.Errorf(
+					"parseRepoFilters(%q) returned %d items, want %d",
+					tt.search,
+					len(result),
+					len(tt.expected),
+				)
 				return
 			}
 
 			for i, want := range tt.expected {
 				if result[i] != want {
-					t.Errorf("parseRepoFilters(%q)[%d] = %q, want %q", tt.search, i, result[i], want)
+					t.Errorf(
+						"parseRepoFilters(%q)[%d] = %q, want %q",
+						tt.search,
+						i,
+						result[i],
+						want,
+					)
 				}
 			}
 		})
@@ -405,7 +443,7 @@ func TestParseNotificationFiltersEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filters := parseNotificationFilters(tt.search)
+			filters := parseNotificationFilters(tt.search, false)
 
 			if filters.ReadState != tt.wantReadState {
 				t.Errorf("ReadState = %v, want %v", filters.ReadState, tt.wantReadState)
@@ -414,10 +452,18 @@ func TestParseNotificationFiltersEdgeCases(t *testing.T) {
 				t.Errorf("IsDone = %v, want %v", filters.IsDone, tt.wantIsDone)
 			}
 			if filters.ExplicitUnread != tt.wantExplicitUnread {
-				t.Errorf("ExplicitUnread = %v, want %v", filters.ExplicitUnread, tt.wantExplicitUnread)
+				t.Errorf(
+					"ExplicitUnread = %v, want %v",
+					filters.ExplicitUnread,
+					tt.wantExplicitUnread,
+				)
 			}
 			if filters.IncludeBookmarked != tt.wantIncludeBookmarked {
-				t.Errorf("IncludeBookmarked = %v, want %v", filters.IncludeBookmarked, tt.wantIncludeBookmarked)
+				t.Errorf(
+					"IncludeBookmarked = %v, want %v",
+					filters.IncludeBookmarked,
+					tt.wantIncludeBookmarked,
+				)
 			}
 		})
 	}
@@ -463,7 +509,12 @@ func TestParseReasonFiltersEdgeCases(t *testing.T) {
 			result := parseReasonFilters(tt.search)
 
 			if len(result) != len(tt.expected) {
-				t.Errorf("parseReasonFilters(%q) returned %d items, want %d", tt.search, len(result), len(tt.expected))
+				t.Errorf(
+					"parseReasonFilters(%q) returned %d items, want %d",
+					tt.search,
+					len(result),
+					len(tt.expected),
+				)
 				t.Errorf("got: %v", result)
 				t.Errorf("want: %v", tt.expected)
 				return
@@ -471,8 +522,90 @@ func TestParseReasonFiltersEdgeCases(t *testing.T) {
 
 			for i, want := range tt.expected {
 				if result[i] != want {
-					t.Errorf("parseReasonFilters(%q)[%d] = %q, want %q", tt.search, i, result[i], want)
+					t.Errorf(
+						"parseReasonFilters(%q)[%d] = %q, want %q",
+						tt.search,
+						i,
+						result[i],
+						want,
+					)
 				}
+			}
+		})
+	}
+}
+
+func TestParseNotificationFiltersIncludeRead(t *testing.T) {
+	tests := []struct {
+		name                  string
+		search                string
+		includeRead           bool
+		wantReadState         data.NotificationReadState
+		wantIncludeBookmarked bool
+		wantExplicitUnread    bool
+	}{
+		{
+			name:                  "includeRead true with empty search defaults to all",
+			search:                "",
+			includeRead:           true,
+			wantReadState:         data.NotificationStateAll,
+			wantIncludeBookmarked: false,
+			wantExplicitUnread:    false,
+		},
+		{
+			name:                  "includeRead false with empty search defaults to unread",
+			search:                "",
+			includeRead:           false,
+			wantReadState:         data.NotificationStateUnread,
+			wantIncludeBookmarked: true,
+			wantExplicitUnread:    false,
+		},
+		{
+			name:                  "includeRead true with explicit is:unread overrides to unread",
+			search:                "is:unread",
+			includeRead:           true,
+			wantReadState:         data.NotificationStateUnread,
+			wantIncludeBookmarked: false,
+			wantExplicitUnread:    true,
+		},
+		{
+			name:                  "includeRead true with explicit is:read overrides to read",
+			search:                "is:read",
+			includeRead:           true,
+			wantReadState:         data.NotificationStateRead,
+			wantIncludeBookmarked: false,
+			wantExplicitUnread:    false,
+		},
+		{
+			name:                  "includeRead true with random text defaults to all",
+			search:                "some random text",
+			includeRead:           true,
+			wantReadState:         data.NotificationStateAll,
+			wantIncludeBookmarked: false,
+			wantExplicitUnread:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filters := parseNotificationFilters(tt.search, tt.includeRead)
+
+			if filters.ReadState != tt.wantReadState {
+				t.Errorf("ReadState = %v, want %v", filters.ReadState, tt.wantReadState)
+			}
+			if filters.IncludeBookmarked != tt.wantIncludeBookmarked {
+				t.Errorf(
+					"IncludeBookmarked = %v, want %v",
+					filters.IncludeBookmarked,
+					tt.wantIncludeBookmarked,
+				)
+			}
+			if filters.ExplicitUnread != tt.wantExplicitUnread {
+				t.Errorf(
+					"ExplicitUnread = %v, want %v",
+					filters.ExplicitUnread,
+					tt.wantExplicitUnread,
+				)
 			}
 		})
 	}

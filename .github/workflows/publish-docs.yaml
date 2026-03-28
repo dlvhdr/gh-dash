@@ -1,9 +1,6 @@
-name: Build Docs Docker image
+name: Build and Push Docs Docker image
 
 on:
-  pull_request:
-    paths:
-      - "docs/**"
   push:
     branches: ["main"]
     paths:

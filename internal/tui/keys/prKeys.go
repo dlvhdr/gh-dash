@@ -3,8 +3,8 @@ package keys
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
-	log "github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
@@ -15,6 +15,7 @@ type PRKeyMap struct {
 	Approve              key.Binding
 	Assign               key.Binding
 	Unassign             key.Binding
+	Label                key.Binding
 	Comment              key.Binding
 	Diff                 key.Binding
 	Checkout             key.Binding
@@ -25,6 +26,7 @@ type PRKeyMap struct {
 	Merge                key.Binding
 	Update               key.Binding
 	WatchChecks          key.Binding
+	ApproveWorkflows     key.Binding
 	ToggleSmartFiltering key.Binding
 	ViewIssues           key.Binding
 }
@@ -50,6 +52,10 @@ var PRKeys = PRKeyMap{
 		key.WithKeys("A"),
 		key.WithHelp("A", "unassign"),
 	),
+	Label: key.NewBinding(
+		key.WithKeys("L"),
+		key.WithHelp("L", "label"),
+	),
 	Comment: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "comment"),
@@ -59,7 +65,7 @@ var PRKeys = PRKeyMap{
 		key.WithHelp("d", "diff"),
 	),
 	Checkout: key.NewBinding(
-		key.WithKeys("C", " "),
+		key.WithKeys("C", "space"),
 		key.WithHelp("C/Space", "checkout"),
 	),
 	Close: key.NewBinding(
@@ -90,6 +96,10 @@ var PRKeys = PRKeyMap{
 		key.WithKeys("w"),
 		key.WithHelp("w", "watch checks"),
 	),
+	ApproveWorkflows: key.NewBinding(
+		key.WithKeys("V"),
+		key.WithHelp("V", "approve all workflows"),
+	),
 	ToggleSmartFiltering: key.NewBinding(
 		key.WithKeys("t"),
 		key.WithHelp("t", "toggle smart filtering"),
@@ -107,6 +117,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Approve,
 		PRKeys.Assign,
 		PRKeys.Unassign,
+		PRKeys.Label,
 		PRKeys.Comment,
 		PRKeys.Diff,
 		PRKeys.Checkout,
@@ -116,6 +127,7 @@ func PRFullHelp() []key.Binding {
 		PRKeys.Merge,
 		PRKeys.Update,
 		PRKeys.WatchChecks,
+		PRKeys.ApproveWorkflows,
 		PRKeys.ToggleSmartFiltering,
 		PRKeys.ViewIssues,
 	}
@@ -158,6 +170,8 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			key = &PRKeys.Assign
 		case "unassign":
 			key = &PRKeys.Unassign
+		case "label":
+			key = &PRKeys.Label
 		case "comment":
 			key = &PRKeys.Comment
 		case "diff":
@@ -176,6 +190,8 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			key = &PRKeys.Update
 		case "watchChecks":
 			key = &PRKeys.WatchChecks
+		case "approveWorkflows":
+			key = &PRKeys.ApproveWorkflows
 		case "viewIssues":
 			key = &PRKeys.ViewIssues
 		case "summaryViewMore":

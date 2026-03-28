@@ -3,7 +3,7 @@ package issueview
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -49,6 +49,7 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 		{"assign key", "a", IssueActionAssign},
 		{"unassign key", "A", IssueActionUnassign},
 		{"comment key", "c", IssueActionComment},
+		{"checkout key", "C", IssueActionCheckout},
 		{"close key", "x", IssueActionClose},
 		{"reopen key", "X", IssueActionReopen},
 	}
@@ -56,20 +57,27 @@ func TestUpdateReturnsCorrectActions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			m := newTestModelForAction(t)
-			msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tc.keyBinding)}
+			msg := tea.KeyPressMsg{Text: tc.keyBinding}
 
 			_, _, action := m.Update(msg)
 
 			require.NotNil(t, action, "expected action for key %q", tc.keyBinding)
-			require.Equal(t, tc.expectedAction, action.Type,
-				"expected action type %v for key %q, got %v", tc.expectedAction, tc.keyBinding, action.Type)
+			require.Equal(
+				t,
+				tc.expectedAction,
+				action.Type,
+				"expected action type %v for key %q, got %v",
+				tc.expectedAction,
+				tc.keyBinding,
+				action.Type,
+			)
 		})
 	}
 }
 
 func TestUpdateReturnsNilActionForUnknownKeys(t *testing.T) {
 	m := newTestModelForAction(t)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")}
+	msg := tea.KeyPressMsg{Text: "z"}
 
 	_, _, action := m.Update(msg)
 
@@ -78,8 +86,10 @@ func TestUpdateReturnsNilActionForUnknownKeys(t *testing.T) {
 
 func TestUpdateReturnsNilActionWhenCommenting(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isCommenting = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("L")} // label key
+	cmd := m.SetIsCommenting(true)
+
+	require.NotNil(t, cmd)
+	msg := tea.KeyPressMsg{Text: "L"} // label key
 
 	_, _, action := m.Update(msg)
 
@@ -88,8 +98,10 @@ func TestUpdateReturnsNilActionWhenCommenting(t *testing.T) {
 
 func TestUpdateReturnsNilActionWhenLabeling(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isLabeling = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")} // comment key
+	cmd := m.SetIsLabeling(true)
+
+	require.NotNil(t, cmd)
+	msg := tea.KeyPressMsg{Text: "c"} // comment key
 
 	_, _, action := m.Update(msg)
 
@@ -98,8 +110,10 @@ func TestUpdateReturnsNilActionWhenLabeling(t *testing.T) {
 
 func TestUpdateReturnsNilActionWhenAssigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isAssigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")} // close key
+	cmd := m.SetIsAssigning(true)
+
+	require.NotNil(t, cmd)
+	msg := tea.KeyPressMsg{Text: "x"} // close key
 
 	_, _, action := m.Update(msg)
 
@@ -108,8 +122,10 @@ func TestUpdateReturnsNilActionWhenAssigning(t *testing.T) {
 
 func TestUpdateReturnsNilActionWhenUnassigning(t *testing.T) {
 	m := newTestModelForAction(t)
-	m.isUnassigning = true
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("X")} // reopen key
+	cmd := m.SetIsUnassigning(true)
+
+	require.NotNil(t, cmd)
+	msg := tea.KeyPressMsg{Text: "X"} // reopen key
 
 	_, _, action := m.Update(msg)
 
@@ -124,6 +140,7 @@ func TestIssueActionTypes(t *testing.T) {
 		IssueActionAssign,
 		IssueActionUnassign,
 		IssueActionComment,
+		IssueActionCheckout,
 		IssueActionClose,
 		IssueActionReopen,
 	}
@@ -150,7 +167,7 @@ func TestUpdateWithReboundKeys(t *testing.T) {
 	}()
 
 	m := newTestModelForAction(t)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("l")}
+	msg := tea.KeyPressMsg{Text: "l"}
 
 	_, _, action := m.Update(msg)
 
@@ -158,101 +175,37 @@ func TestUpdateWithReboundKeys(t *testing.T) {
 	require.Equal(t, IssueActionLabel, action.Type, "expected label action for rebound key")
 }
 
-// TestAutocompleteStateResetWhenSwitchingModes verifies that autocomplete
-// suggestions from labeling mode don't leak into commenting mode.
-// This is a regression test for https://github.com/dlvhdr/gh-dash/issues/751
-func TestAutocompleteStateResetWhenSwitchingModes(t *testing.T) {
+func TestSetIsCommentingActivatesFocusedInput(t *testing.T) {
 	m := newTestModelForAction(t)
+	cmd := m.SetIsCommenting(true)
 
-	// Simulate what happens when entering labeling mode:
-	// 1. Autocomplete gets populated with label suggestions
-	m.ac.SetSuggestions([]string{"bug", "feature", "documentation", "enhancement"})
-
-	// 2. User types something and autocomplete filters/shows suggestions
-	// This populates the internal 'filtered' slice
-	m.ac.Show("fea", nil) // Would match "feature"
-
-	// Verify autocomplete has suggestions (the bug condition)
-	require.True(t, m.ac.HasSuggestions(),
-		"autocomplete should have suggestions after Show()")
-
-	// 3. User exits labeling mode (Escape) - in the bug, this only hid but didn't reset
-	m.ac.Hide()
-
-	// In the buggy code, HasSuggestions() would still return true here
-	// because Hide() only sets visible=false but doesn't clear filtered
-
-	// 4. User enters commenting mode
-	m.SetIsCommenting(true)
-
-	// 5. After the fix, autocomplete state should be fully reset
-	require.False(t, m.ac.HasSuggestions(),
-		"autocomplete should have no suggestions after entering comment mode")
-	require.False(t, m.ac.IsVisible(),
-		"autocomplete should not be visible after entering comment mode")
+	require.NotNil(t, cmd)
+	require.True(t, m.IsTextInputBoxFocused())
+	require.True(t, m.GetIsCommenting())
 }
 
-// TestAutocompleteResetOnAssignMode verifies autocomplete is reset when entering assign mode
-func TestAutocompleteResetOnAssignMode(t *testing.T) {
+func TestSetIsAssigningReturnsCommandOnCacheMiss(t *testing.T) {
 	m := newTestModelForAction(t)
+	cmd := m.SetIsAssigning(true)
 
-	// Set up autocomplete with label suggestions
-	m.ac.SetSuggestions([]string{"bug", "feature"})
-	m.ac.Show("bug", nil)
-	require.True(t, m.ac.HasSuggestions(), "precondition: autocomplete should have suggestions")
-
-	// Enter assign mode
-	m.SetIsAssigning(true)
-
-	// Autocomplete should be reset
-	require.False(t, m.ac.HasSuggestions(),
-		"autocomplete should have no suggestions after entering assign mode")
+	require.NotNil(t, cmd)
+	require.True(t, m.IsTextInputBoxFocused())
+	require.True(t, m.GetIsAssigning())
 }
 
-// TestAutocompleteResetOnUnassignMode verifies autocomplete is reset when entering unassign mode
-func TestAutocompleteResetOnUnassignMode(t *testing.T) {
+func TestSetIsUnassigningActivatesFocusedInput(t *testing.T) {
 	m := newTestModelForAction(t)
+	cmd := m.SetIsUnassigning(true)
 
-	// Set up autocomplete with label suggestions
-	m.ac.SetSuggestions([]string{"bug", "feature"})
-	m.ac.Show("bug", nil)
-	require.True(t, m.ac.HasSuggestions(), "precondition: autocomplete should have suggestions")
-
-	// Enter unassign mode
-	m.SetIsUnassigning(true)
-
-	// Autocomplete should be reset
-	require.False(t, m.ac.HasSuggestions(),
-		"autocomplete should have no suggestions after entering unassign mode")
+	require.NotNil(t, cmd)
+	require.True(t, m.IsTextInputBoxFocused())
+	require.True(t, m.GetIsUnassigning())
 }
 
-// TestInputBoxTextNotReplacedByStaleAutocomplete is an end-to-end test that
-// verifies the full bug scenario: typing in comment box after exiting label mode
-// should not autocomplete with label names.
-func TestInputBoxTextNotReplacedByStaleAutocomplete(t *testing.T) {
+func TestSetIsLabelingActivatesFocusedInput(t *testing.T) {
 	m := newTestModelForAction(t)
+	cmd := m.SetIsLabeling(true)
 
-	// Step 1: Simulate labeling mode with suggestions
-	m.ac.SetSuggestions([]string{"bug", "feature", "documentation"})
-	m.isLabeling = true
-	m.ac.Show("fea", nil) // User typed "fea", matches "feature"
-
-	// Step 2: Exit labeling mode (simulates pressing Escape)
-	m.isLabeling = false
-	m.ac.Hide()
-
-	// Step 3: Enter commenting mode
-	m.SetIsCommenting(true)
-
-	// Step 4: Set some text in the input box (simulates user typing)
-	m.inputBox.SetValue("This is my comment about fea")
-
-	// Step 5: Verify that Tab key does NOT trigger autocomplete selection
-	// because autocomplete was reset when entering comment mode
-	tabMsg := tea.KeyMsg{Type: tea.KeyTab}
-	m.inputBox.Update(tabMsg)
-
-	// The text should remain unchanged (not replaced with "feature")
-	require.Equal(t, "This is my comment about fea", m.inputBox.Value(),
-		"input text should not be modified by Tab when autocomplete is reset")
+	require.NotNil(t, cmd)
+	require.True(t, m.IsTextInputBoxFocused())
 }

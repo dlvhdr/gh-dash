@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 	checks "github.com/dlvhdr/x/gh-checks"
@@ -135,6 +135,26 @@ type StatusContext struct {
 	}
 }
 
+type CheckSuiteNode struct {
+	Status     graphql.String
+	Conclusion graphql.String
+
+	App struct {
+		Name graphql.String
+	}
+
+	WorkflowRun struct {
+		Workflow struct {
+			Name graphql.String
+		}
+	}
+}
+
+type CheckSuites struct {
+	TotalCount graphql.Int
+	Nodes      []CheckSuiteNode
+}
+
 type StatusCheckRollupStats struct {
 	State    checks.CommitState
 	Contexts struct {
@@ -188,6 +208,11 @@ type LastCommitWithStatusChecks struct {
 					}
 				} `graphql:"contexts(last: 100)"`
 			}
+			// CheckSuites are fetched separately from StatusCheckRollup because
+			// workflows awaiting approval (conclusion ACTION_REQUIRED) and workflows
+			// still queued have no CheckRun objects yet, so they don’t appear in
+			// StatusCheckRollup.contexts.
+			CheckSuites CheckSuites `graphql:"checkSuites(last: 20)"`
 		}
 	}
 	TotalCount int
@@ -391,6 +416,10 @@ func (data PullRequestData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
 }
 
+func (data PullRequestData) GetRepoNameAndOwner() (owner, repoName string) {
+	return data.Repository.Owner.Login, data.Repository.Name
+}
+
 func (data PullRequestData) GetNumber() int {
 	return data.Number
 }
@@ -481,8 +510,12 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	if client == nil {
 		if config.IsFeatureEnabled(config.FF_MOCK_DATA) {
 			log.Info("using mock data", "server", "https://localhost:3000")
-			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-			client, err = gh.NewGraphQLClient(gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"})
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+				InsecureSkipVerify: true,
+			}
+			client, err = gh.NewGraphQLClient(
+				gh.ClientOptions{Host: "localhost:3000", AuthToken: "fake-token"},
+			)
 		} else {
 			client, err = gh.DefaultGraphQLClient()
 		}

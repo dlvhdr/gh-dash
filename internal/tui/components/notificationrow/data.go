@@ -53,34 +53,41 @@ func (d Data) GetNumber() int {
 
 func (d Data) GetUrl() string {
 	subject := d.Notification.Subject
-	repo := d.Notification.Repository.FullName
+	baseUrl := repoBaseUrl(d.Notification.Repository)
 
 	switch subject.Type {
 	case "PullRequest":
-		return fmt.Sprintf("https://github.com/%s/pull/%s", repo, extractNumberFromUrl(subject.Url))
+		return fmt.Sprintf("%s/pull/%s", baseUrl, extractNumberFromUrl(subject.Url))
 	case "Issue":
-		return fmt.Sprintf("https://github.com/%s/issues/%s", repo, extractNumberFromUrl(subject.Url))
+		return fmt.Sprintf("%s/issues/%s", baseUrl, extractNumberFromUrl(subject.Url))
 	case "Discussion":
 		num := extractNumberFromUrl(subject.Url)
 		if num != "" {
-			return fmt.Sprintf("https://github.com/%s/discussions/%s", repo, num)
+			return fmt.Sprintf("%s/discussions/%s", baseUrl, num)
 		}
-		return fmt.Sprintf("https://github.com/%s/discussions", repo)
+		return fmt.Sprintf("%s/discussions", baseUrl)
 	case "Release":
-		return fmt.Sprintf("https://github.com/%s/releases", repo)
+		return fmt.Sprintf("%s/releases", baseUrl)
 	case "Commit":
-		return fmt.Sprintf("https://github.com/%s/commits", repo)
+		return fmt.Sprintf("%s/commits", baseUrl)
 	case "CheckSuite":
-		// GitHub's API returns subject.url=null for CheckSuite notifications.
-		// ResolvedUrl is populated asynchronously with the specific workflow run URL.
-		// Until resolved, we fall back to the repository's actions page.
 		if d.ResolvedUrl != "" {
 			return d.ResolvedUrl
 		}
-		return fmt.Sprintf("https://github.com/%s/actions", repo)
+		return fmt.Sprintf("%s/actions", baseUrl)
 	default:
-		return fmt.Sprintf("https://github.com/%s", repo)
+		return baseUrl
 	}
+}
+
+// repoBaseUrl returns the base HTML URL for a repository.
+// It prefers Repository.HtmlUrl (which includes the correct host for GitHub Enterprise),
+// falling back to https://github.com/<FullName> if HtmlUrl is empty.
+func repoBaseUrl(repo data.NotificationRepository) string {
+	if repo.HtmlUrl != "" {
+		return strings.TrimRight(repo.HtmlUrl, "/")
+	}
+	return fmt.Sprintf("https://github.com/%s", repo.FullName)
 }
 
 func (d Data) GetUpdatedAt() time.Time {

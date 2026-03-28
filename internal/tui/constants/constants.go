@@ -1,7 +1,7 @@
 package constants
 
 import (
-	"github.com/charmbracelet/bubbles/key"
+	"charm.land/bubbles/v2/key"
 )
 
 type KeyMap struct {
@@ -39,6 +39,7 @@ const (
 	SuccessIcon          = ""
 	TeamIcon             = ""
 	WaitingIcon          = ""
+	ActionRequiredIcon   = "" // nf-cod-warning (matches GitHub UI)
 
 	BehindIcon         = "󰇮"
 	BlockedIcon        = ""
@@ -55,6 +56,12 @@ const (
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""
 	SelectionIcon      = "❯"
+
+	AutocompleteColumnGap              = 2
+	AutocompleteMinValueWidth          = 8
+	AutocompleteMinDetailWidth         = 10
+	AutocompletePreferredValueRatioNum = 2
+	AutocompletePreferredValueRatioDen = 3
 
 	// New contributors: users who created a PR for the repo for the first time
 	NewContributorIcon = "󰎔" // \udb80\udf94 nf-md-new_box

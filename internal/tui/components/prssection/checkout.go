@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -25,7 +25,9 @@ func (m *Model) checkout() (tea.Cmd, error) {
 	repoPath, ok := common.GetRepoLocalPath(repoName, m.Ctx.Config.RepoPaths)
 
 	if !ok {
-		return nil, errors.New("local path to repo not specified, set one in your config.yml under repoPaths")
+		return nil, errors.New(
+			"local path to repo not specified, set one in your config.yml under repoPaths",
+		)
 	}
 
 	prNumber := pr.GetNumber()

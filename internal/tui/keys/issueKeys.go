@@ -3,8 +3,8 @@ package keys
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
-	log "github.com/charmbracelet/log"
+	"charm.land/bubbles/v2/key"
+	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
@@ -14,6 +14,7 @@ type IssueKeyMap struct {
 	Assign               key.Binding
 	Unassign             key.Binding
 	Comment              key.Binding
+	Checkout             key.Binding
 	Close                key.Binding
 	Reopen               key.Binding
 	ToggleSmartFiltering key.Binding
@@ -36,6 +37,10 @@ var IssueKeys = IssueKeyMap{
 	Comment: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "comment"),
+	),
+	Checkout: key.NewBinding(
+		key.WithKeys("C"),
+		key.WithHelp("C", "checkout"),
 	),
 	Close: key.NewBinding(
 		key.WithKeys("x"),
@@ -61,6 +66,7 @@ func IssueFullHelp() []key.Binding {
 		IssueKeys.Assign,
 		IssueKeys.Unassign,
 		IssueKeys.Comment,
+		IssueKeys.Checkout,
 		IssueKeys.Close,
 		IssueKeys.Reopen,
 		IssueKeys.ToggleSmartFiltering,
@@ -103,6 +109,8 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 			key = &IssueKeys.Unassign
 		case "comment":
 			key = &IssueKeys.Comment
+		case "checkout":
+			key = &IssueKeys.Checkout
 		case "close":
 			key = &IssueKeys.Close
 		case "reopen":

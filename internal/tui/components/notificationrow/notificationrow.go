@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
@@ -74,10 +75,14 @@ func (n *Notification) renderType() string {
 		}
 	case "Discussion":
 		icon = ""
-		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"})
+		style = style.Foreground(
+			compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")},
+		)
 	case "Release":
 		icon = ""
-		style = style.Foreground(lipgloss.AdaptiveColor{Light: "#0969da", Dark: "#58a6ff"})
+		style = style.Foreground(
+			compat.AdaptiveColor{Light: lipgloss.Color("#0969da"), Dark: lipgloss.Color("#58a6ff")},
+		)
 	case "Commit":
 		icon = ""
 		style = style.Foreground(n.Ctx.Theme.SecondaryText)
@@ -144,7 +149,9 @@ func (n *Notification) renderTitleBlock() string {
 	}
 	// Add bookmark icon if bookmarked (using raw ANSI for warning color)
 	if data.GetBookmarkStore().IsBookmarked(n.Data.GetId()) {
-		bookmarkPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText))
+		bookmarkPrefix := utils.GetStylePrefix(
+			lipgloss.NewStyle().Foreground(n.Ctx.Theme.WarningText),
+		)
 		line1 = line1 + " " + bookmarkPrefix + ""
 	}
 	line1Rendered := repoPrefix + line1
@@ -159,13 +166,24 @@ func (n *Notification) renderTitleBlock() string {
 	line2Rendered := titlePrefix + title
 
 	// Line 3: Activity description (no ANSI reset)
-	activityPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
 	line3 := n.Data.ActivityDescription
 	if line3 == "" {
 		// Fallback to reason-based description
 		line3 = n.getReasonDescription()
 	}
-	line3Rendered := activityPrefix + line3
+	activityPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.FaintText))
+	var line3Rendered string
+	if strings.HasPrefix(line3, "@") {
+		// Style the @username with ActorText for better contrast
+		actorPrefix := utils.GetStylePrefix(lipgloss.NewStyle().Foreground(n.Ctx.Theme.ActorText))
+		if idx := strings.Index(line3, " "); idx > 0 {
+			line3Rendered = actorPrefix + line3[:idx] + activityPrefix + line3[idx:]
+		} else {
+			line3Rendered = actorPrefix + line3
+		}
+	} else {
+		line3Rendered = activityPrefix + line3
+	}
 
 	return line1Rendered + "\n" + line2Rendered + "\n" + line3Rendered
 }
@@ -213,7 +231,10 @@ func (n *Notification) renderActivity() string {
 	// White foreground for count, green foreground for icon
 	white := "\x1b[97m" // Bright white
 	green := "\x1b[32m" // Green
-	return white + fmt.Sprintf("+%d ", n.Data.NewCommentsCount) + green + constants.CommentsIcon + "\n\n"
+	return white + fmt.Sprintf(
+		"+%d ",
+		n.Data.NewCommentsCount,
+	) + green + constants.CommentsIcon + "\n\n"
 }
 
 // renderUpdatedAt returns the time since last update

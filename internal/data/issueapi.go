@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 	"github.com/shurcooL/githubv4"
@@ -51,8 +51,9 @@ type IssueReactions struct {
 }
 
 type Label struct {
-	Color string
-	Name  string
+	Color       string
+	Name        string
+	Description string
 }
 
 type IssueLabels struct {
@@ -73,6 +74,10 @@ func (data IssueData) GetTitle() string {
 
 func (data IssueData) GetRepoNameWithOwner() string {
 	return data.Repository.NameWithOwner
+}
+
+func (data IssueData) GetRepoNameAndOwner() (owner, repoName string) {
+	return data.Repository.Owner.Login, data.Repository.Name
 }
 
 func (data IssueData) GetNumber() int {

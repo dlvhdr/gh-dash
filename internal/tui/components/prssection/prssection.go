@@ -5,8 +5,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -62,14 +63,15 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 	case tea.KeyMsg:
 
 		if m.IsSearchFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.SearchBar.SetValue(m.SearchValue)
 				blinkCmd := m.SetIsSearching(false)
 				return m, blinkCmd
 
-			case tea.KeyEnter:
+			case "enter":
 				m.SearchValue = m.SearchBar.Value()
+				m.SyncSmartFilterWithSearchValue()
 				m.SetIsSearching(false)
 				m.ResetRows()
 				return m, tea.Batch(m.FetchNextPageSectionRows()...)
@@ -79,18 +81,18 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 		if m.IsPromptConfirmationFocused() {
-			switch msg.Type {
-			case tea.KeyCtrlC, tea.KeyEsc:
+			switch msg.String() {
+			case "ctrl+c", "esc":
 				m.PromptConfirmationBox.Reset()
 				cmd = m.SetIsPromptConfirmationShown(false)
 				return m, cmd
 
-			case tea.KeyEnter:
+			case "enter":
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
 				pr := m.GetCurrRow()
 				sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
-				if input == "Y" || input == "y" {
+				if input == "" || input == "Y" || input == "y" {
 					switch action {
 					case "close":
 						cmd = tasks.ClosePR(m.Ctx, sid, pr)
@@ -102,6 +104,8 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 						cmd = tasks.MergePR(m.Ctx, sid, pr)
 					case "update":
 						cmd = tasks.UpdatePR(m.Ctx, sid, pr)
+					case "approveWorkflows":
+						cmd = tasks.ApproveWorkflows(m.Ctx, sid, pr)
 					}
 				}
 
@@ -119,9 +123,20 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			cmd = m.diff()
 
 		case key.Matches(msg, keys.PRKeys.ToggleSmartFiltering):
-			if !m.HasRepoNameInConfiguredFilter() {
-				m.IsFilteredByCurrentRemote = !m.IsFilteredByCurrentRemote
+			before := m.IsFilteredByCurrentRemote
+
+			// If we're filtering by the current repo - we want to remove it
+			// If there's no repo filter we want to add the current repo filter.
+			if m.HasCurrentRepoNameInConfiguredFilter() || !m.HasRepoNameInConfiguredFilter() {
+				m.IsFilteredByCurrentRemote = !before
 			}
+			log.Debug(
+				"toggled smart filtering",
+				"before",
+				before,
+				"after",
+				m.IsFilteredByCurrentRemote,
+			)
 			searchValue := m.GetSearchValue()
 			if m.SearchValue != searchValue {
 				m.SearchValue = searchValue
@@ -165,6 +180,9 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			if msg.RemovedAssignees != nil {
 				currPr.Primary.Assignees.Nodes = removeAssignees(
 					currPr.Primary.Assignees.Nodes, msg.RemovedAssignees.Nodes)
+			}
+			if msg.Labels != nil {
+				currPr.Primary.Labels.Nodes = msg.Labels.Nodes
 			}
 			if msg.ReadyForReview != nil && *msg.ReadyForReview {
 				currPr.Primary.IsDraft = false
@@ -252,6 +270,7 @@ func GetSectionColumns(
 	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
+	labelsLayout := config.MergeColumnConfigs(dLayout.Labels, sLayout.Labels)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
 
 	if !ctx.Config.Theme.Ui.Table.Compact {
@@ -265,6 +284,11 @@ func GetSectionColumns(
 				Title:  "Title",
 				Grow:   utils.BoolPtr(true),
 				Hidden: titleLayout.Hidden,
+			},
+			{
+				Title:  constants.LabelsIcon,
+				Width:  labelsLayout.Width,
+				Hidden: labelsLayout.Hidden,
 			},
 			{
 				Title:  "Assignees",
@@ -330,6 +354,11 @@ func GetSectionColumns(
 			Title:  "Author",
 			Width:  authorLayout.Width,
 			Hidden: authorLayout.Hidden,
+		},
+		{
+			Title:  constants.LabelsIcon,
+			Width:  labelsLayout.Width,
+			Hidden: labelsLayout.Hidden,
 		},
 		{
 			Title:  "Assignees",

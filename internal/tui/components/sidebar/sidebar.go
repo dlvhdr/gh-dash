@@ -3,10 +3,10 @@ package sidebar
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
@@ -24,10 +24,10 @@ func NewModel() Model {
 	return Model{
 		IsOpen: false,
 		data:   "",
-		viewport: viewport.Model{
-			Width:  0,
-			Height: 0,
-		},
+		viewport: viewport.New(
+			viewport.WithWidth(0),
+			viewport.WithHeight(0),
+		),
 		ctx:        nil,
 		emptyState: "Nothing selected...",
 	}
@@ -82,7 +82,7 @@ func (m *Model) GetSidebarContentWidth() int {
 	if m.ctx == nil || m.ctx.Config == nil {
 		return 0
 	}
-	return m.ctx.DynamicPreviewWidth - m.ctx.Styles.Sidebar.BorderWidth
+	return max(0, m.ctx.DynamicPreviewWidth-m.ctx.Styles.Sidebar.BorderWidth)
 }
 
 func (m *Model) ScrollToTop() {
@@ -104,6 +104,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		return
 	}
 	m.ctx = ctx
-	m.viewport.Height = m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight
-	m.viewport.Width = m.GetSidebarContentWidth()
+	m.viewport.SetHeight(m.ctx.MainContentHeight - m.ctx.Styles.Sidebar.PagerHeight)
+	m.viewport.SetWidth(m.GetSidebarContentWidth())
 }

@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/glamour/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -108,16 +108,22 @@ type comment struct {
 	Line      *int
 }
 
-func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderComment(
+	comment comment,
+	markdownRenderer glamour.TermRenderer,
+) (string, error) {
 	width := m.getIndentedContentWidth()
 	authorAndTime := lipgloss.NewStyle().
 		Width(width).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(m.ctx.Theme.FaintBorder).Render(
-		lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
 			m.ctx.Styles.Common.MainTextStyle.Render(comment.Author),
 			" ",
-			lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(utils.TimeElapsed(comment.UpdatedAt)),
+			lipgloss.NewStyle().
+				Foreground(m.ctx.Theme.FaintText).
+				Render(utils.TimeElapsed(comment.UpdatedAt)),
 		))
 
 	var header string
@@ -144,7 +150,10 @@ func (m *Model) renderComment(comment comment, markdownRenderer glamour.TermRend
 	), err
 }
 
-func (m *Model) renderReview(review data.Review, markdownRenderer glamour.TermRenderer) (string, error) {
+func (m *Model) renderReview(
+	review data.Review,
+	markdownRenderer glamour.TermRenderer,
+) (string, error) {
 	header := m.renderReviewHeader(review)
 	body, err := markdownRenderer.Render(review.Body)
 	return lipgloss.JoinVertical(

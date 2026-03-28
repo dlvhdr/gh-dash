@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -101,9 +101,13 @@ func ShortNumber(n int) string {
 // This allows styled text to be concatenated without breaking parent background colors.
 func GetStylePrefix(s lipgloss.Style) string {
 	rendered := s.Render("")
-	// Strip trailing reset sequence if present
+	// Strip trailing SGR reset sequence: \x1b[0m (4 bytes) or \x1b[m (3 bytes).
+	// lipgloss v2 uses the shorter form (\x1b[m); both are valid per ANSI spec.
 	if len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m" {
 		return rendered[:len(rendered)-4]
+	}
+	if len(rendered) >= 3 && rendered[len(rendered)-3:] == "\x1b[m" {
+		return rendered[:len(rendered)-3]
 	}
 	return rendered
 }

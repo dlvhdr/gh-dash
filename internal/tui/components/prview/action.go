@@ -1,8 +1,8 @@
 package prview
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
@@ -15,6 +15,7 @@ const (
 	PRActionApprove
 	PRActionAssign
 	PRActionUnassign
+	PRActionLabel
 	PRActionComment
 	PRActionDiff
 	PRActionCheckout
@@ -24,6 +25,7 @@ const (
 	PRActionMerge
 	PRActionUpdate
 	PRActionSummaryViewMore
+	PRActionApproveWorkflows
 )
 
 // PRAction represents an action to be performed on a PR.
@@ -45,6 +47,8 @@ func MsgToAction(msg tea.Msg) *PRAction {
 		return &PRAction{Type: PRActionAssign}
 	case key.Matches(keyMsg, keys.PRKeys.Unassign):
 		return &PRAction{Type: PRActionUnassign}
+	case key.Matches(keyMsg, keys.PRKeys.Label):
+		return &PRAction{Type: PRActionLabel}
 	case key.Matches(keyMsg, keys.PRKeys.Comment):
 		return &PRAction{Type: PRActionComment}
 	case key.Matches(keyMsg, keys.PRKeys.Diff):
@@ -63,6 +67,8 @@ func MsgToAction(msg tea.Msg) *PRAction {
 		return &PRAction{Type: PRActionUpdate}
 	case key.Matches(keyMsg, keys.PRKeys.SummaryViewMore):
 		return &PRAction{Type: PRActionSummaryViewMore}
+	case key.Matches(keyMsg, keys.PRKeys.ApproveWorkflows):
+		return &PRAction{Type: PRActionApproveWorkflows}
 	}
 
 	return nil

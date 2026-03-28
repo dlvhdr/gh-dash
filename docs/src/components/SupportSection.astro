@@ -1,0 +1,30 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import Sponsorship from "../components/Sponsorship.astro";
+---
+
+<h2 class="mt-8 mb-2 text-center !text-3xl">Donate To Support the Project</h2>
+
+<div class="mt-12 flex flex-col gap-2 text-center">
+  <p class="text-pretty lg:w-[80ch]">
+    I'm always working on new terminal UIs to make my life easier.<br />By
+    donating or joining <a href="/insiders">Insiders</a> you can support this and
+    any of my other projects.<br />
+  </p>
+  <div class="m-auto flex max-w-lg flex-col justify-center">
+    <p class="mt-4 text-[var(--sl-color-gray-3)]">
+      This is my current sponsorship goal
+    </p>
+    <Sponsorship server:defer />
+  </div>
+</div>
+
+<form action="/donating" class="flex w-full justify-center pt-8">
+  <button
+    type="submit"
+    class="flex items-center gap-2 bg-[var(--sl-color-accent)] px-4 py-2 font-bold text-black"
+  >
+    Donate!
+    <Icon class="mt-0" name="heart" size="20px" color="var(--color-pink-800)" />
+  </button>
+</form>

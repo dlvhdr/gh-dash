@@ -1,7 +1,7 @@
 package testdata
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
@@ -92,11 +92,6 @@ func (t *TestSection) GetTotalCount() int {
 
 // GetType implements section.Section.
 func (t *TestSection) GetType() string {
-	panic("unimplemented")
-}
-
-// IsFilteringByClone implements section.Section.
-func (t *TestSection) IsFilteringByClone() bool {
 	panic("unimplemented")
 }
 

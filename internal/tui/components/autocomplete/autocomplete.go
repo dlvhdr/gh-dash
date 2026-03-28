@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
@@ -16,13 +16,20 @@ import (
 	"github.com/sahilm/fuzzy"
 )
 
-// suggestionList wraps a slice of strings to implement fuzzy.Source
+// Suggestion represents an autocomplete entry
+// Value is the text inserted into the input; Detail is optional display-only context
+type Suggestion struct {
+	Value  string
+	Detail string
+}
+
+// suggestionList wraps a slice of suggestions to implement fuzzy.Source
 type suggestionList struct {
-	items []string
+	items []Suggestion
 }
 
 func (s suggestionList) String(i int) string {
-	return s.items[i]
+	return s.items[i].Value
 }
 
 type FetchState int
@@ -32,11 +39,26 @@ func (s suggestionList) Len() int {
 }
 
 var (
-	NextKey               = key.NewBinding(key.WithKeys(tea.KeyDown.String(), tea.KeyCtrlN.String()), key.WithHelp("↓/Ctrl+n", "next"))
-	PrevKey               = key.NewBinding(key.WithKeys(tea.KeyUp.String(), tea.KeyCtrlP.String()), key.WithHelp("↑/Ctrl+p", "previous"))
-	SelectKey             = key.NewBinding(key.WithKeys(tea.KeyTab.String(), tea.KeyEnter.String(), tea.KeyCtrlY.String()), key.WithHelp("tab/enter/Ctrl+y", "select"))
-	RefreshSuggestionsKey = key.NewBinding(key.WithKeys(tea.KeyCtrlF.String()), key.WithHelp("Ctrl+f", "refresh suggestions"))
-	ToggleSuggestions     = key.NewBinding(key.WithKeys(tea.KeyCtrlH.String()), key.WithHelp("Ctrl+h", "toggle suggestions"))
+	NextKey = key.NewBinding(
+		key.WithKeys("down", "ctrl+n"),
+		key.WithHelp("↓/Ctrl+n", "next"),
+	)
+	PrevKey = key.NewBinding(
+		key.WithKeys("up", "ctrl+p"),
+		key.WithHelp("↑/Ctrl+p", "previous"),
+	)
+	SelectKey = key.NewBinding(
+		key.WithKeys("tab", "enter", "ctrl+y"),
+		key.WithHelp("tab/enter/Ctrl+y", "select"),
+	)
+	RefreshSuggestionsKey = key.NewBinding(
+		key.WithKeys("ctrl+f"),
+		key.WithHelp("Ctrl+f", "refresh suggestions"),
+	)
+	ToggleSuggestions = key.NewBinding(
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("Ctrl+h", "toggle suggestions"),
+	)
 )
 
 var suggestionKeys = []key.Binding{
@@ -73,8 +95,8 @@ func NewFetchSuggestionsRequestedCmd(force bool) tea.Cmd {
 type Model struct {
 	ctx            *context.ProgramContext
 	suggestionHelp help.Model
-	suggestions    []string
-	filtered       []string
+	suggestions    []Suggestion
+	filtered       []Suggestion
 	selected       int
 	visible        bool
 	maxVisible     int
@@ -106,7 +128,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m *Model) SetSuggestions(suggestions []string) {
+func (m *Model) SetSuggestions(suggestions []Suggestion) {
 	m.suggestions = suggestions
 }
 
@@ -116,10 +138,10 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 		excludeMap[strings.ToLower(strings.TrimSpace(item))] = true
 	}
 
-	// Filter excluded labels first
-	var filteredSuggestions []string
+	// Filter excluded items first
+	filteredSuggestions := make([]Suggestion, 0, len(m.suggestions))
 	for _, suggestion := range m.suggestions {
-		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion))] {
+		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion.Value))] {
 			filteredSuggestions = append(filteredSuggestions, suggestion)
 		}
 	}
@@ -140,12 +162,12 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 	matches := fuzzy.FindFrom(currentItem, list)
 
 	// Collect matched items up to maxResults
-	m.filtered = make([]string, 0, m.maxVisible)
+	m.filtered = make([]Suggestion, 0, m.maxVisible)
 	for _, match := range matches {
 		if len(m.filtered) >= m.maxVisible {
 			break
 		}
-		m.filtered = append(m.filtered, match.Str)
+		m.filtered = append(m.filtered, filteredSuggestions[match.Index])
 	}
 
 	m.selected = 0
@@ -155,7 +177,7 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 
 func (m *Model) Selected() string {
 	if m.selected >= 0 && m.selected < len(m.filtered) {
-		return m.filtered[m.selected]
+		return m.filtered[m.selected].Value
 	}
 	return ""
 }
@@ -217,35 +239,122 @@ func (m *Model) SetWidth(width int) {
 	m.width = max(0, width)
 }
 
+type columnLayout struct {
+	valueWidth  int
+	detailWidth int
+	gapWidth    int
+}
+
+func (m *Model) computeColumnLayout(numVisible, totalContentWidth int) columnLayout {
+	layout := columnLayout{
+		valueWidth: totalContentWidth,
+	}
+
+	maxValueWidth := 0
+	hasAnyDetail := false
+	for i := 0; i < numVisible; i++ {
+		suggestion := m.filtered[i]
+		maxValueWidth = max(maxValueWidth, lipgloss.Width(suggestion.Value))
+		hasAnyDetail = hasAnyDetail || strings.TrimSpace(suggestion.Detail) != ""
+	}
+	if !hasAnyDetail || totalContentWidth <= 0 {
+		return layout
+	}
+
+	layout.gapWidth = min(
+		constants.AutocompleteColumnGap,
+		max(0, totalContentWidth-constants.AutocompleteMinDetailWidth),
+	)
+	maxValueForDetails := max(
+		0,
+		totalContentWidth-layout.gapWidth-constants.AutocompleteMinDetailWidth,
+	)
+	if maxValueForDetails <= 0 {
+		return layout
+	}
+
+	preferredValueWidth := min(
+		maxValueWidth,
+		max(
+			constants.AutocompleteMinValueWidth,
+			(totalContentWidth*constants.AutocompletePreferredValueRatioNum)/constants.AutocompletePreferredValueRatioDen,
+		),
+	)
+	layout.valueWidth = max(1, min(preferredValueWidth, maxValueForDetails))
+	layout.detailWidth = max(0, totalContentWidth-layout.valueWidth-layout.gapWidth)
+
+	return layout
+}
+
 func (m *Model) View() string {
 	if !m.visible || len(m.filtered) == 0 {
 		return ""
 	}
 
 	numVisible := min(len(m.filtered), m.maxVisible)
+	numRows := m.maxVisible
+	if numRows <= 0 {
+		numRows = numVisible
+	}
 
 	var b strings.Builder
 
 	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle.Width(m.width)
 	maxLabelWidth := m.width - popupStyle.GetHorizontalPadding()
+
+	selectedPrefix := constants.SelectionIcon + " "
+	normalPrefix := "  "
+	selectedPrefixWidth := lipgloss.Width(selectedPrefix)
+	normalPrefixWidth := lipgloss.Width(normalPrefix)
+	maxPrefixWidth := max(selectedPrefixWidth, normalPrefixWidth)
+	totalContentWidth := max(0, maxLabelWidth-maxPrefixWidth)
+	layout := m.computeColumnLayout(numVisible, totalContentWidth)
+	valueColumnStyle := lipgloss.NewStyle().Width(layout.valueWidth)
+	detailColumnStyle := lipgloss.NewStyle().
+		Width(layout.detailWidth).
+		Foreground(m.ctx.Theme.FaintText)
 	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
 
-	for i := 0; i < numVisible && i < len(m.filtered); i++ {
-		label := m.filtered[i]
-		if len(label) > maxLabelWidth {
-			label = ansi.Truncate(label, maxLabelWidth-ellipsisWidth, constants.Ellipsis)
+	for i := 0; i < numRows; i++ {
+		suggestion := Suggestion{}
+		if i < numVisible {
+			suggestion = m.filtered[i]
+		}
+		value := suggestion.Value
+		detail := suggestion.Detail
+
+		if layout.valueWidth > 0 && lipgloss.Width(value) > layout.valueWidth {
+			value = ansi.Truncate(
+				value,
+				max(0, layout.valueWidth-ellipsisWidth),
+				constants.Ellipsis,
+			)
+		}
+		if layout.detailWidth > 0 && lipgloss.Width(detail) > layout.detailWidth {
+			detail = ansi.Truncate(
+				detail,
+				max(0, layout.detailWidth-ellipsisWidth),
+				constants.Ellipsis,
+			)
 		}
 
-		// Style based on selection
-		if i == m.selected {
-			// Selected row - use inverted colors
-			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(constants.SelectionIcon + " " + label))
+		rowText := value
+		if layout.detailWidth > 0 {
+			rowText = lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				valueColumnStyle.Render(value),
+				strings.Repeat(" ", layout.gapWidth),
+				detailColumnStyle.Render(detail),
+			)
+		}
+
+		if i < numVisible && i == m.selected {
+			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(selectedPrefix + rowText))
 		} else {
-			// Non-selected row
-			b.WriteString("  " + label)
+			b.WriteString(normalPrefix + rowText)
 		}
 
-		if i < numVisible-1 {
+		if i < numRows-1 {
 			b.WriteString("\n")
 		}
 	}
@@ -253,11 +362,17 @@ func (m *Model) View() string {
 	var statusView string
 	switch m.fetchState {
 	case FetchStateLoading:
-		statusView = m.spinner.View() + m.ctx.Styles.Common.FaintTextStyle.Render("Fetching suggestions"+constants.Ellipsis)
+		statusView = m.spinner.View() + m.ctx.Styles.Common.FaintTextStyle.Render(
+			"Fetching suggestions"+constants.Ellipsis,
+		)
 	case FetchStateSuccess:
-		statusView = m.ctx.Styles.Common.SuccessGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(" Suggestions loaded")
+		statusView = m.ctx.Styles.Common.SuccessGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
+			" Suggestions loaded",
+		)
 	case FetchStateError:
-		errMsg := m.ctx.Styles.Common.FailureGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(" Failed to fetch suggestions")
+		errMsg := m.ctx.Styles.Common.FailureGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
+			" Failed to fetch suggestions",
+		)
 		if m.fetchError != nil {
 			errMsg = m.fetchError.Error()
 		}
@@ -279,9 +394,9 @@ func (m *Model) SetFetchLoading() tea.Cmd {
 	m.fetchState = FetchStateLoading
 	m.fetchError = nil
 
-	placeholders := make([]string, 0, m.maxVisible)
+	placeholders := make([]Suggestion, 0, m.maxVisible)
 	for i := 0; i < m.maxVisible; i++ {
-		placeholders = append(placeholders, "")
+		placeholders = append(placeholders, Suggestion{})
 	}
 	m.filtered = placeholders
 	m.selected = 0
@@ -294,17 +409,17 @@ func (m *Model) SetFetchLoading() tea.Cmd {
 func (m *Model) SetFetchSuccess() tea.Cmd {
 	m.fetchState = FetchStateSuccess
 	m.fetchError = nil
-	return m.clearFetchStatusAfterDelay()
+	return m.clearFetchStatus()
 }
 
 func (m *Model) SetFetchError(err error) tea.Cmd {
 	m.fetchState = FetchStateError
 	m.fetchError = err
-	return m.clearFetchStatusAfterDelay()
+	return m.clearFetchStatus()
 }
 
-// clearFetchStatusAfterDelay returns a command that will send a ClearFetchStatusMsg after 2 seconds
-func (m *Model) clearFetchStatusAfterDelay() tea.Cmd {
+// clearFetchStatus returns a command that will send a ClearFetchStatusMsg after 2 seconds
+func (m *Model) clearFetchStatus() tea.Cmd {
 	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
 		return ClearFetchStatusMsg{}
 	})

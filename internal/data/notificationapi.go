@@ -2,9 +2,10 @@ package data
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 )
 
@@ -78,9 +79,9 @@ func (n NotificationData) GetNumber() int {
 }
 
 func (n NotificationData) GetUrl() string {
-	// Convert API URL to HTML URL
-	// API URL: https://api.github.com/repos/owner/repo/pulls/123
-	// HTML URL: https://github.com/owner/repo/pull/123
+	if n.Repository.HtmlUrl != "" {
+		return strings.TrimRight(n.Repository.HtmlUrl, "/")
+	}
 	return fmt.Sprintf("https://github.com/%s", n.Repository.FullName)
 }
 
@@ -117,7 +118,12 @@ const (
 	NotificationStateAll    NotificationReadState = "all"    // Both read and unread
 )
 
-func FetchNotifications(limit int, repoFilters []string, readState NotificationReadState, pageInfo *PageInfo) (NotificationsResponse, error) {
+func FetchNotifications(
+	limit int,
+	repoFilters []string,
+	readState NotificationReadState,
+	pageInfo *PageInfo,
+) (NotificationsResponse, error) {
 	client, err := getRESTClient()
 	if err != nil {
 		return NotificationsResponse{}, err
@@ -151,8 +157,24 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		// Fetch notifications for each repo and combine
 		for _, repo := range repoFilters {
 			var repoNotifications []NotificationData
-			path := fmt.Sprintf("repos/%s/notifications?per_page=%d&page=%d%s", repo, limit, page, allParam)
-			log.Debug("Fetching notifications for repo", "repo", repo, "limit", limit, "page", page, "readState", readState)
+			path := fmt.Sprintf(
+				"repos/%s/notifications?per_page=%d&page=%d%s",
+				repo,
+				limit,
+				page,
+				allParam,
+			)
+			log.Debug(
+				"Fetching notifications for repo",
+				"repo",
+				repo,
+				"limit",
+				limit,
+				"page",
+				page,
+				"readState",
+				readState,
+			)
 			err = client.Get(path, &repoNotifications)
 			if err != nil {
 				log.Warn("Failed to fetch notifications for repo", "repo", repo, "err", err)
@@ -194,7 +216,19 @@ func FetchNotifications(limit int, repoFilters []string, readState NotificationR
 		// Keep all, no filtering needed
 	}
 
-	log.Info("Successfully fetched notifications", "rawCount", rawCount, "filteredCount", len(allNotifications), "page", page, "hasNextPage", hasNextPage, "readState", readState)
+	log.Info(
+		"Successfully fetched notifications",
+		"rawCount",
+		rawCount,
+		"filteredCount",
+		len(allNotifications),
+		"page",
+		page,
+		"hasNextPage",
+		hasNextPage,
+		"readState",
+		readState,
+	)
 
 	return NotificationsResponse{
 		Notifications: allNotifications,
@@ -390,7 +424,11 @@ func FindBestWorkflowRunMatch(runs []WorkflowRun, notificationUpdatedAt time.Tim
 // based on the notification's updated_at timestamp. Returns the HTML URL of the matching run.
 // The title parameter is the notification subject title (e.g., "CI / build (push)")
 // which may help identify the correct workflow run.
-func FetchRecentWorkflowRun(repo string, notificationUpdatedAt time.Time, title string) (string, error) {
+func FetchRecentWorkflowRun(
+	repo string,
+	notificationUpdatedAt time.Time,
+	title string,
+) (string, error) {
 	client, err := getRESTClient()
 	if err != nil {
 		return "", err
@@ -413,7 +451,15 @@ func FetchRecentWorkflowRun(repo string, notificationUpdatedAt time.Time, title 
 
 	bestMatch := FindBestWorkflowRunMatch(response.WorkflowRuns, notificationUpdatedAt)
 	if bestMatch != nil {
-		log.Debug("Found matching workflow run", "id", bestMatch.Id, "name", bestMatch.Name, "url", bestMatch.HtmlUrl)
+		log.Debug(
+			"Found matching workflow run",
+			"id",
+			bestMatch.Id,
+			"name",
+			bestMatch.Name,
+			"url",
+			bestMatch.HtmlUrl,
+		)
 		return bestMatch.HtmlUrl, nil
 	}
 

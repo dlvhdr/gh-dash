@@ -3,40 +3,29 @@ package inputbox
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 type Model struct {
-	ctx          *context.ProgramContext
-	textArea     textarea.Model
-	inputHelp    help.Model
-	prompt       string
-	autocomplete *autocomplete.Model
-
-	// OnSuggestionSelected is called when a user selects an autocomplete suggestion.
-	// It receives the selected suggestion, current cursor position, and current value in inputbox.
-	// It should return the new value for the inputbox and new cursor position after insertion.
-	OnSuggestionSelected func(selected string, cursorPos int, currentValue string) (newValue string, newCursorPos int)
-
-	// CurrentContext extracts the "current context" (e.g., partial label being typed)
-	// at the given cursor position, used for filtering autocomplete suggestions.
-	CurrentContext func(cursorPos int, currentValue string) string
-
-	// SuggestionsToExclude parses the current value in the inputbox and returns all complete items,
-	// used to exclude already-entered items from autocomplete suggestions.
-	SuggestionsToExclude func(currentValue string) []string
+	ctx                *context.ProgramContext
+	textArea           textarea.Model
+	inputHelp          help.Model
+	prompt             string
+	autocomplete       *autocomplete.Model
+	autocompleteSource dataautocomplete.Source
 }
 
 var inputKeys = []key.Binding{
-	key.NewBinding(key.WithKeys(tea.KeyCtrlD.String()), key.WithHelp("Ctrl+d", "submit")),
-	key.NewBinding(key.WithKeys(tea.KeyCtrlC.String(), tea.KeyEsc.String()), key.WithHelp("Ctrl+c/esc", "cancel")),
+	key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "submit")),
+	key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Ctrl+c/esc", "cancel")),
 	autocomplete.ToggleSuggestions,
 }
 
@@ -45,15 +34,19 @@ func NewModel(ctx *context.ProgramContext) Model {
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
 	ta.CharLimit = 65536
-	ta.FocusedStyle.Base = lipgloss.NewStyle()
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle().
-		Background(ctx.Theme.FaintBorder).
-		Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.LineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.CursorLineNumber = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
-	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText)
-	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle().Foreground(ctx.Theme.FaintText)
+	base := lipgloss.NewStyle()
+	ta.SetStyles(textarea.Styles{
+		Focused: textarea.StyleState{
+			Base:       base,
+			Text:       base.Foreground(ctx.Theme.PrimaryText),
+			LineNumber: base.Foreground(ctx.Theme.FaintText),
+			CursorLine: base.Background(ctx.Theme.FaintBorder).
+				Foreground(ctx.Theme.PrimaryText),
+			CursorLineNumber: base.Foreground(ctx.Theme.SecondaryText),
+			Placeholder:      base.Foreground(ctx.Theme.FaintText),
+			EndOfBuffer:      base.Foreground(ctx.Theme.FaintText),
+		},
+	})
 	ta.Focus()
 
 	h := help.New()
@@ -70,6 +63,26 @@ func (m *Model) SetAutocomplete(ac *autocomplete.Model) {
 	m.autocomplete = ac
 }
 
+func (m *Model) SetAutocompleteSource(src dataautocomplete.Source) {
+	m.autocompleteSource = src
+}
+
+func (m Model) CurrentAutocompleteContext() dataautocomplete.Context {
+	if m.autocompleteSource == nil {
+		return dataautocomplete.Context{}
+	}
+
+	return m.autocompleteSource.ExtractContext(m.textArea.Value(), m.CursorPosition())
+}
+
+func (m Model) AutocompleteItemsToExclude() []string {
+	if m.autocompleteSource == nil {
+		return nil
+	}
+
+	return m.autocompleteSource.ItemsToExclude(m.textArea.Value(), m.CursorPosition())
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -83,22 +96,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 
 			m.autocomplete.Unsuppress()
-			currentValue := m.textArea.Value()
-			cursorPos := m.GetCursorPosition()
-			var currentLabel string
-			var existingLabels []string
-			if m.CurrentContext != nil {
-				currentLabel = m.CurrentContext(cursorPos, currentValue)
-			}
-			if m.SuggestionsToExclude != nil {
-				existingLabels = m.SuggestionsToExclude(currentValue)
-			}
-			m.autocomplete.Show(currentLabel, existingLabels)
+			currentContext := m.CurrentAutocompleteContext()
+			m.autocomplete.Show(currentContext.Content, m.AutocompleteItemsToExclude())
 			return m, nil
 		}
 
 		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
-		if m.autocomplete != nil && (m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
+		if m.autocomplete != nil &&
+			(m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
 			switch {
 			case key.Matches(msg, autocomplete.PrevKey):
 				m.autocomplete.Prev()
@@ -108,14 +113,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			case key.Matches(msg, autocomplete.SelectKey):
 				selected := m.autocomplete.Selected()
-				if selected != "" && m.OnSuggestionSelected != nil {
+				if selected != "" && m.autocompleteSource != nil {
 					currentValue := m.textArea.Value()
-					cursorPos := m.GetCursorPosition()
-					newValue, newCursorPos := m.OnSuggestionSelected(selected, cursorPos, currentValue)
+					currentContext := m.CurrentAutocompleteContext()
+					newValue, newCursorPos := m.autocompleteSource.InsertSuggestion(
+						currentValue,
+						selected,
+						currentContext.Start,
+						currentContext.End,
+					)
 					m.textArea.SetValue(newValue)
-					m.textArea.SetCursor(newCursorPos)
+					m.textArea.SetCursorColumn(newCursorPos)
+					// Refresh autocomplete to exclude the newly-added item
+					if m.AutocompleteItemsToExclude() != nil {
+						newContext := m.CurrentAutocompleteContext()
+						m.autocomplete.Show(newContext.Content, m.AutocompleteItemsToExclude())
+					}
 				}
-				m.autocomplete.Hide()
 				return m, nil
 			}
 		}
@@ -145,7 +159,7 @@ func (m Model) View() string {
 
 func (m Model) ViewWithAutocomplete() string {
 	autocompleteView := ""
-	if m.autocomplete != nil {
+	if m.autocomplete != nil && m.autocomplete.IsVisible() {
 		autocompleteView = m.autocomplete.View()
 	}
 
@@ -204,13 +218,13 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
 
-// GetCursorPosition returns the cursor position within the current logical line
+// CursorPosition returns the cursor position within the current logical line
 // in runes. This correctly handles multi-byte Unicode characters since the
 // textarea internally uses rune-based positioning via [][]rune.
 //
 // Use this for single-line input contexts like comma-separated labels.
 // For multi-line contexts (e.g., @mentions in comments), use GetAbsoluteCursorPosition.
-func (m *Model) GetCursorPosition() int {
+func (m *Model) CursorPosition() int {
 	lineInfo := m.textArea.LineInfo()
 	return lineInfo.StartColumn + lineInfo.ColumnOffset
 }

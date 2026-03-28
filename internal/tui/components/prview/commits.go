@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
@@ -17,7 +17,12 @@ func (m *Model) renderCommits() string {
 	fainter := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder)
 
 	if !m.pr.Data.IsEnriched {
-		return lipgloss.JoinHorizontal(lipgloss.Top, m.ctx.Styles.Common.WaitingGlyph, " ", faint.Render("Loading..."))
+		return lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.ctx.Styles.Common.WaitingGlyph,
+			" ",
+			faint.Render("Loading..."),
+		)
 	}
 
 	commits := m.pr.Data.Enriched.AllCommits.Nodes

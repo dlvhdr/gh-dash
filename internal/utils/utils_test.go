@@ -3,7 +3,8 @@ package utils
 import (
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 )
 
 func TestGetStylePrefix(t *testing.T) {
@@ -34,7 +35,8 @@ func TestGetStylePrefix(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := GetStylePrefix(tt.style)
 			// The result should not end with reset sequence
-			if len(result) >= 4 && result[len(result)-4:] == "\x1b[0m" {
+			if (len(result) >= 4 && result[len(result)-4:] == "\x1b[0m") ||
+				(len(result) >= 3 && result[len(result)-3:] == "\x1b[m") {
 				t.Error("GetStylePrefix should strip trailing reset sequence")
 			}
 		})
@@ -47,12 +49,14 @@ func TestGetStylePrefix_StripsReset(t *testing.T) {
 	rendered := style.Render("")
 
 	// Verify the raw render has a reset
-	hasReset := len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m"
+	hasReset := (len(rendered) >= 4 && rendered[len(rendered)-4:] == "\x1b[0m") ||
+		(len(rendered) >= 3 && rendered[len(rendered)-3:] == "\x1b[m")
 
 	prefix := GetStylePrefix(style)
 
 	// Prefix should not have reset even if rendered did
-	prefixHasReset := len(prefix) >= 4 && prefix[len(prefix)-4:] == "\x1b[0m"
+	prefixHasReset := (len(prefix) >= 4 && prefix[len(prefix)-4:] == "\x1b[0m") ||
+		(len(prefix) >= 3 && prefix[len(prefix)-3:] == "\x1b[m")
 	if prefixHasReset {
 		t.Errorf("GetStylePrefix should strip reset, but got: %q", prefix)
 	}
@@ -81,12 +85,15 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 			style: lipgloss.NewStyle().Underline(true),
 		},
 		{
-			name:  "combined foreground and background",
-			style: lipgloss.NewStyle().Foreground(lipgloss.Color("red")).Background(lipgloss.Color("blue")),
+			name: "combined foreground and background",
+			style: lipgloss.NewStyle().
+				Foreground(lipgloss.Color("red")).
+				Background(lipgloss.Color("blue")),
 		},
 		{
-			name:  "adaptive color",
-			style: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}),
+			name: "adaptive color",
+			style: lipgloss.NewStyle().
+				Foreground(compat.AdaptiveColor{Light: lipgloss.Color("#000000"), Dark: lipgloss.Color("#ffffff")}),
 		},
 		{
 			name:  "256 color",
@@ -103,7 +110,8 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 			prefix := GetStylePrefix(tt.style)
 
 			// Should not end with reset
-			if len(prefix) >= 4 && prefix[len(prefix)-4:] == "\x1b[0m" {
+			if (len(prefix) >= 4 && prefix[len(prefix)-4:] == "\x1b[0m") ||
+				(len(prefix) >= 3 && prefix[len(prefix)-3:] == "\x1b[m") {
 				t.Errorf("GetStylePrefix should strip reset for %s, but got: %q", tt.name, prefix)
 			}
 
@@ -112,7 +120,11 @@ func TestGetStylePrefix_VariousStyles(t *testing.T) {
 				// Only fail if the style would produce ANSI codes
 				rendered := tt.style.Render("")
 				if len(rendered) > 0 && rendered[0] == '\x1b' {
-					t.Errorf("GetStylePrefix for %s should start with escape, got: %q", tt.name, prefix)
+					t.Errorf(
+						"GetStylePrefix for %s should start with escape, got: %q",
+						tt.name,
+						prefix,
+					)
 				}
 			}
 		})

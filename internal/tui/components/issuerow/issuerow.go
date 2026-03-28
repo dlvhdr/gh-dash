@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
@@ -69,7 +69,12 @@ func (issue *Issue) renderRepoName() string {
 }
 
 func (issue *Issue) renderTitle() string {
-	return components.RenderIssueTitle(issue.Ctx, issue.Data.State, issue.Data.Title, issue.Data.Number)
+	return components.RenderIssueTitle(
+		issue.Ctx,
+		issue.Data.State,
+		issue.Data.Title,
+		issue.Data.Number,
+	)
 }
 
 func (issue *Issue) renderOpenedBy() string {
