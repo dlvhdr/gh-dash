@@ -176,6 +176,10 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 }
 
 func (m *Model) Selected() string {
+	if !m.IsVisible() {
+		return ""
+	}
+
 	if m.selected >= 0 && m.selected < len(m.filtered) {
 		return m.filtered[m.selected].Value
 	}
@@ -252,7 +256,7 @@ func (m *Model) computeColumnLayout(numVisible, totalContentWidth int) columnLay
 
 	maxValueWidth := 0
 	hasAnyDetail := false
-	for i := 0; i < numVisible; i++ {
+	for i := range numVisible {
 		suggestion := m.filtered[i]
 		maxValueWidth = max(maxValueWidth, lipgloss.Width(suggestion.Value))
 		hasAnyDetail = hasAnyDetail || strings.TrimSpace(suggestion.Detail) != ""

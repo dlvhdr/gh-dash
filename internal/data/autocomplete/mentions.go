@@ -1,23 +1,37 @@
 package autocomplete
 
+import (
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
+)
+
 type UserMentionSource struct{}
 
-func (UserMentionSource) ExtractContext(input string, cursorPos int) Context {
+func (UserMentionSource) ExtractContext(input string, cursorPos tea.Position) Context {
 	if input == "" {
 		return Context{}
 	}
 
-	runes := []rune(input)
-
-	if cursorPos < 0 {
-		cursorPos = 0
+	lines := strings.Split(input, "\n")
+	if cursorPos.Y > len(lines) {
+		return Context{}
 	}
-	if cursorPos > len(runes) {
-		cursorPos = len(runes)
+
+	line := lines[cursorPos.Y]
+	runes := []rune(line)
+
+	if cursorPos.X < 0 {
+		cursorPos.X = 0
+	}
+	if cursorPos.X > len(runes) {
+		cursorPos.X = len(runes)
 	}
 
 	userStart := 0
-	for i := cursorPos - 1; i >= 0; i-- {
+	// If the curosr is on position X - the user types on position X
+	// This means the last thing he typed was on X-1
+	for i := cursorPos.X - 1; i >= 0; i-- {
 		if isWordBoundary(runes[i]) {
 			userStart = i + 1
 			break
@@ -30,7 +44,7 @@ func (UserMentionSource) ExtractContext(input string, cursorPos int) Context {
 	}
 
 	userEnd := len(runes)
-	for i := cursorPos; i < len(runes); i++ {
+	for i := cursorPos.X; i < len(runes); i++ {
 		if isWordBoundary(runes[i]) {
 			userEnd = i
 			break
@@ -38,8 +52,8 @@ func (UserMentionSource) ExtractContext(input string, cursorPos int) Context {
 	}
 
 	return Context{
-		Start:   userStart,
-		End:     userEnd,
+		Start:   tea.Position{X: userStart, Y: cursorPos.Y},
+		End:     tea.Position{X: userEnd, Y: cursorPos.Y},
 		Content: string(runes[userStart+1 : userEnd]),
 	}
 }
@@ -47,17 +61,24 @@ func (UserMentionSource) ExtractContext(input string, cursorPos int) Context {
 func (UserMentionSource) InsertSuggestion(
 	input string,
 	suggestion string,
-	contextStart int,
-	contextEnd int,
-) (newInput string, newCursorPos int) {
-	runes := []rune(input)
+	contextStart tea.Position,
+	contextEnd tea.Position,
+) (newInput string, newCursorPos tea.Position) {
+	lines := lines(input)
+	runes := []rune(lines[contextStart.Y])
 	replacement := "@" + suggestion + " "
-	newValue := string(runes[:contextStart]) + replacement + string(runes[contextEnd:])
-	newCursorPos = contextStart + len([]rune(replacement))
+	newLine := string(runes[:contextStart.X]) + replacement + string(runes[contextEnd.X:])
+
+	before := joinLines(lines[:contextStart.Y])
+	if before != "" {
+		before += string('\n')
+	}
+	newValue := before + newLine + joinLines(lines[contextEnd.Y+1:])
+	newCursorPos.X = contextStart.X + len([]rune(replacement))
 	return newValue, newCursorPos
 }
 
-func (UserMentionSource) ItemsToExclude(input string, cursorPos int) []string {
+func (UserMentionSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
 	return nil
 }
 

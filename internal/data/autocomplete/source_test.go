@@ -3,6 +3,7 @@ package autocomplete
 import (
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -10,80 +11,80 @@ func TestExtractLabelAtCursor(t *testing.T) {
 	testCases := []struct {
 		name        string
 		input       string
-		cursorPos   int
+		cursorPos   tea.Position
 		wantLabel   string
-		wantStart   int
-		wantEnd     int
+		wantStart   tea.Position
+		wantEnd     tea.Position
 		wantIsFirst bool
 		wantIsLast  bool
 	}{
 		{
 			name:        "empty input",
 			input:       "",
-			cursorPos:   0,
+			cursorPos:   tea.Position{},
 			wantLabel:   "",
-			wantStart:   0,
-			wantEnd:     0,
+			wantStart:   tea.Position{X: 0},
+			wantEnd:     tea.Position{X: 0},
 			wantIsFirst: true,
 			wantIsLast:  true,
 		},
 		{
 			name:        "single label, cursor at start",
 			input:       "bug",
-			cursorPos:   0,
+			cursorPos:   tea.Position{},
 			wantLabel:   "bug",
-			wantStart:   0,
-			wantEnd:     3,
+			wantStart:   tea.Position{X: 0},
+			wantEnd:     tea.Position{X: 3},
 			wantIsFirst: true,
 			wantIsLast:  true,
 		},
 		{
 			name:        "single label, cursor at end",
 			input:       "bug",
-			cursorPos:   3,
+			cursorPos:   tea.Position{X: 3},
 			wantLabel:   "bug",
-			wantStart:   0,
-			wantEnd:     3,
+			wantStart:   tea.Position{X: 0},
+			wantEnd:     tea.Position{X: 3},
 			wantIsFirst: true,
 			wantIsLast:  true,
 		},
 		{
 			name:        "multiple labels, cursor on first",
 			input:       "bug, feature",
-			cursorPos:   2,
+			cursorPos:   tea.Position{X: 2},
 			wantLabel:   "bug",
-			wantStart:   0,
-			wantEnd:     3,
+			wantStart:   tea.Position{X: 0},
+			wantEnd:     tea.Position{X: 3},
 			wantIsFirst: true,
 			wantIsLast:  false,
 		},
 		{
 			name:        "multiple labels, cursor on second",
 			input:       "bug, feature",
-			cursorPos:   8,
+			cursorPos:   tea.Position{X: 8},
 			wantLabel:   "feature",
-			wantStart:   4,
-			wantEnd:     12,
+			wantStart:   tea.Position{X: 4},
+			wantEnd:     tea.Position{X: 12},
 			wantIsFirst: false,
 			wantIsLast:  true,
 		},
 		{
 			name:        "three labels, cursor on middle",
 			input:       "bug, feature, docs",
-			cursorPos:   10,
+			cursorPos:   tea.Position{X: 10},
 			wantLabel:   "feature",
-			wantStart:   4,
-			wantEnd:     12,
+			wantStart:   tea.Position{X: 4},
+			wantEnd:     tea.Position{X: 12},
 			wantIsFirst: false,
 			wantIsLast:  false,
 		},
 		{
 			name:        "unicode label",
 			input:       "🔴-bug",
-			cursorPos:   3,
+			cursorPos:   tea.Position{X: 3},
 			wantLabel:   "🔴-bug",
-			wantStart:   0,
-			wantEnd:     5,
+			wantStart:   tea.Position{X: 0},
+			wantEnd:     tea.Position{X: 5},
 			wantIsFirst: true,
 			wantIsLast:  true,
 		},
@@ -106,27 +107,32 @@ func TestLabelSourceItemsToExclude(t *testing.T) {
 	testCases := []struct {
 		name      string
 		input     string
-		cursorPos int
+		cursorPos tea.Position
 		want      []string
 	}{
-		{name: "empty input", input: "", cursorPos: 0, want: nil},
-		{name: "single label - nothing to exclude", input: "bug", cursorPos: 0, want: []string{}},
+		{name: "empty input", input: "", cursorPos: tea.Position{X: 0}, want: nil},
+		{
+			name:      "single label - nothing to exclude",
+			input:     "bug",
+			cursorPos: tea.Position{X: 0},
+			want:      []string{},
+		},
 		{
 			name:      "two labels, first is current",
 			input:     "bug, feature",
-			cursorPos: 0,
+			cursorPos: tea.Position{X: 0},
 			want:      []string{"feature"},
 		},
 		{
 			name:      "two labels, second is current",
 			input:     "bug, feature",
-			cursorPos: 5,
+			cursorPos: tea.Position{X: 5},
 			want:      []string{"bug"},
 		},
 		{
 			name:      "three labels, middle is current",
 			input:     "bug, feature, docs",
-			cursorPos: 8,
+			cursorPos: tea.Position{X: 8},
 			want:      []string{"bug", "docs"},
 		},
 	}
@@ -144,37 +150,37 @@ func TestLabelSourceInsertSuggestion(t *testing.T) {
 		name          string
 		input         string
 		suggestion    string
-		contextStart  int
-		contextEnd    int
+		contextStart  tea.Position
+		contextEnd    tea.Position
 		wantNewInput  string
-		wantNewCursor int
+		wantNewCursor tea.Position
 	}{
 		{
 			name:          "replace first label",
 			input:         "bu, feature, docs",
 			suggestion:    "bug",
-			contextStart:  0,
-			contextEnd:    2,
+			contextStart:  tea.Position{X: 0},
+			contextEnd:    tea.Position{X: 2},
 			wantNewInput:  "bug, feature, docs",
-			wantNewCursor: 5,
+			wantNewCursor: tea.Position{X: 5},
 		},
 		{
 			name:          "replace middle label",
 			input:         "bug, fea, docs",
 			suggestion:    "feature",
-			contextStart:  5,
-			contextEnd:    8,
+			contextStart:  tea.Position{X: 5},
+			contextEnd:    tea.Position{X: 8},
 			wantNewInput:  "bug, feature, docs",
-			wantNewCursor: 14,
+			wantNewCursor: tea.Position{X: 14},
 		},
 		{
 			name:          "replace last label",
 			input:         "bug, feature, do",
 			suggestion:    "docs",
-			contextStart:  14,
-			contextEnd:    16,
+			contextStart:  tea.Position{X: 14},
+			contextEnd:    tea.Position{X: 16},
 			wantNewInput:  "bug, feature, docs, ",
-			wantNewCursor: 20,
+			wantNewCursor: tea.Position{X: 20},
 		},
 	}
 
@@ -194,28 +200,83 @@ func TestLabelSourceInsertSuggestion(t *testing.T) {
 
 func TestWhitespaceSource(t *testing.T) {
 	source := WhitespaceSource{}
-	ctx := source.ExtractContext("foo bar baz", 5)
-	require.Equal(t, Context{Start: 4, End: 7, Content: "bar"}, ctx)
-	require.Equal(t, []string{"foo", "baz"}, source.ItemsToExclude("foo bar baz", 5))
+	ctx := source.ExtractContext("foo bar baz", tea.Position{X: 5})
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 4}, End: tea.Position{X: 7}, Content: "bar"},
+		ctx,
+	)
+	require.Equal(
+		t,
+		[]string{"foo", "baz"},
+		source.ItemsToExclude("foo bar baz", tea.Position{X: 5}),
+	)
 
-	newInput, newCursor := source.InsertSuggestion("foo ba baz", "bar", 4, 6)
+	newInput, newCursor := source.InsertSuggestion(
+		"foo ba baz",
+		"bar",
+		tea.Position{X: 4},
+		tea.Position{X: 6},
+	)
 	require.Equal(t, "foo bar  baz", newInput)
-	require.Equal(t, 8, newCursor)
+	require.Equal(t, tea.Position{X: 8}, newCursor)
 }
 
 func TestUserMentionSource(t *testing.T) {
 	source := UserMentionSource{}
-	require.Equal(t, Context{}, source.ExtractContext("hello world", 5))
-	require.Equal(t, Context{Start: 6, End: 7, Content: ""}, source.ExtractContext("hello @", 7))
-	require.Equal(t, Context{Start: 0, End: 1, Content: ""}, source.ExtractContext("@", 1))
+	require.Equal(t, Context{}, source.ExtractContext("hello world", tea.Position{X: 5}))
 	require.Equal(
 		t,
-		Context{Start: 6, End: 11, Content: "octo"},
-		source.ExtractContext("hello @octo", 9),
+		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 7}, Content: ""},
+		source.ExtractContext("hello @", tea.Position{X: 7}),
+	)
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 0}, End: tea.Position{X: 1}, Content: ""},
+		source.ExtractContext("@", tea.Position{X: 1}),
+	)
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 11}, Content: "octo"},
+		source.ExtractContext("hello @octo", tea.Position{X: 9}),
+	)
+	require.Equal(
+		t,
+		Context{},
+		source.ExtractContext("hello @octo ", tea.Position{X: 12}),
 	)
 
-	newInput, newCursor := source.InsertSuggestion("hello @oc", "octo", 6, 9)
+	require.Equal(
+		t,
+		Context{},
+		source.ExtractContext("hello @octo"+string('\n'), tea.Position{Y: 1, X: 0}),
+	)
+
+	newInput, newCursor := source.InsertSuggestion(
+		"hello @oc",
+		"octo",
+		tea.Position{X: 6},
+		tea.Position{X: 9},
+	)
 	require.Equal(t, "hello @octo ", newInput)
-	require.Equal(t, 12, newCursor)
-	require.Nil(t, source.ItemsToExclude("hello @oc", 8))
+	require.Equal(t, tea.Position{X: 12}, newCursor)
+	require.Nil(t, source.ItemsToExclude("hello @oc", tea.Position{X: 8}))
+}
+
+func TestUserMentionSourceWithNewLines(t *testing.T) {
+	source := UserMentionSource{}
+	newInput, newCursor := source.InsertSuggestion(
+		`hello @octo
+
+yes
+@oc`,
+		"octo",
+		tea.Position{Y: 3, X: 0},
+		tea.Position{Y: 3, X: 3},
+	)
+	require.Equal(t, `hello @octo
+
+yes
+@octo `, newInput)
+	require.Equal(t, tea.Position{Y: 0, X: 6}, newCursor)
 }

@@ -1,18 +1,22 @@
 package autocomplete
 
-import "strings"
+import (
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 type WordInfo struct {
 	Word     string
-	StartIdx int
-	EndIdx   int
+	StartIdx tea.Position
+	EndIdx   tea.Position
 	IsFirst  bool
 	IsLast   bool
 }
 
 type WhitespaceSource struct{}
 
-func (WhitespaceSource) ExtractContext(input string, cursorPos int) Context {
+func (WhitespaceSource) ExtractContext(input string, cursorPos tea.Position) Context {
 	info := ExtractWordAtCursor(input, cursorPos)
 	return Context{
 		Start:   info.StartIdx,
@@ -24,17 +28,19 @@ func (WhitespaceSource) ExtractContext(input string, cursorPos int) Context {
 func (WhitespaceSource) InsertSuggestion(
 	input string,
 	suggestion string,
-	contextStart int,
-	contextEnd int,
-) (newInput string, newCursorPos int) {
-	runes := []rune(input)
+	contextStart tea.Position,
+	contextEnd tea.Position,
+) (newInput string, newCursorPos tea.Position) {
+	lines := lines(input)
+	runes := []rune(lines[contextStart.Y])
 	replacement := suggestion + " "
-	newValue := string(runes[:contextStart]) + replacement + string(runes[contextEnd:])
-	newCursorPos = contextStart + len([]rune(replacement))
+	newLine := string(runes[:contextStart.X]) + replacement + string(runes[contextEnd.X:])
+	newValue := joinLines(lines[:contextStart.Y]) + newLine + joinLines(lines[contextEnd.Y+1:])
+	newCursorPos.X = contextStart.X + len([]rune(replacement))
 	return newValue, newCursorPos
 }
 
-func (WhitespaceSource) ItemsToExclude(input string, cursorPos int) []string {
+func (WhitespaceSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
 	if strings.TrimSpace(input) == "" {
 		return nil
 	}
@@ -55,28 +61,40 @@ func (WhitespaceSource) ItemsToExclude(input string, cursorPos int) []string {
 	return excluded
 }
 
-func ExtractWordAtCursor(input string, cursorPos int) WordInfo {
+func ExtractWordAtCursor(input string, cursorPos tea.Position) WordInfo {
 	if input == "" {
 		return WordInfo{
 			Word:     "",
-			StartIdx: 0,
-			EndIdx:   0,
+			StartIdx: tea.Position{X: 0},
+			EndIdx:   tea.Position{X: 0},
 			IsFirst:  true,
 			IsLast:   true,
 		}
 	}
 
-	runes := []rune(input)
-
-	if cursorPos < 0 {
-		cursorPos = 0
+	lines := strings.Split(input, "\n")
+	if cursorPos.Y > len(lines) {
+		return WordInfo{
+			Word:     "",
+			StartIdx: tea.Position{X: 0},
+			EndIdx:   tea.Position{X: 0},
+			IsFirst:  true,
+			IsLast:   true,
+		}
 	}
-	if cursorPos > len(runes) {
-		cursorPos = len(runes)
+
+	line := lines[cursorPos.Y]
+	runes := []rune(line)
+
+	if cursorPos.X < 0 {
+		cursorPos.X = 0
+	}
+	if cursorPos.X > len(runes) {
+		cursorPos.X = len(runes)
 	}
 
 	wordStart := 0
-	for i := cursorPos - 1; i >= 0; i-- {
+	for i := cursorPos.X - 1; i >= 0; i-- {
 		if isWhitespace(runes[i]) {
 			wordStart = i + 1
 			break
@@ -85,7 +103,7 @@ func ExtractWordAtCursor(input string, cursorPos int) WordInfo {
 	}
 
 	wordEnd := len(runes)
-	for i := cursorPos; i < len(runes); i++ {
+	for i := cursorPos.X; i < len(runes); i++ {
 		if isWhitespace(runes[i]) {
 			wordEnd = i
 			break
@@ -98,8 +116,8 @@ func ExtractWordAtCursor(input string, cursorPos int) WordInfo {
 
 	return WordInfo{
 		Word:     wordText,
-		StartIdx: wordStart,
-		EndIdx:   wordEnd,
+		StartIdx: tea.Position{X: wordStart, Y: cursorPos.Y},
+		EndIdx:   tea.Position{X: wordEnd, Y: cursorPos.Y},
 		IsFirst:  isFirst,
 		IsLast:   isLast,
 	}
