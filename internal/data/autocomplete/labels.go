@@ -1,21 +1,25 @@
 package autocomplete
 
-import "strings"
+import (
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 // LabelInfo contains information about a label at a specific cursor position
 // in a comma-separated list of labels.
 // StartIdx and EndIdx are rune indices (not byte indices).
 type LabelInfo struct {
 	Label    string
-	StartIdx int
-	EndIdx   int
+	StartIdx tea.Position
+	EndIdx   tea.Position
 	IsFirst  bool
 	IsLast   bool
 }
 
 type LabelSource struct{}
 
-func (LabelSource) ExtractContext(input string, cursorPos int) Context {
+func (LabelSource) ExtractContext(input string, cursorPos tea.Position) Context {
 	info := ExtractLabelAtCursor(input, cursorPos)
 	return Context{
 		Start:   info.StartIdx,
@@ -27,11 +31,12 @@ func (LabelSource) ExtractContext(input string, cursorPos int) Context {
 func (LabelSource) InsertSuggestion(
 	input string,
 	suggestion string,
-	contextStart int,
-	contextEnd int,
-) (newInput string, newCursorPos int) {
-	labelInfo := ExtractLabelAtCursor(input, contextStart)
-	runes := []rune(input)
+	contextStart tea.Position,
+	contextEnd tea.Position,
+) (newInput string, newCursorPos tea.Position) {
+	labelInfo := ExtractLabelAtCursor(input, contextEnd)
+	lines := lines(input)
+	runes := []rune(lines[contextStart.Y])
 
 	var replacement string
 	if labelInfo.IsFirst {
@@ -40,17 +45,18 @@ func (LabelSource) InsertSuggestion(
 		replacement = " " + suggestion + ", "
 	}
 
-	remainingInput := string(runes[labelInfo.EndIdx:])
+	remainingInput := string(runes[labelInfo.EndIdx.X:])
 	remainingInput = strings.TrimPrefix(remainingInput, ",")
 	remainingInput = strings.TrimLeft(remainingInput, " \t")
 
-	newValue := string(runes[:labelInfo.StartIdx]) + replacement + remainingInput
-	newCursorPos = labelInfo.StartIdx + len([]rune(replacement))
+	newLine := string(runes[:labelInfo.StartIdx.X]) + replacement + remainingInput
+	newValue := joinLines(lines[:contextStart.Y]) + newLine + joinLines(lines[contextEnd.Y+1:])
+	newCursorPos.X = labelInfo.StartIdx.X + len([]rune(replacement))
 
 	return newValue, newCursorPos
 }
 
-func (LabelSource) ItemsToExclude(input string, cursorPos int) []string {
+func (LabelSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
 	if strings.TrimSpace(input) == "" {
 		return nil
 	}
@@ -75,28 +81,40 @@ func (LabelSource) ItemsToExclude(input string, cursorPos int) []string {
 // in a comma-separated list. It considers the entire word containing the cursor as the
 // current label. The cursor position and returned indices are rune-based (not byte-based)
 // to correctly handle multi-byte Unicode characters.
-func ExtractLabelAtCursor(input string, cursorPos int) LabelInfo {
+func ExtractLabelAtCursor(input string, cursorPos tea.Position) LabelInfo {
 	if input == "" {
 		return LabelInfo{
 			Label:    "",
-			StartIdx: 0,
-			EndIdx:   0,
+			StartIdx: tea.Position{},
+			EndIdx:   tea.Position{},
 			IsFirst:  true,
 			IsLast:   true,
 		}
 	}
 
-	runes := []rune(input)
-
-	if cursorPos < 0 {
-		cursorPos = 0
+	lines := strings.Split(input, "\n")
+	if cursorPos.Y > len(lines) {
+		return LabelInfo{
+			Label:    "",
+			StartIdx: tea.Position{},
+			EndIdx:   tea.Position{},
+			IsFirst:  true,
+			IsLast:   true,
+		}
 	}
-	if cursorPos > len(runes) {
-		cursorPos = len(runes)
+
+	line := lines[cursorPos.Y]
+	runes := []rune(line)
+
+	if cursorPos.X < 0 {
+		cursorPos.X = 0
+	}
+	if cursorPos.X > len(runes) {
+		cursorPos.X = len(runes)
 	}
 
 	startIdx := 0
-	for i := cursorPos - 1; i >= 0; i-- {
+	for i := cursorPos.X - 1; i >= 0; i-- {
 		if runes[i] == ',' {
 			startIdx = i + 1
 			break
@@ -104,7 +122,7 @@ func ExtractLabelAtCursor(input string, cursorPos int) LabelInfo {
 	}
 
 	endIdx := len(runes)
-	for i := cursorPos; i < len(runes); i++ {
+	for i := cursorPos.X; i < len(runes); i++ {
 		if runes[i] == ',' {
 			endIdx = i
 			break
@@ -117,8 +135,8 @@ func ExtractLabelAtCursor(input string, cursorPos int) LabelInfo {
 
 	return LabelInfo{
 		Label:    label,
-		StartIdx: startIdx,
-		EndIdx:   endIdx,
+		StartIdx: tea.Position{X: startIdx, Y: cursorPos.Y},
+		EndIdx:   tea.Position{X: endIdx, Y: cursorPos.Y},
 		IsFirst:  isFirst,
 		IsLast:   isLast,
 	}

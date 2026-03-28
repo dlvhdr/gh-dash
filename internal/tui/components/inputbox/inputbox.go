@@ -72,7 +72,7 @@ func (m Model) CurrentAutocompleteContext() dataautocomplete.Context {
 		return dataautocomplete.Context{}
 	}
 
-	return m.autocompleteSource.ExtractContext(m.textArea.Value(), m.CursorPosition())
+	return m.autocompleteSource.ExtractContext(m.textArea.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) AutocompleteItemsToExclude() []string {
@@ -80,7 +80,7 @@ func (m Model) AutocompleteItemsToExclude() []string {
 		return nil
 	}
 
-	return m.autocompleteSource.ItemsToExclude(m.textArea.Value(), m.CursorPosition())
+	return m.autocompleteSource.ItemsToExclude(m.textArea.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -111,7 +111,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case key.Matches(msg, autocomplete.NextKey):
 				m.autocomplete.Next()
 				return m, nil
-			case key.Matches(msg, autocomplete.SelectKey):
+			case m.autocomplete.Selected() != "" && key.Matches(msg, autocomplete.SelectKey):
 				selected := m.autocomplete.Selected()
 				if selected != "" && m.autocompleteSource != nil {
 					currentValue := m.textArea.Value()
@@ -123,7 +123,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 						currentContext.End,
 					)
 					m.textArea.SetValue(newValue)
-					m.textArea.SetCursorColumn(newCursorPos)
+					m.textArea.SetCursorColumn(newCursorPos.X)
 					// Refresh autocomplete to exclude the newly-added item
 					if m.AutocompleteItemsToExclude() != nil {
 						newContext := m.CurrentAutocompleteContext()
@@ -218,13 +218,12 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.inputHelp.Styles = ctx.Styles.Help.BubbleStyles
 }
 
-// CursorPosition returns the cursor position within the current logical line
-// in runes. This correctly handles multi-byte Unicode characters since the
-// textarea internally uses rune-based positioning via [][]rune.
-//
-// Use this for single-line input contexts like comma-separated labels.
-// For multi-line contexts (e.g., @mentions in comments), use GetAbsoluteCursorPosition.
-func (m *Model) CursorPosition() int {
-	lineInfo := m.textArea.LineInfo()
-	return lineInfo.StartColumn + lineInfo.ColumnOffset
+func (m *Model) GetAbsoluteCursorPosition() tea.Position {
+	line := m.textArea.Line()
+	col := m.textArea.Column()
+	return tea.Position{X: col, Y: line}
+}
+
+func (m *Model) CursorEnd() {
+	m.textArea.CursorEnd()
 }

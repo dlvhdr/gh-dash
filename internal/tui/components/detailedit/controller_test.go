@@ -211,6 +211,27 @@ func TestCommentModeHidesPopupWhenMentionContextDisappears(t *testing.T) {
 	require.False(t, c.ac.IsVisible())
 }
 
+func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.T) {
+	data.ClearUserCache()
+	c := newTestController(t)
+	c, _ = c.Enter(EnterOptions{
+		Mode:                             ModeComment,
+		Prompt:                           "comment",
+		InitialValue:                     "@ali ",
+		Source:                           dataautocomplete.UserMentionSource{},
+		Repo:                             testRepo(),
+		SuggestionKind:                   SuggestionUsers,
+		EnterFetch:                       FetchNone,
+		ConfirmDiscardOnCancel:           true,
+		HideAutocompleteWhenContextEmpty: true,
+	})
+	c.ac.SetSuggestions(suggestions("alice"))
+	c.Update(c.inputBox.Focus())
+	c.inputBox.CursorEnd()
+	c.showSuggestionsFromCurrentContext()
+	require.False(t, c.ac.IsVisible())
+}
+
 func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
