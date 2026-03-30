@@ -15,7 +15,8 @@ import (
 
 // GitLabProvider implements the Provider interface for GitLab
 type GitLabProvider struct {
-	host string
+	host        string
+	labelColors map[string]map[string]string // project -> label name -> color
 }
 
 // NewGitLabProvider creates a new GitLab provider
@@ -26,7 +27,8 @@ func NewGitLabProvider(host string) *GitLabProvider {
 	host = strings.TrimSuffix(host, "/")
 
 	return &GitLabProvider{
-		host: host,
+		host:        host,
+		labelColors: make(map[string]map[string]string),
 	}
 }
 
@@ -61,6 +63,56 @@ func (g *GitLabProvider) runGlab(args ...string) ([]byte, error) {
 	return output, nil
 }
 
+// glabLabel represents a GitLab label with color information
+type glabLabel struct {
+	Name      string `json:"name"`
+	Color     string `json:"color"`
+	TextColor string `json:"text_color"`
+}
+
+// fetchLabelColors fetches and caches label colors for a project
+func (g *GitLabProvider) fetchLabelColors(project string) {
+	if project == "" {
+		return
+	}
+
+	// Check if already cached
+	if _, ok := g.labelColors[project]; ok {
+		return
+	}
+
+	output, err := g.runGlab("label", "list", "--repo", project, "--output", "json", "--per-page", "100")
+	if err != nil {
+		log.Debug("Failed to fetch labels for color cache", "project", project, "err", err)
+		return
+	}
+
+	var labels []glabLabel
+	if err := json.Unmarshal(output, &labels); err != nil {
+		log.Debug("Failed to parse labels", "err", err)
+		return
+	}
+
+	g.labelColors[project] = make(map[string]string)
+	for _, l := range labels {
+		// Remove # prefix if present
+		color := strings.TrimPrefix(l.Color, "#")
+		g.labelColors[project][l.Name] = color
+	}
+
+	log.Debug("Cached label colors", "project", project, "count", len(labels))
+}
+
+// getLabelColor returns the color for a label, or empty string if not found
+func (g *GitLabProvider) getLabelColor(project, labelName string) string {
+	if projectLabels, ok := g.labelColors[project]; ok {
+		if color, ok := projectLabels[labelName]; ok {
+			return color
+		}
+	}
+	return ""
+}
+
 // GitLab API response structures
 type glabMergeRequest struct {
 	IID          int       `json:"iid"`
@@ -82,22 +134,27 @@ type glabMergeRequest struct {
 	Reviewers []struct {
 		Username string `json:"username"`
 	} `json:"reviewers"`
-	Labels               []string `json:"labels"`
-	UserNotesCount       int      `json:"user_notes_count"`
-	MergeStatus          string   `json:"merge_status"`
-	HasConflicts         bool     `json:"has_conflicts"`
-	BlockingDiscussions  int      `json:"blocking_discussions_resolved_count"`
-	ChangesCount         string   `json:"changes_count"`
-	DiffRefs             struct{} `json:"diff_refs"`
-	ProjectID            int      `json:"project_id"`
-	SourceProjectID      int      `json:"source_project_id"`
-	TargetProjectID      int      `json:"target_project_id"`
-	References           struct {
+	Labels              []string `json:"labels"`
+	UserNotesCount      int      `json:"user_notes_count"`
+	MergeStatus         string   `json:"merge_status"`
+	HasConflicts        bool     `json:"has_conflicts"`
+	BlockingDiscussions int      `json:"blocking_discussions_resolved_count"`
+	ChangesCount        string   `json:"changes_count"`
+	DiffRefs            struct{} `json:"diff_refs"`
+	ProjectID           int      `json:"project_id"`
+	SourceProjectID     int      `json:"source_project_id"`
+	TargetProjectID     int      `json:"target_project_id"`
+	References          struct {
 		Full string `json:"full"`
 	} `json:"references"`
 	Pipeline *struct {
+		ID     int    `json:"id"`
 		Status string `json:"status"`
 	} `json:"pipeline"`
+	HeadPipeline *struct {
+		ID     int    `json:"id"`
+		Status string `json:"status"`
+	} `json:"head_pipeline"`
 }
 
 type glabIssue struct {
@@ -133,24 +190,44 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 	// GitLab uses different query syntax than GitHub
 	// Common filters: state, labels, author, assignee, reviewer
 
-	args := []string{"mr", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
-
 	// Parse query for common filters
 	filters := g.parseQuery(query)
+
+	// Fetch label colors for the project (if specified)
+	if project, ok := filters["repo"]; ok {
+		g.fetchLabelColors(project)
+	}
+
+	args := []string{"mr", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
+
+	// Handle pagination - use EndCursor as page number
+	page := 1
+	if pageInfo != nil && pageInfo.EndCursor != "" {
+		if p, err := strconv.Atoi(pageInfo.EndCursor); err == nil {
+			page = p
+		}
+	}
+	args = append(args, "--page", strconv.Itoa(page))
 
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
 	}
 
+	// glab mr list uses --closed and --merged flags (no flag = opened by default)
 	if state, ok := filters["state"]; ok {
-		args = append(args, "--state", state)
-	} else if strings.Contains(query, "is:open") {
-		args = append(args, "--state", "opened")
+		switch state {
+		case "closed":
+			args = append(args, "--closed")
+		case "merged":
+			args = append(args, "--merged")
+			// "opened" is the default, no flag needed
+		}
 	} else if strings.Contains(query, "is:closed") {
-		args = append(args, "--state", "closed")
+		args = append(args, "--closed")
 	} else if strings.Contains(query, "is:merged") {
-		args = append(args, "--state", "merged")
+		args = append(args, "--merged")
 	}
+	// Note: "is:open" maps to default opened state, no flag needed
 
 	if author, ok := filters["author"]; ok {
 		if author == "@me" {
@@ -205,12 +282,18 @@ func (g *GitLabProvider) FetchPullRequests(query string, limit int, pageInfo *Pa
 		prs = append(prs, pr)
 	}
 
-	log.Info("Successfully fetched MRs from GitLab", "count", len(prs))
+	log.Info("Successfully fetched MRs from GitLab", "count", len(prs), "page", page)
+
+	// Calculate next page cursor
+	nextPage := strconv.Itoa(page + 1)
 
 	return PullRequestsResponse{
 		Prs:        prs,
 		TotalCount: len(prs),
-		PageInfo:   PageInfo{HasNextPage: len(prs) == limit},
+		PageInfo: PageInfo{
+			HasNextPage: len(prs) == limit,
+			EndCursor:   nextPage,
+		},
 	}, nil
 }
 
@@ -220,9 +303,19 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 		assignees[i] = Assignee{Login: a.Username}
 	}
 
+	// Extract project path from full reference (e.g., "group/project!123")
+	projectPath := ""
+	if mr.References.Full != "" {
+		parts := strings.Split(mr.References.Full, "!")
+		if len(parts) > 0 {
+			projectPath = parts[0]
+		}
+	}
+
+	// Get label colors from cache
 	labels := make([]Label, len(mr.Labels))
 	for i, l := range mr.Labels {
-		labels[i] = Label{Name: l, Color: ""}
+		labels[i] = Label{Name: l, Color: g.getLabelColor(projectPath, l)}
 	}
 
 	reviewRequests := make([]ReviewRequestNode, len(mr.Reviewers))
@@ -232,11 +325,12 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 	}
 
 	state := mr.State
-	if state == "opened" {
+	switch state {
+	case "opened":
 		state = "OPEN"
-	} else if state == "merged" {
+	case "merged":
 		state = "MERGED"
-	} else if state == "closed" {
+	case "closed":
 		state = "CLOSED"
 	}
 
@@ -250,15 +344,14 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 	ciStatus := ""
 	if mr.Pipeline != nil {
 		ciStatus = mr.Pipeline.Status
+	} else if mr.HeadPipeline != nil {
+		ciStatus = mr.HeadPipeline.Status
 	}
 
-	// Extract project path from full reference (e.g., "group/project!123")
-	projectPath := ""
-	if mr.References.Full != "" {
-		parts := strings.Split(mr.References.Full, "!")
-		if len(parts) > 0 {
-			projectPath = parts[0]
-		}
+	// Parse changes count (it's a string in the API)
+	changesCount := 0
+	if mr.ChangesCount != "" {
+		fmt.Sscanf(mr.ChangesCount, "%d", &changesCount)
 	}
 
 	return PullRequestData{
@@ -285,7 +378,7 @@ func (g *GitLabProvider) convertMRtoPR(mr glabMergeRequest) PullRequestData {
 		ReviewThreads:     ReviewThreads{TotalCount: 0},
 		Reviews:           Reviews{TotalCount: 0, Nodes: nil},
 		ReviewRequests:    ReviewRequests{TotalCount: len(reviewRequests), Nodes: reviewRequests},
-		Files:             ChangedFiles{TotalCount: 0, Nodes: nil},
+		Files:             ChangedFiles{TotalCount: changesCount, Nodes: nil},
 		IsDraft:           mr.Draft,
 		Commits:           Commits{TotalCount: 0},
 		Labels:            Labels{Nodes: labels},
@@ -324,21 +417,99 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		return EnrichedPullRequestData{}, fmt.Errorf("failed to parse MR: %w", err)
 	}
 
-	// Get MR notes/comments
-	notesOutput, err := g.runGlab("mr", "note", "list", mrID, "--repo", project, "--output", "json")
+	// Get MR notes/comments via API
+	encodedProject := url.PathEscape(project)
+	notesEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/notes", encodedProject, mrID)
+	notesOutput, err := g.runGlab("api", notesEndpoint)
 	comments := CommentsWithBody{TotalCount: mr.UserNotesCount}
 	if err == nil && len(notesOutput) > 0 {
 		var notes []struct {
-			Body      string    `json:"body"`
+			Body      string                    `json:"body"`
 			Author    struct{ Username string } `json:"author"`
-			CreatedAt time.Time `json:"created_at"`
+			CreatedAt time.Time                 `json:"created_at"`
+			System    bool                      `json:"system"` // Filter out system notes
 		}
 		if json.Unmarshal(notesOutput, &notes) == nil {
 			for _, note := range notes {
+				// Skip system-generated notes (like "mentioned in commit", "changed the description", etc.)
+				if note.System {
+					continue
+				}
 				comments.Nodes = append(comments.Nodes, Comment{
 					Author:    Author{Login: note.Author.Username},
 					Body:      note.Body,
 					UpdatedAt: note.CreatedAt,
+				})
+			}
+			comments.TotalCount = len(comments.Nodes)
+		}
+	}
+
+	// Get MR commits via API
+	commitsEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/commits", encodedProject, mrID)
+	commitsOutput, err := g.runGlab("api", commitsEndpoint)
+	var commits []CommitData
+	if err == nil && len(commitsOutput) > 0 {
+		var glabCommits []struct {
+			ID            string    `json:"id"`
+			ShortID       string    `json:"short_id"`
+			Title         string    `json:"title"`
+			AuthorName    string    `json:"author_name"`
+			AuthorEmail   string    `json:"author_email"`
+			CommittedDate time.Time `json:"committed_date"`
+		}
+		if json.Unmarshal(commitsOutput, &glabCommits) == nil {
+			for _, c := range glabCommits {
+				commits = append(commits, CommitData{
+					AbbreviatedOid:  c.ShortID,
+					CommittedDate:   c.CommittedDate,
+					MessageHeadline: c.Title,
+					Author: struct {
+						Name string
+						User struct{ Login string }
+					}{
+						Name: c.AuthorName,
+						User: struct{ Login string }{Login: ""},
+					},
+				})
+			}
+		}
+	}
+
+	// Get MR changes (files) via API
+	changesEndpoint := fmt.Sprintf("projects/%s/merge_requests/%s/changes", encodedProject, mrID)
+	changesOutput, err := g.runGlab("api", changesEndpoint)
+	var changedFiles []ChangedFile
+	if err == nil && len(changesOutput) > 0 {
+		var changesResp struct {
+			Changes []struct {
+				OldPath     string `json:"old_path"`
+				NewPath     string `json:"new_path"`
+				NewFile     bool   `json:"new_file"`
+				RenamedFile bool   `json:"renamed_file"`
+				DeletedFile bool   `json:"deleted_file"`
+				Diff        string `json:"diff"`
+			} `json:"changes"`
+		}
+		if json.Unmarshal(changesOutput, &changesResp) == nil {
+			for _, c := range changesResp.Changes {
+				changeType := "MODIFIED"
+				if c.NewFile {
+					changeType = "ADDED"
+				} else if c.DeletedFile {
+					changeType = "DELETED"
+				} else if c.RenamedFile {
+					changeType = "RENAMED"
+				}
+
+				// Count additions and deletions from diff
+				additions, deletions := countDiffStats(c.Diff)
+
+				changedFiles = append(changedFiles, ChangedFile{
+					Path:       c.NewPath,
+					ChangeType: changeType,
+					Additions:  additions,
+					Deletions:  deletions,
 				})
 			}
 		}
@@ -350,6 +521,38 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		reviewRequests[i].RequestedReviewer.User.Login = r.Username
 	}
 
+	// Fetch pipeline jobs if there's a pipeline (check both pipeline and head_pipeline)
+	var pipelineJobs []PipelineJob
+	var pipelineID int
+	if mr.Pipeline != nil && mr.Pipeline.ID > 0 {
+		pipelineID = mr.Pipeline.ID
+	} else if mr.HeadPipeline != nil && mr.HeadPipeline.ID > 0 {
+		pipelineID = mr.HeadPipeline.ID
+	}
+
+	if pipelineID > 0 {
+		jobsEndpoint := fmt.Sprintf("projects/%s/pipelines/%d/jobs", encodedProject, pipelineID)
+		jobsOutput, err := g.runGlab("api", jobsEndpoint)
+		if err == nil && len(jobsOutput) > 0 {
+			var jobs []struct {
+				Name   string `json:"name"`
+				Status string `json:"status"`
+				Stage  string `json:"stage"`
+				WebURL string `json:"web_url"`
+			}
+			if json.Unmarshal(jobsOutput, &jobs) == nil {
+				for _, j := range jobs {
+					pipelineJobs = append(pipelineJobs, PipelineJob{
+						Name:   j.Name,
+						Status: j.Status,
+						Stage:  j.Stage,
+						WebURL: j.WebURL,
+					})
+				}
+			}
+		}
+	}
+
 	return EnrichedPullRequestData{
 		Url:            mr.WebURL,
 		Number:         mr.IID,
@@ -358,25 +561,62 @@ func (g *GitLabProvider) FetchPullRequest(prUrl string) (EnrichedPullRequestData
 		ReviewThreads:  ReviewThreads{TotalCount: 0},
 		ReviewRequests: ReviewRequests{TotalCount: len(reviewRequests), Nodes: reviewRequests},
 		Reviews:        Reviews{TotalCount: 0},
-		Commits:        nil,
+		Commits:        commits,
+		ChangedFiles:   changedFiles,
+		PipelineJobs:   pipelineJobs,
 	}, nil
 }
 
+// countDiffStats counts additions and deletions from a unified diff string
+func countDiffStats(diff string) (additions, deletions int) {
+	lines := strings.Split(diff, "\n")
+	for _, line := range lines {
+		if len(line) > 0 {
+			if line[0] == '+' && !strings.HasPrefix(line, "+++") {
+				additions++
+			} else if line[0] == '-' && !strings.HasPrefix(line, "---") {
+				deletions++
+			}
+		}
+	}
+	return
+}
+
 func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, error) {
+	filters := g.parseQuery(query)
+
+	// Fetch label colors for the project (if specified)
+	if project, ok := filters["repo"]; ok {
+		g.fetchLabelColors(project)
+	}
+
 	args := []string{"issue", "list", "--output", "json", "--per-page", strconv.Itoa(limit)}
 
-	filters := g.parseQuery(query)
+	// Handle pagination - use EndCursor as page number
+	page := 1
+	if pageInfo != nil && pageInfo.EndCursor != "" {
+		if p, err := strconv.Atoi(pageInfo.EndCursor); err == nil {
+			page = p
+		}
+	}
+	args = append(args, "--page", strconv.Itoa(page))
 
 	if project, ok := filters["repo"]; ok {
 		args = append(args, "--repo", project)
 	}
 
+	// glab issue list uses --closed and --opened flags (no flag = all issues)
 	if state, ok := filters["state"]; ok {
-		args = append(args, "--state", state)
+		switch state {
+		case "closed":
+			args = append(args, "--closed")
+		case "opened":
+			args = append(args, "--opened")
+		}
 	} else if strings.Contains(query, "is:open") {
-		args = append(args, "--state", "opened")
+		args = append(args, "--opened")
 	} else if strings.Contains(query, "is:closed") {
-		args = append(args, "--state", "closed")
+		args = append(args, "--closed")
 	}
 
 	if author, ok := filters["author"]; ok {
@@ -415,12 +655,18 @@ func (g *GitLabProvider) FetchIssues(query string, limit int, pageInfo *PageInfo
 		issues = append(issues, g.convertGitLabIssue(issue))
 	}
 
-	log.Info("Successfully fetched issues from GitLab", "count", len(issues))
+	log.Info("Successfully fetched issues from GitLab", "count", len(issues), "page", page)
+
+	// Calculate next page cursor
+	nextPage := strconv.Itoa(page + 1)
 
 	return IssuesResponse{
 		Issues:     issues,
 		TotalCount: len(issues),
-		PageInfo:   PageInfo{HasNextPage: len(issues) == limit},
+		PageInfo: PageInfo{
+			HasNextPage: len(issues) == limit,
+			EndCursor:   nextPage,
+		},
 	}, nil
 }
 
@@ -430,18 +676,6 @@ func (g *GitLabProvider) convertGitLabIssue(issue glabIssue) IssueData {
 		assignees[i] = Assignee{Login: a.Username}
 	}
 
-	labels := make([]Label, len(issue.Labels))
-	for i, l := range issue.Labels {
-		labels[i] = Label{Name: l, Color: ""}
-	}
-
-	state := issue.State
-	if state == "opened" {
-		state = "OPEN"
-	} else if state == "closed" {
-		state = "CLOSED"
-	}
-
 	// Extract project path from full reference
 	projectPath := ""
 	if issue.References.Full != "" {
@@ -449,6 +683,20 @@ func (g *GitLabProvider) convertGitLabIssue(issue glabIssue) IssueData {
 		if len(parts) > 0 {
 			projectPath = parts[0]
 		}
+	}
+
+	// Get label colors from cache
+	labels := make([]Label, len(issue.Labels))
+	for i, l := range issue.Labels {
+		labels[i] = Label{Name: l, Color: g.getLabelColor(projectPath, l)}
+	}
+
+	state := issue.State
+	switch state {
+	case "opened":
+		state = "OPEN"
+	case "closed":
+		state = "CLOSED"
 	}
 
 	return IssueData{
@@ -476,20 +724,27 @@ func (g *GitLabProvider) GetCurrentUser() (string, error) {
 	}
 
 	// Parse the auth status output to get username
-	// Output format includes "Logged in to ... as USERNAME"
+	// Output format includes "Logged in to <host> as <user>" with optional leading checkmark
 	lines := strings.Split(string(output), "\n")
+	linePattern := regexp.MustCompile(`^\s*(?:[✓✔]\s*)?Logged in to\s+\S+\s+as\s+([^\s]+)(?:\s+\(.*\))?\s*$`)
 	for _, line := range lines {
-		if strings.Contains(line, "Logged in to") && strings.Contains(line, " as ") {
-			parts := strings.Split(line, " as ")
-			if len(parts) >= 2 {
-				// Clean up the username
-				username := strings.TrimSpace(parts[1])
-				// Remove any trailing info in parentheses
-				if idx := strings.Index(username, " ("); idx > 0 {
-					username = username[:idx]
-				}
+		matches := linePattern.FindStringSubmatch(line)
+		if len(matches) == 2 {
+			username := strings.TrimSpace(matches[1])
+			if username != "" {
 				return username, nil
 			}
+		}
+	}
+
+	// Fallback to the GitLab API
+	userOutput, err := g.runGlab("api", "user")
+	if err == nil && len(userOutput) > 0 {
+		var user struct {
+			Username string `json:"username"`
+		}
+		if json.Unmarshal(userOutput, &user) == nil && user.Username != "" {
+			return user.Username, nil
 		}
 	}
 
@@ -521,4 +776,58 @@ func (g *GitLabProvider) parseQuery(query string) map[string]string {
 	}
 
 	return filters
+}
+
+// FetchIssueComments fetches comments for a single issue
+func (g *GitLabProvider) FetchIssueComments(issueUrl string) ([]IssueComment, error) {
+	// Parse project and issue IID from URL
+	// Format: https://gitlab.example.com/group/project/-/issues/123
+	parsedURL, err := url.Parse(issueUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	path := parsedURL.Path
+	re := regexp.MustCompile(`(.+?)/-/issues/(\d+)`)
+	matches := re.FindStringSubmatch(path)
+	if len(matches) < 3 {
+		return nil, fmt.Errorf("invalid issue URL format: %s", issueUrl)
+	}
+
+	project := strings.TrimPrefix(matches[1], "/")
+	issueID := matches[2]
+
+	// Get issue notes/comments via API
+	encodedProject := url.PathEscape(project)
+	notesEndpoint := fmt.Sprintf("projects/%s/issues/%s/notes", encodedProject, issueID)
+	notesOutput, err := g.runGlab("api", notesEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	var comments []IssueComment
+	if len(notesOutput) > 0 {
+		var notes []struct {
+			Body      string                    `json:"body"`
+			Author    struct{ Username string } `json:"author"`
+			CreatedAt time.Time                 `json:"created_at"`
+			System    bool                      `json:"system"`
+		}
+		if err := json.Unmarshal(notesOutput, &notes); err != nil {
+			return nil, err
+		}
+		for _, note := range notes {
+			// Skip system-generated notes
+			if note.System {
+				continue
+			}
+			comments = append(comments, IssueComment{
+				Author:    Author{Login: note.Author.Username},
+				Body:      note.Body,
+				UpdatedAt: note.CreatedAt,
+			})
+		}
+	}
+
+	return comments, nil
 }
