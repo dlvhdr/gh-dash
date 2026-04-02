@@ -9,10 +9,9 @@ type ProviderType string
 
 const (
 	GitHub ProviderType = "github"
-	GitLab ProviderType = "gitlab"
 )
 
-// Provider is the interface that abstracts GitHub and GitLab APIs
+// Provider is the interface that abstracts provider APIs
 type Provider interface {
 	// GetType returns the provider type
 	GetType() ProviderType
@@ -32,7 +31,7 @@ type Provider interface {
 	// GetCurrentUser returns the current authenticated user
 	GetCurrentUser() (string, error)
 
-	// GetCLICommand returns the CLI command name ("gh" or "glab")
+	// GetCLICommand returns the CLI command name
 	GetCLICommand() string
 }
 

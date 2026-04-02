@@ -38,8 +38,7 @@ var (
 )
 
 var (
-	cfgFlag    string
-	gitlabHost string
+	cfgFlag string
 
 	logo = lipgloss.NewStyle().Foreground(dctx.LogoColor).MarginBottom(1).SetString(constants.Logo)
 
@@ -61,9 +60,6 @@ gh dash --config /path/to/configuration/file.yml
 
 # Run with debug logging to debug.log
 gh dash --debug
-
-# Connect to a GitLab instance
-gh dash --gitlab gitlab.example.com
 
 # Print version
 gh dash -v
@@ -179,22 +175,8 @@ func init() {
 		"help for gh-dash",
 	)
 
-	rootCmd.Flags().StringVar(
-		&gitlabHost,
-		"gitlab",
-		"",
-		"GitLab hostname (e.g., gitlab.example.com) - enables GitLab mode",
-	)
-
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
-		// Set up the provider based on flags
-		gitlabHostFlag, _ := rootCmd.Flags().GetString("gitlab")
-		if gitlabHostFlag != "" {
-			log.Info("Using GitLab provider", "host", gitlabHostFlag)
-			provider.SetProvider(provider.NewGitLabProvider(gitlabHostFlag))
-		} else {
-			provider.SetProvider(provider.NewGitHubProvider())
-		}
+		provider.SetProvider(provider.NewGitHubProvider())
 		var repo string
 		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {

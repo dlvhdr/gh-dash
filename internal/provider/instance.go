@@ -27,12 +27,6 @@ func GetProvider() Provider {
 	return currentProvider
 }
 
-// IsGitLab returns true if the current provider is GitLab
-func IsGitLab() bool {
-	p := GetProvider()
-	return p.GetType() == GitLab
-}
-
 // IsGitHub returns true if the current provider is GitHub
 func IsGitHub() bool {
 	p := GetProvider()
