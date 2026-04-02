@@ -247,7 +247,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 	default:
 		icon = pr.Ctx.Styles.Common.PersonGlyph
 		title = "Reviews"
-		subtitle = "Non requested"
+		subtitle = "None requested"
 		status = statusNonRequested
 	}
 
