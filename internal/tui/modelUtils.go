@@ -199,6 +199,11 @@ func resolveTemplateInput(
 		}
 	}
 
+	// Fall back to the current repo path if RepoPath was not resolved via repoPaths config
+	if input["RepoPath"] == nil && ctxRepoPath != "" {
+		input["RepoPath"] = ctxRepoPath
+	}
+
 	return input
 }
 

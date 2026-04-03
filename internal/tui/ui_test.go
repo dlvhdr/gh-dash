@@ -814,6 +814,42 @@ func TestCommandTemplateMissingVariable(t *testing.T) {
 	require.Error(t, err, "template with missing variable should return an error")
 }
 
+func TestRepoPathFallbackToCtxRepoPath(t *testing.T) {
+	// When repoPaths config is empty, RepoPath should fall back to ctxRepoPath
+	// (the repo gh-dash was started from).
+	contextData := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 42,
+	}
+	resolved := resolveTemplateInput(
+		&contextData, map[string]string{}, "/home/user/projects/repo",
+	)
+	tmpl := "cd {{.RepoPath}} && gh issue edit {{.IssueNumber}}"
+	result, err := executeCommandTemplate(t, tmpl, resolved)
+	require.NoError(t, err)
+	require.Equal(t, "cd /home/user/projects/repo && gh issue edit 42", result)
+}
+
+func TestRepoPathConfigTakesPriority(t *testing.T) {
+	// Explicit repoPaths config should win over ctxRepoPath.
+	contextData := map[string]any{
+		"RepoName":    "owner/repo",
+		"IssueNumber": 42,
+	}
+	resolved := resolveTemplateInput(
+		&contextData,
+		map[string]string{"owner/repo": "/configured/path"},
+		"/home/user/projects/repo",
+	)
+	result, err := executeCommandTemplate(
+		t,
+		"cd {{.RepoPath}} && gh issue edit {{.IssueNumber}}",
+		resolved,
+	)
+	require.NoError(t, err)
+	require.Equal(t, "cd /configured/path && gh issue edit 42", result)
+}
+
 func TestSyncMainContentWidth(t *testing.T) {
 	tests := []struct {
 		name                 string
