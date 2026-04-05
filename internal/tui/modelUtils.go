@@ -171,10 +171,14 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	return nil
 }
 
-// runCustomCommand executes a user-defined command.
-// commandTemplate is a template string that will be parsed with the input data.
-// contextData is a map of key-value pairs of data specific to the context the command is being run in.
-func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string]any) tea.Cmd {
+// resolveTemplateInput builds the input map for a keybinding command template.
+// It merges context-specific data and resolves RepoPath via the repoPaths config mapping.
+// ctxRepoPath is the path of the repo gh-dash was started from (may be empty).
+func resolveTemplateInput(
+	contextData *map[string]any,
+	repoPaths map[string]string,
+	ctxRepoPath string,
+) map[string]any {
 	// A generic map is a pretty easy & flexible way to populate a template if there's no pressing need
 	// for structured data, existing structs, etc. Especially if holes in the data are expected.
 	// Common data shared across contexts could be set here.
@@ -189,11 +193,25 @@ func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string
 	if input["RepoName"] != nil {
 		if repoPath, ok := common.GetRepoLocalPath(
 			input["RepoName"].(string),
-			m.ctx.Config.RepoPaths,
+			repoPaths,
 		); ok {
 			input["RepoPath"] = repoPath
 		}
 	}
+
+	// Fall back to the current repo path if RepoPath was not resolved via repoPaths config
+	if input["RepoPath"] == nil && ctxRepoPath != "" {
+		input["RepoPath"] = ctxRepoPath
+	}
+
+	return input
+}
+
+// runCustomCommand executes a user-defined command.
+// commandTemplate is a template string that will be parsed with the input data.
+// contextData is a map of key-value pairs of data specific to the context the command is being run in.
+func (m *Model) runCustomCommand(commandTemplate string, contextData *map[string]any) tea.Cmd {
+	input := resolveTemplateInput(contextData, m.ctx.Config.RepoPaths, m.ctx.RepoPath)
 
 	cmd, err := template.New("keybinding_command").Parse(commandTemplate)
 	if err != nil {
