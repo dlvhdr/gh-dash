@@ -100,6 +100,20 @@ import "charm.land/log/v2"
 log.Debug("some message", "someVariable", someVariable)
 ```
 
+### Linting
+
+CI runs this check, but for PRs from forks it may require maintainer approval before it starts. Running `task lint` locally saves a round-trip.
+
+```sh
+task lint
+```
+
+To auto-fix formatting issues (line length, imports, etc.):
+
+```sh
+task lint:fix
+```
+
 ### Running the Docs Locally
 
 - Run the docs site by running `task docs`
