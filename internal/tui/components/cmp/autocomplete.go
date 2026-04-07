@@ -1,4 +1,5 @@
-package autocomplete
+// Package cmp houses the generic completion component
+package cmp
 
 import (
 	"strings"

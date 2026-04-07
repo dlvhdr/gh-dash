@@ -1,4 +1,4 @@
-package detailedit
+package cmpcontroller
 
 import (
 	"testing"
@@ -8,8 +8,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
-	popupautocomplete "github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
@@ -41,10 +40,10 @@ func testRepo() RepoRef {
 	}
 }
 
-func suggestions(values ...string) []popupautocomplete.Suggestion {
-	items := make([]popupautocomplete.Suggestion, 0, len(values))
+func suggestions(values ...string) []cmp.Suggestion {
+	items := make([]cmp.Suggestion, 0, len(values))
 	for _, value := range values {
-		items = append(items, popupautocomplete.Suggestion{Value: value})
+		items = append(items, cmp.Suggestion{Value: value})
 	}
 	return items
 }
@@ -52,14 +51,14 @@ func suggestions(values ...string) []popupautocomplete.Suggestion {
 func TestEnterCommentModeResetsAutocompleteState(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c.ac.SetSuggestions(suggestions("bug", "feature"))
-	c.ac.Show("bug", nil)
-	require.True(t, c.ac.HasSuggestions())
+	c.cmp.SetSuggestions(suggestions("bug", "feature"))
+	c.cmp.Show("bug", nil)
+	require.True(t, c.cmp.HasSuggestions())
 
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -67,29 +66,29 @@ func TestEnterCommentModeResetsAutocompleteState(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: true,
 	})
 
-	require.False(t, c.ac.HasSuggestions())
-	require.False(t, c.ac.IsVisible())
+	require.False(t, c.cmp.HasSuggestions())
+	require.False(t, c.cmp.IsVisible())
 }
 
 func TestEnterAssignModeResetsAutocompleteState(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c.ac.SetSuggestions(suggestions("bug", "feature"))
-	c.ac.Show("bug", nil)
-	require.True(t, c.ac.HasSuggestions())
+	c.cmp.SetSuggestions(suggestions("bug", "feature"))
+	c.cmp.Show("bug", nil)
+	require.True(t, c.cmp.HasSuggestions())
 
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	require.False(t, c.ac.HasSuggestions())
-	require.False(t, c.ac.IsVisible())
+	require.False(t, c.cmp.HasSuggestions())
+	require.False(t, c.cmp.IsVisible())
 }
 
 func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
@@ -100,7 +99,7 @@ func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		InitialValue:                     "bug, docs, ",
-		Source:                           dataautocomplete.LabelSource{},
+		Source:                           cmp.LabelSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionLabels,
 		EnterFetch:                       FetchNone,
@@ -115,7 +114,7 @@ func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -128,7 +127,7 @@ func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 	require.True(t, handled)
 	require.Len(t, c.repoUsers, 1)
 	require.Equal(t, "alice", c.repoUsers[0].Login)
-	require.True(t, c.ac.IsVisible())
+	require.True(t, c.cmp.IsVisible())
 }
 
 func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
@@ -137,7 +136,7 @@ func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		InitialValue:                     "bu",
-		Source:                           dataautocomplete.LabelSource{},
+		Source:                           cmp.LabelSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionLabels,
 		EnterFetch:                       FetchNone,
@@ -150,7 +149,7 @@ func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
 	require.True(t, handled)
 	require.Len(t, c.repoLabels, 1)
 	require.Equal(t, "bug", c.repoLabels[0].Name)
-	require.True(t, c.ac.IsVisible())
+	require.True(t, c.cmp.IsVisible())
 }
 
 func TestEnterSilentFetchReturnsCommand(t *testing.T) {
@@ -160,7 +159,7 @@ func TestEnterSilentFetchReturnsCommand(t *testing.T) {
 	_, cmd := c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchSilent,
@@ -176,14 +175,14 @@ func TestForceRefreshClearsRelevantCache(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
-		Source:                           dataautocomplete.LabelSource{},
+		Source:                           cmp.LabelSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionLabels,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	_, cmd, _, handled := c.Update(popupautocomplete.FetchSuggestionsRequestedMsg{Force: true})
+	_, cmd, _, handled := c.Update(cmp.FetchSuggestionsRequestedMsg{Force: true})
 	require.True(t, handled)
 	require.NotNil(t, cmd)
 }
@@ -195,20 +194,20 @@ func TestCommentModeHidesPopupWhenMentionContextDisappears(t *testing.T) {
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		InitialValue:                     "@ali",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	c.ac.SetSuggestions(suggestions("alice"))
+	c.cmp.SetSuggestions(suggestions("alice"))
 	c.showSuggestionsFromCurrentContext()
-	require.True(t, c.ac.IsVisible())
+	require.True(t, c.cmp.IsVisible())
 
 	c.inputBox.SetValue("done")
 	c.showSuggestionsFromCurrentContext()
-	require.False(t, c.ac.IsVisible())
+	require.False(t, c.cmp.IsVisible())
 }
 
 func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.T) {
@@ -218,18 +217,18 @@ func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		InitialValue:                     "@ali ",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	c.ac.SetSuggestions(suggestions("alice"))
+	c.cmp.SetSuggestions(suggestions("alice"))
 	c.Update(c.inputBox.Focus())
 	c.inputBox.CursorEnd()
 	c.showSuggestionsFromCurrentContext()
-	require.False(t, c.ac.IsVisible())
+	require.False(t, c.cmp.IsVisible())
 }
 
 func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
@@ -238,18 +237,18 @@ func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	c.ac.SetSuggestions(suggestions("alice"))
+	c.cmp.SetSuggestions(suggestions("alice"))
 
 	c, _, _, handled := c.Update(tea.KeyPressMsg{Text: "@"})
 	require.True(t, handled)
-	require.True(t, c.ac.IsVisible())
+	require.True(t, c.cmp.IsVisible())
 }
 
 func TestAssignModeShowsPopupForEmptyContext(t *testing.T) {
@@ -259,16 +258,16 @@ func TestAssignModeShowsPopupForEmptyContext(t *testing.T) {
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	c.ac.SetSuggestions(suggestions("alice"))
+	c.cmp.SetSuggestions(suggestions("alice"))
 	c.showSuggestionsFromCurrentContext()
 
-	require.True(t, c.ac.IsVisible())
+	require.True(t, c.cmp.IsVisible())
 }
 
 func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
@@ -276,7 +275,7 @@ func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -294,7 +293,7 @@ func TestConfirmDiscardExitsMode(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeApprove,
 		Prompt:                           "approve",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -313,7 +312,7 @@ func TestRejectDiscardRestoresPrompt(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -333,7 +332,7 @@ func TestCtrlDReturnsSubmit(t *testing.T) {
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "alice bob",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -366,7 +365,7 @@ func TestPasteInCommentMode(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
@@ -388,7 +387,7 @@ func TestPasteInAssignMode(t *testing.T) {
 	c, _ = c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
 		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
