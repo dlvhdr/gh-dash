@@ -15,7 +15,7 @@ type Model struct {
 	ctx          *context.ProgramContext
 	initialValue string
 	textInput    textinput.Model
-	cmp *cmp.Model
+	cmp          *cmp.Model
 }
 
 type SearchOptions struct {
