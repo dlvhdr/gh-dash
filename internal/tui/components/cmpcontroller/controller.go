@@ -1,4 +1,6 @@
-package detailedit
+// Package cmpcontroller is used to load completions (e.g. from the network)
+// for the various modes and using the cmp package to display them
+package cmpcontroller
 
 import (
 	"strings"
@@ -11,8 +13,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
-	popupautocomplete "github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -54,7 +55,7 @@ type EnterOptions struct {
 	Mode                             Mode
 	Prompt                           string
 	InitialValue                     string
-	Source                           dataautocomplete.Source
+	Source                           cmp.Source
 	Repo                             RepoRef
 	SuggestionKind                   SuggestionKind
 	EnterFetch                       FetchPolicy
@@ -86,7 +87,7 @@ type RepoUsersFetchFailedMsg struct {
 type Controller struct {
 	ctx               *context.ProgramContext
 	inputBox          inputbox.Model
-	ac                *popupautocomplete.Model
+	cmp               *cmp.Model
 	mode              Mode
 	prompt            string
 	repo              RepoRef
@@ -100,13 +101,13 @@ type Controller struct {
 
 func New(ctx *context.ProgramContext) Controller {
 	inputBox := inputbox.NewModel(ctx)
-	ac := popupautocomplete.NewModel(ctx)
-	inputBox.SetAutocomplete(&ac)
+	cmp := cmp.NewModel(ctx)
+	inputBox.SetAutocomplete(&cmp)
 
 	return Controller{
 		ctx:      ctx,
 		inputBox: inputBox,
-		ac:       &ac,
+		cmp:      &cmp,
 	}
 }
 
@@ -133,13 +134,13 @@ func (c Controller) View() string {
 
 func (c *Controller) SetWidth(width int) {
 	c.inputBox.SetWidth(width)
-	c.ac.SetWidth(width - 4)
+	c.cmp.SetWidth(width - 4)
 }
 
 func (c *Controller) UpdateProgramContext(ctx *context.ProgramContext) {
 	c.ctx = ctx
 	c.inputBox.UpdateProgramContext(ctx)
-	c.ac.UpdateProgramContext(ctx)
+	c.cmp.UpdateProgramContext(ctx)
 }
 
 func (c Controller) Exit() Controller {
@@ -176,7 +177,7 @@ func (c Controller) Enter(opts EnterOptions) (Controller, tea.Cmd) {
 	case SuggestionUsers:
 		if users, ok := data.CachedRepoUsers(opts.Repo.NameWithOwner); ok {
 			c.repoUsers = users
-			c.ac.SetSuggestions(userSuggestions(users))
+			c.cmp.SetSuggestions(userSuggestions(users))
 			c.showSuggestionsFromCurrentContext()
 		} else if opts.EnterFetch != FetchNone {
 			cmds = append([]tea.Cmd{c.fetchUsers(opts.EnterFetch == FetchWithLoading)}, cmds...)
@@ -184,7 +185,7 @@ func (c Controller) Enter(opts EnterOptions) (Controller, tea.Cmd) {
 	case SuggestionLabels:
 		if labels, ok := data.CachedRepoLabels(opts.Repo.NameWithOwner); ok {
 			c.repoLabels = labels
-			c.ac.SetSuggestions(labelSuggestions(labels))
+			c.cmp.SetSuggestions(labelSuggestions(labels))
 			c.showSuggestionsFromCurrentContext()
 		} else if opts.EnterFetch != FetchNone {
 			cmds = append([]tea.Cmd{c.fetchLabels(opts.EnterFetch == FetchWithLoading)}, cmds...)
@@ -211,29 +212,29 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 
 	case RepoLabelsFetchedMsg:
 		c.repoLabels = msg.Labels
-		c.ac.SetSuggestions(labelSuggestions(msg.Labels))
-		cmds = append(cmds, c.ac.SetFetchSuccess())
+		c.cmp.SetSuggestions(labelSuggestions(msg.Labels))
+		cmds = append(cmds, c.cmp.SetFetchSuccess())
 		if c.mode == ModeLabel {
 			c.showSuggestionsFromCurrentContext()
 		}
 		return c, tea.Batch(cmds...), nil, true
 
 	case RepoLabelsFetchFailedMsg:
-		return c, c.ac.SetFetchError(msg.Err), nil, true
+		return c, c.cmp.SetFetchError(msg.Err), nil, true
 
 	case RepoUsersFetchedMsg:
 		c.repoUsers = msg.Users
-		c.ac.SetSuggestions(userSuggestions(msg.Users))
-		cmds = append(cmds, c.ac.SetFetchSuccess())
+		c.cmp.SetSuggestions(userSuggestions(msg.Users))
+		cmds = append(cmds, c.cmp.SetFetchSuccess())
 		if c.mode == ModeComment || c.mode == ModeApprove || c.mode == ModeAssign {
 			c.showSuggestionsFromCurrentContext()
 		}
 		return c, tea.Batch(cmds...), nil, true
 
 	case RepoUsersFetchFailedMsg:
-		return c, c.ac.SetFetchError(msg.Err), nil, true
+		return c, c.cmp.SetFetchError(msg.Err), nil, true
 
-	case popupautocomplete.FetchSuggestionsRequestedMsg:
+	case cmp.FetchSuggestionsRequestedMsg:
 		if !c.Active() || c.suggestionKind == SuggestionNone {
 			return c, nil, nil, false
 		}
@@ -255,7 +256,7 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		}
 
 		switch {
-		case key.Matches(msg, popupautocomplete.RefreshSuggestionsKey):
+		case key.Matches(msg, cmp.RefreshSuggestionsKey):
 			if c.suggestionKind == SuggestionNone {
 				return c, nil, nil, true
 			}
@@ -305,7 +306,7 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 			}
 		}
 
-		var previousContext dataautocomplete.Context
+		var previousContext cmp.Context
 		if c.usesAutocomplete() {
 			previousContext = c.inputBox.CurrentAutocompleteContext()
 		}
@@ -316,10 +317,10 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		if c.usesAutocomplete() {
 			currentContext := c.inputBox.CurrentAutocompleteContext()
 			if currentContext != previousContext {
-				if c.hideOnEmpty && currentContext == (dataautocomplete.Context{}) {
-					c.ac.Hide()
+				if c.hideOnEmpty && currentContext == (cmp.Context{}) {
+					c.cmp.Hide()
 				} else {
-					c.ac.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
+					c.cmp.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
 				}
 			}
 		}
@@ -328,9 +329,9 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 	}
 
 	switch msg.(type) {
-	case spinner.TickMsg, popupautocomplete.ClearFetchStatusMsg:
+	case spinner.TickMsg, cmp.ClearFetchStatusMsg:
 		var acCmd tea.Cmd
-		*c.ac, acCmd = c.ac.Update(msg)
+		*c.cmp, acCmd = c.cmp.Update(msg)
 		return c, acCmd, nil, c.Active() || c.suggestionKind != SuggestionNone
 	}
 
@@ -363,9 +364,9 @@ func (c *Controller) setDiscardPrompt() {
 }
 
 func (c *Controller) resetAutocompleteState() {
-	c.ac.Reset()
-	c.ac.Hide()
-	c.ac.SetSuggestions(nil)
+	c.cmp.Reset()
+	c.cmp.Hide()
+	c.cmp.SetSuggestions(nil)
 }
 
 func (c Controller) showSuggestionsFromCurrentContext() {
@@ -373,11 +374,11 @@ func (c Controller) showSuggestionsFromCurrentContext() {
 		return
 	}
 	currentContext := c.inputBox.CurrentAutocompleteContext()
-	if c.hideOnEmpty && currentContext == (dataautocomplete.Context{}) {
-		c.ac.Hide()
+	if c.hideOnEmpty && currentContext == (cmp.Context{}) {
+		c.cmp.Hide()
 		return
 	}
-	c.ac.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
+	c.cmp.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
 }
 
 func (c Controller) usesAutocomplete() bool {
@@ -392,7 +393,7 @@ func (c Controller) usesAutocomplete() bool {
 func (c Controller) fetchLabels(showLoading bool) tea.Cmd {
 	var spinnerTickCmd tea.Cmd
 	if showLoading {
-		spinnerTickCmd = c.ac.SetFetchLoading()
+		spinnerTickCmd = c.cmp.SetFetchLoading()
 	}
 
 	fetchCmd := func() tea.Msg {
@@ -412,7 +413,7 @@ func (c Controller) fetchLabels(showLoading bool) tea.Cmd {
 func (c Controller) fetchUsers(showLoading bool) tea.Cmd {
 	var spinnerTickCmd tea.Cmd
 	if showLoading {
-		spinnerTickCmd = c.ac.SetFetchLoading()
+		spinnerTickCmd = c.cmp.SetFetchLoading()
 	}
 
 	fetchCmd := func() tea.Msg {
@@ -429,10 +430,10 @@ func (c Controller) fetchUsers(showLoading bool) tea.Cmd {
 	return fetchCmd
 }
 
-func userSuggestions(users []data.User) []popupautocomplete.Suggestion {
-	suggestions := make([]popupautocomplete.Suggestion, 0, len(users))
+func userSuggestions(users []data.User) []cmp.Suggestion {
+	suggestions := make([]cmp.Suggestion, 0, len(users))
 	for _, user := range users {
-		suggestions = append(suggestions, popupautocomplete.Suggestion{
+		suggestions = append(suggestions, cmp.Suggestion{
 			Value:  user.Login,
 			Detail: strings.TrimSpace(user.Name),
 		})
@@ -440,10 +441,10 @@ func userSuggestions(users []data.User) []popupautocomplete.Suggestion {
 	return suggestions
 }
 
-func labelSuggestions(labels []data.Label) []popupautocomplete.Suggestion {
-	suggestions := make([]popupautocomplete.Suggestion, 0, len(labels))
+func labelSuggestions(labels []data.Label) []cmp.Suggestion {
+	suggestions := make([]cmp.Suggestion, 0, len(labels))
 	for _, label := range labels {
-		suggestions = append(suggestions, popupautocomplete.Suggestion{
+		suggestions = append(suggestions, cmp.Suggestion{
 			Value:  label.Name,
 			Detail: strings.TrimSpace(label.Description),
 		})

@@ -1,4 +1,4 @@
-package autocomplete
+package cmp
 
 import tea "charm.land/bubbletea/v2"
 

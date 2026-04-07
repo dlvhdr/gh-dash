@@ -11,9 +11,9 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/detailedit"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -34,13 +34,13 @@ type Model struct {
 	issue     *issuerow.Issue
 	sectionId int
 	width     int
-	editor    detailedit.Controller
+	editor    cmpcontroller.Controller
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		issue:  nil,
-		editor: detailedit.New(ctx),
+		editor: cmpcontroller.New(ctx),
 	}
 }
 
@@ -56,28 +56,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
 
 		switch submit.Mode {
-		case detailedit.ModeComment:
+		case cmpcontroller.ModeComment:
 			if len(strings.TrimSpace(submit.Value)) != 0 {
 				return m, tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, submit.Value), nil
 			}
 			return m, nil, nil
 
-		case detailedit.ModeAssign:
-			usernames := dataautocomplete.AllWords(submit.Value)
+		case cmpcontroller.ModeAssign:
+			usernames := cmp.AllWords(submit.Value)
 			if len(usernames) > 0 {
 				return m, tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
-		case detailedit.ModeUnassign:
-			usernames := dataautocomplete.AllWords(submit.Value)
+		case cmpcontroller.ModeUnassign:
+			usernames := cmp.AllWords(submit.Value)
 			if len(usernames) > 0 {
 				return m, tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
-		case detailedit.ModeLabel:
-			labels := dataautocomplete.CurrentLabels(submit.Value)
+		case cmpcontroller.ModeLabel:
+			labels := cmp.CurrentLabels(submit.Value)
 			if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
 				return m, tasks.LabelIssue(
 					m.ctx,
@@ -257,7 +257,7 @@ func (m *Model) IsTextInputBoxFocused() bool {
 }
 
 func (m *Model) GetIsCommenting() bool {
-	return m.editor.Mode() == detailedit.ModeComment
+	return m.editor.Mode() == cmpcontroller.ModeComment
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
@@ -266,19 +266,19 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 	}
 
 	if !isCommenting {
-		if m.editor.Mode() == detailedit.ModeComment {
+		if m.editor.Mode() == cmpcontroller.ModeComment {
 			m.editor = m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
-		Mode:                             detailedit.ModeComment,
+	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
-		Source:                           dataautocomplete.UserMentionSource{},
+		Source:                           cmp.UserMentionSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   detailedit.SuggestionUsers,
-		EnterFetch:                       detailedit.FetchSilent,
+		SuggestionKind:                   cmpcontroller.SuggestionUsers,
+		EnterFetch:                       cmpcontroller.FetchSilent,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
@@ -287,7 +287,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) GetIsAssigning() bool {
-	return m.editor.Mode() == detailedit.ModeAssign
+	return m.editor.Mode() == cmpcontroller.ModeAssign
 }
 
 func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
@@ -296,7 +296,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 	}
 
 	if !isAssigning {
-		if m.editor.Mode() == detailedit.ModeAssign {
+		if m.editor.Mode() == cmpcontroller.ModeAssign {
 			m.editor = m.editor.Exit()
 		}
 		return nil
@@ -307,14 +307,14 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
-	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
-		Mode:                             detailedit.ModeAssign,
+	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
 		InitialValue:                     initialValue,
-		Source:                           dataautocomplete.WhitespaceSource{},
+		Source:                           cmp.WhitespaceSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   detailedit.SuggestionUsers,
-		EnterFetch:                       detailedit.FetchSilent,
+		SuggestionKind:                   cmpcontroller.SuggestionUsers,
+		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 	m.editor = editor
@@ -327,7 +327,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 
 	if !isLabeling {
-		if m.editor.Mode() == detailedit.ModeLabel {
+		if m.editor.Mode() == cmpcontroller.ModeLabel {
 			m.editor = m.editor.Exit()
 		}
 		return nil
@@ -339,14 +339,14 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	labels = append(labels, "")
 
-	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
-		Mode:                             detailedit.ModeLabel,
+	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+		Mode:                             cmpcontroller.ModeLabel,
 		Prompt:                           constants.LabelPrompt,
 		InitialValue:                     strings.Join(labels, ", "),
-		Source:                           dataautocomplete.LabelSource{},
+		Source:                           cmp.LabelSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   detailedit.SuggestionLabels,
-		EnterFetch:                       detailedit.FetchSilent,
+		SuggestionKind:                   cmpcontroller.SuggestionLabels,
+		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 	m.editor = editor
@@ -363,7 +363,7 @@ func (m *Model) userAssignedToIssue(login string) bool {
 }
 
 func (m *Model) GetIsUnassigning() bool {
-	return m.editor.Mode() == detailedit.ModeUnassign
+	return m.editor.Mode() == cmpcontroller.ModeUnassign
 }
 
 func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
@@ -372,14 +372,14 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 	}
 
 	if !isUnassigning {
-		if m.editor.Mode() == detailedit.ModeUnassign {
+		if m.editor.Mode() == cmpcontroller.ModeUnassign {
 			m.editor = m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(detailedit.EnterOptions{
-		Mode:         detailedit.ModeUnassign,
+	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+		Mode:         cmpcontroller.ModeUnassign,
 		Prompt:       constants.UnassignPrompt,
 		InitialValue: strings.Join(m.issueAssignees(), "\n"),
 		Repo:         m.repoRef(),
@@ -401,9 +401,9 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.editor.UpdateProgramContext(ctx)
 }
 
-func (m *Model) repoRef() detailedit.RepoRef {
+func (m *Model) repoRef() cmpcontroller.RepoRef {
 	owner, repo := m.issue.Data.GetRepoNameAndOwner()
-	return detailedit.RepoRef{
+	return cmpcontroller.RepoRef{
 		NameWithOwner: m.issue.Data.GetRepoNameWithOwner(),
 		Owner:         owner,
 		Name:          repo,

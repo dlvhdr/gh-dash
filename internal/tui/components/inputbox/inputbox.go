@@ -9,24 +9,23 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	dataautocomplete "github.com/dlvhdr/gh-dash/v4/internal/data/autocomplete"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/autocomplete"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 type Model struct {
-	ctx                *context.ProgramContext
-	textArea           textarea.Model
-	inputHelp          help.Model
-	prompt             string
-	autocomplete       *autocomplete.Model
-	autocompleteSource dataautocomplete.Source
+	ctx       *context.ProgramContext
+	textArea  textarea.Model
+	inputHelp help.Model
+	prompt    string
+	cmp       *cmp.Model
+	cmpSource cmp.Source
 }
 
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Ctrl+c/esc", "cancel")),
-	autocomplete.ToggleSuggestions,
+	cmp.ToggleSuggestions,
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
@@ -59,28 +58,28 @@ func NewModel(ctx *context.ProgramContext) Model {
 	}
 }
 
-func (m *Model) SetAutocomplete(ac *autocomplete.Model) {
-	m.autocomplete = ac
+func (m *Model) SetAutocomplete(cmp *cmp.Model) {
+	m.cmp = cmp
 }
 
-func (m *Model) SetAutocompleteSource(src dataautocomplete.Source) {
-	m.autocompleteSource = src
+func (m *Model) SetAutocompleteSource(src cmp.Source) {
+	m.cmpSource = src
 }
 
-func (m Model) CurrentAutocompleteContext() dataautocomplete.Context {
-	if m.autocompleteSource == nil {
-		return dataautocomplete.Context{}
+func (m Model) CurrentAutocompleteContext() cmp.Context {
+	if m.cmpSource == nil {
+		return cmp.Context{}
 	}
 
-	return m.autocompleteSource.ExtractContext(m.textArea.Value(), m.GetAbsoluteCursorPosition())
+	return m.cmpSource.ExtractContext(m.textArea.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) AutocompleteItemsToExclude() []string {
-	if m.autocompleteSource == nil {
+	if m.cmpSource == nil {
 		return nil
 	}
 
-	return m.autocompleteSource.ItemsToExclude(m.textArea.Value(), m.GetAbsoluteCursorPosition())
+	return m.cmpSource.ItemsToExclude(m.textArea.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -89,34 +88,34 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Allow toggling suggestions at any time
-		if m.autocomplete != nil && key.Matches(msg, autocomplete.ToggleSuggestions) {
-			if m.autocomplete.IsVisible() {
-				m.autocomplete.Suppress()
+		if m.cmp != nil && key.Matches(msg, cmp.ToggleSuggestions) {
+			if m.cmp.IsVisible() {
+				m.cmp.Suppress()
 				return m, nil
 			}
 
-			m.autocomplete.Unsuppress()
+			m.cmp.Unsuppress()
 			currentContext := m.CurrentAutocompleteContext()
-			m.autocomplete.Show(currentContext.Content, m.AutocompleteItemsToExclude())
+			m.cmp.Show(currentContext.Content, m.AutocompleteItemsToExclude())
 			return m, nil
 		}
 
 		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
-		if m.autocomplete != nil &&
-			(m.autocomplete.IsVisible() || m.autocomplete.HasSuggestions()) {
+		if m.cmp != nil &&
+			(m.cmp.IsVisible() || m.cmp.HasSuggestions()) {
 			switch {
-			case key.Matches(msg, autocomplete.PrevKey):
-				m.autocomplete.Prev()
+			case key.Matches(msg, cmp.PrevKey):
+				m.cmp.Prev()
 				return m, nil
-			case key.Matches(msg, autocomplete.NextKey):
-				m.autocomplete.Next()
+			case key.Matches(msg, cmp.NextKey):
+				m.cmp.Next()
 				return m, nil
-			case m.autocomplete.Selected() != "" && key.Matches(msg, autocomplete.SelectKey):
-				selected := m.autocomplete.Selected()
-				if selected != "" && m.autocompleteSource != nil {
+			case m.cmp.Selected() != "" && key.Matches(msg, cmp.SelectKey):
+				selected := m.cmp.Selected()
+				if selected != "" && m.cmpSource != nil {
 					currentValue := m.textArea.Value()
 					currentContext := m.CurrentAutocompleteContext()
-					newValue, newCursorPos := m.autocompleteSource.InsertSuggestion(
+					newValue, newCursorPos := m.cmpSource.InsertSuggestion(
 						currentValue,
 						selected,
 						currentContext.Start,
@@ -124,10 +123,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					)
 					m.textArea.SetValue(newValue)
 					m.textArea.SetCursorColumn(newCursorPos.X)
-					// Refresh autocomplete to exclude the newly-added item
+					// Refresh cmp to exclude the newly-added item
 					if m.AutocompleteItemsToExclude() != nil {
 						newContext := m.CurrentAutocompleteContext()
-						m.autocomplete.Show(newContext.Content, m.AutocompleteItemsToExclude())
+						m.cmp.Show(newContext.Content, m.AutocompleteItemsToExclude())
 					}
 				}
 				return m, nil
@@ -158,9 +157,9 @@ func (m Model) View() string {
 }
 
 func (m Model) ViewWithAutocomplete() string {
-	autocompleteView := ""
-	if m.autocomplete != nil && m.autocomplete.IsVisible() {
-		autocompleteView = m.autocomplete.View()
+	cmpView := ""
+	if m.cmp != nil && m.cmp.IsVisible() {
+		cmpView = m.cmp.View()
 	}
 
 	return lipgloss.NewStyle().
@@ -173,7 +172,7 @@ func (m Model) ViewWithAutocomplete() string {
 				lipgloss.Left,
 				fmt.Sprintf("%s\n", m.prompt),
 				m.textArea.View(),
-				autocompleteView,
+				cmpView,
 				lipgloss.NewStyle().
 					MarginTop(1).
 					Render(m.inputHelp.ShortHelpView(inputKeys)),
