@@ -9,6 +9,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
@@ -29,7 +30,7 @@ func newTestController(t *testing.T) Controller {
 		Styles: context.InitStyles(thm),
 	}
 
-	return New(ctx)
+	return New(ctx, inputbox.DefaultTextArea(ctx))
 }
 
 func testRepo() RepoRef {
@@ -55,7 +56,7 @@ func TestEnterCommentModeResetsAutocompleteState(t *testing.T) {
 	c.cmp.Show("bug", nil)
 	require.True(t, c.cmp.HasSuggestions())
 
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		Source:                           cmp.UserMentionSource{},
@@ -77,7 +78,7 @@ func TestEnterAssignModeResetsAutocompleteState(t *testing.T) {
 	c.cmp.Show("bug", nil)
 	require.True(t, c.cmp.HasSuggestions())
 
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		Source:                           cmp.WhitespaceSource{},
@@ -95,7 +96,7 @@ func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
 	data.ClearLabelCache()
 	c := newTestController(t)
 
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		InitialValue:                     "bug, docs, ",
@@ -111,7 +112,7 @@ func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
 
 func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		Source:                           cmp.WhitespaceSource{},
@@ -121,7 +122,7 @@ func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	c, _, _, handled := c.Update(
+	_, handled := c.Update(
 		RepoUsersFetchedMsg{Users: []data.User{{Login: "alice", Name: "Alice"}}},
 	)
 	require.True(t, handled)
@@ -132,7 +133,7 @@ func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
 
 func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		InitialValue:                     "bu",
@@ -143,7 +144,7 @@ func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	c, _, _, handled := c.Update(
+	_, handled := c.Update(
 		RepoLabelsFetchedMsg{Labels: []data.Label{{Name: "bug", Description: "Bug"}}},
 	)
 	require.True(t, handled)
@@ -156,7 +157,7 @@ func TestEnterSilentFetchReturnsCommand(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
 
-	_, cmd := c.Enter(EnterOptions{
+	cmd := c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		Source:                           cmp.WhitespaceSource{},
@@ -172,7 +173,7 @@ func TestEnterSilentFetchReturnsCommand(t *testing.T) {
 func TestForceRefreshClearsRelevantCache(t *testing.T) {
 	data.ClearLabelCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		Source:                           cmp.LabelSource{},
@@ -182,7 +183,7 @@ func TestForceRefreshClearsRelevantCache(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	_, cmd, _, handled := c.Update(cmp.FetchSuggestionsRequestedMsg{Force: true})
+	cmd, handled := c.Update(cmp.FetchSuggestionsRequestedMsg{Force: true})
 	require.True(t, handled)
 	require.NotNil(t, cmd)
 }
@@ -190,7 +191,7 @@ func TestForceRefreshClearsRelevantCache(t *testing.T) {
 func TestCommentModeHidesPopupWhenMentionContextDisappears(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		InitialValue:                     "@ali",
@@ -213,7 +214,7 @@ func TestCommentModeHidesPopupWhenMentionContextDisappears(t *testing.T) {
 func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		InitialValue:                     "@ali ",
@@ -234,7 +235,7 @@ func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.
 func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		Source:                           cmp.UserMentionSource{},
@@ -246,7 +247,7 @@ func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
 	})
 	c.cmp.SetSuggestions(suggestions("alice"))
 
-	c, _, _, handled := c.Update(tea.KeyPressMsg{Text: "@"})
+	_, handled := c.Update(tea.KeyPressMsg{Text: "@"})
 	require.True(t, handled)
 	require.True(t, c.cmp.IsVisible())
 }
@@ -254,7 +255,7 @@ func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
 func TestAssignModeShowsPopupForEmptyContext(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "",
@@ -272,7 +273,7 @@ func TestAssignModeShowsPopupForEmptyContext(t *testing.T) {
 
 func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		Source:                           cmp.UserMentionSource{},
@@ -283,14 +284,14 @@ func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: true,
 	})
 
-	c, _, _, handled := c.Update(tea.KeyPressMsg{Text: "esc"})
+	_, handled := c.Update(tea.KeyPressMsg{Text: "esc"})
 	require.True(t, handled)
 	require.True(t, c.showConfirmCancel)
 }
 
 func TestConfirmDiscardExitsMode(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeApprove,
 		Prompt:                           "approve",
 		Source:                           cmp.WhitespaceSource{},
@@ -302,14 +303,13 @@ func TestConfirmDiscardExitsMode(t *testing.T) {
 	})
 
 	c.showConfirmCancel = true
-	c, _, _, handled := c.Update(tea.KeyPressMsg{Text: "y"})
+	_, handled := c.Update(tea.KeyPressMsg{Text: "y"})
 	require.True(t, handled)
-	require.Equal(t, ModeNone, c.Mode())
 }
 
 func TestRejectDiscardRestoresPrompt(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		Source:                           cmp.UserMentionSource{},
@@ -321,14 +321,14 @@ func TestRejectDiscardRestoresPrompt(t *testing.T) {
 	})
 
 	c.showConfirmCancel = true
-	c, _, _, handled := c.Update(tea.KeyPressMsg{Text: "n"})
+	_, handled := c.Update(tea.KeyPressMsg{Text: "n"})
 	require.True(t, handled)
 	require.False(t, c.showConfirmCancel)
 }
 
 func TestCtrlDReturnsSubmit(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "alice bob",
@@ -339,17 +339,15 @@ func TestCtrlDReturnsSubmit(t *testing.T) {
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	c, _, submit, handled := c.Update(tea.KeyPressMsg{Text: "ctrl+d"})
+	_, handled := c.Update(tea.KeyPressMsg{Text: "ctrl+d"})
 	require.True(t, handled)
-	require.Equal(t, ModeNone, c.Mode())
-	require.NotNil(t, submit)
-	require.Equal(t, ModeAssign, submit.Mode)
-	require.Equal(t, "alice bob", submit.Value)
+	require.Equal(t, ModeAssign, c.Mode())
+	require.Equal(t, "alice bob", c.Value())
 }
 
 func TestUnassignModeDoesNotUseAutocomplete(t *testing.T) {
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:         ModeUnassign,
 		Prompt:       "unassign",
 		InitialValue: "alice\nbob",
@@ -362,7 +360,7 @@ func TestUnassignModeDoesNotUseAutocomplete(t *testing.T) {
 func TestPasteInCommentMode(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		Source:                           cmp.UserMentionSource{},
@@ -374,7 +372,7 @@ func TestPasteInCommentMode(t *testing.T) {
 	})
 
 	msg := tea.PasteMsg{Content: "pasted text"}
-	c, _, _, handled := c.Update(msg)
+	_, handled := c.Update(msg)
 
 	require.True(t, handled)
 	require.Contains(t, c.inputBox.Value(), "pasted text",
@@ -384,7 +382,7 @@ func TestPasteInCommentMode(t *testing.T) {
 func TestPasteInAssignMode(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c, _ = c.Enter(EnterOptions{
+	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		Source:                           cmp.WhitespaceSource{},
@@ -395,7 +393,7 @@ func TestPasteInAssignMode(t *testing.T) {
 	})
 
 	msg := tea.PasteMsg{Content: "alice bob"}
-	c, _, _, handled := c.Update(msg)
+	_, handled := c.Update(msg)
 
 	require.True(t, handled)
 	require.Contains(t, c.inputBox.Value(), "alice bob",
@@ -406,7 +404,7 @@ func TestPasteIgnoredWhenInactive(t *testing.T) {
 	c := newTestController(t)
 
 	msg := tea.PasteMsg{Content: "should not appear"}
-	_, _, _, handled := c.Update(msg)
+	_, handled := c.Update(msg)
 
 	require.False(t, handled,
 		"paste should not be handled when controller is inactive")

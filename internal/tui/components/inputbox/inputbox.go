@@ -28,7 +28,7 @@ var inputKeys = []key.Binding{
 	cmp.ToggleSuggestions,
 }
 
-func NewModel(ctx *context.ProgramContext) Model {
+func DefaultTextArea(ctx *context.ProgramContext) textarea.Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
@@ -46,6 +46,10 @@ func NewModel(ctx *context.ProgramContext) Model {
 			EndOfBuffer:      base.Foreground(ctx.Theme.FaintText),
 		},
 	})
+	return ta
+}
+
+func NewModel(ctx *context.ProgramContext, ta textarea.Model) Model {
 	ta.Focus()
 
 	h := help.New()

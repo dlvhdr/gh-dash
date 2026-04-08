@@ -99,8 +99,8 @@ type Controller struct {
 	repoUsers         []data.User
 }
 
-func New(ctx *context.ProgramContext) Controller {
-	inputBox := inputbox.NewModel(ctx)
+func New(ctx *context.ProgramContext, ta textarea.Model) Controller {
+	inputBox := inputbox.NewModel(ctx, ta)
 	cmp := cmp.NewModel(ctx)
 	inputBox.SetAutocomplete(&cmp)
 
@@ -109,6 +109,10 @@ func New(ctx *context.ProgramContext) Controller {
 		inputBox: inputBox,
 		cmp:      &cmp,
 	}
+}
+
+func (c *Controller) Value() string {
+	return c.inputBox.Value()
 }
 
 func (c Controller) Mode() Mode {
@@ -143,7 +147,7 @@ func (c *Controller) UpdateProgramContext(ctx *context.ProgramContext) {
 	c.cmp.UpdateProgramContext(ctx)
 }
 
-func (c Controller) Exit() Controller {
+func (c *Controller) Exit() {
 	c.inputBox.Blur()
 	c.resetAutocompleteState()
 	c.mode = ModeNone
@@ -153,10 +157,10 @@ func (c Controller) Exit() Controller {
 	c.confirmDiscard = false
 	c.showConfirmCancel = false
 	c.hideOnEmpty = false
-	return c
 }
 
-func (c Controller) Enter(opts EnterOptions) (Controller, tea.Cmd) {
+// todo make pinter
+func (c *Controller) Enter(opts EnterOptions) tea.Cmd {
 	c.inputBox.Reset()
 	c.resetAutocompleteState()
 	c.mode = opts.Mode
@@ -192,10 +196,10 @@ func (c Controller) Enter(opts EnterOptions) (Controller, tea.Cmd) {
 		}
 	}
 
-	return c, tea.Sequence(cmds...)
+	return tea.Sequence(cmds...)
 }
 
-func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
+func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 	var (
 		cmds  []tea.Cmd
 		taCmd tea.Cmd
@@ -206,9 +210,9 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		if c.Active() {
 			c.inputBox, taCmd = c.inputBox.Update(msg)
 			cmds = append(cmds, taCmd)
-			return c, tea.Batch(cmds...), nil, true
+			return tea.Batch(cmds...), true
 		}
-		return c, nil, nil, false
+		return nil, false
 
 	case RepoLabelsFetchedMsg:
 		c.repoLabels = msg.Labels
@@ -217,10 +221,10 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		if c.mode == ModeLabel {
 			c.showSuggestionsFromCurrentContext()
 		}
-		return c, tea.Batch(cmds...), nil, true
+		return tea.Batch(cmds...), true
 
 	case RepoLabelsFetchFailedMsg:
-		return c, c.cmp.SetFetchError(msg.Err), nil, true
+		return c.cmp.SetFetchError(msg.Err), true
 
 	case RepoUsersFetchedMsg:
 		c.repoUsers = msg.Users
@@ -229,76 +233,70 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 		if c.mode == ModeComment || c.mode == ModeApprove || c.mode == ModeAssign {
 			c.showSuggestionsFromCurrentContext()
 		}
-		return c, tea.Batch(cmds...), nil, true
+		return tea.Batch(cmds...), true
 
 	case RepoUsersFetchFailedMsg:
-		return c, c.cmp.SetFetchError(msg.Err), nil, true
+		return c.cmp.SetFetchError(msg.Err), true
 
 	case cmp.FetchSuggestionsRequestedMsg:
 		if !c.Active() || c.suggestionKind == SuggestionNone {
-			return c, nil, nil, false
+			return nil, false
 		}
 		if msg.Force {
 			c.clearRelevantCache()
 		}
 		switch c.suggestionKind {
 		case SuggestionUsers:
-			return c, c.fetchUsers(true), nil, true
+			return c.fetchUsers(true), true
 		case SuggestionLabels:
-			return c, c.fetchLabels(true), nil, true
+			return c.fetchLabels(true), true
 		default:
-			return c, nil, nil, false
+			return nil, false
 		}
 
 	case tea.KeyMsg:
 		if !c.Active() {
-			return c, nil, nil, false
+			return nil, false
 		}
 
 		switch {
 		case key.Matches(msg, cmp.RefreshSuggestionsKey):
 			if c.suggestionKind == SuggestionNone {
-				return c, nil, nil, true
+				return nil, true
 			}
 			c.clearRelevantCache()
 			switch c.suggestionKind {
 			case SuggestionUsers:
-				return c, c.fetchUsers(true), nil, true
+				return c.fetchUsers(true), true
 			case SuggestionLabels:
-				return c, c.fetchLabels(true), nil, true
+				return c.fetchLabels(true), true
 			}
 		}
 
 		switch msg.String() {
-		case "ctrl+d":
-			value := c.inputBox.Value()
-			mode := c.mode
-			c = c.Exit()
-			return c, nil, &Submit{Mode: mode, Value: value}, true
-
 		case "esc", "ctrl+c":
 			if c.confirmDiscard {
 				if !c.showConfirmCancel {
 					c.setDiscardPrompt()
-					return c, nil, nil, true
+					return nil, true
 				}
-				c = c.Exit()
-				return c, nil, nil, true
+				c.Exit()
+				return nil, true
 			}
-			c = c.Exit()
-			return c, nil, nil, true
+			c.Exit()
+			return nil, true
 
 		default:
 			if c.confirmDiscard {
 				if msg.String() == "Y" || msg.String() == "y" {
 					if c.showConfirmCancel {
-						c = c.Exit()
-						return c, nil, nil, true
+						c.Exit()
+						return nil, true
 					}
 				}
 				if c.showConfirmCancel && (msg.String() == "N" || msg.String() == "n") {
 					c.restorePrompt()
-					return c, nil, nil, true
+					return nil, true
 				}
 				if c.showConfirmCancel {
 					c.restorePrompt()
@@ -325,17 +323,17 @@ func (c Controller) Update(msg tea.Msg) (Controller, tea.Cmd, *Submit, bool) {
 			}
 		}
 
-		return c, tea.Batch(cmds...), nil, true
+		return tea.Batch(cmds...), true
 	}
 
 	switch msg.(type) {
 	case spinner.TickMsg, cmp.ClearFetchStatusMsg:
 		var acCmd tea.Cmd
 		*c.cmp, acCmd = c.cmp.Update(msg)
-		return c, acCmd, nil, c.Active() || c.suggestionKind != SuggestionNone
+		return acCmd, c.Active() || c.suggestionKind != SuggestionNone
 	}
 
-	return c, nil, nil, false
+	return nil, false
 }
 
 func (c *Controller) clearRelevantCache() {
