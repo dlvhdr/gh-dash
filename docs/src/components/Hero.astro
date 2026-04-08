@@ -1,7 +1,4 @@
 ---
-import Default from "@astrojs/starlight/components/PageTitle.astro";
-import Logo from "./Logo.astro";
-import EnhanceLogo from "./EnhanceLogo.astro";
 import ReleaseVersionButton from "./ReleaseVersionButton.astro";
 import Terminal from "./Terminal.astro";
 import { Icon } from "@astrojs/starlight/components";
@@ -20,7 +17,7 @@ const { tagline, githubUrl, videoUrl, getStartedUrl } = Astro.props;
     <slot />
     <div class="flex flex-row items-center gap-1">
       <form action={`${githubUrl}/releases`}>
-        <ReleaseVersionButton server:defer>
+        <ReleaseVersionButton server:defer githubUrl={githubUrl}>
           <button
             slot="fallback"
             class="m-0 h-7 w-16 animate-pulse rounded-lg bg-[var(--sl-color-black)] px-2 py-2 text-sm text-[var(--sl-color-gray-3)]"
