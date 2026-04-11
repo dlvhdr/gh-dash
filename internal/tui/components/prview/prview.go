@@ -15,6 +15,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -52,57 +53,60 @@ func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		pr:       nil,
 		carousel: c,
-		editor:   cmpcontroller.New(ctx),
+		editor:   cmpcontroller.New(ctx, inputbox.DefaultTextArea(ctx)),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	editor, cmd, submit, handled := m.editor.Update(msg)
-	m.editor = editor
+	cmd, handled := m.editor.Update(msg)
 
-	if submit != nil {
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "ctrl+d" {
+		value := m.editor.Value()
+		mode := m.editor.Mode()
+		m.editor.Exit()
 		if m.pr == nil {
 			return m, nil
 		}
 
 		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: prssection.SectionType}
 
-		switch submit.Mode {
+		switch mode {
 		case cmpcontroller.ModeComment:
-			if len(strings.TrimSpace(submit.Value)) != 0 {
-				return m, tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, submit.Value)
+			if len(strings.TrimSpace(value)) != 0 {
+				return m, tasks.CommentOnPR(m.ctx, sid, m.pr.Data.Primary, value)
 			}
 			return m, nil
 
 		case cmpcontroller.ModeApprove:
 			comment := ""
-			if len(strings.TrimSpace(submit.Value)) != 0 {
-				comment = submit.Value
+			if len(strings.TrimSpace(value)) != 0 {
+				comment = value
 			}
 			return m, tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
 
 		case cmpcontroller.ModeAssign:
-			usernames := cmp.AllWords(submit.Value)
+			usernames := cmp.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
 			return m, nil
 
 		case cmpcontroller.ModeUnassign:
-			usernames := cmp.AllWords(submit.Value)
+			usernames := cmp.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
 			return m, nil
 
 		case cmpcontroller.ModeLabel:
-			labels := cmp.CurrentLabels(submit.Value)
+			labels := cmp.CurrentLabels(value)
 			if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
 				return m, m.label(labels)
 			}
 			return m, nil
 		}
 	}
+
 	if handled {
 		return m, cmd
 	}
@@ -578,12 +582,12 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 	if !isCommenting {
 		if m.editor.Mode() == cmpcontroller.ModeComment {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
 		Source:                           cmp.UserMentionSource{},
@@ -593,7 +597,6 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -612,12 +615,12 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 
 	if !isApproving {
 		if m.editor.Mode() == cmpcontroller.ModeApprove {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeApprove,
 		Prompt:                           constants.ApprovalPrompt,
 		InitialValue:                     m.ctx.Config.Defaults.PrApproveComment,
@@ -628,7 +631,6 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -643,7 +645,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 
 	if !isAssigning {
 		if m.editor.Mode() == cmpcontroller.ModeAssign {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
@@ -653,7 +655,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
 		InitialValue:                     initialValue,
@@ -663,7 +665,6 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -687,18 +688,17 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 
 	if !isUnassigning {
 		if m.editor.Mode() == cmpcontroller.ModeUnassign {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:         cmpcontroller.ModeUnassign,
 		Prompt:       constants.UnassignPrompt,
 		InitialValue: strings.Join(m.prAssignees(), "\n"),
 		Repo:         m.repoRef(),
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -749,7 +749,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 
 	if !isLabeling {
 		if m.editor.Mode() == cmpcontroller.ModeLabel {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
@@ -760,7 +760,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	labels = append(labels, "")
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeLabel,
 		Prompt:                           constants.LabelPrompt,
 		InitialValue:                     strings.Join(labels, ", "),
@@ -769,8 +769,8 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		SuggestionKind:                   cmpcontroller.SuggestionLabels,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
+		ConfirmDiscardOnCancel:           false,
 	})
-	m.editor = editor
 	return cmd
 }
 

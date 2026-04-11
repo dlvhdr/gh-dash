@@ -14,6 +14,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
@@ -40,44 +41,46 @@ type Model struct {
 func NewModel(ctx *context.ProgramContext) Model {
 	return Model{
 		issue:  nil,
-		editor: cmpcontroller.New(ctx),
+		editor: cmpcontroller.New(ctx, inputbox.DefaultTextArea(ctx)),
 	}
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
-	editor, cmd, submit, handled := m.editor.Update(msg)
-	m.editor = editor
+	cmd, handled := m.editor.Update(msg)
 
-	if submit != nil {
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "ctrl+d" {
+		value := m.editor.Value()
+		mode := m.editor.Mode()
+		m.editor.Exit()
 		if m.issue == nil {
 			return m, nil, nil
 		}
 
 		sid := tasks.SectionIdentifier{Id: m.sectionId, Type: issuessection.SectionType}
 
-		switch submit.Mode {
+		switch mode {
 		case cmpcontroller.ModeComment:
-			if len(strings.TrimSpace(submit.Value)) != 0 {
-				return m, tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, submit.Value), nil
+			if len(strings.TrimSpace(value)) != 0 {
+				return m, tasks.CommentOnIssue(m.ctx, sid, m.issue.Data, value), nil
 			}
 			return m, nil, nil
 
 		case cmpcontroller.ModeAssign:
-			usernames := cmp.AllWords(submit.Value)
+			usernames := cmp.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
 		case cmpcontroller.ModeUnassign:
-			usernames := cmp.AllWords(submit.Value)
+			usernames := cmp.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
 		case cmpcontroller.ModeLabel:
-			labels := cmp.CurrentLabels(submit.Value)
+			labels := cmp.CurrentLabels(value)
 			if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
 				return m, tasks.LabelIssue(
 					m.ctx,
@@ -267,12 +270,12 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 
 	if !isCommenting {
 		if m.editor.Mode() == cmpcontroller.ModeComment {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
 		Source:                           cmp.UserMentionSource{},
@@ -282,7 +285,6 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -297,7 +299,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 
 	if !isAssigning {
 		if m.editor.Mode() == cmpcontroller.ModeAssign {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
@@ -307,7 +309,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
 		InitialValue:                     initialValue,
@@ -317,7 +319,6 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -328,7 +329,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 
 	if !isLabeling {
 		if m.editor.Mode() == cmpcontroller.ModeLabel {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
@@ -339,7 +340,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	labels = append(labels, "")
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeLabel,
 		Prompt:                           constants.LabelPrompt,
 		InitialValue:                     strings.Join(labels, ", "),
@@ -349,7 +350,6 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	m.editor = editor
 	return cmd
 }
 
@@ -373,18 +373,17 @@ func (m *Model) SetIsUnassigning(isUnassigning bool) tea.Cmd {
 
 	if !isUnassigning {
 		if m.editor.Mode() == cmpcontroller.ModeUnassign {
-			m.editor = m.editor.Exit()
+			m.editor.Exit()
 		}
 		return nil
 	}
 
-	editor, cmd := m.editor.Enter(cmpcontroller.EnterOptions{
+	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:         cmpcontroller.ModeUnassign,
 		Prompt:       constants.UnassignPrompt,
 		InitialValue: strings.Join(m.issueAssignees(), "\n"),
 		Repo:         m.repoRef(),
 	})
-	m.editor = editor
 	return cmd
 }
 

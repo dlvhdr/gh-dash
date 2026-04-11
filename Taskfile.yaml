@@ -107,7 +107,7 @@ tasks:
 
   docs:
     cmds:
-      - cd docs && pnpm dev
+      - cd docs && pnpm dev {{.CLI_ARGS}}
     desc: Start docs server
 
   docs-build:
