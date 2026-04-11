@@ -34,7 +34,7 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 		"-R",
 		repoNameWithOwner,
 		"--json",
-		"name,color",
+		"name,description,color",
 		"--limit",
 		"300",
 	)
