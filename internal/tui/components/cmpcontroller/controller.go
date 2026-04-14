@@ -27,6 +27,7 @@ const (
 	ModeAssign
 	ModeUnassign
 	ModeLabel
+	ModeSearch
 )
 
 type SuggestionKind int
@@ -115,30 +116,37 @@ func (c *Controller) Value() string {
 	return c.inputBox.Value()
 }
 
-func (c Controller) Mode() Mode {
+func (c *Controller) SetValue(value string) {
+	c.inputBox.SetValue(value)
+}
+
+func (c *Controller) Mode() Mode {
 	return c.mode
 }
 
-func (c Controller) Active() bool {
+func (c *Controller) Active() bool {
 	return c.mode != ModeNone
 }
 
-func (c Controller) View() string {
-	if !c.Active() {
-		return ""
-	}
+func (c *Controller) View() string {
+	return c.inputBox.View()
+}
 
-	switch c.mode {
-	case ModeComment, ModeApprove, ModeAssign, ModeLabel:
-		return c.inputBox.ViewWithAutocomplete()
-	default:
-		return c.inputBox.View()
-	}
+func (c *Controller) ViewCompletions() string {
+	return c.inputBox.ViewCompletions()
+}
+
+func (c *Controller) Width() int {
+	return c.cmp.Width()
 }
 
 func (c *Controller) SetWidth(width int) {
 	c.inputBox.SetWidth(width)
-	c.cmp.SetWidth(width - 4)
+	c.cmp.SetWidth(width)
+}
+
+func (c *Controller) CursorEnd() {
+	c.inputBox.CursorEnd()
 }
 
 func (c *Controller) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -334,6 +342,10 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 	}
 
 	return nil, false
+}
+
+func (c *Controller) LineFromBottom() int {
+	return c.inputBox.LineFromBottom()
 }
 
 func (c *Controller) clearRelevantCache() {

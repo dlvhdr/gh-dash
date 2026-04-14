@@ -21,13 +21,15 @@ type Model struct {
 }
 
 func NewModel() Model {
+	vp := viewport.New(
+		viewport.WithWidth(0),
+		viewport.WithHeight(0),
+	)
+
 	return Model{
-		IsOpen: false,
-		data:   "",
-		viewport: viewport.New(
-			viewport.WithWidth(0),
-			viewport.WithHeight(0),
-		),
+		IsOpen:     false,
+		data:       "",
+		viewport:   vp,
 		ctx:        nil,
 		emptyState: "Nothing selected...",
 	}
@@ -91,6 +93,10 @@ func (m *Model) ScrollToTop() {
 
 func (m *Model) ScrollToBottom() {
 	m.viewport.GotoBottom()
+}
+
+func (m *Model) YOffset() int {
+	return m.viewport.YOffset()
 }
 
 func (m *Model) ScrollToPercent(percent float64) {

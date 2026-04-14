@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"charm.land/bubbles/v2/textarea"
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
 type Model struct {
 	ctx          *context.ProgramContext
 	initialValue string
-	textInput    textarea.Model
+	cmpctl       *cmpcontroller.Controller
 }
 
 type SearchOptions struct {
@@ -55,68 +55,82 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	ta.SetValue(opts.InitialValue)
 	ta.CursorStart()
 
+	ctl := cmpcontroller.New(ctx, ta)
+
 	m := Model{
 		ctx:          ctx,
-		textInput:    ta,
 		initialValue: opts.InitialValue,
+		cmpctl:       &ctl,
 	}
 
 	w := m.getInputWidth(m.ctx)
-	m.textInput.SetWidth(w)
+	m.cmpctl.SetWidth(w)
+	m.cmpctl.Exit()
 
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return textinput.Blink
+	return nil
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var cmd tea.Cmd
-	cmds := make([]tea.Cmd, 0)
-
-	m.textInput, cmd = m.textInput.Update(msg)
-	cmds = append(cmds, cmd)
-	return m, tea.Batch(cmds...)
+	cmd, _ := m.cmpctl.Update(msg)
+	return m, cmd
 }
 
 func (m Model) View(ctx *context.ProgramContext) string {
-	return lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(m.ctx.Theme.PrimaryBorder).
-		Render(m.textInput.View())
+	return m.ctx.Styles.Search.Root.Render(m.cmpctl.View())
 }
 
 func (m *Model) Focus() tea.Cmd {
-	m.textInput.CursorEnd()
-	return m.textInput.Focus()
+	return m.cmpctl.Enter(cmpcontroller.EnterOptions{
+		Mode:   cmpcontroller.ModeSearch,
+		Prompt: "",
+		Repo: cmpcontroller.RepoRef{
+			NameWithOwner: "dlvhdr/gh-dash",
+			Owner:         "dlvhdr",
+			Name:          "gh-dash",
+		},
+		SuggestionKind:                   cmpcontroller.SuggestionNone,
+		EnterFetch:                       cmpcontroller.FetchNone,
+		ConfirmDiscardOnCancel:           false,
+		HideAutocompleteWhenContextEmpty: true,
+		InitialValue:                     m.cmpctl.Value(),
+	})
 }
 
 func (m *Model) Blur() {
-	m.textInput.CursorStart()
-	m.textInput.Blur()
+	m.cmpctl.Exit()
 }
 
 func (m *Model) SetValue(val string) {
-	m.textInput.SetValue(val)
+	m.cmpctl.SetValue(val)
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	oldWidth := m.textInput.Width()
+	oldWidth := m.cmpctl.Width()
 	newWidth := m.getInputWidth(ctx)
-	m.textInput.SetWidth(newWidth)
-	if m.textInput.Width() != oldWidth {
-		m.textInput.CursorEnd()
+	m.cmpctl.SetWidth(newWidth)
+	if newWidth != oldWidth {
+		m.cmpctl.CursorEnd()
 	}
 }
 
 func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
+	if m.ctx.SidebarOpen {
+		return max(
+			2,
+			ctx.MainContentWidth,
+		)
+	}
+
 	return max(
 		2,
-		ctx.MainContentWidth,
+		ctx.MainContentWidth-4,
 	)
 }
 
 func (m Model) Value() string {
-	return m.textInput.Value()
+	return m.cmpctl.Value()
 }

@@ -1,10 +1,7 @@
 package tabs
 
 import (
-	"fmt"
-
 	tea "charm.land/bubbletea/v2"
-	"charm.land/log/v2"
 
 	// "charm.land/x/exp/teatest"
 
@@ -168,7 +165,6 @@ func (m testModel) Init() tea.Cmd {
 func (m testModel) Update(msg tea.Msg) (testModel, tea.Cmd) {
 	var cmd tea.Cmd
 	cmds := make([]tea.Cmd, 0)
-	log.Debug("got msg", "type", fmt.Sprintf("%T", msg), "msg", msg)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "l" || msg.String() == "right" {

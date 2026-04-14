@@ -28,10 +28,13 @@ var inputKeys = []key.Binding{
 	cmp.ToggleSuggestions,
 }
 
+const DefaultInputHeight = 5
+
 func DefaultTextArea(ctx *context.ProgramContext) textarea.Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = true
 	ta.Prompt = ""
+	ta.SetHeight(DefaultInputHeight)
 	ta.CharLimit = 65536
 	base := lipgloss.NewStyle()
 	ta.SetStyles(textarea.Styles{
@@ -143,45 +146,26 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return lipgloss.NewStyle().
-		BorderTop(true).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(m.ctx.Theme.SecondaryBorder).
-		MarginTop(1).
-		Render(
-			lipgloss.JoinVertical(
-				lipgloss.Left,
-				fmt.Sprintf("%s\n", m.prompt),
-				m.textArea.View(),
-				lipgloss.NewStyle().
-					MarginTop(1).
-					Render(m.inputHelp.ShortHelpView(inputKeys)),
-			),
+	if m.prompt != "" {
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			fmt.Sprintf("%s\n", m.prompt),
+			m.textArea.View(),
+			lipgloss.NewStyle().
+				MarginTop(1).
+				Render(m.inputHelp.ShortHelpView(inputKeys)),
 		)
-}
-
-func (m Model) ViewWithAutocomplete() string {
-	cmpView := ""
-	if m.cmp != nil && m.cmp.IsVisible() {
-		cmpView = m.cmp.View()
 	}
 
-	return lipgloss.NewStyle().
-		BorderTop(true).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(m.ctx.Theme.SecondaryBorder).
-		MarginTop(1).
-		Render(
-			lipgloss.JoinVertical(
-				lipgloss.Left,
-				fmt.Sprintf("%s\n", m.prompt),
-				m.textArea.View(),
-				cmpView,
-				lipgloss.NewStyle().
-					MarginTop(1).
-					Render(m.inputHelp.ShortHelpView(inputKeys)),
-			),
-		)
+	return m.textArea.View()
+}
+
+func (m Model) ViewCompletions() string {
+	if m.cmp != nil && m.cmp.IsVisible() {
+		return m.cmp.View()
+	}
+
+	return ""
 }
 
 func (m *Model) Value() string {
@@ -198,6 +182,10 @@ func (m *Model) Blur() {
 
 func (m *Model) Focus() tea.Cmd {
 	return m.textArea.Focus()
+}
+
+func (m *Model) Width() int {
+	return m.textArea.Width()
 }
 
 func (m *Model) SetWidth(width int) {
@@ -229,4 +217,12 @@ func (m *Model) GetAbsoluteCursorPosition() tea.Position {
 
 func (m *Model) CursorEnd() {
 	m.textArea.CursorEnd()
+}
+
+func (m *Model) LineFromBottom() int {
+	if m.textArea.LineCount() < m.textArea.Height() {
+		return m.textArea.Height() - m.textArea.LineCount()
+	}
+
+	return m.textArea.LineCount() - m.textArea.Line() - 1
 }
