@@ -255,7 +255,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 }
 
 func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) string {
-	w := m.getIndentedContentWidth()
+	w := m.getIndentedContentWidth() - 2
 	part := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), false, false, !isLast, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
@@ -281,7 +281,7 @@ func (m *Model) viewCheckCategory(icon, title, subtitle string, isLast bool) str
 }
 
 func (m *Model) viewChecksBar() string {
-	w := m.getIndentedContentWidth() - 4
+	w := m.getIndentedContentWidth() - 6
 	stats := m.getChecksStats()
 	total := float64(
 		stats.failed + stats.skipped + stats.neutral + stats.succeeded + stats.inProgress + stats.awaitingApproval,

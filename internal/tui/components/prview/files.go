@@ -10,14 +10,15 @@ import (
 )
 
 func (m *Model) renderChangesOverview() string {
+	w := m.getIndentedContentWidth() - 2
 	changes := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder(), false, false, true, false).
 		BorderForeground(m.ctx.Theme.FaintBorder).
-		Width(m.getIndentedContentWidth()).
+		Width(w).
 		Padding(1)
 
 	commits := lipgloss.NewStyle().
-		Width(m.getIndentedContentWidth()).
+		Width(w).
 		Padding(1)
 
 	box := lipgloss.NewStyle().

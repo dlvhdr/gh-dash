@@ -633,7 +633,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) getIndentedContentWidth() int {
-	return m.width - 3*m.ctx.Styles.Sidebar.ContentPadding
+	return m.width - 4*m.ctx.Styles.Sidebar.ContentPadding
 }
 
 func (m *Model) GetIsApproving() bool {
