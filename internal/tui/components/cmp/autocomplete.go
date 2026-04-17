@@ -10,10 +10,10 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 	"github.com/sahilm/fuzzy"
 )
 
@@ -61,13 +61,6 @@ var (
 		key.WithHelp("Ctrl+h", "toggle suggestions"),
 	)
 )
-
-var suggestionKeys = []key.Binding{
-	NextKey,
-	PrevKey,
-	SelectKey,
-	RefreshSuggestionsKey,
-}
 
 const (
 	FetchStateIdle FetchState = iota
@@ -240,55 +233,12 @@ func (m *Model) HasSuggestions() bool {
 	return len(m.filtered) > 0
 }
 
+func (m *Model) Width() int {
+	return m.width
+}
+
 func (m *Model) SetWidth(width int) {
 	m.width = max(0, width)
-}
-
-type columnLayout struct {
-	valueWidth  int
-	detailWidth int
-	gapWidth    int
-}
-
-func (m *Model) computeColumnLayout(numVisible, totalContentWidth int) columnLayout {
-	layout := columnLayout{
-		valueWidth: totalContentWidth,
-	}
-
-	maxValueWidth := 0
-	hasAnyDetail := false
-	for i := range numVisible {
-		suggestion := m.filtered[i]
-		maxValueWidth = max(maxValueWidth, lipgloss.Width(suggestion.Value))
-		hasAnyDetail = hasAnyDetail || strings.TrimSpace(suggestion.Detail) != ""
-	}
-	if !hasAnyDetail || totalContentWidth <= 0 {
-		return layout
-	}
-
-	layout.gapWidth = min(
-		constants.AutocompleteColumnGap,
-		max(0, totalContentWidth-constants.AutocompleteMinDetailWidth),
-	)
-	maxValueForDetails := max(
-		0,
-		totalContentWidth-layout.gapWidth-constants.AutocompleteMinDetailWidth,
-	)
-	if maxValueForDetails <= 0 {
-		return layout
-	}
-
-	preferredValueWidth := min(
-		maxValueWidth,
-		max(
-			constants.AutocompleteMinValueWidth,
-			(totalContentWidth*constants.AutocompletePreferredValueRatioNum)/constants.AutocompletePreferredValueRatioDen,
-		),
-	)
-	layout.valueWidth = max(1, min(preferredValueWidth, maxValueForDetails))
-	layout.detailWidth = max(0, totalContentWidth-layout.valueWidth-layout.gapWidth)
-
-	return layout
 }
 
 func (m *Model) View() string {
@@ -304,22 +254,15 @@ func (m *Model) View() string {
 
 	var b strings.Builder
 
-	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle.Width(m.width)
-	maxLabelWidth := m.width - popupStyle.GetHorizontalPadding()
-
+	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle
 	selectedPrefix := constants.SelectionIcon + " "
 	normalPrefix := "  "
-	selectedPrefixWidth := lipgloss.Width(selectedPrefix)
-	normalPrefixWidth := lipgloss.Width(normalPrefix)
-	maxPrefixWidth := max(selectedPrefixWidth, normalPrefixWidth)
-	totalContentWidth := max(0, maxLabelWidth-maxPrefixWidth)
-	layout := m.computeColumnLayout(numVisible, totalContentWidth)
-	valueColumnStyle := lipgloss.NewStyle().Width(layout.valueWidth)
-	detailColumnStyle := lipgloss.NewStyle().
-		Width(layout.detailWidth).
-		Foreground(m.ctx.Theme.FaintText)
-	ellipsisWidth := lipgloss.Width(constants.Ellipsis)
+	valueColStyle := lipgloss.NewStyle().Bold(true).Foreground(m.ctx.Theme.PrimaryText)
+	detailColStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
 
+	var rows []string
+	selectedBgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground)
+	maxRowWidth := 0
 	for i := 0; i < numRows; i++ {
 		suggestion := Suggestion{}
 		if i < numVisible {
@@ -328,41 +271,39 @@ func (m *Model) View() string {
 		value := suggestion.Value
 		detail := suggestion.Detail
 
-		if layout.valueWidth > 0 && lipgloss.Width(value) > layout.valueWidth {
-			value = ansi.Truncate(
-				value,
-				max(0, layout.valueWidth-ellipsisWidth),
-				constants.Ellipsis,
-			)
-		}
-		if layout.detailWidth > 0 && lipgloss.Width(detail) > layout.detailWidth {
-			detail = ansi.Truncate(
-				detail,
-				max(0, layout.detailWidth-ellipsisWidth),
-				constants.Ellipsis,
-			)
+		bg := lipgloss.NewStyle()
+		selected := i < numVisible && i == m.selected
+		if selected {
+			bg = selectedBgStyle
 		}
 
-		rowText := value
-		if layout.detailWidth > 0 {
-			rowText = lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				valueColumnStyle.Render(value),
-				strings.Repeat(" ", layout.gapWidth),
-				detailColumnStyle.Render(detail),
-			)
-		}
+		rowText := lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			bg.Render(valueColStyle.Render(value)),
+			bg.Render(" "),
+			bg.Render(detailColStyle.Render(detail)),
+		)
 
+		row := ""
 		if i < numVisible && i == m.selected {
-			b.WriteString(m.ctx.Styles.Autocomplete.SelectedStyle.Render(selectedPrefix + rowText))
+			char := selectedPrefix
+			row = utils.RemoveLastReset(
+				char + m.ctx.Styles.Autocomplete.SelectedStyle.Render(rowText),
+			)
 		} else {
-			b.WriteString(normalPrefix + rowText)
+			row = m.ctx.Styles.Autocomplete.ItemStyle.Render(normalPrefix + rowText)
 		}
 
-		if i < numRows-1 {
-			b.WriteString("\n")
-		}
+		rows = append(rows, row)
+		maxRowWidth = max(
+			maxRowWidth,
+			lipgloss.Width(row),
+		)
 	}
+
+	rows[m.selected] = selectedBgStyle.Width(maxRowWidth).
+		Render(rows[m.selected])
+	b.WriteString(lipgloss.JoinVertical(lipgloss.Left, rows...))
 
 	var statusView string
 	switch m.fetchState {
@@ -389,8 +330,6 @@ func (m *Model) View() string {
 			lipgloss.Left,
 			b.String(),
 			statusView,
-			lipgloss.NewStyle().
-				Render(m.suggestionHelp.ShortHelpView(suggestionKeys)),
 		),
 	)
 }

@@ -142,11 +142,23 @@ func (m Model) View() string {
 	s.WriteString("\n\n")
 	s.WriteString(m.renderActivity())
 
-	if editorView := m.editor.View(); editorView != "" {
-		s.WriteString(editorView)
+	if m.editor.Mode() != cmpcontroller.ModeNone {
+		s.WriteString(m.ctx.Styles.Sidebar.InputBox.Render(m.editor.View()))
 	}
 
 	return lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(s.String())
+}
+
+func (m *Model) ViewCompletions() string {
+	if !m.hasData() {
+		return ""
+	}
+
+	return m.editor.ViewCompletions()
+}
+
+func (m *Model) InputBoxLineFromButton() int {
+	return m.editor.LineFromBottom()
 }
 
 func (m *Model) renderFullNameAndNumber() string {
@@ -407,4 +419,8 @@ func (m *Model) repoRef() cmpcontroller.RepoRef {
 		Owner:         owner,
 		Name:          repo,
 	}
+}
+
+func (m *Model) hasData() bool {
+	return m.issue != nil
 }

@@ -921,7 +921,25 @@ func (m Model) View() tea.View {
 		s.WriteString(m.footer.View())
 	}
 
-	v.SetContent(zone.Scan(s.String()))
+	layers := []*lipgloss.Layer{
+		lipgloss.NewLayer(zone.Scan(s.String())),
+	}
+
+	prCmp := m.prView.ViewCompletions()
+	if prCmp != "" {
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromButton() - common.InputBoxHeight - 4
+		layers = append(layers, lipgloss.NewLayer(prCmp).X(m.ctx.MainContentWidth+4).Y(y))
+	}
+
+	issueCmp := m.issueSidebar.ViewCompletions()
+	if issueCmp != "" {
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.issueSidebar.InputBoxLineFromButton() - common.InputBoxHeight - 4
+		layers = append(layers, lipgloss.NewLayer(issueCmp).X(m.ctx.MainContentWidth+4).Y(y))
+	}
+
+	comp := lipgloss.NewCompositor(layers...)
+	v.SetContent(comp.Render())
+
 	return v
 }
 

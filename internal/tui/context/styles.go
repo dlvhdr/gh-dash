@@ -21,6 +21,10 @@ type Styles struct {
 
 	Common common.CommonStyles
 
+	Search struct {
+		Root lipgloss.Style
+	}
+
 	PrView struct {
 		PillStyle lipgloss.Style
 	}
@@ -56,6 +60,7 @@ type Styles struct {
 		ContentPadding int
 		Root           lipgloss.Style
 		PagerStyle     lipgloss.Style
+		InputBox       lipgloss.Style
 	}
 	ListViewPort struct {
 		PagerStyle lipgloss.Style
@@ -83,6 +88,7 @@ type Styles struct {
 	}
 	Autocomplete struct {
 		PopupStyle    lipgloss.Style
+		ItemStyle     lipgloss.Style
 		SelectedStyle lipgloss.Style
 	}
 }
@@ -115,6 +121,10 @@ func InitStyles(theme theme.Theme) Styles {
 	}
 
 	s.Common = common.BuildStyles(theme)
+
+	s.Search.Root = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder(), true).
+		BorderForeground(theme.PrimaryBorder)
 
 	s.PrView.PillStyle = s.Common.MainTextStyle.
 		Border(lipgloss.Border{Left: "", Right: ""}, false, true, false, true).
@@ -182,6 +192,12 @@ func InitStyles(theme theme.Theme) Styles {
 		Bold(true).
 		Foreground(theme.FaintText)
 
+	s.Sidebar.InputBox = lipgloss.NewStyle().
+		MarginTop(1).
+		Border(lipgloss.NormalBorder()).
+		BorderTop(true).
+		BorderForeground(theme.PrimaryBorder)
+
 	s.ListViewPort.PagerStyle = lipgloss.NewStyle().
 		Padding(0, 1).
 		Background(theme.SelectedBackground).
@@ -238,10 +254,11 @@ func InitStyles(theme theme.Theme) Styles {
 		BorderForeground(theme.SecondaryBorder).
 		Foreground(theme.PrimaryText)
 
-	s.Autocomplete.SelectedStyle = lipgloss.NewStyle().
-		Background(theme.SelectedBackground).
-		Foreground(theme.PrimaryText).
-		Bold(true)
+	s.Autocomplete.ItemStyle = lipgloss.NewStyle().
+		PaddingRight(1)
+
+	s.Autocomplete.SelectedStyle = s.Autocomplete.ItemStyle.
+		Foreground(theme.PrimaryText)
 
 	return s
 }

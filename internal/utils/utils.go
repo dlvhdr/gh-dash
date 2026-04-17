@@ -3,6 +3,7 @@ package utils
 import (
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"charm.land/lipgloss/v2"
@@ -110,4 +111,23 @@ func GetStylePrefix(s lipgloss.Style) string {
 		return rendered[:len(rendered)-3]
 	}
 	return rendered
+}
+
+func Clamp(mn, wanted, mx int) int {
+	return min(mx, max(mn, wanted))
+}
+
+// Remove all ANSI reset codes
+func RemoveReset(s string) string {
+	return strings.ReplaceAll(s, "\x1b[m", "")
+}
+
+// Remove last ANSI reset code
+func RemoveLastReset(s string) string {
+	idx := strings.LastIndex(s, "\x1b[m")
+	if idx < 0 {
+		return s
+	}
+
+	return s[:idx]
 }

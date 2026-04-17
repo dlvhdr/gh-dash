@@ -124,6 +124,33 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	if !m.hasData() {
+		return ""
+	}
+
+	body := strings.Builder{}
+	switch m.carousel.SelectedItem() {
+	case tabs[0]:
+		body.WriteString(m.viewOverviewTab())
+	case tabs[1]:
+		body.WriteString(m.renderActivity())
+	case tabs[2]:
+		body.WriteString(m.renderCommits())
+	case tabs[3]:
+		body.WriteString(m.renderChecksOverview())
+		body.WriteString("\n\n")
+		body.WriteString(m.renderChecks())
+	case tabs[4]:
+		body.WriteString(m.renderChangedFiles())
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		m.viewHeader(),
+		lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(body.String()),
+	)
+}
+
+func (m *Model) viewHeader() string {
 	header := strings.Builder{}
 
 	header.WriteString(m.renderFullNameAndNumber())
@@ -142,60 +169,61 @@ func (m Model) View() string {
 	)
 
 	header.WriteString("\n")
+	return header.String()
+}
 
+func (m *Model) viewOverviewTab() string {
 	body := strings.Builder{}
-
-	switch m.carousel.SelectedItem() {
-	case tabs[0]:
-		reviewers := m.renderRequestedReviewers()
-		if reviewers != "" {
-			body.WriteString(reviewers)
-			body.WriteString("\n\n")
-		}
-
-		labels := m.renderLabels()
-		if labels != "" {
-			body.WriteString(labels)
-			body.WriteString("\n\n")
-		}
-
-		body.WriteString(m.renderSummary())
+	reviewers := m.renderRequestedReviewers()
+	if reviewers != "" {
+		body.WriteString(reviewers)
 		body.WriteString("\n\n")
-		body.WriteString(
-			m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"),
-		)
-		body.WriteString("\n")
-		body.WriteString(m.renderChangesOverview())
-		body.WriteString("\n\n")
-		body.WriteString(
-			m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"),
-		)
-		body.WriteString("\n")
-		body.WriteString(m.renderChecksOverview())
-
-		if editorView := m.editor.View(); editorView != "" {
-			body.WriteString(editorView)
-		}
-
-	case tabs[1]:
-		body.WriteString(m.renderActivity())
-	case tabs[2]:
-		body.WriteString(m.renderCommits())
-	case tabs[3]:
-		body.WriteString(m.renderChecksOverview())
-		body.WriteString("\n\n")
-		body.WriteString(m.renderChecks())
-	case tabs[4]:
-		body.WriteString(m.renderChangedFiles())
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left,
-		header.String(),
-		lipgloss.NewStyle().Padding(0, m.ctx.Styles.Sidebar.ContentPadding).Render(body.String()),
+	labels := m.renderLabels()
+	if labels != "" {
+		body.WriteString(labels)
+		body.WriteString("\n\n")
+	}
+
+	body.WriteString(m.renderSummary())
+	body.WriteString("\n\n")
+	body.WriteString(
+		m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Changes"),
 	)
+	body.WriteString("\n")
+	body.WriteString(m.renderChangesOverview())
+	body.WriteString("\n\n")
+	body.WriteString(
+		m.ctx.Styles.Common.MainTextStyle.MarginBottom(1).Underline(true).Render(" Checks"),
+	)
+	body.WriteString("\n")
+	body.WriteString(m.renderChecksOverview())
+
+	if m.editor.Mode() != cmpcontroller.ModeNone {
+		body.WriteString(m.ctx.Styles.Sidebar.InputBox.Render(m.editor.View()))
+	}
+
+	return body.String()
+}
+
+func (m *Model) ViewCompletions() string {
+	if !m.hasData() {
+		return ""
+	}
+
+	return m.editor.ViewCompletions()
+}
+
+func (m *Model) InputBoxLineFromButton() int {
+	return m.editor.LineFromBottom()
 }
 
 func (m *Model) renderFullNameAndNumber() string {
+	if !m.hasData() {
+		return ""
+	}
+
 	return common.RenderPreviewHeader(
 		m.ctx.Theme,
 		m.width,
@@ -208,6 +236,10 @@ func (m *Model) renderFullNameAndNumber() string {
 }
 
 func (m *Model) renderTitle() string {
+	if !m.hasData() {
+		return ""
+	}
+
 	return common.RenderPreviewTitle(
 		m.ctx.Theme,
 		m.ctx.Styles.Common,
@@ -601,7 +633,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) getIndentedContentWidth() int {
-	return m.width - 3*m.ctx.Styles.Sidebar.ContentPadding
+	return m.width - 4*m.ctx.Styles.Sidebar.ContentPadding
 }
 
 func (m *Model) GetIsApproving() bool {
@@ -781,4 +813,8 @@ func (m *Model) repoRef() cmpcontroller.RepoRef {
 		Owner:         owner,
 		Name:          repo,
 	}
+}
+
+func (m *Model) hasData() bool {
+	return m.pr != nil && m.pr.Data != nil
 }

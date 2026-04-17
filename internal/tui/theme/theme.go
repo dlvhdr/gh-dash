@@ -122,7 +122,6 @@ func ParseTheme(cfg *config.Config) Theme {
 		if color == "" {
 			return fallback
 		}
-		log.Debug("parseTheme", "color", color)
 		return compat.AdaptiveColor{
 			Light: lipgloss.Color(string(color)),
 			Dark:  lipgloss.Color(string(color)),
