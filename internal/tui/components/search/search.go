@@ -88,9 +88,9 @@ func (m *Model) Focus() tea.Cmd {
 		Mode:   cmpcontroller.ModeSearch,
 		Prompt: "",
 		Repo: cmpcontroller.RepoRef{
-			NameWithOwner: "dlvhdr/gh-dash",
-			Owner:         "dlvhdr",
-			Name:          "gh-dash",
+			NameWithOwner: "",
+			Owner:         "",
+			Name:          "",
 		},
 		SuggestionKind:                   cmpcontroller.SuggestionNone,
 		EnterFetch:                       cmpcontroller.FetchNone,

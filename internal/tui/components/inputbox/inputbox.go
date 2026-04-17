@@ -161,11 +161,11 @@ func (m Model) View() string {
 }
 
 func (m Model) ViewCompletions() string {
-	if m.cmp != nil && m.cmp.IsVisible() {
-		return m.cmp.View()
+	if m.cmp == nil || !m.cmp.IsVisible() {
+		return ""
 	}
 
-	return ""
+	return m.cmp.View()
 }
 
 func (m *Model) Value() string {
