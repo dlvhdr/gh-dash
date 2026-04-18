@@ -59,6 +59,7 @@ type Styles struct {
 		PagerHeight    int
 		ContentPadding int
 		Root           lipgloss.Style
+		BottomRoot     lipgloss.Style
 		PagerStyle     lipgloss.Style
 		InputBox       lipgloss.Style
 	}
@@ -186,6 +187,10 @@ func InitStyles(theme theme.Theme) Styles {
 			BottomRight: "",
 			BottomLeft:  "",
 		}).
+		BorderForeground(theme.PrimaryBorder)
+	s.Sidebar.BottomRoot = lipgloss.NewStyle().
+		BorderTop(true).
+		BorderStyle(lipgloss.ThickBorder()).
 		BorderForeground(theme.PrimaryBorder)
 	s.Sidebar.PagerStyle = lipgloss.NewStyle().
 		Height(s.Sidebar.PagerHeight).
