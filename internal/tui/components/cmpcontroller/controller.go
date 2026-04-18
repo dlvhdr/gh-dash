@@ -348,9 +348,8 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 	}
 
 	c.inputBox, taCmd = c.inputBox.Update(msg)
-	cmds = append(cmds, taCmd)
 
-	return nil, false
+	return taCmd, false
 }
 
 func (c *Controller) LineFromBottom() int {
