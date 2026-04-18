@@ -100,8 +100,8 @@ type Controller struct {
 	repoUsers         []data.User
 }
 
-func New(ctx *context.ProgramContext, ta textarea.Model) Controller {
-	inputBox := inputbox.NewModel(ctx, ta)
+func New(ctx *context.ProgramContext, opts inputbox.ModelOpts) Controller {
+	inputBox := inputbox.NewModel(ctx, opts)
 	cmp := cmp.NewModel(ctx)
 	inputBox.SetAutocomplete(&cmp)
 
@@ -130,6 +130,10 @@ func (c *Controller) Active() bool {
 
 func (c *Controller) View() string {
 	return c.inputBox.View()
+}
+
+func (c *Controller) Focused() bool {
+	return c.inputBox.Focused()
 }
 
 func (c *Controller) ViewCompletions() string {

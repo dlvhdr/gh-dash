@@ -50,10 +50,11 @@ func NewModel(ctx *context.ProgramContext) Model {
 		carousel.WithWidth(ctx.MainContentWidth),
 	)
 
+	ta := inputbox.DefaultTextArea(ctx)
 	return Model{
 		pr:       nil,
 		carousel: c,
-		editor:   cmpcontroller.New(ctx, inputbox.DefaultTextArea(ctx)),
+		editor:   cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta}),
 	}
 }
 

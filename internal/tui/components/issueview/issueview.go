@@ -39,9 +39,10 @@ type Model struct {
 }
 
 func NewModel(ctx *context.ProgramContext) Model {
+	ta := inputbox.DefaultTextArea(ctx)
 	return Model{
 		issue:  nil,
-		editor: cmpcontroller.New(ctx, inputbox.DefaultTextArea(ctx)),
+		editor: cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta}),
 	}
 }
 

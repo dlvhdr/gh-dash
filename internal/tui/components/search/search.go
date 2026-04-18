@@ -3,11 +3,12 @@ package search
 import (
 	"fmt"
 
-	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -24,41 +25,33 @@ type SearchOptions struct {
 }
 
 func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
-	ta := textarea.New()
-	ta.Placeholder = opts.Placeholder
+	ti := textinput.New()
+	ti.Placeholder = opts.Placeholder
 	base := lipgloss.NewStyle()
-	ta.SetStyles(textarea.Styles{
-		Focused: textarea.StyleState{
-			Base:        base,
+	ti.SetStyles(textinput.Styles{
+		Focused: textinput.StyleState{
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
 			Text:        base.Foreground(ctx.Theme.PrimaryText),
 		},
-		Blurred: textarea.StyleState{
-			Base:        base.Foreground(ctx.Theme.FaintText),
+		Blurred: textinput.StyleState{
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
-			Text:        lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
+			Text:        lipgloss.NewStyle().Foreground(ctx.Theme.PrimaryText),
 		},
-		Cursor: textarea.CursorStyle{
+		Cursor: textinput.CursorStyle{
 			Color: ctx.Theme.FaintText,
 			Shape: tea.CursorBar,
 			Blink: true,
 		},
 	})
-	ta.Prompt = fmt.Sprintf(" %s ", opts.Prefix)
+	ti.Prompt = fmt.Sprintf(" %s ", opts.Prefix)
 
-	// act as an input to allow reuse of autocomplete
-	ta.MaxHeight = 1
-	ta.SetHeight(1)
-	ta.MaxWidth = -1
+	ti.Blur()
+	ti.SetValue(opts.InitialValue)
+	ti.CursorStart()
 
-	ta.ShowLineNumbers = false
-	ta.Blur()
-	ta.SetValue(opts.InitialValue)
-	ta.CursorStart()
-
-	ctl := cmpcontroller.New(ctx, ta)
+	ctl := cmpcontroller.New(ctx, inputbox.ModelOpts{TextInput: &ti})
 
 	m := Model{
 		ctx:          ctx,
@@ -66,8 +59,6 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 		cmpctl:       &ctl,
 	}
 
-	w := m.getInputWidth(m.ctx)
-	m.cmpctl.SetWidth(w)
 	m.cmpctl.Exit()
 
 	return m
@@ -79,7 +70,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View(ctx *context.ProgramContext) string {
-	return m.ctx.Styles.Search.Root.Render(m.cmpctl.View())
+	s := m.ctx.Styles.Search.Root
+	if m.cmpctl.Focused() {
+		s = s.BorderForeground(m.ctx.Styles.Colors.OpenIssue)
+	}
+	return s.Render(m.cmpctl.View())
 }
 
 func (m *Model) CursorEnd() {
