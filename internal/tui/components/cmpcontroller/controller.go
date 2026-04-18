@@ -145,6 +145,10 @@ func (c *Controller) SetWidth(width int) {
 	c.cmp.SetWidth(width)
 }
 
+func (c *Controller) Column() int {
+	return c.inputBox.Column()
+}
+
 func (c *Controller) CursorEnd() {
 	c.inputBox.CursorEnd()
 }
@@ -157,6 +161,7 @@ func (c *Controller) UpdateProgramContext(ctx *context.ProgramContext) {
 
 func (c *Controller) Exit() {
 	c.inputBox.Blur()
+	c.inputBox.CursorStart()
 	c.resetAutocompleteState()
 	c.mode = ModeNone
 	c.prompt = ""
@@ -170,6 +175,8 @@ func (c *Controller) Exit() {
 // todo make pinter
 func (c *Controller) Enter(opts EnterOptions) tea.Cmd {
 	c.inputBox.Reset()
+	c.inputBox.SetValue(opts.InitialValue)
+	c.CursorEnd()
 	c.resetAutocompleteState()
 	c.mode = opts.Mode
 	c.prompt = opts.Prompt
@@ -181,7 +188,6 @@ func (c *Controller) Enter(opts EnterOptions) tea.Cmd {
 
 	c.inputBox.SetPrompt(opts.Prompt)
 	c.inputBox.SetAutocompleteSource(opts.Source)
-	c.inputBox.SetValue(opts.InitialValue)
 
 	cmds := []tea.Cmd{textarea.Blink, c.inputBox.Focus()}
 
@@ -340,6 +346,9 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		*c.cmp, acCmd = c.cmp.Update(msg)
 		return acCmd, c.Active() || c.suggestionKind != SuggestionNone
 	}
+
+	c.inputBox, taCmd = c.inputBox.Update(msg)
+	cmds = append(cmds, taCmd)
 
 	return nil, false
 }

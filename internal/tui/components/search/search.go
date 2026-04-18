@@ -29,11 +29,13 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	base := lipgloss.NewStyle()
 	ta.SetStyles(textarea.Styles{
 		Focused: textarea.StyleState{
+			Base:        base,
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
 			Text:        base.Foreground(ctx.Theme.PrimaryText),
 		},
 		Blurred: textarea.StyleState{
+			Base:        base.Foreground(ctx.Theme.FaintText),
 			Placeholder: lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
 			Prompt:      base.Foreground(ctx.Theme.SecondaryText),
 			Text:        lipgloss.NewStyle().Foreground(ctx.Theme.FaintText),
@@ -49,6 +51,7 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	// act as an input to allow reuse of autocomplete
 	ta.MaxHeight = 1
 	ta.SetHeight(1)
+	ta.MaxWidth = -1
 
 	ta.ShowLineNumbers = false
 	ta.Blur()
@@ -70,10 +73,6 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	return m
 }
 
-func (m Model) Init() tea.Cmd {
-	return nil
-}
-
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	cmd, _ := m.cmpctl.Update(msg)
 	return m, cmd
@@ -81,6 +80,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View(ctx *context.ProgramContext) string {
 	return m.ctx.Styles.Search.Root.Render(m.cmpctl.View())
+}
+
+func (m *Model) CursorEnd() {
+	m.cmpctl.CursorEnd()
 }
 
 func (m *Model) Focus() tea.Cmd {
@@ -118,13 +121,6 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) getInputWidth(ctx *context.ProgramContext) int {
-	if m.ctx.SidebarOpen {
-		return max(
-			2,
-			ctx.MainContentWidth,
-		)
-	}
-
 	return max(
 		2,
 		ctx.MainContentWidth-4,

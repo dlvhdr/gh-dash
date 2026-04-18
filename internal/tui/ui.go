@@ -943,7 +943,7 @@ func (m Model) View() tea.View {
 
 	prCmp := m.prView.ViewCompletions()
 	if prCmp != "" {
-		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromButton() - common.InputBoxHeight - 4
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromBottom() - common.InputBoxHeight - 4
 		layers = append(layers, lipgloss.NewLayer(prCmp).X(m.ctx.MainContentWidth+4).Y(y))
 	}
 
@@ -1026,6 +1026,7 @@ func (m *Model) onWindowSizeChanged(msg tea.WindowSizeMsg) {
 			m.positionOverride = ""
 		}
 		m.syncMainContentDimensions()
+		m.syncSidebar()
 	}
 }
 

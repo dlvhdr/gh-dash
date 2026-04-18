@@ -190,16 +190,7 @@ func InitStyles(theme theme.Theme) Styles {
 		BorderForeground(theme.PrimaryBorder)
 	s.Sidebar.BottomRoot = lipgloss.NewStyle().
 		BorderTop(true).
-		BorderStyle(lipgloss.Border{
-			Top:         "─",
-			Bottom:      "",
-			Left:        "",
-			Right:       "",
-			TopLeft:     "",
-			TopRight:    "",
-			BottomRight: "",
-			BottomLeft:  "",
-		}).
+		BorderStyle(lipgloss.ThickBorder()).
 		BorderForeground(theme.PrimaryBorder)
 	s.Sidebar.PagerStyle = lipgloss.NewStyle().
 		Height(s.Sidebar.PagerHeight).

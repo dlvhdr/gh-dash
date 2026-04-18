@@ -350,7 +350,10 @@ func (m *BaseModel) GetIsLoading() bool {
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
-		return tea.Batch(m.SearchBar.Focus(), m.SearchBar.Init())
+		cmd := m.SearchBar.Focus()
+		m.SearchBar.CursorEnd()
+		m.SearchBar, _ = m.SearchBar.Update(nil)
+		return cmd
 	} else {
 		m.SearchBar.Blur()
 		return nil

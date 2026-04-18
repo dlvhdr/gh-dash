@@ -215,8 +215,16 @@ func (m *Model) GetAbsoluteCursorPosition() tea.Position {
 	return tea.Position{X: col, Y: line}
 }
 
+func (m *Model) CursorStart() {
+	m.textArea.CursorStart()
+}
+
 func (m *Model) CursorEnd() {
 	m.textArea.CursorEnd()
+}
+
+func (m *Model) Column() int {
+	return m.textArea.Column()
 }
 
 func (m *Model) LineFromBottom() int {

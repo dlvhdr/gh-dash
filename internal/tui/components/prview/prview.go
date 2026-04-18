@@ -215,7 +215,7 @@ func (m *Model) ViewCompletions() string {
 	return m.editor.ViewCompletions()
 }
 
-func (m *Model) InputBoxLineFromButton() int {
+func (m *Model) InputBoxLineFromBottom() int {
 	return m.editor.LineFromBottom()
 }
 
