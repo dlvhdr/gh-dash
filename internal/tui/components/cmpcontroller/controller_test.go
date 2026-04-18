@@ -30,7 +30,8 @@ func newTestController(t *testing.T) Controller {
 		Styles: context.InitStyles(thm),
 	}
 
-	return New(ctx, inputbox.DefaultTextArea(ctx))
+	ta := inputbox.DefaultTextArea(ctx)
+	return New(ctx, inputbox.ModelOpts{TextArea: &ta})
 }
 
 func testRepo() RepoRef {

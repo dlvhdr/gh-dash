@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
@@ -14,8 +15,11 @@ import (
 )
 
 type Model struct {
-	ctx       *context.ProgramContext
-	textArea  textarea.Model
+	ctx *context.ProgramContext
+	// text area is for multiline inputs
+	textArea *textarea.Model
+	// text area is for single line inputs
+	textInput *textinput.Model
 	inputHelp help.Model
 	prompt    string
 	cmp       *cmp.Model
@@ -52,14 +56,39 @@ func DefaultTextArea(ctx *context.ProgramContext) textarea.Model {
 	return ta
 }
 
-func NewModel(ctx *context.ProgramContext, ta textarea.Model) Model {
-	ta.Focus()
+func DefaultTextInput(ctx *context.ProgramContext) textinput.Model {
+	ti := textinput.New()
+	ti.Prompt = ""
+	ti.CharLimit = 65536
+	base := lipgloss.NewStyle()
+	ti.SetStyles(textinput.Styles{
+		Focused: textinput.StyleState{
+			Text:        base.Foreground(ctx.Theme.PrimaryText),
+			Placeholder: base.Foreground(ctx.Theme.FaintText),
+		},
+	})
+	return ti
+}
+
+type ModelOpts struct {
+	TextArea  *textarea.Model
+	TextInput *textinput.Model
+}
+
+func NewModel(ctx *context.ProgramContext, opts ModelOpts) Model {
+	if opts.TextArea != nil {
+		opts.TextArea.Focus()
+	}
+	if opts.TextInput != nil {
+		opts.TextInput.Focus()
+	}
 
 	h := help.New()
 	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
 		ctx:       ctx,
-		textArea:  ta,
+		textArea:  opts.TextArea,
+		textInput: opts.TextInput,
 		inputHelp: h,
 		prompt:    "",
 	}
@@ -78,7 +107,7 @@ func (m Model) CurrentAutocompleteContext() cmp.Context {
 		return cmp.Context{}
 	}
 
-	return m.cmpSource.ExtractContext(m.textArea.Value(), m.GetAbsoluteCursorPosition())
+	return m.cmpSource.ExtractContext(m.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) AutocompleteItemsToExclude() []string {
@@ -86,12 +115,10 @@ func (m Model) AutocompleteItemsToExclude() []string {
 		return nil
 	}
 
-	return m.cmpSource.ItemsToExclude(m.textArea.Value(), m.GetAbsoluteCursorPosition())
+	return m.cmpSource.ItemsToExclude(m.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Allow toggling suggestions at any time
@@ -120,7 +147,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case m.cmp.Selected() != "" && key.Matches(msg, cmp.SelectKey):
 				selected := m.cmp.Selected()
 				if selected != "" && m.cmpSource != nil {
-					currentValue := m.textArea.Value()
+					currentValue := m.Value()
 					currentContext := m.CurrentAutocompleteContext()
 					newValue, newCursorPos := m.cmpSource.InsertSuggestion(
 						currentValue,
@@ -128,8 +155,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 						currentContext.Start,
 						currentContext.End,
 					)
-					m.textArea.SetValue(newValue)
-					m.textArea.SetCursorColumn(newCursorPos.X)
+					m.SetValue(newValue)
+					m.SetCursorColumn(newCursorPos.X)
 					// Refresh cmp to exclude the newly-added item
 					if m.AutocompleteItemsToExclude() != nil {
 						newContext := m.CurrentAutocompleteContext()
@@ -141,23 +168,39 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
-	m.textArea, cmd = m.textArea.Update(msg)
+	var cmd tea.Cmd
+	if m.textArea != nil {
+		ta, taCmd := m.textArea.Update(msg)
+		m.textArea = &ta
+		cmd = taCmd
+	}
+	if m.textInput != nil {
+		ti, tiCmd := m.textInput.Update(msg)
+		m.textInput = &ti
+		cmd = tiCmd
+	}
 	return m, cmd
 }
 
 func (m Model) View() string {
+	content := ""
+	if m.textInput != nil {
+		content = m.textInput.View()
+	} else {
+		content = m.textArea.View()
+	}
 	if m.prompt != "" {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			fmt.Sprintf("%s\n", m.prompt),
-			m.textArea.View(),
+			content,
 			lipgloss.NewStyle().
 				MarginTop(1).
 				Render(m.inputHelp.ShortHelpView(inputKeys)),
 		)
 	}
 
-	return m.textArea.View()
+	return content
 }
 
 func (m Model) ViewCompletions() string {
@@ -169,31 +212,76 @@ func (m Model) ViewCompletions() string {
 }
 
 func (m *Model) Value() string {
+	if m.textInput != nil {
+		return m.textInput.Value()
+	}
 	return m.textArea.Value()
 }
 
 func (m *Model) SetValue(s string) {
+	if m.textInput != nil {
+		m.textInput.SetValue(s)
+		return
+	}
 	m.textArea.SetValue(s)
 }
 
+func (m *Model) SetCursorColumn(col int) {
+	if m.textInput != nil {
+		m.textInput.SetCursor(col)
+		return
+	}
+	m.textArea.SetCursorColumn(col)
+}
+
 func (m *Model) Blur() {
-	m.textArea.Blur()
+	if m.textArea != nil {
+		m.textArea.Blur()
+		return
+	}
+
+	m.textInput.Blur()
 }
 
 func (m *Model) Focus() tea.Cmd {
-	return m.textArea.Focus()
+	if m.textArea != nil {
+		return m.textArea.Focus()
+	}
+
+	return m.textInput.Focus()
+}
+
+func (m *Model) Focused() bool {
+	if m.textArea != nil {
+		return m.textArea.Focused()
+	}
+
+	return m.textInput.Focused()
 }
 
 func (m *Model) Width() int {
-	return m.textArea.Width()
+	if m.textArea != nil {
+		return m.textArea.Width()
+	}
+
+	return m.textInput.Width()
 }
 
 func (m *Model) SetWidth(width int) {
-	m.textArea.SetWidth(width)
+	if m.textArea != nil {
+		m.textArea.SetWidth(width)
+		return
+	}
+
+	w := max(1, width-lipgloss.Width(m.textInput.Prompt)-1)
+	m.textInput.SetWidth(w)
 }
 
 func (m *Model) SetHeight(height int) {
-	m.textArea.SetHeight(height)
+	if m.textArea != nil {
+		m.textArea.SetHeight(height)
+		return
+	}
 }
 
 func (m *Model) SetPrompt(prompt string) {
@@ -201,7 +289,12 @@ func (m *Model) SetPrompt(prompt string) {
 }
 
 func (m *Model) Reset() {
-	m.textArea.Reset()
+	if m.textArea != nil {
+		m.textArea.Reset()
+		return
+	}
+
+	m.textInput.Reset()
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -210,24 +303,44 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 }
 
 func (m *Model) GetAbsoluteCursorPosition() tea.Position {
+	if m.textInput != nil {
+		return tea.Position{X: m.textInput.Position(), Y: 0}
+	}
 	line := m.textArea.Line()
 	col := m.textArea.Column()
 	return tea.Position{X: col, Y: line}
 }
 
 func (m *Model) CursorStart() {
-	m.textArea.CursorStart()
+	if m.textArea != nil {
+		m.textArea.CursorStart()
+		return
+	}
+
+	m.textInput.CursorStart()
 }
 
 func (m *Model) CursorEnd() {
-	m.textArea.CursorEnd()
+	if m.textArea != nil {
+		m.textArea.CursorEnd()
+		return
+	}
+
+	m.textInput.CursorEnd()
 }
 
 func (m *Model) Column() int {
-	return m.textArea.Column()
+	if m.textArea != nil {
+		return m.textArea.Column()
+	}
+
+	return m.textInput.Position()
 }
 
 func (m *Model) LineFromBottom() int {
+	if m.textInput != nil {
+		return 0
+	}
 	if m.textArea.LineCount() < m.textArea.Height() {
 		return m.textArea.Height() - m.textArea.LineCount()
 	}
