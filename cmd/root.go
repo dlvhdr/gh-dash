@@ -13,18 +13,21 @@ import (
 	"runtime/pprof"
 	"time"
 
-	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
-	"charm.land/log/v2"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/fang"
-	zone "github.com/lrstanley/bubblezone/v2"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
+	zone "github.com/lrstanley/bubblezone"
+	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
+	"github.com/dlvhdr/gh-dash/v4/internal/provider"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	dctx "github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/markdown"
 )
 
 var (
@@ -42,9 +45,9 @@ var (
 	rootCmd = &cobra.Command{
 		Use: "gh dash",
 		Long: lipgloss.JoinVertical(lipgloss.Left, logo.Render(),
-			"A rich terminal UI for GitHub that doesn't break your flow.",
+			"A rich terminal UI for GitHub/GitLab that doesn't break your flow.",
 			"Visit https://gh-dash.dev for the docs."),
-		Short:   "A rich terminal UI for GitHub that doesn't break your flow.",
+		Short:   "A rich terminal UI for GitHub/GitLab that doesn't break your flow.",
 		Version: "",
 		Example: `
 # Running without arguments will either:
@@ -66,13 +69,8 @@ gh dash -v
 )
 
 func Execute() {
-	if err := fang.Execute(
-		context.Background(),
-		rootCmd,
-		fang.WithVersion(rootCmd.Version),
-		fang.WithoutCompletions(),
-		fang.WithoutManpage(),
-	); err != nil {
+	if err := fang.Execute(context.Background(), rootCmd, fang.WithVersion(rootCmd.Version),
+		fang.WithoutCompletions(), fang.WithoutManpage()); err != nil {
 		os.Exit(1)
 	}
 }
@@ -131,12 +129,7 @@ func buildVersion(version, commit, date, builtBy string) string {
 	}
 	result = fmt.Sprintf("%s\ngoos: %s\ngoarch: %s", result, runtime.GOOS, runtime.GOARCH)
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
-		result = fmt.Sprintf(
-			"%s\nmodule version: %s, checksum: %s",
-			result,
-			info.Main.Version,
-			info.Main.Sum,
-		)
+		result = fmt.Sprintf("%s\nmodule version: %s, checksum: %s", result, info.Main.Version, info.Main.Sum)
 	}
 
 	return result
@@ -183,6 +176,7 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
+		provider.SetProvider(provider.NewGitHubProvider())
 		var repo string
 		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
 		if repos && len(args) > 0 {
@@ -202,6 +196,10 @@ func init() {
 
 		zone.NewGlobal()
 
+		// see https://github.com/charmbracelet/lipgloss/issues/73
+		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+		markdown.InitializeMarkdownStyle(termenv.HasDarkBackground())
+
 		model, logger := createModel(config.Location{RepoPath: repo, ConfigFlag: cfgFlag}, debug)
 		if logger != nil {
 			defer logger.Close()
@@ -220,7 +218,12 @@ func init() {
 			defer pprof.StopCPUProfile()
 		}
 
-		p := tea.NewProgram(model)
+		p := tea.NewProgram(
+			model,
+			tea.WithAltScreen(),
+			tea.WithReportFocus(),
+			tea.WithMouseCellMotion(),
+		)
 		if _, err := p.Run(); err != nil {
 			log.Fatal("Failed starting the TUI", err)
 		}
