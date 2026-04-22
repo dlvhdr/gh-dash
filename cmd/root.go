@@ -41,9 +41,16 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use: "gh dash",
-		Long: lipgloss.JoinVertical(lipgloss.Left, logo.Render(),
+		Long: lipgloss.JoinVertical(
+			lipgloss.Left,
+			logo.Render(),
 			"A rich terminal UI for GitHub that doesn't break your flow.",
-			"Visit https://gh-dash.dev for the docs."),
+			"",
+			lipgloss.NewStyle().
+				Faint(true).
+				Italic(true).
+				Render("Visit https://gh-dash.dev for the docs."),
+		),
 		Short:   "A rich terminal UI for GitHub that doesn't break your flow.",
 		Version: "",
 		Example: `
@@ -66,9 +73,23 @@ gh dash -v
 )
 
 func Execute() {
+	themeFunc := fang.WithColorSchemeFunc(func(
+		ld lipgloss.LightDarkFunc,
+	) fang.ColorScheme {
+		c := ld(lipgloss.Color("#00196F"), lipgloss.Color("#02F9FB"))
+		def := fang.DefaultColorScheme(ld)
+		def.DimmedArgument = ld(lipgloss.Black, lipgloss.White)
+		def.Codeblock = lipgloss.Color("#1E1E2C")
+		def.Title = c
+		def.Flag = lipgloss.Color("#42A0FA")
+		def.Command = c
+		def.Program = c
+		return def
+	})
 	if err := fang.Execute(
 		context.Background(),
 		rootCmd,
+		themeFunc,
 		fang.WithVersion(rootCmd.Version),
 		fang.WithoutCompletions(),
 		fang.WithoutManpage(),
@@ -161,7 +182,14 @@ func init() {
 	}
 
 	rootCmd.Version = buildVersion(Version, Commit, Date, BuiltBy)
-	rootCmd.SetVersionTemplate(`gh-dash {{printf "version %s\n" .Version}}`)
+	rootCmd.SetVersionTemplate(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			"",
+			logo.Render(),
+			`gh-dash {{printf "version %s\n" .Version}}`,
+		),
+	)
 
 	rootCmd.Flags().Bool(
 		"debug",
