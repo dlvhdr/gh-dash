@@ -1,18 +1,19 @@
 # Projects v2 Section — Design
 
 **Date:** 2026-04-22
-**Status:** Draft, ready for implementation
+**Status:** Draft, ready for implementation (revised after code-grounded review — see §8)
 **Author:** Angel Cantu
 
 ## 1. Goals, Non-Goals, Scope
 
 ### Goal
 
-Add a fourth top-level section type to gh-dash — alongside PRs, Issues, and
-Notifications — that surfaces GitHub Projects v2. Users configure one or more
-"project sections" via YAML. Each section shows a deduplicated list of
-accessible projects and supports drilling into project items (issues, PRs,
-draft items) with custom-field-aware columns.
+Add a new top-level **view type** (`ProjectsView`) to gh-dash — alongside the
+existing `prs`, `issues`, `notifications`, and `repo` views — that surfaces
+GitHub Projects v2. Users configure one or more "project sections" via YAML.
+Each section shows a deduplicated list of accessible projects and supports
+drilling into project items (issues, PRs, draft items) with custom-field-aware
+columns.
 
 ### In scope (MVP)
 
@@ -26,12 +27,13 @@ draft items) with custom-field-aware columns.
 - **Sidebar reuse:** selecting an Issue or PR item reuses the existing
   `prView` / `issueView` sidebars.
 - **Project-level filters:** `closed`, `titleContains`.
-- **On-disk cache with TTL:** cold-start speed. Invalidated by `ctrl+r` and
-  successful mutations.
-- **Cross-view cache invalidation:** `ctrl+r` on the list invalidates cached
-  items for any open drill-downs.
+- **On-disk cache with TTL:** cold-start speed. Invalidated by `r` (refresh)
+  and successful mutations.
+- **Cross-view cache invalidation:** `r` on the list invalidates cached items
+  for any open drill-downs.
 - **Session persistence:** remember cursor position per section and the last
-  visited project; expose a `R` keybind to resume the last drill-down.
+  visited project (cursor-only restore; no auto-drill). Auto-drill resume is
+  deferred — §6.5.
 
 ### Non-goals (deferred)
 
@@ -55,23 +57,54 @@ draft items) with custom-field-aware columns.
 ## 2. Architecture & Package Layout
 
 The feature threads the same three layers every other section uses —
-**config → data → TUI section** — and adds two cross-cutting packages (cache,
-state).
+**config → data → TUI section** — and adds two cross-cutting packages
+(`persistcache`, `state`) plus changes to the view-routing surface in
+`internal/tui/ui.go` and `internal/tui/keys/`.
+
+### ViewType integration surface (the hidden cost)
+
+The existing code models top-level navigation as an enum `ViewType`
+(`parser.go:48-81`) with values `prs | issues | notifications | repo`. Adding
+a new view is not just a new section type — it requires touching every
+routing call site:
+
+| Touch-point | File:line | What changes |
+| --- | --- | --- |
+| Enum value | `internal/config/parser.go:77-81` | Add `ProjectsView ViewType = "projects"` |
+| Enum unmarshal | `internal/config/parser.go:58` | Reject unknown values (today's impl silently accepts) |
+| Default-view decision | `internal/config/parser.go` (view resolution) | Document fallback when no projects section configured |
+| Config merge | `internal/config/parser.go:~637` | Ensure `projectsSections`, `cache`, `state` survive the manual merge |
+| Section registry | `internal/tui/ui.go:48` (Model fields) | Add `projects []section.Section` slice |
+| Fetch-all loop | `internal/tui/ui.go` `fetchAllViewSections` | Include projects in fan-out |
+| View getter | `internal/tui/ui.go:1476` `getCurrentViewSections` | Add case |
+| View setter | `internal/tui/ui.go:1508` `setCurrentViewSections` | Add case; stop the silent fall-through to issues |
+| View switcher | `internal/tui/ui.go:1583` `switchSelectedView` | Add projects to rotation |
+| Keymap | `internal/tui/keys/keys.go` `CreateKeyMapForView` | Projects-specific keymap |
+| Keybinding rebind | `cmd/root.go` | Include projects keymap in post-load rebind |
+| Tab renderer | `internal/tui/components/tabs/` | Register the new view |
+
+This fan-out is **PR #0** in the revised rollout (§6.3) — scaffolding the view
+without any data behind it, so every subsequent PR lands into a routed view.
 
 ### New and modified packages
 
 ```
 internal/
 ├── config/
-│   └── parser.go                       (extend: ProjectsSectionConfig + cache/state config)
+│   └── parser.go                       (extend: ViewType, ProjectsSectionConfig,
+│                                        CacheConfig, StateConfig; enforce strict unknown-key check)
 ├── data/
-│   ├── projects.go                     (NEW: FetchProjects, FetchProjectItems, UpdateItemStatus)
-│   ├── projects_types.go               (NEW: ProjectData, ProjectItemData, field value types)
-│   └── cache/                          (NEW: on-disk TTL cache shared by all data/* callers)
-│       ├── cache.go
-│       └── cache_test.go
+│   ├── projects.go                     (NEW: FetchProjects, FetchProjectItems,
+│   │                                    UpdateItemStatus, FetchIssue — follows prapi.go shape,
+│   │                                    honors FF_MOCK_DATA feature flag)
+│   └── projects_types.go               (NEW: ProjectData, ProjectItemData, field value types)
+├── persistcache/                       (NEW — was "data/cache/"; renamed to avoid collision
+│   │                                    with the existing in-memory otter cache at
+│   │                                    internal/data/cache.go)
+│   ├── persistcache.go                 (TTL on-disk store; injected into data/projects.go)
+│   └── persistcache_test.go
 ├── state/                              (NEW: per-user session state on disk)
-│   ├── state.go                        (last section, last cursor, last project)
+│   ├── state.go                        (last section, last cursor, last project ID)
 │   └── state_test.go
 └── tui/
     ├── components/
@@ -81,25 +114,43 @@ internal/
     │   │   └── columns.go
     │   ├── projectitemsview/           (NEW: drill-down table for a single project's items)
     │   │   ├── projectitemsview.go
-    │   │   ├── columns.go              (fixed base + dynamic extras builder)
-    │   │   └── statuscmp.go            (floating autocomplete for Status, reuses cmp/)
+    │   │   ├── columns.go              (fixed base + dynamic extras builder; resolves extras
+    │   │   │                            by field ID after name lookup)
+    │   │   └── statuspicker.go         (selection-mode wrapper over cmp.Model; NOT the
+    │   │                                text-editing cmpcontroller)
     │   └── projectrow/                 (NEW: typed row data for the items table)
     │       └── projectrow.go
+    ├── keys/
+    │   └── projectKeys.go              (NEW: projects-specific keymap)
     └── ui.go                           (extend: register projectsection, route drill-down,
                                          restore state on startup)
 ```
+
+### Cache / state / config path resolution
+
+All three use a single centralized helper (new: `internal/xdgpath`) built on
+Go's `os.UserConfigDir`, `os.UserCacheDir`, and `os.UserHomeDir`. This
+normalizes cross-platform paths (Linux XDG, macOS `~/Library/...`, Windows
+`%LocalAppData%`) and keeps existing `XDG_CONFIG_HOME` overrides working
+(`parser.go:579` already honors it — we preserve that behavior).
 
 ### Section lifecycle
 
 ```
 ui.Model
-  ├── sections[]                            ← projectsection.Model appended here
+  ├── projects[]                            ← projectsection.Model appended here
   │     └── projectsection.Model
   │           └── drill: *projectitemsview.Model   ← non-nil when user pressed Enter
   ├── sidebar / prView / issueView          ← reused when an item is Issue or PR
-  ├── dataCache: *cache.Store               ← shared across data/* functions
+  │                                            (requires hydration — see §4.3)
+  ├── persistCache: *persistcache.Store     ← injected into data/projects.go fetchers
   └── userState: *state.Store               ← restored on boot, saved on Stop
 ```
+
+The `persistCache` is explicitly injected into fetcher calls (§3 API) rather
+than being a hidden package-global. This matches the package-level GraphQL
+client pattern `prapi.go:493` uses and makes tests easy to wire with a
+`t.TempDir()` backing store.
 
 ### Why a nested drill-down rather than a new tab?
 
@@ -123,33 +174,80 @@ the child free of the wide interface it does not need.
 ### Public API (package `internal/data`)
 
 ```go
-// Discovery — owner-scoped, deduped by node ID. Cache-aware.
-func FetchProjects(owners []string, filters ProjectFilters) ([]ProjectData, error)
+// Discovery — owner-scoped, deduped by node ID. Cache-aware via injected store.
+func FetchProjects(
+    cache *persistcache.Store,
+    owners []OwnerRef,                // typed: {Kind: OwnerOrg|OwnerUser, Login string}
+    filters ProjectFilters,
+) ([]ProjectData, error)
 
-// Drill-down — items plus the field schema for column resolution. Cache-aware.
-func FetchProjectItems(projectID string, limit int) (ProjectSchema, []ProjectItemData, error)
+// Drill-down — items plus field schema. Supports pagination.
+// `after` empty ⇒ first page; otherwise resumes from cursor.
+func FetchProjectItems(
+    cache *persistcache.Store,
+    projectID, after string,
+    limit int,
+) (ProjectSchema, []ProjectItemData, PageInfo, error)
 
-// Mutation — only the built-in Status single-select in MVP.
-// On success, invalidates the project's cached items.
-func UpdateItemStatus(projectID, itemID, statusOptionID string) error
+// Mutation — built-in Status single-select in MVP.
+// Non-nil optionID ⇒ updateProjectV2ItemFieldValue.
+// Nil optionID ⇒ clearProjectV2ItemFieldValue.
+// On success, invalidates project-items/<projectID> in the cache.
+func UpdateItemStatus(
+    cache *persistcache.Store,
+    projectID, itemID, statusFieldID string,
+    optionID *string,
+) error
+
+// Hydration — fetches full IssueData by URL for sidebar reuse when a project
+// item is an Issue. Follows the existing FetchPullRequest(url) pattern.
+// PR items don't need this at the call site because prview calls
+// data.FetchPullRequest internally (see prview.go:576).
+func FetchIssue(issueURL string) (EnrichedIssueData, error)
 ```
+
+All four honor the existing `FF_MOCK_DATA` feature flag (`prapi.go:496`) so
+tests can run without network access, consistent with PR-side fetch paths.
 
 ### Types
 
 ```go
+type OwnerKind int
+const (
+    OwnerOrg OwnerKind = iota
+    OwnerUser
+)
+
+type OwnerRef struct {
+    Kind  OwnerKind
+    Login string
+}
+
 type ProjectData struct {
     ID, Number, Title, URL string
-    Owner          string    // "org/login" for display
-    Closed         bool
-    Public         bool
-    ItemsCount     int
-    OpenItemsCount int       // computed client-side post-fetch
-    UpdatedAt      time.Time
+    Owner               OwnerRef  // typed; Login for display, Kind drives GraphQL route
+    Closed              bool
+    Public              bool
+    ItemsCount          int       // from items.totalCount — accurate regardless of fetch limit
+    OpenItemsCountLoaded int      // computed from currently-fetched page; "Loaded" suffix
+                                  // makes the approximation explicit (renamed from
+                                  // OpenItemsCount — see §7 decision 9)
+    UpdatedAt           time.Time
 }
 
 type ProjectSchema struct {
-    StatusField *StatusFieldDef       // built-in single-select; nil if absent
-    ExtraFields map[string]FieldDef   // filtered to section config's extraFields
+    // StatusField is the built-in single-select used for mutation.
+    // nil if the project has no field named "Status" (MVP only wires this one).
+    StatusField *StatusFieldDef
+
+    // ExtraFields are resolved by YAML name → field ID once at schema fetch time.
+    // Keyed by field ID (NOT name) — same name across projects may map to
+    // different field IDs with different types. Duplicates within one project
+    // log a warn and first match wins.
+    ExtraFields map[string]FieldDef
+
+    // ExtraFieldOrder preserves the YAML-declared order for column rendering.
+    ExtraFieldOrder []string   // field IDs in config order
 }
 
 type ProjectItemData struct {
@@ -157,26 +255,48 @@ type ProjectItemData struct {
     Type      ItemType       // Issue | PullRequest | DraftIssue
     Title     string
     Repo      string         // "owner/name"; "" for drafts
-    URL       string         // "" for drafts
-    Content   *ItemContent   // hydrated Issue/PR ref, used by the sidebar
-    Fields    map[string]FieldValue
+    URL       string         // "" for drafts — drafts have no standalone URL
+    Fields    map[string]FieldValue  // keyed by field ID
     UpdatedAt time.Time
+}
+
+type PageInfo struct {
+    HasNextPage bool
+    EndCursor   string
 }
 ```
 
+### Why extra fields are keyed by ID, not name
+
+If two projects both have a field named "Priority" but one is a
+single-select and the other is a number field, name-keyed rendering would
+silently render the wrong cell. Resolving name → ID once per drill-down
+(at schema fetch time) makes the mapping explicit and type-safe at render
+time. The YAML stays ergonomic (users type `extraFields: [Priority]`); the
+resolution step is per-project internal bookkeeping.
+
 ### Discovery query
 
-One GraphQL call per configured owner, plus `viewer.projectsV2` when `owners`
-is empty. Results are deduped by `ProjectV2.id`.
+One GraphQL call per configured `OwnerRef`, plus `viewer.projectsV2` when
+`owners` is empty. The query branches on `Kind`:
+
+- `OwnerOrg` → `organization(login: $login) { projectsV2(first: $limit) { ... } }`
+- `OwnerUser` → `user(login: $login) { projectsV2(first: $limit) { ... } }`
+
+Results across owners are deduped by `ProjectV2.id`.
 
 ### Items query shape
 
 ```graphql
-query ($projectId: ID!, $first: Int!) {
+query ($projectId: ID!, $first: Int!, $after: String) {
   node(id: $projectId) {
     ... on ProjectV2 {
-      fields(first: 50) { nodes { ...FieldSchema } }
-      items(first: $first) {
+      fields(first: 50) {
+        nodes { ...FieldSchema }
+        pageInfo { hasNextPage endCursor }
+      }
+      items(first: $first, after: $after) {
+        totalCount              # authoritative ItemsCount, independent of page size
         pageInfo { hasNextPage endCursor }
         nodes {
           id
@@ -186,7 +306,10 @@ query ($projectId: ID!, $first: Int!) {
             ... on PullRequest { ... }
             ... on DraftIssue  { title }
           }
-          fieldValues(first: 20) { nodes { ...FieldValue } }
+          fieldValues(first: 20) {
+            nodes { ...FieldValue }
+            pageInfo { hasNextPage endCursor }
+          }
           updatedAt
         }
       }
@@ -196,34 +319,65 @@ query ($projectId: ID!, $first: Int!) {
 ```
 
 The `fields` sub-query runs once per drill-down because mapping `fieldValues`
-back to column cells requires the schema. `ProjectSchema` is cached per
-project for the session.
+back to column cells requires the schema. `ProjectSchema` is cached in the
+`project-schema/<projectID>` entry (24h TTL).
 
-### On-disk cache
+### GraphQL ceiling handling
 
-Cache lives at `$XDG_CACHE_HOME/gh-dash/v1/` (`$HOME/.cache/gh-dash/v1/` on
-Linux, `$HOME/Library/Caches/gh-dash/v1/` on macOS). File format is JSON; one
-file per cache key. Keys:
+Three nested collections have hard `first:` limits. Each needs an explicit
+truncation policy:
+
+| Collection | Limit | Policy if truncated |
+| --- | --- | --- |
+| `fields(first:50)` | 50 | If `pageInfo.hasNextPage`, log `warn` with project ID; render with what we got. Re-paginate in a follow-up fetch before MVP ships if any real project trips this. |
+| `items(first:$first,after:$after)` | 250 default | Cursor-paginated via `after`. "Load more" affordance on the drill-down surfaces additional pages. |
+| `fieldValues(first:20)` per item | 20 | Same warn-log policy. In practice projects rarely have >20 fields with a non-null value per item. |
+
+`ItemsCount` uses `items.totalCount` directly (accurate even if the current
+page is truncated). `OpenItemsCountLoaded` is only computed over fetched
+items — the field name makes the approximation explicit. A future iteration
+can extend it to a server-side count via a separate filtered query.
+
+### On-disk cache (`internal/persistcache`)
+
+The cache lives under `os.UserCacheDir() + "/gh-dash/v1/"`, resolved via the
+shared `internal/xdgpath` helper:
+
+- Linux: `$XDG_CACHE_HOME/gh-dash/v1/` or `$HOME/.cache/gh-dash/v1/`
+- macOS: `$HOME/Library/Caches/gh-dash/v1/`
+- Windows: `%LocalAppData%/gh-dash/v1/`
+
+File format is JSON; one file per cache key. Keys:
 
 | Key shape | Content | Default TTL |
 | --- | --- | --- |
 | `projects/<ownerHash>.json` | `[]ProjectData` per owner | 1h |
-| `project-items/<projectID>.json` | `ProjectSchema + []ProjectItemData` | 5m |
-| `project-schema/<projectID>.json` | `ProjectSchema` only (used as fallback) | 24h |
+| `project-items/<projectID>/<pageCursor>.json` | `[]ProjectItemData` for that page | 5m |
+| `project-items/<projectID>/_meta.json` | `ProjectSchema + PageInfo chain` | 5m |
+| `project-schema/<projectID>.json` | `ProjectSchema` only (fallback when items cache evicted) | 24h |
+
+Paginated items cache layout: each page is stored under its cursor. The
+`_meta.json` sidecar tracks which cursor chain belongs to "first page" vs
+appended pages, so a "Load more" hit can stitch pages deterministically.
 
 TTLs are overridable per section via YAML (see §6.1). The cache is
-opportunistic: a fresh network response always wins and overwrites. The cache
-is authoritative only while the network request is in flight, so the list
+opportunistic: a fresh network response always wins and overwrites. It is
+authoritative only while the network request is in flight, so the list
 paints instantly and then reconciles.
+
+**Naming rationale:** the package is called `persistcache` (not `cache`) to
+avoid colliding with the pre-existing in-memory cache at
+`internal/data/cache.go`. See §7 decision 10 for the rationale.
 
 ### Cache invalidation rules
 
 | Trigger | Invalidates |
 | --- | --- |
-| `ctrl+r` on project list view | `projects/*` for this section's owners + `project-items/*` for any currently-open drill-down |
-| `ctrl+r` on drill-down | `project-items/<projectID>` for the open project |
-| Successful status mutation | `project-items/<projectID>` for the containing project |
+| `r` on project list view | `projects/*` for this section's owners + `project-items/<projectID>/*` for any currently-open drill-down |
+| `r` on drill-down | `project-items/<projectID>/*` for the open project (all pages + meta) |
+| Successful status mutation | `project-items/<projectID>/*` for the containing project |
 | Cache file TTL expiry | The expired entry only (lazy, on read) |
+| Corrupt cache file | Delete and refetch; log `warn` (self-healing) |
 
 ### Async pattern
 
@@ -257,10 +411,10 @@ Fixed columns:
 | Column | Source | Width |
 | --- | --- | --- |
 | `Title` | `ProjectData.Title` | flex |
-| `Owner` | `ProjectData.Owner` | 20 |
+| `Owner` | `ProjectData.Owner.Login` (kind-prefixed: `org:acme`, `user:angel`) | 20 |
 | `Status` | `Closed ? "closed" : "open"` | 6 |
-| `Items` | `ItemsCount` | 6 |
-| `Open` | `OpenItemsCount` | 6 |
+| `Items` | `ItemsCount` (from `items.totalCount`) | 6 |
+| `Open` | `OpenItemsCountLoaded` (marked `~` when paginated) | 6 |
 | `Updated` | relative (`3h ago`) | 10 |
 
 Embeds `section.BaseModel`, so `/` search, pagination, and confirmation
@@ -291,38 +445,62 @@ Rendering rules per field type:
 | `Text` | truncated to column width |
 | any unsupported type | `—` (no crash, no hidden row) |
 
-### 4.3 Item activation
+### 4.3 Item activation (sidebar hydration)
 
-When the user presses Enter on an item row:
+When the user presses Enter on an item row, we **hydrate** full data for the
+sidebar from its URL — project item GraphQL fragments are a subset of what
+the existing sidebars need, so feeding them raw would leave fields blank or
+trigger broken follow-up fetches.
 
-- `Issue` → populate `ui.issueSidebar` with the hydrated `Content`.
-- `PullRequest` → populate `ui.prView`.
-- `DraftIssue` → no sidebar; `o` opens the project URL in the browser, since
-  drafts have no standalone URL.
+| Item type | Activation path |
+| --- | --- |
+| `Issue` | `data.FetchIssue(url)` → populate `ui.issueSidebar` with full `EnrichedIssueData`. `FetchIssue` is a new helper mirroring `FetchPullRequest(url)` at `prapi.go:550`. |
+| `PullRequest` | Pass URL to `prView`; `prview.go:576` already calls `data.FetchPullRequest(url)` internally — no new hydration call site needed. |
+| `DraftIssue` | **No sidebar.** Drafts have no standalone URL, number, or repo. `o` on a draft opens the **project** URL in the browser. The item row renders with a `(draft)` badge in the `Type` column. |
 
-Reusing the existing sidebars is the biggest payoff of choosing full
-drill-down — detail views are not rebuilt, they consume the same
-`IssueData` / `PullRequestData` shapes they already accept.
+Reusing the sidebars is still the right call — it avoids building a third
+detail view — but the SPEC was wrong to call it "feeding the same shapes".
+A round-trip for full hydration is required and is async (wrapped in the
+usual `TaskFinishedMsg` pattern).
 
 ### 4.4 Status mutation UX (MVP)
 
-Keybind `s` on an item row opens a floating `cmp` autocomplete of the
-project's Status options. Enter confirms. The row re-renders optimistically,
-then `UpdateItemStatus` fires. On error, the previous status is restored
-and the footer flashes a 2-second error toast. The autocomplete populator is
-new; the autocomplete widget already exists in `internal/tui/components/cmp/`.
+Keybind `S` (shift-s) on an item row opens a **selection-mode** picker
+populated with the project's Status options. Enter confirms, Esc cancels.
+The row re-renders optimistically, then `UpdateItemStatus(projectID, itemID,
+statusFieldID, optionID)` fires. On error, the previous status is restored
+and the footer flashes a 2-second error toast.
+
+**Why `S` and not `s`:** lowercase `s` already switches between PRs and
+Issues views in `prKeys.go:108` / `issueKeys.go:58`. Adding a project-view
+override is fine in isolation but invites muscle-memory collisions — shifted
+variant keeps the two semantically distinct.
+
+**Why a new picker and not `cmpcontroller`:** `cmp.Model` (generic floating
+widget) is currently wrapped by `cmpcontroller` for *text editing* — the
+controller drives a text input and filters completions as the user types.
+Status mutation is *selection*, not editing. We add a thin wrapper
+`statuspicker.go` that reuses `cmp.Model` directly but in "select-only" mode:
+no text input, arrow keys navigate, Enter confirms.
 
 ### 4.5 Navigation & keys
 
-| Key | List view | Drill-down |
-| --- | --- | --- |
-| `Enter` | drill into project | activate item (open sidebar) |
-| `Esc` / `b` | — | back to list |
-| `o` | open project in browser | open item in browser |
-| `s` | — | change Status |
-| `ctrl+r` | refetch projects + invalidate items caches for any open drill-downs | refetch items |
-| `/` | search projects | search items (client-side over `Title`) |
-| `R` | resume last-visited drill-down (if one exists in state) | — |
+All bindings verified non-colliding against `internal/tui/keys/keys.go`,
+`prKeys.go`, `issueKeys.go`.
+
+| Key | List view | Drill-down | Notes |
+| --- | --- | --- | --- |
+| `Enter` | drill into project | activate item (hydrate + open sidebar) | |
+| `Esc` / `b` | — | back to list | `b` matches existing sidebar back convention |
+| `o` | open project in browser | open item in browser (or project URL for drafts) | `keys.go:165` existing |
+| `S` | — | change Status (shift-s) | Avoids `s`=switch-view collision |
+| `r` | refetch projects + invalidate items caches for any open drill-downs | refetch items | Uses existing refresh binding at `keys.go:169` |
+| `R` | refresh all views | — | Existing binding at `keys.go:173`, unchanged |
+| `/` | search projects | search items (client-side over `Title`) | |
+| `L` | — | load more items (next page) | Shift-l; no collision |
+
+Resume-last-drill-down is deferred to §6.5 — cursor restore is what actually
+ships in MVP.
 
 ## 5. State Machine — Async, Errors, Refresh
 
@@ -337,11 +515,12 @@ User action             tea.Cmd                        Goroutine does           
 -----------------------------------------------------------------------------------------------------
 open section            fetchProjectsCmd               cache.Get + FetchProjects         ProjectsFetchedMsg
 Enter on project        fetchProjectItemsCmd           cache.Get + FetchProjectItems     ProjectItemsFetchedMsg
-ctrl+r on list          fetchProjectsCmd (force)       invalidate + FetchProjects        ProjectsFetchedMsg
-ctrl+r on drill-down    fetchProjectItemsCmd (force)   invalidate + FetchProjectItems    ProjectItemsFetchedMsg
-s → option              updateStatusCmd (optimistic)   UpdateItemStatus                  StatusUpdatedMsg | StatusUpdateErrMsg
-Load more               fetchProjectItemsCmd(after)    FetchProjectItems(+cursor)        ProjectItemsAppendMsg
-R (resume)              (synchronous)                  restore drill from state          (immediate)
+r on list               fetchProjectsCmd (force)       invalidate + FetchProjects        ProjectsFetchedMsg
+r on drill-down         fetchProjectItemsCmd (force)   invalidate + FetchProjectItems    ProjectItemsFetchedMsg
+S → option              updateStatusCmd (optimistic)   UpdateItemStatus                  StatusUpdatedMsg | StatusUpdateErrMsg
+L (load more)           fetchProjectItemsCmd(after)    FetchProjectItems(+cursor)        ProjectItemsAppendMsg
+Enter on Issue item     hydrateIssueCmd                FetchIssue(url)                   IssueHydratedMsg → opens sidebar
+Enter on PR item        (none — prview hydrates)       FetchPullRequest(url) in prview   existing flow
 ```
 
 Every domain message is wrapped in `constants.TaskFinishedMsg` so the root
@@ -393,20 +572,28 @@ user-visible.
 
 ### 5.5 Concurrency & cancellation
 
-- **Stale responses:** each fetch tags its message with a monotonic `reqID`.
-  `Update` drops messages whose `reqID` is older than the current in-flight
-  one. Prevents flicker on rapid `ctrl+r` or quick project-switching.
+- **Stale responses:** reuse the existing `LastFetchTaskId` pattern
+  (`prssection.go:464`). Each fetch tags its returned message with the
+  section's current task ID; `Update` drops messages whose task ID doesn't
+  match the latest. Prevents flicker on rapid `r` or quick project-switching.
+  **Do not invent a parallel `reqID` concept** — the pattern is already
+  codified and tested.
 - **No in-flight HTTP cancellation:** the existing `data/` helpers do not
   accept a `context.Context`. Matches PR/Issue section behavior; not
   worth expanding scope here.
 - **Single in-flight per scope:** at most one list fetch and one items fetch
-  per open drill-down. Pressing `ctrl+r` during a pending fetch is a no-op
+  per open drill-down. Pressing `r` during a pending fetch is a no-op
   with a footer hint.
 
 ### 5.6 Session state persistence
 
-State file: `$XDG_STATE_HOME/gh-dash/v1/state.json` (Linux) or
-`$HOME/Library/Application Support/gh-dash/v1/state.json` (macOS).
+State file path is resolved via `internal/xdgpath` using Go's
+`os.UserConfigDir`:
+
+- Linux: `$XDG_CONFIG_HOME/gh-dash/state/v1/state.json` (or
+  `$HOME/.config/gh-dash/state/v1/state.json`)
+- macOS: `$HOME/Library/Application Support/gh-dash/state/v1/state.json`
+- Windows: `%AppData%/gh-dash/state/v1/state.json`
 
 ```json
 {
@@ -421,12 +608,14 @@ State file: `$XDG_STATE_HOME/gh-dash/v1/state.json` (Linux) or
 }
 ```
 
-- On boot, `ui.NewModel` reads the file and restores the active section,
-  cursor index, and "last project" hint.
-- `R` on the list view drills into `lastProjectID` if it still exists in the
-  current list; otherwise a footer hint says it's gone.
+- On boot, `ui.NewModel` reads the file and restores the active section and
+  cursor index. `lastProjectID` is stored but **not used to auto-drill in
+  MVP** — it seeds the §6.5 follow-up item ("resume last drill") without
+  building it now.
 - Writes happen on cursor change (debounced 500ms) and on drill-in/out.
   On app exit, a final flush is attempted in a `defer` — best-effort only.
+- Corrupt state file: log `warn`, reset to defaults, never crash
+  (self-healing).
 
 ### 5.7 Empty states
 
@@ -458,24 +647,50 @@ projectsSections:
       itemsTTL: 5m            # default 5m
 
   - title: "Org Roadmaps"
-    owners: [my-org, platform-team]
+    owners:                   # prefix-shorthand form to disambiguate
+      - org:my-org            #   user vs organization (GitHub GraphQL
+      - org:platform-team     #   uses separate query roots for each)
+      - user:angelcantugr
     filters: { closed: false }
     extraFields: [Priority]
 
 # Global cache and state toggles (optional)
 cache:
   enabled: true               # default true; false disables on-disk cache entirely
-  dir: ""                     # override default XDG path
+  dir: ""                     # override default OS cache dir
 state:
   enabled: true               # default true; controls session persistence
 ```
 
+**Owner syntax.** Each entry in `owners` uses `<kind>:<login>` where `kind`
+is one of `org` or `user`. Bare logins (`my-org` without prefix) are
+rejected at parse time with a clear error — disambiguation is mandatory
+because `organization(login:)` and `user(login:)` are different GraphQL
+query roots and a guess-and-fallback strategy masks config errors as
+404s. This is a small ergonomic cost that pays for itself the first time
+someone mistypes a login.
+
 ### Parsing
 
-Extend `internal/config/parser.go`. The top-level `Config` struct gains
-`ProjectsSections []ProjectsSectionConfig`, `Cache CacheConfig`, and
-`State StateConfig`. Validation: unknown keys error loudly (koanf does not
-silently drop — good). `TTL` fields use `time.ParseDuration`.
+Extend `internal/config/parser.go`:
+
+1. Top-level `Config` struct gains `ProjectsSections []ProjectsSectionConfig`,
+   `Cache CacheConfig`, `State StateConfig`.
+2. **Explicit strict validation** is added (the existing `StrictMerge: true`
+   at `parser.go:31` does not enforce unknown-key rejection — the earlier
+   claim that "koanf does not silently drop" was wrong). Add a
+   `validateKnownKeys(rawMap, allowedKeys)` pass before `UnmarshalWithConf`
+   that errors on unknown top-level keys and unknown `projectsSections[*]`
+   fields.
+3. `ViewType.UnmarshalJSON` at `parser.go:58` is extended to reject unknown
+   values (today's implementation silently accepts anything). Add
+   `ProjectsView ViewType = "projects"` to the allowlist.
+4. Manual merge at `parser.go:~637` must include `projectsSections`, `cache`,
+   `state`, and new keybindings. Today's merge preserves only PR/Issues/
+   Notifications sections; naive addition would drop the new keys.
+5. `TTL` fields use `time.ParseDuration`.
+6. Owner strings are parsed into `OwnerRef` at load time; malformed entries
+   error with the entry's location.
 
 ### 6.2 Testing strategy
 
@@ -501,31 +716,39 @@ prefix.
 
 | # | PR | Commit prefix | Depends on |
 | --- | --- | --- | --- |
-| 1 | Config schema (`projectsSections`, `cache`, `state`) + parser + fixtures | `feat(config):` | — |
-| 2 | `internal/data/cache` TTL store + tests | `feat(data):` | 1 |
-| 3 | `internal/state` session store + tests | `feat(state):` | 1 |
-| 4 | Data layer: `FetchProjects`, types, dedupe, cache integration, tests | `feat(data):` | 2 |
-| 5 | Data layer: `FetchProjectItems`, `ProjectSchema`, cache integration, tests | `feat(data):` | 4 |
-| 6 | TUI: `projectsection.Model` list view (no drill-down yet), state-driven cursor restore | `feat(tui):` | 3, 4 |
-| 7 | TUI: `projectitemsview.Model` drill-down, base columns, state-driven last-project + `R` resume | `feat(tui):` | 5, 6 |
-| 8 | TUI: extra fields from YAML flow into drill-down columns | `feat(tui):` | 7 |
-| 9 | TUI: cross-view invalidation on `ctrl+r` from list | `feat(tui):` | 7 |
-| 10 | Mutation: `UpdateItemStatus` + `s` keybind + optimistic revert + cache invalidate | `feat(tui):` | 5, 7 |
-| 11 | Docs: new section type in `docs/` | `docs:` | all |
+| 0 | Core: add `ProjectsView` to `ViewType`, wire into `ui.go` routing (`getCurrentViewSections`, `setCurrentViewSections`, `switchSelectedView`, `fetchAllViewSections`), `keys.CreateKeyMapForView`, tabs renderer. Also fix `ViewType.UnmarshalJSON` to reject unknown values. No data yet. | `feat(core):` | — |
+| 1 | `internal/xdgpath` centralized path helper + tests | `feat(core):` | — |
+| 2 | Config schema (`projectsSections`, `cache`, `state`) + parser + strict unknown-key validation + merge updates + fixtures | `feat(config):` | 0, 1 |
+| 3 | `internal/persistcache` TTL store + tests (pure-Go, `t.TempDir()`) | `feat(persistcache):` | 1 |
+| 4 | `internal/state` session store + tests | `feat(state):` | 1 |
+| 5 | Data layer: `FetchProjects`, types (`OwnerRef`, `ProjectData`), owner-routing, dedupe, persistcache integration, tests | `feat(data):` | 2, 3 |
+| 6 | Data layer: `FetchProjectItems` (cursor-paginated), `ProjectSchema` with field-ID resolution, persistcache integration, tests | `feat(data):` | 5 |
+| 7 | Data layer: `FetchIssue(url)` helper for sidebar hydration, tests | `feat(data):` | 5 |
+| 8 | TUI: `projectsection.Model` list view (no drill-down), state-driven cursor restore, `projectKeys.go` keymap | `feat(tui):` | 0, 4, 5 |
+| 9 | TUI: `projectitemsview.Model` drill-down, base columns, hydration-on-activate for Issues/PRs, draft no-sidebar behavior, `L` load-more | `feat(tui):` | 6, 7, 8 |
+| 10 | TUI: extra fields (YAML → field-ID → dynamic columns) | `feat(tui):` | 9 |
+| 11 | TUI: cross-view invalidation on `r` from list | `feat(tui):` | 9 |
+| 12 | Mutation: `UpdateItemStatus` + `statuspicker.go` selection-mode wrapper + `S` keybind + optimistic revert + cache invalidate | `feat(tui):` | 6, 9 |
+| 13 | Docs: new view type + section type in `docs/` | `docs:` | all |
 
 Each PR is shippable in isolation behind `projectsSections`. Absence of the
 config key means zero behavior change, so the feature is opt-in without a
-feature flag.
+feature flag. **PR #0 is explicitly empty of data** — it only scaffolds the
+view so every subsequent PR has a routed home.
 
 ### 6.4 Observability
 
-- Each GraphQL call logs at `debug` with `owner`, `project_id`,
-  `items_fetched`, `elapsed_ms`, and `cache_hit` (bool) — consistent with
-  existing `FetchPullRequests` logging.
-- Cache invalidation events log at `debug` with trigger reason.
-- Mutation failures log at `warn` with the error class (auth, not-found,
-  validation).
+- Each GraphQL call logs at `debug` with `owner_kind`, `owner_login`,
+  `project_id`, `items_fetched`, `after_cursor`, `elapsed_ms`, and
+  `cache_hit` (bool) — consistent with existing `FetchPullRequests` logging
+  plus the new project-specific keys.
+- Field pagination truncation logs at `warn` with `project_id` and which
+  collection truncated (`fields`, `fieldValues`).
+- Cache invalidation events log at `debug` with trigger reason and key pattern.
+- Mutations log at `debug` on success (`field_id`, `item_id`, `new_value`)
+  and `warn` on failure (error class: auth, not-found, validation).
 - State read/write failures log at `warn` but never raise (self-healing).
+- Owner-parse errors log the exact YAML path and expected format.
 - No metrics emission. gh-dash is a CLI, not a daemon.
 
 ### 6.5 Planned follow-ups (post-MVP)
@@ -539,6 +762,13 @@ These are confirmed directions, not ideas in limbo:
 3. Cache LRU eviction once long-running users start accumulating entries.
 4. Stale-banner affordance in the list header ("cached 3m ago — fetching…").
 5. Per-repo invalidation hooks when notifications suggest project changes.
+6. **Resume-last-drill-down** via a keybind — state is already persisted in
+   §5.6, only the UX needs adding (pick a non-colliding key, handle
+   project-gone case).
+7. Rate-limit awareness on rapid `r` — back off or batch if GitHub GraphQL
+   point budget is getting hot.
+8. Accurate `OpenItemsCount` via a separate server-side filtered `items`
+   query, replacing the `Loaded` approximation.
 
 ## 7. Decision Log
 
@@ -551,4 +781,68 @@ These are confirmed directions, not ideas in limbo:
 | 5 | MVP: Status mutation only; full edits deferred | Status is the one field touched constantly; rest needs a type-aware editor (future SPEC). |
 | 6 | Project-level filters only in MVP | Item-level filters evolve into a mini query language — do not invent prematurely. |
 | 7 | On-disk cache in MVP | Cold-start speed matters with 10+ sections; retrofitting a cache is more painful than building it upfront. |
-| 8 | Session state persistence in MVP | The feature's point is resumable triage across sessions. Without state, cold-starts lose context. |
+| 8 | Session state persistence in MVP (cursor-only; resume-drill deferred) | Cursor restore is the first-order need; auto-drill is second-order and needs more UX thought. |
+| 9 | Rename `ItemsCount`/`OpenItemsCount` to surface fetch-limit truth | `ItemsCount` uses `items.totalCount` (exact); `OpenItemsCountLoaded` acknowledges it's an approximation over fetched items. Honest naming beats silent inaccuracy. |
+| 10 | New on-disk cache package is `persistcache`, not `data/cache` | `internal/data/cache.go` already exists (otter in-memory cache). Collision-free naming now avoids confusion forever. |
+| 11 | Owners use `<kind>:<login>` shorthand, not bare logins | `organization(login:)` and `user(login:)` are separate GraphQL roots. Guess-and-fallback masks config typos as 404s; explicit prefix fails loud. |
+| 12 | Extra fields keyed by field ID, not name | Same field name across projects can map to different IDs and types. Name-keyed rendering would silently render the wrong cell. |
+| 13 | Status mutation on `S` (shift-s) not `s` | Lowercase `s` already switches between PRs and Issues. Shifted variant avoids muscle-memory collision while staying mnemonic. |
+| 14 | Refresh on `r` (existing), not `ctrl+r` | Reuse codified binding at `keys.go:169`; no reason to invent a parallel. |
+| 15 | Reuse `LastFetchTaskId` pattern for stale-response drop | Already in `prssection.go:464`; a second mechanism (`reqID`) would fragment the pattern. |
+| 16 | Selection-mode `statuspicker.go` instead of extending `cmpcontroller` | `cmpcontroller` is a text-editing wrapper; Status picking is selection-only. Adapting the generic widget is cleaner than repurposing the text wrapper. |
+
+## 8. Revision History
+
+### 2026-04-22 — v1 → v2 (after code-grounded second-opinion review)
+
+A Codex ReAct review surfaced several claims in v1 that were false when
+checked against actual code. The SPEC was revised in-place with the
+following substantive changes:
+
+**Corrected mental-model errors:**
+
+- v1 called this the "fourth" section type — actually fifth (`ViewType` already
+  has `prs/issues/notifications/repo`). Integration surface expanded from "a
+  new section" to "a new view type with ~10 routing touch-points"
+  (`ui.go:48,1476,1508,1583` + keys + tabs + config merge).
+- v1 claimed koanf "does not silently drop" unknown keys. It does. Explicit
+  `validateKnownKeys` pass added (§6.1).
+- v1 said sidebar reuse "consumes the same shapes" — false; `prview.go:576`
+  hydrates via `FetchPullRequest(url)`. §4.3 rewritten to describe hydration
+  explicitly; drafts excluded from sidebar entirely.
+- v1's `UpdateItemStatus(projectID, itemID, optionID)` was unimplementable —
+  GitHub's mutation requires `fieldID` too, and clearing uses a different
+  mutation. §3 signature fixed; §7 decision 5 clarified.
+
+**Renamed to avoid collisions:**
+
+- Proposed `internal/data/cache/` package collided with the existing
+  `internal/data/cache.go` (otter in-memory cache). Renamed to
+  `internal/persistcache`.
+- Keybindings `ctrl+r`, `s`, `R` all collided with existing bindings
+  (`keys.go:165-174`, `prKeys.go:108`, `issueKeys.go:58`). Rebound per §4.5
+  decision log.
+
+**Added missing pieces:**
+
+- Owner disambiguation with `<kind>:<login>` shorthand (§6.1, decision 11).
+- Cursor-paginated `FetchProjectItems` with `PageInfo` return and
+  pagination-aware cache layout (§3, §3.On-disk cache).
+- Field-ID resolution for `extraFields` with warn-on-duplicate behavior
+  (§3 types, decision 12).
+- `FetchIssue(url)` hydration helper (§3 API, new PR #7).
+- Cross-platform path resolution via `internal/xdgpath` using
+  `os.UserCacheDir`/`os.UserConfigDir` (§2, §5.6).
+- GraphQL ceiling handling with explicit truncation logs (§3).
+- `ProjectsView` plumbing elevated to PR #0 so later PRs have a routed home
+  (§2, §6.3).
+
+**Deferred out of MVP:**
+
+- `R`-keybind resume into the last drill-down — state is persisted,
+  UX isn't wired (§5.6, §6.5 #6).
+
+**Deliberately kept:**
+
+- Reuse of `LastFetchTaskId` pattern rather than inventing `reqID` (§5.5,
+  decision 15).
