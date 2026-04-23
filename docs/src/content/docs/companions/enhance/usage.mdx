@@ -7,7 +7,7 @@ To use `enhance`, follow these steps after you've [installed it][01]:
 1. Run
 
    ```
-    gh enhance [<PR URL> | <PR number>] [flags]
+    gh enhance [<PR URL> | <PR number> | <run URL>] [flags]
    ```
 
    **Examples:**
@@ -19,6 +19,12 @@ To use `enhance`, follow these steps after you've [installed it][01]:
     # look up checks via a PR number when inside a clone of dlvhdr/gh-dash
     # will look at checks of https://github.com/dlvhdr/gh-dash/pull/767
     gh enhance 767
+
+    # look up a workflow run via its URL
+    gh enhance https://github.com/dlvhdr/gh-dash/actions/runs/23687980056
+
+    # look up a workflow run via its run ID (--run disambiguates from PR numbers)
+    gh enhance --run 23687980056
    ```
 
 2. Press <kbd>?</kbd> for help.
@@ -27,12 +33,13 @@ Run `gh enhance --help` for more info:
 
 ```
 Usage:
-  gh enhance [<url> | <number>] [flags]
+  gh enhance [<PR URL> | <PR number> | <run URL>] [flags]
 
 Flags:
       --debug         passing this flag will allow writing debug output to debug.log
       --flat          passing this flag will present checks as a flat list
   -h, --help          help for gh-enhance
   -R, --repo string   [HOST/]OWNER/REPO   Select another repository using the [HOST/]OWNER/REPO format
+      --run string    look up a workflow run by its numeric ID
   -v, --version       version for gh-enhance
 ```
