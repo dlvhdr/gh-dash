@@ -89,7 +89,6 @@ export function GET() {
               $ref: "./options.json",
             },
           ],
-          properties: null,
           default: {
             width: 15,
           },
