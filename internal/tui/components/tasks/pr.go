@@ -26,6 +26,7 @@ type UpdatePRMsg struct {
 	NewComment       *data.Comment
 	ReadyForReview   *bool
 	IsMerged         *bool
+	AutoMergeEnabled *bool // Auto-merge was enabled (waiting for checks)
 	AddedAssignees   *data.Assignees
 	RemovedAssignees *data.Assignees
 	Labels           *data.PRLabels
@@ -166,14 +167,10 @@ func PRReady(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 
 func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
 	prNumber := pr.GetNumber()
-	c := exec.Command(
-		"gh",
-		"pr",
-		"merge",
-		fmt.Sprint(prNumber),
-		"-R",
-		pr.GetRepoNameWithOwner(),
-	)
+
+	// Extract the underlying PullRequestData to obtain the node ID, merge state
+	// status, and repository merge-method settings required for the GraphQL mutation.
+	prData := extractPullRequestData(pr)
 
 	taskId := fmt.Sprintf("merge_%d", prNumber)
 	task := context.Task{
@@ -185,20 +182,82 @@ func MergePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Row
 	}
 	startCmd := ctx.StartTask(task)
 
-	return tea.Batch(startCmd, tea.ExecProcess(c, func(err error) tea.Msg {
-		isMerged := err == nil && c.ProcessState.ExitCode() == 0
+	return tea.Batch(startCmd, func() tea.Msg {
+		if prData == nil {
+			return constants.TaskFinishedMsg{
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				TaskId:      taskId,
+				Err:         fmt.Errorf("could not resolve PR data for PR #%d", prNumber),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
+		if prData.IsDraft {
+			return constants.TaskFinishedMsg{
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				TaskId:      taskId,
+				Err:         fmt.Errorf("cannot merge a draft PR, please publish it first"),
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
+		status, err := data.MergePullRequest(prData.ID, prData.MergeStateStatus, prData.Repository)
+		if err != nil {
+			log.Error("Failed to merge PR via GraphQL", "pr", prNumber, "err", err)
+			return constants.TaskFinishedMsg{
+				SectionId:   section.Id,
+				SectionType: section.Type,
+				TaskId:      taskId,
+				Err:         err,
+				Msg:         UpdatePRMsg{PrNumber: prNumber},
+			}
+		}
+
+		var finishedText string
+		updateMsg := UpdatePRMsg{PrNumber: prNumber}
+
+		if status.State == "MERGED" {
+			isMerged := true
+			updateMsg.IsMerged = &isMerged
+			finishedText = fmt.Sprintf("PR #%d has been merged", prNumber)
+		} else if status.HasAutoMerge {
+			autoMergeEnabled := true
+			updateMsg.AutoMergeEnabled = &autoMergeEnabled
+			finishedText = fmt.Sprintf("Auto-merge enabled for PR #%d", prNumber)
+		} else {
+			finishedText = fmt.Sprintf("PR #%d merge action completed", prNumber)
+		}
 
 		return constants.TaskFinishedMsg{
-			SectionId:   section.Id,
-			SectionType: section.Type,
-			TaskId:      taskId,
-			Err:         err,
-			Msg: UpdatePRMsg{
-				PrNumber: prNumber,
-				IsMerged: &isMerged,
-			},
+			SectionId:    section.Id,
+			SectionType:  section.Type,
+			TaskId:       taskId,
+			Err:          nil,
+			FinishedText: finishedText,
+			Msg:          updateMsg,
 		}
-	}))
+	})
+}
+
+// primaryPRDataProvider is implemented by row types that wrap a PullRequestData
+// (e.g. prrow.Data in the PR list section).
+type primaryPRDataProvider interface {
+	GetPrimaryPRData() *data.PullRequestData
+}
+
+// extractPullRequestData retrieves the underlying *data.PullRequestData from a
+// RowData value. RowData is implemented by both prrow.Data (PR list rows) and
+// *data.PullRequestData (branch section rows), so we handle both cases.
+func extractPullRequestData(pr data.RowData) *data.PullRequestData {
+	switch v := pr.(type) {
+	case *data.PullRequestData:
+		return v
+	case primaryPRDataProvider:
+		return v.GetPrimaryPRData()
+	}
+	return nil
 }
 
 func CreatePR(

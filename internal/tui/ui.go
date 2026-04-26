@@ -696,6 +696,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				task.Error = msg.Err
 			} else {
 				task.State = context.TaskFinished
+				// Use override finished text if provided
+				if msg.FinishedText != "" {
+					task.FinishedText = msg.FinishedText
+				}
 			}
 			now := time.Now()
 			task.FinishedTime = &now

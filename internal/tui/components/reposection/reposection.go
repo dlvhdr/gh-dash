@@ -29,11 +29,15 @@ const SectionType = "repo"
 
 type Model struct {
 	section.BaseModel
-	repo           *git.Repo
-	Branches       []branch.Branch
-	Prs            []data.PullRequestData
-	isRefreshSetUp bool
-	refreshId      int
+	repo     *git.Repo
+	Branches []branch.Branch
+	Prs      []data.PullRequestData
+	// autoMergeEnabledPRs tracks PR numbers for which the user has enabled
+	// auto-merge via the TUI.  It persists across updateBranchesWithPrs()
+	// rebuilds, which recreate m.Branches from scratch on every Update call.
+	autoMergeEnabledPRs map[int]bool
+	isRefreshSetUp      bool
+	refreshId           int
 }
 
 func NewModel(
@@ -60,6 +64,7 @@ func NewModel(
 	m.repo = &git.Repo{Branches: []git.Branch{}}
 	m.Branches = []branch.Branch{}
 	m.Prs = []data.PullRequestData{}
+	m.autoMergeEnabledPRs = make(map[int]bool)
 	m.isRefreshSetUp = false
 
 	return m
@@ -167,6 +172,24 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 		if msg.NewPr != nil {
 			m.Prs = append(m.Prs, *msg.NewPr)
+		}
+
+	case tasks.UpdatePRMsg:
+		for i, pr := range m.Prs {
+			if pr.Number != msg.PrNumber {
+				continue
+			}
+			if msg.IsMerged != nil && *msg.IsMerged {
+				m.Prs[i].State = "MERGED"
+				m.Prs[i].Mergeable = ""
+			}
+			if msg.AutoMergeEnabled != nil && *msg.AutoMergeEnabled {
+				// Record the flag in the persistent map so it survives
+				// updateBranchesWithPrs() rebuilds.
+				m.autoMergeEnabledPRs[msg.PrNumber] = true
+			}
+			m.Table.SetRows(m.BuildRows())
+			break
 		}
 
 	case repoMsg:
@@ -366,6 +389,9 @@ func (m *Model) updateBranchesWithPrs() {
 	for _, ref := range m.repo.Branches {
 		b := branch.Branch{Ctx: m.Ctx, Data: ref, Columns: m.Table.Columns}
 		b.PR = findPRForRef(m.Prs, ref.Name)
+		if b.PR != nil {
+			b.AutoMergeEnabled = m.autoMergeEnabledPRs[b.PR.Number]
+		}
 
 		branches = append(branches, b)
 	}

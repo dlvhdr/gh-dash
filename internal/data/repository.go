@@ -25,5 +25,8 @@ type Repository struct {
 	Owner                 Owner
 	NameWithOwner         string
 	IsArchived            bool
+	AllowMergeCommit      bool                  `graphql:"mergeCommitAllowed"`
+	AllowSquashMerge      bool                  `graphql:"squashMergeAllowed"`
+	AllowRebaseMerge      bool                  `graphql:"rebaseMergeAllowed"`
 	BranchProtectionRules BranchProtectionRules `graphql:"branchProtectionRules(first: 1)"`
 }
