@@ -10,6 +10,36 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
+func TestUpdatePR_TaskConfiguration(t *testing.T) {
+	section := SectionIdentifier{Id: 2, Type: "pr"}
+	pr := mockIssue{
+		number:   42,
+		repoName: "owner/repo",
+	}
+
+	task := updatePRTask(section, pr)
+
+	require.Equal(t, "pr_update_42", task.Id)
+	require.Equal(t, []string{"pr", "update-branch", "42", "-R", "owner/repo"}, task.Args)
+	require.Equal(t, section, task.Section)
+	require.Equal(t, "Updating PR #42", task.StartText)
+	require.Equal(t, "PR #42 has been updated", task.FinishedText)
+}
+
+func TestUpdatePR_MsgDoesNotMarkPRClosed(t *testing.T) {
+	task := updatePRTask(SectionIdentifier{Id: 2, Type: "pr"}, mockIssue{
+		number:   42,
+		repoName: "owner/repo",
+	})
+
+	msg := task.Msg(nil, nil)
+	updateMsg, ok := msg.(UpdatePRMsg)
+
+	require.True(t, ok, "Msg should return UpdatePRMsg")
+	require.Equal(t, 42, updateMsg.PrNumber)
+	require.Nil(t, updateMsg.IsClosed, "updating a PR branch must not change the PR open/closed state")
+}
+
 func TestApproveWorkflows_TaskConfiguration(t *testing.T) {
 	var capturedTask context.Task
 
