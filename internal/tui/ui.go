@@ -1630,6 +1630,9 @@ func (m *Model) switchSelectedView() tea.Cmd {
 }
 
 func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
+	if m.ctx == nil || m.ctx.Config == nil {
+		return false
+	}
 	for _, keybinding := range m.ctx.Config.Keybindings.Universal {
 		if keybinding.Builtin == "" && keybinding.Key == msg.String() {
 			return true
