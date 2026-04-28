@@ -101,23 +101,3 @@ tasks:
       - nerdfix fix --format=json $(fd --extension go)
     desc: Fix broken nerdfont icons
 
-  docs-prepare:
-    cmds:
-      - cd docs && pnpm i
-
-  docs:
-    cmds:
-      - cd docs && pnpm dev {{.CLI_ARGS}}
-    desc: Start docs server
-
-  docs-build:
-    cmds:
-      - task: docs-prepare
-      - cd docs && pnpm build
-    desc: Run docs production build
-
-  docs-preview:
-    cmds:
-      - task: docs-build
-      - cd docs && pnpm preview
-    desc: Preview docs production build

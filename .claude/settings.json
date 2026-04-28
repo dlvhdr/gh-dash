@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Write", "Glob", "Grep",
+      "Bash(git diff *)", "Bash(git status *)", "Bash(git log *)",
+      "Bash(git branch *)", "Bash(git checkout *)", "Bash(git add *)",
+      "Bash(git commit *)", "Bash(git stash *)", "Bash(git fetch *)",
+      "Bash(git merge *)", "Bash(git rebase *)",
+      "Bash(npm *)", "Bash(npx *)", "Bash(pnpm *)", "Bash(yarn *)", "Bash(bun *)",
+      "Bash(go *)", "Bash(cargo *)", "Bash(python *)", "Bash(pip *)",
+      "Bash(uv *)", "Bash(pytest *)", "Bash(make *)",
+      "Bash(docker *)", "Bash(docker-compose *)",
+      "Bash(gh pr view *)", "Bash(gh pr list *)", "Bash(gh pr diff *)",
+      "Bash(gh issue view *)", "Bash(gh issue list *)",
+      "Bash(gh run view *)", "Bash(gh run list *)",
+      "Bash(* --help)", "Bash(* --version)", "Bash(* -h)",
+      "Bash(cat *)", "Bash(ls *)", "Bash(tree *)", "Bash(find *)",
+      "Bash(grep *)", "Bash(rg *)", "Bash(fd *)",
+      "Bash(jq *)", "Bash(yq *)", "Bash(sed *)", "Bash(awk *)",
+      "Bash(echo *)", "Bash(printf *)", "Bash(date *)",
+      "Bash(wc *)", "Bash(sort *)", "Bash(uniq *)", "Bash(diff *)",
+      "Bash(head *)", "Bash(tail *)", "Bash(less *)",
+      "Bash(which *)", "Bash(type *)", "Bash(env)", "Bash(printenv *)", "Bash(pwd)"
+    ],
+    "deny": [
+      "Read(.env)", "Read(.env.*)", "Read(**/.env)", "Read(**/.env.*)",
+      "Read(**/secrets/**)", "Read(**/.aws/**)", "Read(**/.ssh/**)",
+      "Read(**/credentials*)", "Read(**/*secret*)", "Read(**/*password*)", "Read(**/*token*)",
+      "Edit(.env)", "Edit(.env.*)", "Edit(**/.env)", "Edit(**/.env.*)",
+      "Edit(**/secrets/**)"
+    ],
+    "ask": [
+      "Bash(rm *)", "Bash(rmdir *)",
+      "Bash(git push *)", "Bash(git push)", "Bash(git reset --hard *)", "Bash(git clean *)",
+      "Bash(gh pr create *)", "Bash(gh pr merge *)",
+      "Bash(gh issue create *)", "Bash(gh issue close *)",
+      "Bash(curl *)", "Bash(wget *)",
+      "Bash(docker rm *)", "Bash(docker rmi *)", "Bash(docker system prune *)"
+    ],
+    "defaultMode": "plan"
+  },
+  "includeCoAuthoredBy": true,
+  "cleanupPeriodDays": 30,
+  "alwaysThinkingEnabled": true
+}

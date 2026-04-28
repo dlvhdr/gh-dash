@@ -1,7 +1,7 @@
 # Summary
 
 - [] Closes issue #...
-- [] I have read the [CONTIBUTING.md](../CONTRIBUTING.md) and [AI_POLICY.md](../AI_POLICY.md) guides
+- [] I have read the [CONTRIBUTING.md](../CONTRIBUTING.md) guide
 
 ## How Did You Test this Change?
 

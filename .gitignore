@@ -10,3 +10,7 @@ docs/broken-links.log
 .devbox
 __debug*
 testdata/gh-schema.graphql
+
+# Claude Code
+.claude/settings.local.json
+CLAUDE.local.md
