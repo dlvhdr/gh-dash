@@ -1,0 +1,51 @@
+name: Copilot Setup Steps
+
+# Pre-installs Go toolchain and primes module + build caches so the
+# Copilot cloud agent starts with a warm environment instead of paying
+# the install/download cost on every task.
+#
+# The job name MUST be `copilot-setup-steps` — that exact string is what
+# Copilot's runner looks for to discover this configuration.
+#
+# Triggered on workflow_dispatch and on changes to this file only;
+# build-and-test.yaml + lint.yml continue to handle PR validation.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    name: Warm up gh-dash dev environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+          cache: true
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Install go-task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pre-build all packages
+        run: go build ./...
+
+      - name: Verify test compilation
+        # Compiles every test binary without executing — primes the test
+        # build cache so the agent's first `task test ./...` is fast.
+        run: go test -count=0 ./...

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/ci-full.sh",
+        "cwd": ".",
+        "timeoutSec": 300
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/scripts/ci-quick.sh",
+        "cwd": ".",
+        "timeoutSec": 120
+      }
+    ]
+  }
+}
