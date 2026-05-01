@@ -25,24 +25,6 @@
 
 <img src="./docs/src/assets/overview.gif" />
 
-## 🌟 Features
-
-- User-defined, per-repo, PRs & issues sections
-- Overridable vim-style keyboard hotkeys
-- Custom actions to perform your specific workflow needs
-- Everything you can do on GitHub - diff, comment, checkout, push, update etc.
-- Control every setting with a YAML config file
-
-If you like quickly navigating with your keyboard, seeing the PRs and issues you need and you <strong>love the terminal</strong> - <code>DASH</code> is for you! 🫵🏽
-
-## 📃 Docs
-
-`DASH` has an extensive docs site at [gh-dash.dev/getting-started](https://gh-dash.dev/getting-started).
-
-## 👥 Discord
-
-Have questions? Join our [Discord community](https://discord.gg/SXNXp9NctV)!
-
 ## ❤️ Sponsoring
 
 If you enjoy `DASH` and want to help, consider supporting the project with a
@@ -97,6 +79,24 @@ Thank you to all past and existing sponsors! 🙏🏽
 </p>
 
 <!-- sponsors:end -->
+
+## 🌟 Features
+
+- User-defined, per-repo, PRs & issues sections
+- Overridable vim-style keyboard hotkeys
+- Custom actions to perform your specific workflow needs
+- Everything you can do on GitHub - diff, comment, checkout, push, update etc.
+- Control every setting with a YAML config file
+
+If you like quickly navigating with your keyboard, seeing the PRs and issues you need and you <strong>love the terminal</strong> - <code>DASH</code> is for you! 🫵🏽
+
+## 📃 Docs
+
+`DASH` has an extensive docs site at [gh-dash.dev/getting-started](https://gh-dash.dev/getting-started).
+
+## 👥 Discord
+
+Have questions? Join our [Discord community](https://discord.gg/SXNXp9NctV)!
 
 ## 🙏 Contributing
 
