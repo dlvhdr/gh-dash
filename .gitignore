@@ -1,5 +1,5 @@
 debug.log
-dist
+dist/
 gh-prs
 /gh-dash
 .direnv/
@@ -7,6 +7,8 @@ gh-prs
 .DS_Store
 .killgrave.log
 docs/broken-links.log
-.devbox
+.devbox/
 __debug*
 testdata/gh-schema.graphql
+.task/
+/sponsors.json

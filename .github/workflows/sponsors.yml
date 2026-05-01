@@ -1,0 +1,34 @@
+name: generate
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 8 * * *"
+permissions: read-all
+jobs:
+  docs:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+      - name: Install Task
+        uses: go-task/setup-task@v2
+        with:
+          repo-token: ${{ secrets.GH_TOKEN }}
+      - name: Download Go modules
+        run: go mod download
+      - run: task docs-sponsors
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPONSORS_TOKEN }}
+      - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message: "chore: auto-update generated files"
+          branch: main
+          commit_user_name: actions-user
+          commit_user_email: actions@github.com
+          commit_author: actions-user <actions@github.com>

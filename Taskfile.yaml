@@ -121,3 +121,17 @@ tasks:
       - task: docs-build
       - cd docs && pnpm preview
     desc: Preview docs production build
+
+  docs-sponsors:
+    desc: Update OpenCollective and GitHub sponsors list
+    cmds:
+      - which sponsors || go install github.com/goreleaser/sponsors@main
+      - sponsors generate --config gh://dlvhdr/sponsors/sponsors.yml sponsors.json
+      - sponsors apply sponsors.json gh://dlvhdr/sponsors/readme.tpl.md ./README.md
+    sources:
+      - ./README.md
+      - ./.github/sponsors/sponsors.json
+      - ./.github/sponsors/sponsors.yml
+    generates:
+      - ./README.md
+      - ./.github/sponsors/sponsors.json
