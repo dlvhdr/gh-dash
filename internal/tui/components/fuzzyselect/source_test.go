@@ -1,4 +1,4 @@
-package cmp
+package fuzzyselect
 
 import (
 	"testing"
@@ -198,46 +198,22 @@ func TestLabelSourceInsertSuggestion(t *testing.T) {
 	}
 }
 
-func TestWhitespaceSource(t *testing.T) {
-	source := WhitespaceSource{}
-	ctx := source.ExtractContext("foo bar baz", tea.Position{X: 5})
-	require.Equal(
-		t,
-		Context{Start: tea.Position{X: 4}, End: tea.Position{X: 7}, Content: "bar"},
-		ctx,
-	)
-	require.Equal(
-		t,
-		[]string{"foo", "baz"},
-		source.ItemsToExclude("foo bar baz", tea.Position{X: 5}),
-	)
-
-	newInput, newCursor := source.InsertSuggestion(
-		"foo ba baz",
-		"bar",
-		tea.Position{X: 4},
-		tea.Position{X: 6},
-	)
-	require.Equal(t, "foo bar  baz", newInput)
-	require.Equal(t, tea.Position{X: 8}, newCursor)
-}
-
 func TestUserMentionSource(t *testing.T) {
-	source := UserMentionSource{}
+	source := UserMentionSource{WithAtSymbol: true}
 	require.Equal(t, Context{}, source.ExtractContext("hello world", tea.Position{X: 5}))
 	require.Equal(
 		t,
-		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 7}, Content: ""},
+		Context{Start: tea.Position{X: 7}, End: tea.Position{X: 7}, Content: ""},
 		source.ExtractContext("hello @", tea.Position{X: 7}),
 	)
 	require.Equal(
 		t,
-		Context{Start: tea.Position{X: 0}, End: tea.Position{X: 1}, Content: ""},
+		Context{Start: tea.Position{X: 1}, End: tea.Position{X: 1}, Content: ""},
 		source.ExtractContext("@", tea.Position{X: 1}),
 	)
 	require.Equal(
 		t,
-		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 11}, Content: "octo"},
+		Context{Start: tea.Position{X: 7}, End: tea.Position{X: 11}, Content: "octo"},
 		source.ExtractContext("hello @octo", tea.Position{X: 9}),
 	)
 	require.Equal(
@@ -255,23 +231,61 @@ func TestUserMentionSource(t *testing.T) {
 	newInput, newCursor := source.InsertSuggestion(
 		"hello @oc",
 		"octo",
-		tea.Position{X: 6},
+		tea.Position{X: 7},
 		tea.Position{X: 9},
 	)
 	require.Equal(t, "hello @octo ", newInput)
 	require.Equal(t, tea.Position{X: 12}, newCursor)
-	require.Nil(t, source.ItemsToExclude("hello @oc", tea.Position{X: 8}))
+}
+
+func TestUserMentionSourceWithoutAtSymbol(t *testing.T) {
+	source := UserMentionSource{WithAtSymbol: false}
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 0}, End: tea.Position{X: 5}, Content: "hello"},
+		source.ExtractContext("hello world", tea.Position{X: 5}),
+	)
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 6}, Content: ""},
+		source.ExtractContext("hello ", tea.Position{X: 6}),
+	)
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 0}, End: tea.Position{X: 0}, Content: ""},
+		source.ExtractContext("", tea.Position{X: 1}),
+	)
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 6}, End: tea.Position{X: 10}, Content: "octo"},
+		source.ExtractContext("hello octo", tea.Position{X: 10}),
+	)
+
+	require.Equal(
+		t,
+		Context{Start: tea.Position{Y: 1}, End: tea.Position{Y: 1}, Content: ""},
+		source.ExtractContext("hello octo"+string('\n'), tea.Position{Y: 1, X: 0}),
+	)
+
+	newInput, newCursor := source.InsertSuggestion(
+		"hello oc",
+		"octo",
+		tea.Position{X: 6},
+		tea.Position{X: 8},
+	)
+	require.Equal(t, "hello octo ", newInput)
+	require.Equal(t, tea.Position{X: 11}, newCursor)
 }
 
 func TestUserMentionSourceWithNewLines(t *testing.T) {
-	source := UserMentionSource{}
+	source := UserMentionSource{WithAtSymbol: true}
 	newInput, newCursor := source.InsertSuggestion(
 		`hello @octo
 
 yes
 @oc`,
 		"octo",
-		tea.Position{Y: 3, X: 0},
+		tea.Position{Y: 3, X: 1},
 		tea.Position{Y: 3, X: 3},
 	)
 	require.Equal(t, `hello @octo

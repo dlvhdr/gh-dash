@@ -1,19 +1,18 @@
-// Package cmpcontroller is used to load completions (e.g. from the network)
-// for the various modes and using the cmp package to display them
+// Package cmpcontroller combines an input with a cmp.Source
+// and allows switching sources on the fly
 package cmpcontroller
 
 import (
-	"strings"
-
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/spinner"
 	"charm.land/bubbles/v2/textarea"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -28,14 +27,6 @@ const (
 	ModeUnassign
 	ModeLabel
 	ModeSearch
-)
-
-type SuggestionKind int
-
-const (
-	SuggestionNone SuggestionKind = iota
-	SuggestionUsers
-	SuggestionLabels
 )
 
 type FetchPolicy int
@@ -56,9 +47,7 @@ type EnterOptions struct {
 	Mode                             Mode
 	Prompt                           string
 	InitialValue                     string
-	Source                           cmp.Source
 	Repo                             RepoRef
-	SuggestionKind                   SuggestionKind
 	EnterFetch                       FetchPolicy
 	ConfirmDiscardOnCancel           bool
 	HideAutocompleteWhenContextEmpty bool
@@ -69,47 +58,36 @@ type Submit struct {
 	Value string
 }
 
-type RepoLabelsFetchedMsg struct {
-	Labels []data.Label
-}
-
-type RepoLabelsFetchFailedMsg struct {
+type SourceFetchFailedMsg struct {
 	Err error
 }
 
-type RepoUsersFetchedMsg struct {
-	Users []data.User
-}
-
-type RepoUsersFetchFailedMsg struct {
-	Err error
-}
+type SourceDataFetchedMsg struct{}
 
 type Controller struct {
 	ctx               *context.ProgramContext
 	inputBox          inputbox.Model
-	cmp               *cmp.Model
+	fzfSelect         *fuzzyselect.Model
 	mode              Mode
 	prompt            string
 	repo              RepoRef
-	suggestionKind    SuggestionKind
 	confirmDiscard    bool
 	showConfirmCancel bool
 	hideOnEmpty       bool
-	repoLabels        []data.Label
-	repoUsers         []data.User
 }
 
 func New(ctx *context.ProgramContext, opts inputbox.ModelOpts) Controller {
 	inputBox := inputbox.NewModel(ctx, opts)
-	cmp := cmp.NewModel(ctx)
-	inputBox.SetAutocomplete(&cmp)
+	fzfSelect := fuzzyselect.NewModel(ctx, nil)
+	inputBox.SetAutocomplete(&fzfSelect)
 
-	return Controller{
-		ctx:      ctx,
-		inputBox: inputBox,
-		cmp:      &cmp,
+	ctl := Controller{
+		ctx:       ctx,
+		inputBox:  inputBox,
+		fzfSelect: &fzfSelect,
 	}
+
+	return ctl
 }
 
 func (c *Controller) Value() string {
@@ -118,6 +96,22 @@ func (c *Controller) Value() string {
 
 func (c *Controller) SetValue(value string) {
 	c.inputBox.SetValue(value)
+}
+
+func (c *Controller) SelectStyles() context.SelectStyles {
+	return c.fzfSelect.Styles()
+}
+
+func (c *Controller) SetSelectStyles(styles context.SelectStyles) {
+	c.fzfSelect.SetStyles(styles)
+}
+
+func (c *Controller) InputStyles() inputbox.Styles {
+	return c.inputBox.Styles()
+}
+
+func (c *Controller) SetInputStyles(styles inputbox.Styles) {
+	c.inputBox.SetStyles(styles)
 }
 
 func (c *Controller) Mode() Mode {
@@ -141,12 +135,12 @@ func (c *Controller) ViewCompletions() string {
 }
 
 func (c *Controller) Width() int {
-	return c.cmp.Width()
+	return c.fzfSelect.Width()
 }
 
 func (c *Controller) SetWidth(width int) {
 	c.inputBox.SetWidth(width)
-	c.cmp.SetWidth(width)
+	c.fzfSelect.SetWidth(width)
 }
 
 func (c *Controller) Column() int {
@@ -160,7 +154,7 @@ func (c *Controller) CursorEnd() {
 func (c *Controller) UpdateProgramContext(ctx *context.ProgramContext) {
 	c.ctx = ctx
 	c.inputBox.UpdateProgramContext(ctx)
-	c.cmp.UpdateProgramContext(ctx)
+	c.fzfSelect.UpdateProgramContext(ctx)
 }
 
 func (c *Controller) Exit() {
@@ -170,13 +164,15 @@ func (c *Controller) Exit() {
 	c.mode = ModeNone
 	c.prompt = ""
 	c.repo = RepoRef{}
-	c.suggestionKind = SuggestionNone
 	c.confirmDiscard = false
 	c.showConfirmCancel = false
 	c.hideOnEmpty = false
 }
 
-// todo make pinter
+func (c *Controller) SetAutocompleteSource(src fuzzyselect.Source) {
+	c.fzfSelect.Source = src
+}
+
 func (c *Controller) Enter(opts EnterOptions) tea.Cmd {
 	c.inputBox.Reset()
 	c.inputBox.SetValue(opts.InitialValue)
@@ -185,33 +181,16 @@ func (c *Controller) Enter(opts EnterOptions) tea.Cmd {
 	c.mode = opts.Mode
 	c.prompt = opts.Prompt
 	c.repo = opts.Repo
-	c.suggestionKind = opts.SuggestionKind
 	c.confirmDiscard = opts.ConfirmDiscardOnCancel
 	c.showConfirmCancel = false
 	c.hideOnEmpty = opts.HideAutocompleteWhenContextEmpty
 
 	c.inputBox.SetPrompt(opts.Prompt)
-	c.inputBox.SetAutocompleteSource(opts.Source)
 
-	cmds := []tea.Cmd{textarea.Blink, c.inputBox.Focus()}
-
-	switch opts.SuggestionKind {
-	case SuggestionUsers:
-		if users, ok := data.CachedRepoUsers(opts.Repo.NameWithOwner); ok {
-			c.repoUsers = users
-			c.cmp.SetSuggestions(userSuggestions(users))
-			c.showSuggestionsFromCurrentContext()
-		} else if opts.EnterFetch != FetchNone {
-			cmds = append([]tea.Cmd{c.fetchUsers(opts.EnterFetch == FetchWithLoading)}, cmds...)
-		}
-	case SuggestionLabels:
-		if labels, ok := data.CachedRepoLabels(opts.Repo.NameWithOwner); ok {
-			c.repoLabels = labels
-			c.cmp.SetSuggestions(labelSuggestions(labels))
-			c.showSuggestionsFromCurrentContext()
-		} else if opts.EnterFetch != FetchNone {
-			cmds = append([]tea.Cmd{c.fetchLabels(opts.EnterFetch == FetchWithLoading)}, cmds...)
-		}
+	cmds := []tea.Cmd{
+		textarea.Blink,
+		c.inputBox.Focus(),
+		c.loadSuggestions(opts.EnterFetch == FetchWithLoading),
 	}
 
 	return tea.Sequence(cmds...)
@@ -232,63 +211,15 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		}
 		return nil, false
 
-	case RepoLabelsFetchedMsg:
-		c.repoLabels = msg.Labels
-		c.cmp.SetSuggestions(labelSuggestions(msg.Labels))
-		cmds = append(cmds, c.cmp.SetFetchSuccess())
-		if c.mode == ModeLabel {
-			c.showSuggestionsFromCurrentContext()
-		}
-		return tea.Batch(cmds...), true
-
-	case RepoLabelsFetchFailedMsg:
-		return c.cmp.SetFetchError(msg.Err), true
-
-	case RepoUsersFetchedMsg:
-		c.repoUsers = msg.Users
-		c.cmp.SetSuggestions(userSuggestions(msg.Users))
-		cmds = append(cmds, c.cmp.SetFetchSuccess())
-		if c.mode == ModeComment || c.mode == ModeApprove || c.mode == ModeAssign {
-			c.showSuggestionsFromCurrentContext()
-		}
-		return tea.Batch(cmds...), true
-
-	case RepoUsersFetchFailedMsg:
-		return c.cmp.SetFetchError(msg.Err), true
-
-	case cmp.FetchSuggestionsRequestedMsg:
-		if !c.Active() || c.suggestionKind == SuggestionNone {
-			return nil, false
-		}
-		if msg.Force {
-			c.clearRelevantCache()
-		}
-		switch c.suggestionKind {
-		case SuggestionUsers:
-			return c.fetchUsers(true), true
-		case SuggestionLabels:
-			return c.fetchLabels(true), true
-		default:
-			return nil, false
-		}
-
 	case tea.KeyMsg:
 		if !c.Active() {
 			return nil, false
 		}
 
 		switch {
-		case key.Matches(msg, cmp.RefreshSuggestionsKey):
-			if c.suggestionKind == SuggestionNone {
-				return nil, true
-			}
+		case key.Matches(msg, fuzzyselect.RefreshSuggestionsKey):
 			c.clearRelevantCache()
-			switch c.suggestionKind {
-			case SuggestionUsers:
-				return c.fetchUsers(true), true
-			case SuggestionLabels:
-				return c.fetchLabels(true), true
-			}
+			cmds = append(cmds, c.loadSuggestions(true))
 		}
 
 		switch msg.String() {
@@ -322,7 +253,7 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 			}
 		}
 
-		var previousContext cmp.Context
+		var previousContext fuzzyselect.Context
 		if c.usesAutocomplete() {
 			previousContext = c.inputBox.CurrentAutocompleteContext()
 		}
@@ -333,10 +264,10 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		if c.usesAutocomplete() {
 			currentContext := c.inputBox.CurrentAutocompleteContext()
 			if currentContext != previousContext {
-				if c.hideOnEmpty && currentContext == (cmp.Context{}) {
-					c.cmp.Hide()
+				if c.hideOnEmpty && currentContext == (fuzzyselect.Context{}) {
+					c.fzfSelect.Hide()
 				} else {
-					c.cmp.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
+					c.ShowCompletions()
 				}
 			}
 		}
@@ -344,11 +275,18 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		return tea.Batch(cmds...), true
 	}
 
-	switch msg.(type) {
-	case spinner.TickMsg, cmp.ClearFetchStatusMsg:
-		var acCmd tea.Cmd
-		*c.cmp, acCmd = c.cmp.Update(msg)
-		return acCmd, c.Active() || c.suggestionKind != SuggestionNone
+	var acCmd tea.Cmd
+	switch msg := msg.(type) {
+	case spinner.TickMsg, fuzzyselect.ClearFetchStatusMsg:
+		*c.fzfSelect, acCmd = c.fzfSelect.Update(msg)
+		return acCmd, c.Active()
+	case SourceDataFetchedMsg:
+		c.Filter()
+		acCmd = c.fzfSelect.SetFetchSuccess()
+		return acCmd, c.Active()
+	case SourceFetchFailedMsg:
+		acCmd = c.fzfSelect.SetFetchError(msg.Err)
+		return acCmd, c.Active()
 	}
 
 	c.inputBox, taCmd = c.inputBox.Update(msg)
@@ -361,15 +299,52 @@ func (c *Controller) LineFromBottom() int {
 }
 
 func (c *Controller) clearRelevantCache() {
-	switch c.suggestionKind {
-	case SuggestionUsers:
+	switch c.fzfSelect.Source.(type) {
+	case *fuzzyselect.UserMentionSource:
 		if c.repo.NameWithOwner != "" {
 			data.ClearRepoUserCache(c.repo.NameWithOwner)
 		}
-	case SuggestionLabels:
+	case *fuzzyselect.LabelSource:
 		if c.repo.NameWithOwner != "" {
 			data.ClearRepoLabelCache(c.repo.NameWithOwner)
 		}
+	case *fuzzyselect.SearchQuerySource:
+		if c.repo.NameWithOwner != "" {
+			data.ClearRepoLabelCache(c.repo.NameWithOwner)
+			data.ClearRepoUserCache(c.repo.NameWithOwner)
+		}
+	}
+}
+
+func (c *Controller) Filter() {
+	currentContext := c.inputBox.CurrentAutocompleteContext()
+	exclude := c.inputBox.AutocompleteItemsToExclude()
+	log.Debug("filtering suggestions", "mode", c.mode, "ctx", currentContext)
+	c.fzfSelect.Filter(c.inputBox.Value(), currentContext, exclude)
+}
+
+func (c *Controller) ShowCompletions() {
+	inputValue := c.inputBox.Value()
+	ctx := c.fzfSelect.Source.ExtractContext(
+		inputValue,
+		c.inputBox.GetAbsoluteCursorPosition(),
+	)
+
+	if c.hideOnEmpty && !c.fzfSelect.HasSuggestions() {
+		return
+	}
+
+	lines := c.inputBox.Lines()
+	switch src := c.fzfSelect.Source.(type) {
+	case *fuzzyselect.UserMentionSource:
+		if !src.WithAtSymbol {
+			c.fzfSelect.Show()
+		} else if x := ctx.Start.X - 1; x >= 0 && len(lines) > ctx.Start.Y && len(lines[ctx.Start.Y]) > x &&
+			lines[ctx.Start.Y][x] == '@' {
+			c.fzfSelect.Show()
+		}
+	default:
+		c.fzfSelect.Show()
 	}
 }
 
@@ -386,90 +361,37 @@ func (c *Controller) setDiscardPrompt() {
 }
 
 func (c *Controller) resetAutocompleteState() {
-	c.cmp.Reset()
-	c.cmp.Hide()
-	c.cmp.SetSuggestions(nil)
-}
-
-func (c Controller) showSuggestionsFromCurrentContext() {
-	if !c.usesAutocomplete() {
-		return
-	}
-	currentContext := c.inputBox.CurrentAutocompleteContext()
-	if c.hideOnEmpty && currentContext == (cmp.Context{}) {
-		c.cmp.Hide()
-		return
-	}
-	c.cmp.Show(currentContext.Content, c.inputBox.AutocompleteItemsToExclude())
+	c.fzfSelect.Reset()
+	c.fzfSelect.Hide()
 }
 
 func (c Controller) usesAutocomplete() bool {
-	switch c.mode {
-	case ModeComment, ModeApprove, ModeAssign, ModeLabel:
-		return true
-	default:
-		return false
-	}
+	return c.mode != ModeNone
 }
 
-func (c Controller) fetchLabels(showLoading bool) tea.Cmd {
+func (c Controller) loadSuggestions(showLoading bool) tea.Cmd {
 	var spinnerTickCmd tea.Cmd
+	if c.fzfSelect.Source == nil {
+		log.Error("cannot load completion suggestion without a source")
+		return nil
+	}
+
 	if showLoading {
-		spinnerTickCmd = c.cmp.SetFetchLoading()
+		spinnerTickCmd = c.fzfSelect.SetFetchLoading()
 	}
 
 	fetchCmd := func() tea.Msg {
-		labels, err := data.FetchRepoLabels(c.repo.NameWithOwner)
+		err := c.fzfSelect.Source.LoadSuggestions(
+			fuzzyselect.LoaderContext{RepoOwner: c.repo.Owner, RepoName: c.repo.Name},
+		)
 		if err != nil {
-			return RepoLabelsFetchFailedMsg{Err: err}
+			return SourceFetchFailedMsg{Err: err}
 		}
-		return RepoLabelsFetchedMsg{Labels: labels}
+		return SourceDataFetchedMsg{}
 	}
 
 	if spinnerTickCmd != nil {
 		return tea.Batch(spinnerTickCmd, fetchCmd)
 	}
 	return fetchCmd
-}
-
-func (c Controller) fetchUsers(showLoading bool) tea.Cmd {
-	var spinnerTickCmd tea.Cmd
-	if showLoading {
-		spinnerTickCmd = c.cmp.SetFetchLoading()
-	}
-
-	fetchCmd := func() tea.Msg {
-		users, err := data.FetchRepoUsers(c.repo.Owner, c.repo.Name)
-		if err != nil {
-			return RepoUsersFetchFailedMsg{Err: err}
-		}
-		return RepoUsersFetchedMsg{Users: users}
-	}
-
-	if spinnerTickCmd != nil {
-		return tea.Batch(spinnerTickCmd, fetchCmd)
-	}
-	return fetchCmd
-}
-
-func userSuggestions(users []data.User) []cmp.Suggestion {
-	suggestions := make([]cmp.Suggestion, 0, len(users))
-	for _, user := range users {
-		suggestions = append(suggestions, cmp.Suggestion{
-			Value:  user.Login,
-			Detail: strings.TrimSpace(user.Name),
-		})
-	}
-	return suggestions
-}
-
-func labelSuggestions(labels []data.Label) []cmp.Suggestion {
-	suggestions := make([]cmp.Suggestion, 0, len(labels))
-	for _, label := range labels {
-		suggestions = append(suggestions, cmp.Suggestion{
-			Value:  label.Name,
-			Detail: strings.TrimSpace(label.Description),
-		})
-	}
-	return suggestions
 }

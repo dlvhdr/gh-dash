@@ -60,8 +60,7 @@ func (m Model) View() string {
 		width := m.ctx.DynamicPreviewWidth
 		style := m.ctx.Styles.Sidebar.BottomRoot.
 			Height(height).
-			Width(width).
-			MaxWidth(width)
+			Width(width)
 
 		if m.data == "" {
 			return style.Align(lipgloss.Center).Render(
@@ -81,8 +80,7 @@ func (m Model) View() string {
 	height := m.ctx.MainContentHeight
 	style := m.ctx.Styles.Sidebar.Root.
 		Height(height).
-		Width(m.ctx.DynamicPreviewWidth).
-		MaxWidth(m.ctx.DynamicPreviewWidth)
+		Width(m.ctx.DynamicPreviewWidth)
 
 	if m.data == "" {
 		return style.Align(lipgloss.Center).Render(

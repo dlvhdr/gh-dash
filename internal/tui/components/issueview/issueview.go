@@ -12,8 +12,8 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuerow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/issuessection"
@@ -67,21 +67,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, *IssueAction) {
 			return m, nil, nil
 
 		case cmpcontroller.ModeAssign:
-			usernames := cmp.AllWords(value)
+			usernames := fuzzyselect.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.AssignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
 		case cmpcontroller.ModeUnassign:
-			usernames := cmp.AllWords(value)
+			usernames := fuzzyselect.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.UnassignIssue(m.ctx, sid, m.issue.Data, usernames), nil
 			}
 			return m, nil, nil
 
 		case cmpcontroller.ModeLabel:
-			labels := cmp.CurrentLabels(value)
+			labels := fuzzyselect.CurrentLabels(value)
 			if len(labels) > 0 || len(m.issue.Data.Labels.Nodes) > 0 {
 				return m, tasks.LabelIssue(
 					m.ctx,
@@ -253,7 +253,9 @@ func (m *Model) getIndentedContentWidth() int {
 
 func (m *Model) SetWidth(width int) {
 	m.width = width
-	m.editor.SetWidth(width)
+	m.editor.SetWidth(
+		m.getIndentedContentWidth() - m.ctx.Styles.Sidebar.InputBox.GetHorizontalFrameSize(),
+	)
 }
 
 func (m *Model) SetSectionId(id int) {
@@ -288,12 +290,11 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		return nil
 	}
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionUsers,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
@@ -322,13 +323,12 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
 		InitialValue:                     initialValue,
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionUsers,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
@@ -353,13 +353,12 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	labels = append(labels, "")
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.LabelSource{})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeLabel,
 		Prompt:                           constants.LabelPrompt,
 		InitialValue:                     strings.Join(labels, ", "),
-		Source:                           cmp.LabelSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionLabels,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
