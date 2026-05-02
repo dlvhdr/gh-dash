@@ -37,7 +37,11 @@ func TestUpdatePR_MsgDoesNotMarkPRClosed(t *testing.T) {
 
 	require.True(t, ok, "Msg should return UpdatePRMsg")
 	require.Equal(t, 42, updateMsg.PrNumber)
-	require.Nil(t, updateMsg.IsClosed, "updating a PR branch must not change the PR open/closed state")
+	require.Nil(
+		t,
+		updateMsg.IsClosed,
+		"updating a PR branch must not change the PR open/closed state",
+	)
 }
 
 func TestApproveWorkflows_TaskConfiguration(t *testing.T) {
