@@ -3,7 +3,7 @@ package tui
 import (
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"reflect"
 	"time"
 
@@ -25,7 +25,10 @@ func (m *Model) openBrowser() tea.Cmd {
 	}
 	startCmd := m.ctx.StartTask(task)
 	openCmd := func() tea.Msg {
-		b := browser.New("", os.Stdout, os.Stdin)
+		// Discard the launcher's stdout/stderr so any noise (e.g. GTK / GVFS
+		// warnings from xdg-open / gnome-open) does not leak into the TUI's
+		// terminal and corrupt the display. See #829, #584, #679.
+		b := browser.New("", io.Discard, io.Discard)
 		currRow := m.getCurrRowData()
 		if currRow == nil || reflect.ValueOf(currRow).IsNil() {
 			return constants.TaskFinishedMsg{

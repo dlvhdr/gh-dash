@@ -3,6 +3,7 @@ package notificationssection
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -252,7 +253,10 @@ func (m *Model) openInBrowser() tea.Cmd {
 			}
 		},
 		func() tea.Msg {
-			b := browser.New("", os.Stdout, os.Stdin)
+			// Discard the launcher's stdout/stderr so any noise (e.g. GTK /
+			// GVFS warnings from xdg-open / gnome-open) does not leak into
+			// the TUI's terminal and corrupt the display. See #829, #584, #679.
+			b := browser.New("", io.Discard, io.Discard)
 			err := b.Browse(notificationUrl)
 			if err != nil {
 				return constants.ErrMsg{Err: err}
