@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"os"
-	"os/exec"
 	"reflect"
 	"text/template"
 	"time"
@@ -17,6 +15,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/shell"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
@@ -324,11 +323,7 @@ type execProcessFinishedMsg struct{}
 
 func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 	log.Debug("executing custom command", "cmd", cmd)
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "sh"
-	}
-	c := exec.Command(shell, "-c", cmd)
+	c := shell.Command(cmd)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
 			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth)
