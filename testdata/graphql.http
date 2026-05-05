@@ -1,7 +1,9 @@
 ###
 # @env-stdin-cmd GH_TOKEN gh auth token
 
-GRAPHQL https://api.github.com/graphql HTTP/1.1
+# @graphql
+# @operation FetchWorkspace
+POST {{graphql.endpoint}}
 Accept: application/json
 Authorization: Bearer {{GH_TOKEN}}
 

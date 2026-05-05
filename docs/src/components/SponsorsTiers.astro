@@ -1,0 +1,35 @@
+---
+import { getSponsorTiers } from "../data/sponsors";
+
+const response = await getSponsorTiers();
+const tiers = Object.values(response)
+  .toSorted(
+    (tierA, tierB) =>
+      tierB.tier.monthlyPriceInDollars - tierA.tier.monthlyPriceInDollars,
+  )
+  .filter((tier) => tier.users.length > 0);
+
+const sizes = {
+  "TUI Innovator": 156,
+  "TUI Visionary": 128,
+  "TUI Power User": 50,
+  "TUI Backer": 40,
+};
+---
+
+<section class="flex max-w-3xl flex-col gap-12">
+  {
+    tiers.map((tier) => (
+      <div>
+        <h4 class="text-center">{tier.tier.title}</h4>
+        <div class="flex flex-row flex-wrap justify-center gap-4">
+          {tier.users.map((user) => (
+            <a href={user.websiteUrl ?? user.url}>
+              <img src={user.avatarUrl} width={`${sizes[tier.tier.title]}px`} />
+            </a>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+</section>
