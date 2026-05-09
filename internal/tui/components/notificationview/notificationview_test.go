@@ -210,7 +210,7 @@ func TestUpdate_ConfirmWithUppercaseY(t *testing.T) {
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
-func TestUpdate_ConfirmWithEnter(t *testing.T) {
+func TestUpdate_EnterDoesNotConfirm(t *testing.T) {
 	m := NewModel(&context.ProgramContext{})
 	m.SetSubjectIssue(&data.IssueData{Number: 789}, "notif-id")
 	m.SetPendingIssueAction("reopen")
@@ -218,7 +218,7 @@ func TestUpdate_ConfirmWithEnter(t *testing.T) {
 	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
 	newModel, action := m.Update(msg)
 
-	require.Equal(t, "issue_reopen", action, "should return the confirmed action")
+	require.Empty(t, action, "Enter should not confirm when default is No")
 	require.False(t, newModel.HasPendingAction(), "pending action should be cleared")
 }
 
@@ -331,7 +331,7 @@ func TestUpdate_AllIssueActions(t *testing.T) {
 			m.SetSubjectIssue(&data.IssueData{Number: 456}, "notif-id")
 			m.SetPendingIssueAction(action)
 
-			msg := tea.KeyPressMsg{Code: tea.KeyEnter}
+			msg := tea.KeyPressMsg{Text: "y"}
 			newModel, confirmedAction := m.Update(msg)
 
 			require.Equal(t, "issue_"+action, confirmedAction)

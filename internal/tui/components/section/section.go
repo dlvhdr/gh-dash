@@ -473,36 +473,36 @@ func (m *BaseModel) GetPromptConfirmation() string {
 		var prompt string
 		switch {
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to close this PR? (Y/n) "
+			prompt = "Are you sure you want to close this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to reopen this PR? (Y/n) "
+			prompt = "Are you sure you want to reopen this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "ready" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to mark this PR as ready? (Y/n) "
+			prompt = "Are you sure you want to mark this PR as ready? (y/N) "
 
 		case m.PromptConfirmationAction == "merge" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to merge this PR? (Y/n) "
+			prompt = "Are you sure you want to merge this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "update" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to update this PR? (Y/n) "
+			prompt = "Are you sure you want to update this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "approveWorkflows" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to approve all workflows? (Y/n) "
+			prompt = "Are you sure you want to approve all workflows? (y/N) "
 
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.IssuesView:
-			prompt = "Are you sure you want to close this issue? (Y/n) "
+			prompt = "Are you sure you want to close this issue? (y/N) "
 
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.IssuesView:
-			prompt = "Are you sure you want to reopen this issue? (Y/n) "
+			prompt = "Are you sure you want to reopen this issue? (y/N) "
 		case m.PromptConfirmationAction == "delete" && m.Ctx.View == config.RepoView:
-			prompt = "Are you sure you want to delete this branch? (Y/n) "
+			prompt = "Are you sure you want to delete this branch? (y/N) "
 		case m.PromptConfirmationAction == "new" && m.Ctx.View == config.RepoView:
 			prompt = "Enter branch name: "
 		case m.PromptConfirmationAction == "create_pr" && m.Ctx.View == config.RepoView:
 			prompt = "Enter PR title: "
 		case m.PromptConfirmationAction == "done_all" && m.Ctx.View == config.NotificationsView:
-			prompt = "Are you sure you want to mark all as done? (Y/n) "
+			prompt = "Are you sure you want to mark all as done? (y/N) "
 		}
 
 		m.PromptConfirmationBox.SetPrompt(prompt)

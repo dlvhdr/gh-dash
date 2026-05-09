@@ -145,7 +145,7 @@ func (m Model) Update(msg tea.Msg) (Model, string) {
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		if msg.String() == "y" || msg.String() == "Y" || msg.Code == tea.KeyEnter {
+		if msg.String() == "y" || msg.String() == "Y" {
 			action := m.pendingAction
 			m.pendingAction = ""
 			return m, action
