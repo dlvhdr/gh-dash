@@ -127,6 +127,24 @@ func TestParser(t *testing.T) {
 		assert.Empty(t, cmp.Diff(expected, actual, keybindSorter))
 	})
 
+	t.Run("Should accept notifications as the default view", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "config")
+		testutils.AssertNoError(t, err)
+		defer os.RemoveAll(dir)
+
+		configPath := path.Join(dir, "config.yml")
+		err = os.WriteFile(configPath, []byte("defaults:\n  view: notifications\n"), 0o600)
+		testutils.AssertNoError(t, err)
+
+		parsed, err := ParseConfig(Location{
+			ConfigFlag:       configPath,
+			SkipGlobalConfig: true,
+		})
+
+		testutils.AssertNoError(t, err)
+		require.Equal(t, NotificationsView, parsed.Defaults.View)
+	})
+
 	t.Run("Should merge global config with passed config", func(t *testing.T) {
 		clearEnv := setXDGConfigHomeEnvVar(t, "testdata")
 		defer clearEnv()
