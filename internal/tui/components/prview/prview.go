@@ -659,7 +659,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		return nil
 	}
 
-	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{})
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeApprove,
 		Prompt:                           constants.ApprovalPrompt,
@@ -667,7 +667,7 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		Repo:                             m.repoRef(),
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		ConfirmDiscardOnCancel:           true,
-		HideAutocompleteWhenContextEmpty: false,
+		HideAutocompleteWhenContextEmpty: true,
 	})
 	return cmd
 }
