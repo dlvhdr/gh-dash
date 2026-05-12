@@ -2,12 +2,14 @@ package search
 
 import (
 	"fmt"
+	"strings"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
@@ -51,7 +53,15 @@ func NewModel(ctx *context.ProgramContext, opts SearchOptions) Model {
 	ti.SetValue(opts.InitialValue)
 	ti.CursorStart()
 
-	ctl := cmpcontroller.New(ctx, inputbox.ModelOpts{TextInput: &ti})
+	ctl := cmpcontroller.New(
+		ctx,
+		inputbox.ModelOpts{TextInput: &ti},
+	)
+	selectStyles := ctx.Styles.Select
+	selectStyles.PopupStyle = ctx.Styles.Select.PopupStyle.BorderTop(false).BorderForeground(
+		ctx.Styles.Colors.OpenIssue,
+	)
+	ctl.SetSelectStyles(selectStyles)
 
 	m := Model{
 		ctx:          ctx,
@@ -71,31 +81,58 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View(ctx *context.ProgramContext) string {
 	s := m.ctx.Styles.Search.Root
+	if cmp := m.ViewCompletions(); cmp != "" {
+		b := lipgloss.RoundedBorder()
+		b.BottomLeft = lipgloss.RoundedBorder().MiddleLeft
+		b.BottomRight = lipgloss.RoundedBorder().MiddleRight
+		s = s.Border(b, true)
+	}
 	if m.cmpctl.Focused() {
 		s = s.BorderForeground(m.ctx.Styles.Colors.OpenIssue)
 	}
 	return s.Render(m.cmpctl.View())
 }
 
+func (m Model) ViewCompletions() string {
+	return m.cmpctl.ViewCompletions()
+}
+
 func (m *Model) CursorEnd() {
 	m.cmpctl.CursorEnd()
 }
 
+func (m *Model) Repo() (cmpcontroller.RepoRef, bool) {
+	for token := range strings.FieldsSeq(m.Value()) {
+		if strings.HasPrefix(token, "repo:") {
+			repo, found := strings.CutPrefix(token, "repo:")
+			parts := strings.Split(repo, "/")
+			if len(parts) < 2 {
+				return cmpcontroller.RepoRef{}, false
+			}
+			return cmpcontroller.RepoRef{
+				NameWithOwner: repo,
+				Owner:         parts[0],
+				Name:          parts[1],
+			}, found
+		}
+	}
+	return cmpcontroller.RepoRef{}, false
+}
+
 func (m *Model) Focus() tea.Cmd {
-	return m.cmpctl.Enter(cmpcontroller.EnterOptions{
-		Mode:   cmpcontroller.ModeSearch,
-		Prompt: "",
-		Repo: cmpcontroller.RepoRef{
-			NameWithOwner: "",
-			Owner:         "",
-			Name:          "",
-		},
-		SuggestionKind:                   cmpcontroller.SuggestionNone,
-		EnterFetch:                       cmpcontroller.FetchNone,
+	repo, _ := m.Repo()
+	m.cmpctl.SetAutocompleteSource(&fuzzyselect.SearchQuerySource{})
+	cmd := m.cmpctl.Enter(cmpcontroller.EnterOptions{
+		Mode:                             cmpcontroller.ModeSearch,
+		Prompt:                           "",
+		Repo:                             repo,
+		EnterFetch:                       cmpcontroller.FetchWithLoading,
 		ConfirmDiscardOnCancel:           false,
-		HideAutocompleteWhenContextEmpty: true,
+		HideAutocompleteWhenContextEmpty: false,
 		InitialValue:                     m.cmpctl.Value(),
 	})
+	m.cmpctl.ShowCompletions()
+	return cmd
 }
 
 func (m *Model) Blur() {

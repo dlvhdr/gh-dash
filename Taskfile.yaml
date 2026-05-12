@@ -5,19 +5,24 @@ silent: true
 
 tasks:
   default:
+    desc: Run
     cmds:
       - go run . {{.CLI_ARGS}}
     interactive: true
-    desc: Run
 
   build:
-    - go build .
+    desc: Build
+    cmds:
+      - go build .
 
   uninstall:
-    cmds:
-      - gh ext remove dash
+    desc: Uninstall from the gh extensions
+    cmd: |
+      if gh ext list | grep --quiet 'gh dash'; then echo "🕐 Uninstalling..."; gh ext remove dash; fi
+      exit 0
 
   install:
+    desc: Install the local app as a gh extension
     cmds:
       - task: build
       - task: uninstall
@@ -25,37 +30,38 @@ tasks:
       - gh dash --version
 
   install:prod:
+    desc: Install the latest available version as a gh extension
     cmds:
       - task: uninstall
       - echo "🕐 Installing latest version..." && gh ext install dlvhdr/gh-dash
       - gh dash --version
 
   debug:
+    desc: Run in debug mode. Run `task logs` to watch the logs.
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
       - DEBUG=true go run . --debug {{.CLI_ARGS}}
     interactive: true
-    desc: Run in debug mode. Run `task logs` to watch the logs.
 
   debug:warn:
+    desc: Run in debug mode, only log warning. Run `task logs` to watch the logs.
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
       - LOG_LEVEL=warn DEBUG=true go run . --debug {{.CLI_ARGS}}
     interactive: true
-    desc: Run in debug mode, only log warning. Run `task logs` to watch the logs.
 
   dlv:
+    desc: Debug with dlv
     cmds:
       - dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 .
-    desc: Debug with dlv
 
   logs:
+    desc: Tail the debug logs
     cmds:
       - rm -f ./debug.log
       - touch ./debug.log
       - tail -f ./debug.log
     interactive: true
-    desc: Tail the debug logs
 
   lint:
     desc: Run base linters
@@ -72,9 +78,9 @@ tasks:
       GOEXPERIMENT: null
 
   test:one:
+    desc: Run a test
     cmds:
       - gotip
-    desc: Run a test
 
   test:rerun:
     cmds:
@@ -82,9 +88,9 @@ tasks:
     desc: Rerun the last test
 
   test:
+    desc: Run tests
     cmds:
       - prism test {{.CLI_ARGS}} ./...
-    desc: Run tests
 
   fmt:
     desc: Run gofumpt
@@ -92,14 +98,14 @@ tasks:
       - gofumpt -w $(git ls-files '*.go')
 
   check-nerd-font:
+    desc: Find broken nerdfont characters
     cmds:
       - nerdfix check $(fd --extension go)
-    desc: Find broken nerdfont characters
 
   fix-nerd-font:
+    desc: Fix broken nerdfont icons
     cmds:
       - nerdfix fix --format=json $(fd --extension go)
-    desc: Fix broken nerdfont icons
 
   docs-prepare:
     cmds:
@@ -111,16 +117,16 @@ tasks:
     desc: Start docs server
 
   docs-build:
+    desc: Run docs production build
     cmds:
       - task: docs-prepare
       - cd docs && pnpm build
-    desc: Run docs production build
 
   docs-preview:
+    desc: Preview docs production build
     cmds:
       - task: docs-build
       - cd docs && pnpm preview
-    desc: Preview docs production build
 
   docs-sponsors:
     desc: Update OpenCollective and GitHub sponsors list

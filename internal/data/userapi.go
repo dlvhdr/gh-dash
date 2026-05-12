@@ -3,6 +3,7 @@ package data
 import (
 	"sync"
 
+	"charm.land/log/v2"
 	gh "github.com/cli/go-gh/v2/pkg/api"
 	graphql "github.com/cli/shurcooL-graphql"
 )
@@ -39,8 +40,19 @@ func FetchRepoUsers(owner, repoName string) ([]User, error) {
 	// Check cache first
 	repo := owner + "/" + repoName
 	if cachedUsers, ok := CachedRepoUsers(repo); ok {
+		log.Debug(
+			"Using cached repo users",
+			"owner",
+			owner,
+			"repoName",
+			repoName,
+			"len(cachedUsers)",
+			len(cachedUsers),
+		)
 		return cachedUsers, nil
 	}
+
+	log.Debug("Fetching repo users", "owner", owner, "repoName", repoName)
 
 	// Initialize client if needed
 	if client == nil {
@@ -65,12 +77,26 @@ func FetchRepoUsers(owner, repoName string) ([]User, error) {
 		return nil, err
 	}
 
-	users := result.Repository.MentionableUsers.Nodes
+	users := make([]User, 0)
+	for _, user := range result.Repository.MentionableUsers.Nodes {
+		if user.Login != "" {
+			users = append(users, user)
+		}
+	}
 
 	userCacheMu.Lock()
 	defer userCacheMu.Unlock()
 
 	repoUserCache[repo] = users
+	log.Debug(
+		"Successfully fetched repo users",
+		"owner",
+		owner,
+		"repoName",
+		repoName,
+		"len",
+		len(users),
+	)
 	return users, nil
 }
 
@@ -92,22 +118,4 @@ func UserLogins(users []User) []string {
 		logins[i] = user.Login
 	}
 	return logins
-}
-
-// splitRepoName splits "owner/repo" into ["owner", "repo"]
-func splitRepoName(repoNameWithOwner string) []string {
-	parts := make([]string, 0, 2)
-	start := 0
-	for i, c := range repoNameWithOwner {
-		if c == '/' {
-			if i > start {
-				parts = append(parts, repoNameWithOwner[start:i])
-			}
-			start = i + 1
-		}
-	}
-	if start < len(repoNameWithOwner) {
-		parts = append(parts, repoNameWithOwner[start:])
-	}
-	return parts
 }

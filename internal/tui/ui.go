@@ -941,16 +941,25 @@ func (m Model) View() tea.View {
 		lipgloss.NewLayer(zone.Scan(s.String())),
 	}
 
+	if currSection != nil {
+		searchCmp := currSection.ViewCompletions()
+		if searchCmp != "" {
+			y := common.HeaderHeight + common.SearchHeight + 1
+			layers = append(layers, lipgloss.NewLayer(searchCmp).X(1).Y(y))
+		}
+	}
+
 	prCmp := m.prView.ViewCompletions()
+	previewPos := m.ctx.PreviewCursorPosition()
 	if prCmp != "" {
-		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromBottom() - common.InputBoxHeight - 4
-		layers = append(layers, lipgloss.NewLayer(prCmp).X(m.ctx.MainContentWidth+4).Y(y))
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromBottom() - common.InputBoxHeight - 6
+		layers = append(layers, lipgloss.NewLayer(prCmp).X(previewPos.X+3).Y(y))
 	}
 
 	issueCmp := m.issueSidebar.ViewCompletions()
 	if issueCmp != "" {
-		y := m.ctx.ScreenHeight - common.FooterHeight - m.issueSidebar.InputBoxLineFromButton() - common.InputBoxHeight - 4
-		layers = append(layers, lipgloss.NewLayer(issueCmp).X(m.ctx.MainContentWidth+4).Y(y))
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.issueSidebar.InputBoxLineFromButton() - common.InputBoxHeight - 6
+		layers = append(layers, lipgloss.NewLayer(issueCmp).X(previewPos.X+3).Y(y))
 	}
 
 	comp := lipgloss.NewCompositor(layers...)

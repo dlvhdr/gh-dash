@@ -183,6 +183,7 @@ type Table interface {
 type Search interface {
 	SetIsSearching(val bool) tea.Cmd
 	IsSearchFocused() bool
+	ViewCompletions() string
 	ResetFilters()
 	GetFilters() string
 	ResetPageInfo()
@@ -350,10 +351,13 @@ func (m *BaseModel) GetIsLoading() bool {
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
+		cmds := make([]tea.Cmd, 0)
 		cmd := m.SearchBar.Focus()
+		cmds = append(cmds, cmd)
 		m.SearchBar.CursorEnd()
-		m.SearchBar, _ = m.SearchBar.Update(nil)
-		return cmd
+		m.SearchBar, cmd = m.SearchBar.Update(nil)
+		cmds = append(cmds, cmd)
+		return tea.Sequence(cmds...)
 	} else {
 		m.SearchBar.Blur()
 		return nil
@@ -362,6 +366,10 @@ func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 
 func (m *BaseModel) ResetFilters() {
 	m.SearchBar.SetValue(m.GetSearchValue())
+}
+
+func (m *BaseModel) ViewCompletions() string {
+	return m.SearchBar.ViewCompletions()
 }
 
 func (m *BaseModel) ResetPageInfo() {

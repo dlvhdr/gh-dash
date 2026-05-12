@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+
+	"charm.land/log/v2"
 )
 
 var (
@@ -26,6 +28,8 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	if cachedLabels, ok := CachedRepoLabels(repoNameWithOwner); ok {
 		return cachedLabels, nil
 	}
+
+	log.Debug("Fetching repo labels", "repoNameWithOwner", repoNameWithOwner)
 
 	cmd := execCommand(
 		"gh",
@@ -63,6 +67,13 @@ func FetchRepoLabels(repoNameWithOwner string) ([]Label, error) {
 	}
 
 	repoLabelCache[repoNameWithOwner] = filteredLabels
+	log.Debug(
+		"Successfully fetched repo labels",
+		"repoNameWithOwner",
+		repoNameWithOwner,
+		"len",
+		len(filteredLabels),
+	)
 	return filteredLabels, nil
 }
 

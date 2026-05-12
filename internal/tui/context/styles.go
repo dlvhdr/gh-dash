@@ -9,6 +9,16 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
+type SelectStyles struct {
+	PopupStyle    lipgloss.Style
+	HelpStyle     lipgloss.Style
+	Pointer       lipgloss.Style
+	ItemStyle     lipgloss.Style
+	Status        lipgloss.Style
+	SelectedStyle lipgloss.Style
+	NoResults     lipgloss.Style
+}
+
 type Styles struct {
 	Colors struct {
 		OpenIssue   compat.AdaptiveColor
@@ -87,11 +97,7 @@ type Styles struct {
 		Root           lipgloss.Style
 		ViewsSeparator lipgloss.Style
 	}
-	Autocomplete struct {
-		PopupStyle    lipgloss.Style
-		ItemStyle     lipgloss.Style
-		SelectedStyle lipgloss.Style
-	}
+	Select SelectStyles
 }
 
 var LogoColor = lipgloss.Color("#00F9FB")
@@ -254,16 +260,30 @@ func InitStyles(theme theme.Theme) Styles {
 	s.ViewSwitcher.InactiveView = lipgloss.NewStyle().
 		Background(theme.FaintBorder).
 		Foreground(theme.FaintText)
-	s.Autocomplete.PopupStyle = lipgloss.NewStyle().
+	s.Select.PopupStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(theme.SecondaryBorder).
+		BorderForeground(s.Colors.OpenIssue).
 		Foreground(theme.PrimaryText)
-
-	s.Autocomplete.ItemStyle = lipgloss.NewStyle().
+	s.Select.HelpStyle = lipgloss.NewStyle().
+		Padding(0, 1).
+		Border(lipgloss.NormalBorder(), true, false, false, false).
+		BorderTopForeground(theme.FaintBorder)
+	s.Select.Pointer = lipgloss.NewStyle().
+		Foreground(theme.SuccessText)
+	s.Select.ItemStyle = lipgloss.NewStyle().
 		PaddingRight(1)
-
-	s.Autocomplete.SelectedStyle = s.Autocomplete.ItemStyle.
+	s.Select.SelectedStyle = s.Select.ItemStyle.
 		Foreground(theme.PrimaryText)
+	s.Select.NoResults = lipgloss.NewStyle().
+		PaddingLeft(1).
+		PaddingRight(1).
+		Foreground(theme.FaintText).
+		Italic(true)
+	s.Select.Status = lipgloss.NewStyle().
+		PaddingLeft(1).
+		PaddingRight(1).
+		Foreground(theme.FaintText).
+		Italic(true)
 
 	return s
 }

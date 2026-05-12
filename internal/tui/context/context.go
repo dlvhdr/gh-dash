@@ -77,3 +77,17 @@ func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 
 	return append([]config.SectionConfig{{Title: ""}}, configs...)
 }
+
+func (ctx *ProgramContext) PreviewCursorPosition() tea.Position {
+	if ctx.PreviewPosition == "right" {
+		return tea.Position{
+			X: ctx.MainContentWidth,
+			Y: ctx.Styles.Pager.Height,
+		}
+	}
+
+	return tea.Position{
+		X: 0,
+		Y: ctx.MainContentHeight,
+	}
+}

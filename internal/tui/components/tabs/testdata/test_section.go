@@ -179,3 +179,8 @@ func (t *TestSection) UpdateProgramContext(ctx *context.ProgramContext) {
 func (t *TestSection) View() string {
 	panic("unimplemented")
 }
+
+// View implements section.Section.
+func (t *TestSection) ViewCompletions() string {
+	panic("unimplemented")
+}

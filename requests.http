@@ -3,6 +3,8 @@
 ### PR Checks    
 # @graphql
 # @operation PRChecks
+# @name PR Checks
+# @tag PR
 POST {{graphql.endpoint}}
 Accept: application/json
 
@@ -54,8 +56,9 @@ query PRChecks($url: URI!){
 { "url": "https://github.com/dlvhdr/gh-dash/pull/729" }
 
 ### Sponsor Tiers
- # @graphql
+# @graphql
 # @operation SponsorTiers
+# @name Sponsor Tiers
 POST {{graphql.endpoint}}
 Accept: application/json
 
@@ -89,8 +92,9 @@ query SponsorTiers(){
 }
 
 ### Sponsors
- # @graphql
+# @graphql
 # @operation Sponsors
+# @name Sponsors
 POST {{graphql.endpoint}}
 Accept: application/json
 
