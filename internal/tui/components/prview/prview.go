@@ -596,10 +596,6 @@ func (m *Model) IsTextInputBoxFocused() bool {
 	return m.editor.Active()
 }
 
-func (m *Model) GetIsCommenting() bool {
-	return m.editor.Mode() == cmpcontroller.ModeComment
-}
-
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
 	m.editor.UpdateProgramContext(ctx)
@@ -610,7 +606,13 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		},
 	)
 
+	// TODO: move this to the NewModel func
+	// currently it's not possible since the styles aren't yet instantiated when NewModel is called
 	m.editor.SetSelectStyles(ctx.Styles.Select)
+}
+
+func (m *Model) GetIsCommenting() bool {
+	return m.editor.Mode() == cmpcontroller.ModeComment
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {

@@ -40,9 +40,11 @@ type Model struct {
 
 func NewModel(ctx *context.ProgramContext) Model {
 	ta := inputbox.DefaultTextArea(ctx)
+	cmp := cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta})
+
 	return Model{
 		issue:  nil,
-		editor: cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta}),
+		editor: cmp,
 	}
 }
 
@@ -274,6 +276,15 @@ func (m *Model) IsTextInputBoxFocused() bool {
 	return m.editor.Active()
 }
 
+func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
+	m.ctx = ctx
+	m.editor.UpdateProgramContext(ctx)
+
+	// TODO: move this to the NewModel func
+	// currently it's not possible since the styles aren't yet instantiated when NewModel is called
+	m.editor.SetSelectStyles(ctx.Styles.Select)
+}
+
 func (m *Model) GetIsCommenting() bool {
 	return m.editor.Mode() == cmpcontroller.ModeComment
 }
@@ -290,7 +301,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		return nil
 	}
 
-	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{})
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
@@ -323,7 +334,7 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
-	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: false})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
@@ -362,6 +373,7 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
+	m.editor.ShowCompletions()
 	return cmd
 }
 
@@ -405,11 +417,6 @@ func (m *Model) issueAssignees() []string {
 		assignees = append(assignees, n.Login)
 	}
 	return assignees
-}
-
-func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
-	m.ctx = ctx
-	m.editor.UpdateProgramContext(ctx)
 }
 
 func (m *Model) repoRef() cmpcontroller.RepoRef {

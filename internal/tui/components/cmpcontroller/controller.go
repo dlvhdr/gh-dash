@@ -366,7 +366,12 @@ func (c *Controller) resetAutocompleteState() {
 }
 
 func (c Controller) usesAutocomplete() bool {
-	return c.mode != ModeNone
+	switch c.mode {
+	case ModeComment, ModeApprove, ModeAssign, ModeLabel, ModeSearch:
+		return true
+	default:
+		return false
+	}
 }
 
 func (c Controller) loadSuggestions(showLoading bool) tea.Cmd {
