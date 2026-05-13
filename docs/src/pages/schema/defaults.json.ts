@@ -88,9 +88,9 @@ export function GET() {
         view: {
           title: "Default View",
           description:
-            "Specifies whether the dashboard should display the PRs or Issues view on load.",
+            "Specifies whether the dashboard should display the PRs, Issues, or Notifications view on load.",
           type: "string",
-          enum: ["issues", "prs"],
+          enum: ["issues", "notifications", "prs"],
           default: "prs",
         },
         prApproveComment: {
