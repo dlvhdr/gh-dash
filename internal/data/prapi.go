@@ -249,6 +249,7 @@ type ReviewComment struct {
 		Login string
 	}
 	Body      string
+	DiffHunk  string
 	UpdatedAt time.Time
 	StartLine int
 	Line      int
@@ -282,15 +283,17 @@ type Reviews struct {
 }
 
 type ReviewThreadsWithComments struct {
-	Nodes []struct {
-		Id           string
-		IsOutdated   bool
-		OriginalLine int
-		StartLine    int
-		Line         int
-		Path         string
-		Comments     ReviewComments `graphql:"comments(first: 20)"`
-	}
+	Nodes []ReviewThread
+}
+
+type ReviewThread struct {
+	Id           string
+	IsOutdated   bool
+	OriginalLine int
+	StartLine    int
+	Line         int
+	Path         string
+	Comments     ReviewComments `graphql:"comments(first: 20)"`
 }
 
 type ChangedFile struct {
