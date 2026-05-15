@@ -97,7 +97,8 @@ type Styles struct {
 		Root           lipgloss.Style
 		ViewsSeparator lipgloss.Style
 	}
-	Select SelectStyles
+	Select  SelectStyles
+	KeyHint lipgloss.Style
 }
 
 var LogoColor = lipgloss.Color("#00F9FB")
@@ -284,6 +285,12 @@ func InitStyles(theme theme.Theme) Styles {
 		PaddingRight(1).
 		Foreground(theme.FaintText).
 		Italic(true)
+
+	s.KeyHint = lipgloss.NewStyle().
+		PaddingLeft(1).
+		PaddingRight(1).
+		Background(theme.SelectedBackground).
+		Foreground(theme.PrimaryText)
 
 	return s
 }
