@@ -225,7 +225,7 @@ func (m *Model) renderBody() string {
 			Render("No description provided.")
 	}
 
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	markdownRenderer := markdown.GetMarkdownRenderer(width, m.ctx)
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""
