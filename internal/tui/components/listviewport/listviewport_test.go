@@ -8,21 +8,28 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
-func newTestModel(numItems, viewportHeight, itemHeight int) Model {
+type testModelOpts struct {
+	numItems       int
+	viewportHeight int
+	itemHeight     int
+}
+
+// numItems, viewportHeight, itemHeight int
+func newTestModel(opts testModelOpts) Model {
 	ctx := context.ProgramContext{}
-	dims := constants.Dimensions{Width: 80, Height: viewportHeight}
+	dims := constants.Dimensions{Width: 80, Height: opts.viewportHeight}
 	now := time.Now()
-	return NewModel(ctx, dims, now, now, "items", numItems, itemHeight)
+	return NewModel(ctx, dims, now, now, "items", opts.numItems, opts.itemHeight)
 }
 
 func TestPrevItemScrollsAtTopBound(t *testing.T) {
 	// 10 items, viewport height 5, item height 1 => 5 items per page
 	// Initial bounds: topBoundId=0, bottomBoundId=4
-	m := newTestModel(10, 5, 1)
+	m := newTestModel(testModelOpts{numItems: 10, viewportHeight: 5, itemHeight: 1})
 
 	// Navigate down past the first page boundary
 	// After 5 NextItem calls: currId=5, topBoundId=1, bottomBoundId=5
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		m.NextItem()
 	}
 
@@ -35,7 +42,7 @@ func TestPrevItemScrollsAtTopBound(t *testing.T) {
 
 	// Navigate back up to the top bound
 	// 4 PrevItem calls: currId goes 4, 3, 2, 1
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		m.PrevItem()
 	}
 
@@ -56,16 +63,19 @@ func TestPrevItemScrollsAtTopBound(t *testing.T) {
 		t.Fatalf("expected currId=0, got %d", m.GetCurrItem())
 	}
 	if m.topBoundId != 0 {
-		t.Errorf("PrevItem did not scroll up at the top boundary: expected topBoundId=0, got %d (item 0 is above the visible viewport)", m.topBoundId)
+		t.Errorf(
+			"PrevItem did not scroll up at the top boundary: expected topBoundId=0, got %d (item 0 is above the visible viewport)",
+			m.topBoundId,
+		)
 	}
 }
 
 func TestNextItemScrollsAtBottomBound(t *testing.T) {
 	// Verify NextItem scrolling works symmetrically (this should pass already)
-	m := newTestModel(10, 5, 1)
+	m := newTestModel(testModelOpts{numItems: 10, viewportHeight: 5, itemHeight: 1})
 
 	// Navigate down to bottomBoundId (4)
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		m.NextItem()
 	}
 
@@ -83,14 +93,17 @@ func TestNextItemScrollsAtBottomBound(t *testing.T) {
 		t.Fatalf("expected currId=5, got %d", m.GetCurrItem())
 	}
 	if m.topBoundId != 1 {
-		t.Errorf("NextItem did not scroll down at the bottom boundary: expected topBoundId=1, got %d", m.topBoundId)
+		t.Errorf(
+			"NextItem did not scroll down at the bottom boundary: expected topBoundId=1, got %d",
+			m.topBoundId,
+		)
 	}
 }
 
 func TestPrevItemAtFirstItem(t *testing.T) {
 	// Pressing up when already at the first item should stay at 0
 	// and should not corrupt viewport bounds.
-	m := newTestModel(10, 5, 1)
+	m := newTestModel(testModelOpts{numItems: 10, viewportHeight: 5, itemHeight: 1})
 
 	m.PrevItem()
 
@@ -107,9 +120,9 @@ func TestPrevItemAtFirstItem(t *testing.T) {
 
 func TestNextItemAtLastItem(t *testing.T) {
 	// Pressing down when already at the last item should stay at last
-	m := newTestModel(10, 5, 1)
+	m := newTestModel(testModelOpts{numItems: 10, viewportHeight: 5, itemHeight: 1})
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		m.NextItem()
 	}
 
