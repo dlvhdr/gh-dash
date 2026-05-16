@@ -12,10 +12,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          persist-credentials: true
       - name: Install Go
         uses: actions/setup-go@v6
         with:
           go-version: "1.26"
+          cache: true
       - name: Install Task
         uses: go-task/setup-task@v2
         with:
