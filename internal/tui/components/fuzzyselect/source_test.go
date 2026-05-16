@@ -238,6 +238,35 @@ func TestUserMentionSource(t *testing.T) {
 	require.Equal(t, tea.Position{X: 12}, newCursor)
 }
 
+// Regression test for https://github.com/dlvhdr/gh-dash/issues/877:
+// composing a comment that mentions a user immediately followed by `: ""`
+// used to panic with `slice bounds out of range` because the @-symbol
+// adjustment pushed userStart past userEnd.
+func TestUserMentionSourceMentionFollowedByEmptyString(t *testing.T) {
+	source := UserMentionSource{WithAtSymbol: true}
+
+	input := `@octo: ""`
+
+	require.NotPanics(t, func() {
+		// Cursor between the two trailing quotes (the crashing position).
+		got := source.ExtractContext(input, tea.Position{X: 8})
+		require.Equal(t, Context{}, got)
+	})
+
+	require.NotPanics(t, func() {
+		// Cursor at the very end of the comment.
+		got := source.ExtractContext(input, tea.Position{X: len([]rune(input))})
+		require.Equal(t, Context{}, got)
+	})
+
+	// The mention itself must still be extractable while it is being typed.
+	require.Equal(
+		t,
+		Context{Start: tea.Position{X: 1}, End: tea.Position{X: 5}, Content: "octo"},
+		source.ExtractContext(`@octo`, tea.Position{X: 5}),
+	)
+}
+
 func TestUserMentionSourceWithoutAtSymbol(t *testing.T) {
 	source := UserMentionSource{WithAtSymbol: false}
 	require.Equal(
