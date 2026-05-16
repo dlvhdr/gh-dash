@@ -6,6 +6,7 @@ jobs:
       - uses: OctoGuide/bot@0.21.10
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          include-associations: "FIRST_TIMER,FIRST_TIME_CONTRIBUTOR,CONTRIBUTOR,COLLABORATOR,MEMBER,OWNER"
 
 name: OctoGuide
 
