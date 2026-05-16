@@ -10,8 +10,8 @@ jobs:
           config: none
           rules: |
             {
-              "pr-title-conventional": true
-              "pr-task-completion": true
+              "pr-title-conventional": true,
+              "pr-task-completion": true,
               "pr-linked-issue": true
             }
 
