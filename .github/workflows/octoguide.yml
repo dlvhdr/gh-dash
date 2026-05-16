@@ -8,9 +8,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           include-associations: "FIRST_TIMER,FIRST_TIME_CONTRIBUTOR,CONTRIBUTOR,COLLABORATOR,MEMBER,OWNER"
           config: none
-          pr-title-conventional: "true"
-          pr-task-completion: "true"
-          pr-linked-issue: "true"
+          rules: |
+            {
+              "pr-title-conventional": true
+              "pr-task-completion": true
+              "pr-linked-issue": true
+            }
 
 name: OctoGuide
 
