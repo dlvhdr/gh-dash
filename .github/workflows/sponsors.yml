@@ -7,7 +7,7 @@ permissions: read-all
 jobs:
   write-readme:
     permissions:
-      contents: read
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,7 +19,7 @@ jobs:
       - name: Install Task
         uses: go-task/setup-task@v2
         with:
-          repo-token: ${{ secrets.GH_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: task docs-sponsors
         env:
           GITHUB_TOKEN: ${{ secrets.SPONSORS_TOKEN }}
