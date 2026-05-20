@@ -21,7 +21,7 @@ func InitializeMarkdownStyle(hasDarkBackground bool) {
 
 func GetMarkdownRenderer(width int) glamour.TermRenderer {
 	markdownRenderer, err := glamour.NewTermRenderer(
-		glamour.WithStyles(*markdownStyle),
+		glamour.WithStyles(getMarkdownStyle()),
 		glamour.WithWordWrap(width),
 	)
 	if err != nil || markdownRenderer == nil {
@@ -35,4 +35,12 @@ func GetMarkdownRenderer(width int) glamour.TermRenderer {
 	}
 
 	return *markdownRenderer
+}
+
+func getMarkdownStyle() ansi.StyleConfig {
+	if markdownStyle == nil {
+		return styles.LightStyleConfig
+	}
+
+	return *markdownStyle
 }
