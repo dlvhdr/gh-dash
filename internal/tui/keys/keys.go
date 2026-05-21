@@ -245,6 +245,15 @@ var (
 	CustomNotificationBindings []key.Binding
 )
 
+func normalizeConfigKey(key string) string {
+	switch key {
+	case "pgdn":
+		return "pgdown"
+	default:
+		return key
+	}
+}
+
 func rebindUniversal(universal []config.Keybinding) error {
 	log.Debug("Rebinding universal keys", "keys", universal)
 
@@ -260,7 +269,7 @@ func rebindUniversal(universal []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(kb.Key),
+					key.WithKeys(normalizeConfigKey(kb.Key)),
 					key.WithHelp(kb.Key, name),
 				)
 
@@ -316,7 +325,7 @@ func rebindUniversal(universal []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
 		}
 
-		key.SetKeys(kb.Key)
+		key.SetKeys(normalizeConfigKey(kb.Key))
 
 		helpDesc := key.Help().Desc
 		if kb.Name != "" {

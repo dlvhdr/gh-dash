@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 )
@@ -196,6 +197,30 @@ func TestRebindNotificationKeys_Builtin(t *testing.T) {
 	keys := NotificationKeys.MarkAsDone.Keys()
 	if len(keys) != 1 || keys[0] != "X" {
 		t.Errorf("expected key to be rebound to X, got %v", keys)
+	}
+}
+
+func TestRebindUniversalPageDownAcceptsPgdnAlias(t *testing.T) {
+	origKeys := append([]string(nil), Keys.PageDown.Keys()...)
+	origHelp := Keys.PageDown.Help()
+	defer func() {
+		Keys.PageDown.SetKeys(origKeys...)
+		Keys.PageDown.SetHelp(origHelp.Key, origHelp.Desc)
+	}()
+
+	err := rebindUniversal([]config.Keybinding{
+		{Builtin: "pageDown", Key: "pgdn"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	msg := tea.KeyPressMsg(tea.Key{Code: tea.KeyPgDown})
+	if !key.Matches(msg, Keys.PageDown) {
+		t.Fatalf("PageDown key = %q; want to match %q", msg.String(), "pgdn")
+	}
+	if Keys.PageDown.Help().Key != "pgdn" {
+		t.Fatalf("PageDown help key = %q; want %q", Keys.PageDown.Help().Key, "pgdn")
 	}
 }
 
