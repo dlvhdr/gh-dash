@@ -241,6 +241,7 @@ type Comment struct {
 		Login string
 	}
 	Body      string
+	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
@@ -248,10 +249,18 @@ type ReviewComment struct {
 	Author struct {
 		Login string
 	}
-	Body      string
-	UpdatedAt time.Time
-	StartLine int
-	Line      int
+	Body              string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	StartLine         int
+	Line              int
+	DiffHunk          string
+	PullRequestReview struct {
+		Id string
+	}
+	ReplyTo struct {
+		Id string
+	}
 }
 
 type ReviewComments struct {
@@ -268,12 +277,14 @@ type ReviewThreads struct {
 }
 
 type Review struct {
+	Id     string
 	Author struct {
 		Login string
 	}
-	Body      string
-	State     string
-	UpdatedAt time.Time
+	Body        string
+	State       string
+	SubmittedAt time.Time
+	UpdatedAt   time.Time
 }
 
 type Reviews struct {
@@ -285,6 +296,7 @@ type ReviewThreadsWithComments struct {
 	Nodes []struct {
 		Id           string
 		IsOutdated   bool
+		IsResolved   bool
 		OriginalLine int
 		StartLine    int
 		Line         int
