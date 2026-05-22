@@ -20,6 +20,12 @@ type Branch struct {
 	PR      *data.PullRequestData
 	Data    git.Branch
 	Columns []table.Column
+	// AutoMergeEnabled is a UI-layer flag set when the user enables auto-merge
+	// via the TUI.  It is NOT fetched from the API; it allows the branch
+	// section to show the auto-merge icon immediately without waiting for a
+	// full refresh.  The flag is stored on a map in reposection.Model and
+	// re-applied each time updateBranchesWithPrs() rebuilds this struct.
+	AutoMergeEnabled bool
 }
 
 func (b *Branch) getTextStyle() lipgloss.Style {
@@ -57,6 +63,9 @@ func (b *Branch) renderState() string {
 
 	switch b.PR.State {
 	case "OPEN":
+		if b.PR.AutoMergeRequest != nil || b.AutoMergeEnabled {
+			return mergeCellStyle.Foreground(b.Ctx.Theme.WarningText).Render(constants.AutoMergeIcon)
+		}
 		if b.PR.IsDraft {
 			return mergeCellStyle.Foreground(b.Ctx.Theme.FaintText).Render(constants.DraftIcon)
 		} else {
@@ -207,8 +216,14 @@ func (b *Branch) renderBaseName() string {
 }
 
 func (b *Branch) RenderState() string {
+	if b.PR == nil {
+		return ""
+	}
 	switch b.PR.State {
 	case "OPEN":
+		if b.PR.AutoMergeRequest != nil || b.AutoMergeEnabled {
+			return constants.AutoMergeIcon + " Auto-merge"
+		}
 		if b.PR.IsDraft {
 			return constants.DraftIcon + " Draft"
 		} else {

@@ -2,15 +2,19 @@ package prssection
 
 import (
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prompt"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/section"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/tasks"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 // newTestModel creates a minimal Model with the prompt confirmation box
@@ -33,6 +37,39 @@ func newTestModel(action string) Model {
 		},
 	}
 	m.PromptConfirmationBox.Focus()
+	return m
+}
+
+// newFullTestModel creates a Model via the real NewModel constructor (so that
+// all internal sub-models — Table, SearchBar, etc. — are properly wired) and
+// then injects a single PR row with the given PR number.
+//
+// ctx.Config, ctx.Theme, and ctx.Styles are all populated so that
+// m.Update() can invoke BuildRows() end-to-end without panicking.
+func newFullTestModel(prNumber int) Model {
+	thm := *theme.DefaultTheme
+	s := context.InitStyles(thm)
+	cfg := &config.Config{
+		// A non-nil ThemeConfig is required because table.NewModel and
+		// prrow.ToTableRow both dereference Config.Theme.Ui.Table fields.
+		Theme: &config.ThemeConfig{},
+	}
+
+	ctx := &context.ProgramContext{
+		Config: cfg,
+		Theme:  thm,
+		Styles: s,
+		StartTask: func(task context.Task) tea.Cmd {
+			return func() tea.Msg { return nil }
+		},
+	}
+
+	// Use the real constructor so the embedded Table, SearchBar, and
+	// PromptConfirmationBox are fully initialised with the right ctx.
+	m := NewModel(0, ctx, config.PrsSectionConfig{}, time.Time{}, time.Time{})
+	m.Prs = []prrow.Data{
+		{Primary: &data.PullRequestData{Number: prNumber}},
+	}
 	return m
 }
 
@@ -103,6 +140,31 @@ func TestConfirmation_CancelWithCtrlC(t *testing.T) {
 	require.False(t, m.IsPromptConfirmationShown,
 		"Ctrl+C should dismiss the confirmation prompt")
 	_ = cmd
+}
+
+func TestUpdatePRMsg_AutoMergeEnabled_SetsFlag(t *testing.T) {
+	// Test that when UpdatePRMsg with AutoMergeEnabled=true is processed via
+	// m.Update(), the AutoMergeEnabled flag on prrow.Data is set to true.
+	//
+	// This test uses newFullTestModel() which wires up ctx.Config, ctx.Theme,
+	// and ctx.Styles so that Update() can call BuildRows() end-to-end.
+	m := newFullTestModel(42)
+
+	require.False(t, m.Prs[0].AutoMergeEnabled, "AutoMergeEnabled should start false")
+
+	autoMerge := true
+	msg := tasks.UpdatePRMsg{
+		PrNumber:         42,
+		AutoMergeEnabled: &autoMerge,
+	}
+
+	result, _ := m.Update(msg)
+	updated := result.(*Model)
+
+	require.True(t, updated.Prs[0].AutoMergeEnabled,
+		"AutoMergeEnabled should be set to true after processing AutoMergeEnabled update")
+	require.Nil(t, updated.Prs[0].Primary.AutoMergeRequest,
+		"AutoMergeRequest should remain nil (only real API data should populate it)")
 }
 
 func TestConfirmation_AllActions(t *testing.T) {

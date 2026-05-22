@@ -16,6 +16,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
+// UpdatePRMsg carries PR state changes emitted by repo-section-specific
+// commands (e.g. inline comment, assignee edits). Tasks that are shared
+// between the PR-list section and the repo section (such as MergePR, ClosePR)
+// emit tasks.UpdatePRMsg instead, which is handled directly in Update().
 type UpdatePRMsg struct {
 	PrNumber         int
 	IsClosed         *bool
