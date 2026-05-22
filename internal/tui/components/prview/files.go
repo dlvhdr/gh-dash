@@ -32,7 +32,7 @@ func (m *Model) renderChangesOverview() string {
 			changes.Render(
 				lipgloss.JoinHorizontal(lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d files changed", m.pr.Data.Primary.Files.TotalCount),
+					fmt.Sprintf("%d files changed", m.pr.Data.Enriched.Files.TotalCount),
 					" ",
 					m.pr.RenderLines(false)),
 			),
@@ -40,7 +40,7 @@ func (m *Model) renderChangesOverview() string {
 				lipgloss.JoinHorizontal(
 					lipgloss.Top,
 					lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Render(" "),
-					fmt.Sprintf("%d commits", m.pr.Data.Primary.Commits.TotalCount),
+					fmt.Sprintf("%d commits", m.pr.Data.Enriched.Commits.TotalCount),
 					" ",
 					lipgloss.NewStyle().
 						Foreground(m.ctx.Theme.FaintText).
@@ -53,7 +53,7 @@ func (m *Model) renderChangesOverview() string {
 
 func (m *Model) renderChangedFiles() string {
 	files := make([]string, 0)
-	for _, file := range m.pr.Data.Primary.Files.Nodes {
+	for _, file := range m.pr.Data.Enriched.Files.Nodes {
 		files = append(files, m.renderFile(file))
 	}
 

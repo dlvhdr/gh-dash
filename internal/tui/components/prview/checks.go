@@ -207,7 +207,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
 
-	for _, node := range pr.Data.Primary.Reviews.Nodes {
+	for _, node := range pr.Data.Enriched.Reviews.Nodes {
 		switch node.State {
 		case "APPROVED":
 			numApproving++
@@ -658,7 +658,7 @@ func (m *Model) getChecksStats() checksStats {
 func (m *Model) numRequestedReviewOwners() int {
 	numOwners := 0
 
-	for _, node := range m.pr.Data.Primary.ReviewRequests.Nodes {
+	for _, node := range m.pr.Data.Enriched.ReviewRequests.Nodes {
 		if node.AsCodeOwner {
 			numOwners++
 		}

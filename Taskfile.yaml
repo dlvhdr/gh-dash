@@ -40,7 +40,7 @@ tasks:
     desc: Run in debug mode. Run `task logs` to watch the logs.
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
-      - DEBUG=true go run . --debug {{.CLI_ARGS}}
+      - LOG_LEVEL=debug DEBUG=true go run . --debug {{.CLI_ARGS}}
     interactive: true
 
   debug:warn:

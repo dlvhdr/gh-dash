@@ -43,8 +43,8 @@ func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int
 			Primary:    prData,
 			IsEnriched: true,
 			Enriched: data.EnrichedPullRequestData{
-				ReviewRequests: prData.ReviewRequests,
-				Reviews:        prData.Reviews,
+				ReviewRequests: data.ReviewRequests{TotalCount: prData.ReviewRequests.TotalCount},
+				Reviews:        data.Reviews{TotalCount: prData.Reviews.TotalCount},
 			},
 		},
 	}
@@ -250,13 +250,11 @@ func TestRenderRequestedReviewers(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			prData := &data.PullRequestData{
-				ReviewRequests: data.ReviewRequests{
+				ReviewRequests: data.ReviewRequestsNumber{
 					TotalCount: len(tc.reviewRequests),
-					Nodes:      tc.reviewRequests,
 				},
-				Reviews: data.Reviews{
+				Reviews: data.ReviewsNumber{
 					TotalCount: len(tc.reviews),
-					Nodes:      tc.reviews,
 				},
 			}
 
@@ -299,13 +297,11 @@ func TestRenderRequestedReviewersWrapping(t *testing.T) {
 	}
 
 	prData := &data.PullRequestData{
-		ReviewRequests: data.ReviewRequests{
+		ReviewRequests: data.ReviewRequestsNumber{
 			TotalCount: len(reviewRequests),
-			Nodes:      reviewRequests,
 		},
-		Reviews: data.Reviews{
+		Reviews: data.ReviewsNumber{
 			TotalCount: 0,
-			Nodes:      []data.Review{},
 		},
 	}
 
