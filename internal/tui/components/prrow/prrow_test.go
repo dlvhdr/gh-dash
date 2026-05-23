@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
+	graphql "github.com/cli/shurcooL-graphql"
 	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -36,15 +37,15 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						// Commits: data.LastCommitStatus{
-						// 	Nodes: []struct {
-						// 		Commit struct {
-						// 			StatusCheckRollup struct {
-						// 				State graphql.String
-						// 			}
-						// 		}
-						// 	}{},
-						// },
+						Commits: data.LastCommitStatus{
+							Nodes: []struct {
+								Commit struct {
+									StatusCheckRollup struct {
+										State graphql.String
+									}
+								}
+							}{},
+						},
 					},
 				},
 			},
@@ -55,29 +56,29 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						// Commits: data.LastCommitStatus{
-						// 	Nodes: []struct {
-						// 		Commit struct {
-						// 			StatusCheckRollup struct {
-						// 				State graphql.String
-						// 			}
-						// 		}
-						// 	}{
-						// 		{
-						// 			Commit: struct {
-						// 				StatusCheckRollup struct {
-						// 					State graphql.String
-						// 				}
-						// 			}{
-						// 				StatusCheckRollup: struct {
-						// 					State graphql.String
-						// 				}{
-						// 					State: "SUCCESS",
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
+						Commits: data.LastCommitStatus{
+							Nodes: []struct {
+								Commit struct {
+									StatusCheckRollup struct {
+										State graphql.String
+									}
+								}
+							}{
+								{
+									Commit: struct {
+										StatusCheckRollup struct {
+											State graphql.String
+										}
+									}{
+										StatusCheckRollup: struct {
+											State graphql.String
+										}{
+											State: "SUCCESS",
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -88,29 +89,29 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						// Commits: data.LastCommitStatus{
-						// 	Nodes: []struct {
-						// 		Commit struct {
-						// 			StatusCheckRollup struct {
-						// 				State graphql.String
-						// 			}
-						// 		}
-						// 	}{
-						// 		{
-						// 			Commit: struct {
-						// 				StatusCheckRollup struct {
-						// 					State graphql.String
-						// 				}
-						// 			}{
-						// 				StatusCheckRollup: struct {
-						// 					State graphql.String
-						// 				}{
-						// 					State: "FAILURE",
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
+						Commits: data.LastCommitStatus{
+							Nodes: []struct {
+								Commit struct {
+									StatusCheckRollup struct {
+										State graphql.String
+									}
+								}
+							}{
+								{
+									Commit: struct {
+										StatusCheckRollup struct {
+											State graphql.String
+										}
+									}{
+										StatusCheckRollup: struct {
+											State graphql.String
+										}{
+											State: "FAILURE",
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},

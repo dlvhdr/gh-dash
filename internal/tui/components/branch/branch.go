@@ -27,7 +27,25 @@ func (b *Branch) getTextStyle() lipgloss.Style {
 }
 
 func (b *Branch) renderReviewStatus() string {
-	return "-"
+	if b.PR == nil {
+		return "-"
+	}
+	reviewCellStyle := b.getTextStyle()
+	if b.PR.ReviewDecision == "APPROVED" {
+		reviewCellStyle = reviewCellStyle.Foreground(
+			b.Ctx.Theme.SuccessText,
+		)
+		return reviewCellStyle.Render("󰄬")
+	}
+
+	if b.PR.ReviewDecision == "CHANGES_REQUESTED" {
+		reviewCellStyle = reviewCellStyle.Foreground(
+			b.Ctx.Theme.ErrorText,
+		)
+		return reviewCellStyle.Render("")
+	}
+
+	return reviewCellStyle.Render(b.Ctx.Styles.Common.WaitingGlyph)
 }
 
 func (b *Branch) renderState() string {
@@ -56,7 +74,12 @@ func (b *Branch) renderState() string {
 }
 
 func (b *Branch) GetStatusChecksRollup() string {
-	return "-"
+	commits := b.PR.Commits.Nodes
+	if len(commits) == 0 {
+		return "UNKNOWN"
+	}
+
+	return string(commits[0].Commit.StatusCheckRollup.State)
 }
 
 func (b *Branch) renderCiStatus() string {
