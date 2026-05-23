@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
@@ -29,6 +30,7 @@ type Task struct {
 }
 
 type ProgramContext struct {
+	Repo                 repository.Repository
 	RepoPath             string
 	RepoUrl              string
 	User                 string

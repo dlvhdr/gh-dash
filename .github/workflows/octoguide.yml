@@ -6,13 +6,26 @@ jobs:
       - uses: OctoGuide/bot@0.21.10
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          include-associations: "FIRST_TIMER,FIRST_TIME_CONTRIBUTOR,CONTRIBUTOR,COLLABORATOR,MEMBER,OWNER"
+          include-associations: "FIRST_TIMER,FIRST_TIME_CONTRIBUTOR,CONTRIBUTOR,COLLABORATOR,MEMBER"
           config: none
           rules: |
             {
               "pr-title-conventional": true,
               "pr-task-completion": true,
               "pr-linked-issue": true
+            }
+  octoguide-owner:
+    if: ${{ github.actor == 'dlvhdr' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: OctoGuide/bot@0.21.10
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          include-associations: "OWNER"
+          config: none
+          rules: |
+            {
+              "pr-title-conventional": true,
             }
 
 name: OctoGuide

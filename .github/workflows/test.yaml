@@ -1,4 +1,4 @@
-name: build and test
+name: test
 
 on:
   pull_request:
@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build and test
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,13 +21,11 @@ jobs:
           go-version-file: ./go.mod
       - name: Download Go modules
         run: go mod download
-      - name: Build
-        run: go build ./...
       - name: Test
         run: go test ./...
 
   dependabot:
-    needs: [build-and-test]
+    needs: [test]
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

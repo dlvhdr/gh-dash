@@ -17,6 +17,7 @@ import (
 	log "charm.land/log/v2"
 	"github.com/atotto/clipboard"
 	"github.com/cli/go-gh/v2/pkg/browser"
+	"github.com/cli/go-gh/v2/pkg/repository"
 	zone "github.com/lrstanley/bubblezone/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -160,8 +161,18 @@ func (m *Model) initScreen() tea.Msg {
 	return initMsg{Config: cfg, RepoUrl: url}
 }
 
+type repoDeterminedMsg struct {
+	repo repository.Repository
+	err  error
+}
+
+func (m *Model) determineRepo() tea.Msg {
+	repo, err := repository.Current()
+	return repoDeterminedMsg{repo: repo, err: err}
+}
+
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, m.initScreen)
+	return tea.Batch(tea.RequestBackgroundColor, m.initScreen, m.determineRepo)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -676,6 +687,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.tabs.SetCurrSectionId(1)
 		cmds = append(cmds, fetchSectionsCmds, m.tabs.Init(), fetchUser,
 			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
+
+	case repoDeterminedMsg:
+		m.ctx.Repo = msg.repo
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
