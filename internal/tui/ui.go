@@ -303,10 +303,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.Redraw):
-		// TODO: this doesn't exist in bubbletea v2
-		// can't find a way to just ask to send bubbletea's internal repaintMsg{},
-		// so this seems like the lightest-weight alternative
-		// return m, tea.Batch(tea.ExitAltScreen, tea.EnterAltScreen)
+			// with bubbletea v2's declarative approach, if we just clear the screen then tea will redraw for us
+			return m, tea.ClearScreen
 
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
