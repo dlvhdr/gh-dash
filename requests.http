@@ -112,3 +112,24 @@ query Sponsors(){
     }
   }
 }
+
+
+
+### PR Reviewers Count
+# @graphql
+# @operation PRReviewersCount
+POST {{graphql.endpoint}}
+Accept: application/json
+
+query PRReviewersCount($url: URI!){
+  resource(url: $url) {
+    ... on PullRequest {
+      reviews {
+        totalCount
+      }
+    }
+  }
+}
+
+# @variables
+{ "url": "https://github.com/port-labs/Port/pull/12942" }

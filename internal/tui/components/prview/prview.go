@@ -495,7 +495,7 @@ func (m *Model) renderAuthor() string {
 func (m *Model) renderSummary() string {
 	width := m.getIndentedContentWidth()
 	// Strip HTML comments from body and cleanup body.
-	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Primary.Body, "")
+	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Enriched.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
 	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Summary")

@@ -22,7 +22,6 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.3
 	github.com/lrstanley/bubblezone/v2 v2.0.0
-	github.com/maypok86/otter/v2 v2.3.0
 	github.com/sahilm/fuzzy v0.1.1
 	github.com/shurcooL/githubv4 v0.0.0-20260209031235-2402fdf4a9ed
 	github.com/spf13/cobra v1.10.2
