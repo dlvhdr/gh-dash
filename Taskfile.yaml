@@ -38,17 +38,59 @@ tasks:
 
   debug:
     desc: Run in debug mode. Run `task logs` to watch the logs.
+    env:
+      LOG_LEVEL: debug
+      DEBUG: true
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
-      - LOG_LEVEL=debug DEBUG=true go run . --debug {{.CLI_ARGS}}
+      - go run . --debug {{.CLI_ARGS}}
     interactive: true
 
   debug:warn:
-    desc: Run in debug mode, only log warning. Run `task logs` to watch the logs.
+    desc: Run in debug mode, only log above warning level. Run `task logs` to watch the logs.
+    env:
+      LOG_LEVEL: warn
+      DEBUG: true
     cmds:
       - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
-      - LOG_LEVEL=warn DEBUG=true go run . --debug {{.CLI_ARGS}}
+      - go run . --debug {{.CLI_ARGS}}
     interactive: true
+
+  debug:info:
+    desc: Run in debug mode, only log above info level. Run `task logs` to watch the logs.
+    env:
+      LOG_LEVEL: info
+      DEBUG: true
+    cmds:
+      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
+      - go run . --debug {{.CLI_ARGS}}
+    interactive: true
+
+  profile:
+    desc: Run with profiling enabled
+    env:
+      DASH_PROFILE: true
+      LOG_LEVEL: debug
+      DEBUG: true
+    cmds:
+      - printf "~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n~\n―――――――――――――――――――――――――――――――――――――――――――――――\n" > ./debug.log
+      - go run . --debug {{.CLI_ARGS}}
+    interactive: true
+
+  profile:cpu:
+    desc: 10s CPU profile
+    cmds:
+      - go tool pprof -http :6061 'http://localhost:6060/debug/pprof/profile?seconds=10'
+
+  profile:heap:
+    desc: Heap profile
+    cmds:
+      - go tool pprof -http :6061 'http://localhost:6060/debug/pprof/heap'
+
+  profile:allocs:
+    desc: Allocations profile
+    cmds:
+      - go tool pprof -http :6061 'http://localhost:6060/debug/pprof/allocs'
 
   dlv:
     desc: Debug with dlv

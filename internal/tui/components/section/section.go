@@ -71,8 +71,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
 	}
-	repo, err := repository.Current()
-	if err != nil {
+	if ctx.Repo == (repository.Repository{}) {
 		return searchValue
 	}
 	for token := range strings.FieldsSeq(searchValue) {
@@ -80,7 +79,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 			return searchValue
 		}
 	}
-	return fmt.Sprintf("repo:%s/%s %s", repo.Owner, repo.Name, searchValue)
+	return fmt.Sprintf("repo:%s/%s %s", ctx.Repo.Owner, ctx.Repo.Name, searchValue)
 }
 
 func NewModel(
@@ -89,9 +88,8 @@ func NewModel(
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
 	isFilteredByCurrentRemote := false
-	repo, err := repository.Current()
-	if err == nil {
-		currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	if ctx.Repo != (repository.Repository{}) {
+		currentCloneFilter := fmt.Sprintf("repo:%s/%s", ctx.Repo.Owner, ctx.Repo.Name)
 		for token := range strings.FieldsSeq(filters) {
 			if token == currentCloneFilter {
 				isFilteredByCurrentRemote = true
@@ -223,11 +221,10 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 
 func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
 	filters := m.SearchValue
-	repo, err := repository.Current()
-	if err != nil {
+	if m.Ctx.Repo == (repository.Repository{}) {
 		return false
 	}
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
 	for token := range strings.FieldsSeq(filters) {
 		if token == currentCloneFilter {
 			return true
@@ -242,12 +239,11 @@ func (m *BaseModel) SyncSmartFilterWithSearchValue() {
 
 func (m *BaseModel) GetSearchValue() string {
 	searchValue := m.enrichSearchWithTemplateVars()
-	repo, err := repository.Current()
-	if err != nil {
+	if m.Ctx.Repo == (repository.Repository{}) {
 		return searchValue
 	}
 
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if token != currentCloneFilter {
