@@ -15,7 +15,7 @@ jobs:
               "pr-linked-issue": true
             }
   octoguide-owner:
-    if: ${{ github.actor == 'dlvhdr' }}
+    if: github.actor == 'dlvhdr'
     runs-on: ubuntu-latest
     steps:
       - uses: OctoGuide/bot@0.21.10
