@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"runtime/debug"
@@ -810,7 +811,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if zone.Get("donate").InBounds(msg) {
 			log.Info("Donate clicked", "msg", msg)
 			openCmd := func() tea.Msg {
-				b := browser.New("", os.Stdout, os.Stdin)
+				// Discard the launcher's stdout/stderr so any noise (e.g.
+				// GTK / GVFS warnings from xdg-open / gnome-open) does not
+				// leak into the TUI's terminal and corrupt the display.
+				// See #829, #584, #679.
+				b := browser.New("", io.Discard, io.Discard)
 				err := b.Browse("https://github.com/sponsors/dlvhdr")
 				if err != nil {
 					return constants.ErrMsg{Err: err}
