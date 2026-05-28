@@ -42,6 +42,8 @@ type ProgramContext struct {
 	DynamicPreviewHeight int    // calculated preview height for bottom mode
 	PreviewPosition      string // resolved "right" or "bottom"
 	SidebarOpen          bool
+	HasDarkBackground    bool
+	BackgroundSource     string
 	Config               *config.Config
 	ConfigFlag           string
 	Version              string

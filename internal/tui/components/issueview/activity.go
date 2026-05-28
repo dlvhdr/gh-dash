@@ -19,7 +19,7 @@ type RenderedActivity struct {
 
 func (m *Model) renderActivity() string {
 	width := m.getIndentedContentWidth() - 2
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	markdownRenderer := markdown.GetMarkdownRenderer(width, m.ctx)
 
 	var activity []RenderedActivity
 	for _, comment := range m.issue.Data.Comments.Nodes {

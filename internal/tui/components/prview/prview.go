@@ -514,7 +514,7 @@ func (m *Model) renderSummary() string {
 		)
 	}
 
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	markdownRenderer := markdown.GetMarkdownRenderer(width, m.ctx)
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""

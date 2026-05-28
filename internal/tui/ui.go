@@ -14,6 +14,7 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	log "charm.land/log/v2"
 	"github.com/atotto/clipboard"
 	"github.com/cli/go-gh/v2/pkg/browser"
@@ -91,7 +92,9 @@ func NewModel(location config.Location) Model {
 			m.tasks[task.Id] = task
 			return m.taskSpinner.Tick
 		},
-		Theme: *theme.DefaultTheme,
+		HasDarkBackground: true,
+		BackgroundSource:  "default",
+		Theme:             *theme.DefaultTheme,
 	}
 
 	m.footer = footer.NewModel(m.ctx)
@@ -685,6 +688,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
 		m.tabs.SetCurrSectionId(1)
+
+		if m.ctx.BackgroundSource != "bubbletea" {
+			log.Debugf("Setting markdownStyle in initMsg")
+			m.ctx.HasDarkBackground = compat.HasDarkBackground
+			m.ctx.BackgroundSource = "compat"
+			log.Debugf(
+				"HasDarkBackground: %t, BackgroundSource: %s",
+				m.ctx.HasDarkBackground,
+				m.ctx.BackgroundSource,
+			)
+			markdown.InitializeMarkdownStyle(m.ctx)
+		}
+
 		cmds = append(cmds, fetchSectionsCmds, m.tabs.Init(), fetchUser,
 			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
 
@@ -843,7 +859,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.onWindowSizeChanged(msg)
 
 	case tea.BackgroundColorMsg:
-		markdown.InitializeMarkdownStyle(msg.IsDark())
+		log.Debugf("Setting markdownStyle in BackgroundColorMsg")
+		m.ctx.HasDarkBackground = msg.IsDark()
+		m.ctx.BackgroundSource = "bubbletea"
+		log.Debugf(
+			"HasDarkBackground: %t, BackgroundSource: %s",
+			m.ctx.HasDarkBackground,
+			m.ctx.BackgroundSource,
+		)
+		markdown.InitializeMarkdownStyle(m.ctx)
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
