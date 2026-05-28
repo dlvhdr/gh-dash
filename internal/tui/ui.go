@@ -683,7 +683,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			log.Debugf("Setting markdownStyle in initMsg")
 			m.ctx.HasDarkBackground = compat.HasDarkBackground
 			m.ctx.BackgroundSource = "compat"
-			log.Debugf("HasDarkBackground: %t, BackgroundSource: %s", m.ctx.HasDarkBackground, m.ctx.BackgroundSource)
+			log.Debugf(
+				"HasDarkBackground: %t, BackgroundSource: %s",
+				m.ctx.HasDarkBackground,
+				m.ctx.BackgroundSource,
+			)
 			markdown.InitializeMarkdownStyle(m.ctx)
 		}
 
@@ -841,7 +845,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		log.Debugf("Setting markdownStyle in BackgroundColorMsg")
 		m.ctx.HasDarkBackground = msg.IsDark()
 		m.ctx.BackgroundSource = "bubbletea"
-		log.Debugf("HasDarkBackground: %t, BackgroundSource: %s", m.ctx.HasDarkBackground, m.ctx.BackgroundSource)
+		log.Debugf(
+			"HasDarkBackground: %t, BackgroundSource: %s",
+			m.ctx.HasDarkBackground,
+			m.ctx.BackgroundSource,
+		)
 		markdown.InitializeMarkdownStyle(m.ctx)
 
 	case updateFooterMsg:
