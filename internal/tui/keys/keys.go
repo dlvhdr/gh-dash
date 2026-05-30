@@ -8,6 +8,7 @@ import (
 	log "charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 )
 
 // NotificationSubjectType indicates what type of content is being viewed in the notifications view
@@ -308,6 +309,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 			key = &Keys.CopyUrl
 		case "copyNumber":
 			key = &Keys.CopyNumber
+		case "acceptSelection":
+			key = &fuzzyselect.SelectKey
 		case "help":
 			key = &Keys.Help
 		case "quit":

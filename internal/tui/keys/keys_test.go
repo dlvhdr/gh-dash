@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/key"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 )
 
 func TestSetNotificationSubject(t *testing.T) {
@@ -196,6 +197,27 @@ func TestRebindNotificationKeys_Builtin(t *testing.T) {
 	keys := NotificationKeys.MarkAsDone.Keys()
 	if len(keys) != 1 || keys[0] != "X" {
 		t.Errorf("expected key to be rebound to X, got %v", keys)
+	}
+}
+
+func TestRebindUniversalKeys_AcceptSelectionBuiltin(t *testing.T) {
+	origKeys := fuzzyselect.SelectKey.Keys()
+	origHelp := fuzzyselect.SelectKey.Help()
+	defer func() {
+		fuzzyselect.SelectKey.SetKeys(origKeys...)
+		fuzzyselect.SelectKey.SetHelp(origHelp.Key, origHelp.Desc)
+	}()
+
+	err := rebindUniversal([]config.Keybinding{
+		{Builtin: "acceptSelection", Key: "tab"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := fuzzyselect.SelectKey.Keys()
+	if len(keys) != 1 || keys[0] != "tab" {
+		t.Errorf("expected acceptSelection to bind to tab, got %v", keys)
 	}
 }
 

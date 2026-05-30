@@ -60,7 +60,7 @@ properties:
       details: |
         Specifies the builtin command bound to the the [sref:`key`] for an entry.
 
-        For global actions, the available builtin commands are: `up`, `down`, `firstLine`, `lastLine`, `togglePreview`, `openGithub`, `refresh`, `refreshAll`, `pageDown`, `pageUp`, `nextSection`, `prevSection`, `search`, `copyurl`, `copyNumber`, `help`, `quit`.
+        For global actions, the available builtin commands are: `up`, `down`, `firstLine`, `lastLine`, `togglePreview`, `openGithub`, `refresh`, `refreshAll`, `pageDown`, `pageUp`, `nextSection`, `prevSection`, `search`, `copyurl`, `copyNumber`, `acceptSelection`, `help`, `quit`.
 
         For PRs, the available builtin commands are: `prevSidebarTab`, `nextSidebarTab`, `approve`, `assign`, `unassign`, `comment`, `diff`, `checkout`, `close`, `ready`, `reopen`, `merge`, `update`, `watchChecks`, `viewIssues`, `summaryViewMore`.
 
