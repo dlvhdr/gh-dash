@@ -13,8 +13,8 @@ There are 3 types of keybindings: `universal`, `prs` and `issues`.
 
 ## Key Values
 
-The `key` value must match the key string emitted by [Bubble Tea][bubbletea-keys]. `dash` does
-not translate alternate key names or terminal labels before matching a keybinding.
+The `key` value must match one of the [Ultraviolet key strings][ultraviolet-key-strings].
+`dash` does not translate alternate key names or terminal labels before matching a keybinding.
 
 For example, Page Down is emitted as `pgdown`, not `pgdn`:
 
@@ -219,4 +219,4 @@ The following built-in notifications commands can be overridden with custom keyb
 
 See [notification keys](../../getting-started/keybindings/selected-notification/) for more details.
 
-[bubbletea-keys]: https://github.com/charmbracelet/bubbletea/blob/main/key.go
+[ultraviolet-key-strings]: https://github.com/charmbracelet/ultraviolet/blob/main/key.go#L612
