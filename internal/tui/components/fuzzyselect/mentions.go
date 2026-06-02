@@ -61,6 +61,15 @@ func (src *UserMentionSource) ExtractContext(input string, cursorPos tea.Positio
 		}
 	}
 
+	// When the cursor sits right after a word boundary (e.g. typing a
+	// mention immediately followed by `: ""`), the @-symbol adjustment can
+	// push userStart past userEnd, which would slice runes[userStart:userEnd]
+	// with start > end and panic. There is no mention under the cursor in
+	// that case, so report an empty context instead.
+	if userStart > userEnd {
+		return Context{}
+	}
+
 	return Context{
 		Start:   tea.Position{X: userStart, Y: cursorPos.Y},
 		End:     tea.Position{X: userEnd, Y: cursorPos.Y},
