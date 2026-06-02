@@ -968,9 +968,10 @@ func (m *Model) fetchCommentCountsForNotifications(notifications []notificationr
 		case "PullRequest":
 			// Capture variables for closure
 			id, url, readAt, commentUrl := notifId, subjectUrl, lastReadAt, latestCommentUrl
+			limits := data.PullRequestLimitsFromConfig(m.Ctx.Config.Defaults.Preview)
 			cmds = append(cmds, func() tea.Msg {
 				log.Debug("Fetching PR for comment count", "url", url)
-				pr, err := data.FetchPullRequest(url)
+				pr, err := data.FetchPullRequest(url, limits)
 				if err != nil {
 					log.Error("Failed to fetch PR for comment count", "url", url, "err", err)
 					return nil

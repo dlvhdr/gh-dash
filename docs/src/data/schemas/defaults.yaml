@@ -170,6 +170,24 @@ properties:
           - bottom
           - auto
         default: "auto"
+      filesLimit:
+        title: Changed Files Fetch Limit
+        description: Specifies how many changed files to fetch for a PR's preview pane.
+        schematize:
+          weight: 5
+          details: |
+            Specifies how many changed files are fetched and listed in the "Files changed"
+            section of a PR's preview pane. PRs touching more files than this limit only
+            display the first `filesLimit` files, while the header still shows the real total.
+
+            The value must be between 1 and 100, as GitHub's API returns at most 100 files
+            per request.
+
+            By default, the dashboard fetches 20 changed files.
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
   refetchIntervalMinutes:
     title: Refetch Interval in Minutes
     description: Specifies how often to refetch PRs and Issues in minutes.

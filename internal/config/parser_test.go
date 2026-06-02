@@ -145,6 +145,59 @@ func TestParser(t *testing.T) {
 		require.Equal(t, NotificationsView, parsed.Defaults.View)
 	})
 
+	t.Run("Should default preview filesLimit when unset", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "config")
+		testutils.AssertNoError(t, err)
+		defer os.RemoveAll(dir)
+
+		configPath := path.Join(dir, "config.yml")
+		err = os.WriteFile(configPath, []byte("defaults:\n  view: prs\n"), 0o600)
+		testutils.AssertNoError(t, err)
+
+		parsed, err := ParseConfig(Location{
+			ConfigFlag:       configPath,
+			SkipGlobalConfig: true,
+		})
+
+		testutils.AssertNoError(t, err)
+		require.Equal(t, 20, parsed.Defaults.Preview.FilesLimit)
+	})
+
+	t.Run("Should accept a custom preview filesLimit", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "config")
+		testutils.AssertNoError(t, err)
+		defer os.RemoveAll(dir)
+
+		configPath := path.Join(dir, "config.yml")
+		err = os.WriteFile(configPath, []byte("defaults:\n  preview:\n    filesLimit: 50\n"), 0o600)
+		testutils.AssertNoError(t, err)
+
+		parsed, err := ParseConfig(Location{
+			ConfigFlag:       configPath,
+			SkipGlobalConfig: true,
+		})
+
+		testutils.AssertNoError(t, err)
+		require.Equal(t, 50, parsed.Defaults.Preview.FilesLimit)
+	})
+
+	t.Run("Should reject a preview filesLimit above 100", func(t *testing.T) {
+		dir, err := os.MkdirTemp("", "config")
+		testutils.AssertNoError(t, err)
+		defer os.RemoveAll(dir)
+
+		configPath := path.Join(dir, "config.yml")
+		err = os.WriteFile(configPath, []byte("defaults:\n  preview:\n    filesLimit: 101\n"), 0o600)
+		testutils.AssertNoError(t, err)
+
+		_, err = ParseConfig(Location{
+			ConfigFlag:       configPath,
+			SkipGlobalConfig: true,
+		})
+
+		require.Error(t, err)
+	})
+
 	t.Run("Should merge global config with passed config", func(t *testing.T) {
 		clearEnv := setXDGConfigHomeEnvVar(t, "testdata")
 		defer clearEnv()

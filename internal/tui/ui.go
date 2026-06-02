@@ -1452,7 +1452,10 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 				}
 			},
 			func() tea.Msg {
-				pr, err := data.FetchPullRequest(subjectUrl)
+				pr, err := data.FetchPullRequest(
+					subjectUrl,
+					data.PullRequestLimitsFromConfig(m.ctx.Config.Defaults.Preview),
+				)
 				return notificationPRFetchedMsg{
 					NotificationId:   notifId,
 					PR:               pr,

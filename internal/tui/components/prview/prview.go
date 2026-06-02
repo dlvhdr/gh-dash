@@ -573,8 +573,9 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 		return nil
 	}
 	url := m.pr.Data.Primary.Url
+	limits := data.PullRequestLimitsFromConfig(m.ctx.Config.Defaults.Preview)
 	return func() tea.Msg {
-		d, err := data.FetchPullRequest(url)
+		d, err := data.FetchPullRequest(url, limits)
 		return EnrichedPrMsg{
 			Id:   m.sectionId,
 			Type: prssection.SectionType,

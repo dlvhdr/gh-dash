@@ -110,10 +110,11 @@ type NotificationsSectionConfig struct {
 }
 
 type PreviewConfig struct {
-	Open     bool
-	Width    float64 `yaml:"width"              validate:"gt=0"`
-	Height   float64 `yaml:"height,omitempty"`
-	Position string  `yaml:"position,omitempty"`
+	Open       bool
+	Width      float64 `yaml:"width"                validate:"gt=0"`
+	Height     float64 `yaml:"height,omitempty"`
+	Position   string  `yaml:"position,omitempty"`
+	FilesLimit int     `yaml:"filesLimit,omitempty" validate:"omitempty,gte=1,lte=100"`
 }
 
 type NullableBool struct {
@@ -347,10 +348,11 @@ func (parser ConfigParser) getDefaultConfig() Config {
 	return Config{
 		Defaults: Defaults{
 			Preview: PreviewConfig{
-				Open:     true,
-				Width:    0.45,
-				Height:   0.60,
-				Position: "auto",
+				Open:       true,
+				Width:      0.45,
+				Height:     0.60,
+				Position:   "auto",
+				FilesLimit: 20,
 			},
 			PrsLimit:               20,
 			PrApproveComment:       "LGTM",

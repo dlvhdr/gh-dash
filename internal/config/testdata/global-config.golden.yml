@@ -45,6 +45,7 @@ defaults:
     width: 60
     height: 0.6
     position: auto
+    filesLimit: 20
   prsLimit: 5
   prApproveComment: LGTM
   issuesLimit: 5

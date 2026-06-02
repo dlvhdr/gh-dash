@@ -61,7 +61,20 @@ type EnrichedPullRequestData struct {
 	ReviewRequests     ReviewRequests             `graphql:"reviewRequests(last: 100)"`
 	Reviews            Reviews                    `graphql:"reviews(last: 100)"`
 	SuggestedReviewers []SuggestedReviewer
-	Files              ChangedFiles `graphql:"files(first: 20)"`
+	Files              ChangedFiles `graphql:"files(first: $filesLimit)"`
+}
+
+// PullRequestLimits holds the number of nodes fetched for each connection of a
+// single pull request. Values come from the user's config (defaults.preview).
+type PullRequestLimits struct {
+	Files int
+}
+
+// PullRequestLimitsFromConfig maps the preview config to PullRequestLimits.
+func PullRequestLimitsFromConfig(preview config.PreviewConfig) PullRequestLimits {
+	return PullRequestLimits{
+		Files: preview.FilesLimit,
+	}
 }
 
 type PullRequestData struct {
@@ -570,7 +583,7 @@ func FetchPullRequests(query string, limit int, pageInfo *PageInfo) (PullRequest
 	}, nil
 }
 
-func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
+func FetchPullRequest(prUrl string, limits PullRequestLimits) (EnrichedPullRequestData, error) {
 	var err error
 	if client == nil {
 		client, err = gh.DefaultGraphQLClient()
@@ -589,7 +602,8 @@ func FetchPullRequest(prUrl string) (EnrichedPullRequestData, error) {
 		return EnrichedPullRequestData{}, err
 	}
 	variables := map[string]any{
-		"url": githubv4.URI{URL: parsedUrl},
+		"url":        githubv4.URI{URL: parsedUrl},
+		"filesLimit": graphql.Int(limits.Files),
 	}
 	log.Debug("Fetching PR", "url", prUrl)
 	err = client.Query("FetchPullRequest", &queryResult, variables)
