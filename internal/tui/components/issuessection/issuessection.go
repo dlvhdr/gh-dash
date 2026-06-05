@@ -87,7 +87,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			case "enter":
 				input := m.PromptConfirmationBox.Value()
 				action := m.GetPromptConfirmationAction()
-				if input == "" || input == "Y" || input == "y" {
+				if input == "Y" || input == "y" {
 					issue := m.GetCurrRow()
 					sid := tasks.SectionIdentifier{Id: m.Id, Type: SectionType}
 					switch action {
