@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=https://gh-dash.dev/schema.json
+keybindings:
+  universal:
+    - key: c
+      command: echo grandbase
