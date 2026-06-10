@@ -15,6 +15,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
 
 type Mode int
@@ -217,7 +218,7 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		}
 
 		switch {
-		case key.Matches(msg, fuzzyselect.RefreshSuggestionsKey):
+		case key.Matches(msg, keys.CmpKeys.RefreshSuggestionsKey):
 			c.clearRelevantCache()
 			cmds = append(cmds, c.loadSuggestions(true))
 		}

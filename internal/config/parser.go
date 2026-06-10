@@ -231,6 +231,7 @@ type Keybindings struct {
 	Prs           []Keybinding `yaml:"prs,omitempty"`
 	Branches      []Keybinding `yaml:"branches,omitempty"`
 	Notifications []Keybinding `yaml:"notifications,omitempty"`
+	Cmp           []Keybinding `yaml:"completions,omitempty"`
 }
 
 type Pager struct {
@@ -650,11 +651,13 @@ func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath strin
 			universalKeybinds := mergeKeybindings(overrides, dest, "universal")
 			prsKeybinds := mergeKeybindings(overrides, dest, "prs")
 			issuesKeybinds := mergeKeybindings(overrides, dest, "issues")
+			completionsKeybinds := mergeKeybindings(overrides, dest, "completions")
 
 			maps.Merge(overrides, dest)
 			dest["keybindings"].(map[string]any)["universal"] = universalKeybinds
 			dest["keybindings"].(map[string]any)["prs"] = prsKeybinds
 			dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
+			dest["keybindings"].(map[string]any)["completions"] = completionsKeybinds
 			dest["prSections"] = overridesCopy["prSections"]
 			dest["issuesSections"] = overridesCopy["issuesSections"]
 			dest["notificationsSections"] = overridesCopy["notificationsSections"]

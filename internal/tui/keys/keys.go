@@ -212,7 +212,7 @@ var Keys = &KeyMap{
 }
 
 // Rebind will update our saved keybindings from configuration values.
-func Rebind(universal, issueKeys, prKeys, branchKeys, notificationKeys []config.Keybinding) error {
+func Rebind(universal, issueKeys, prKeys, branchKeys, notificationKeys, cmpKeys []config.Keybinding) error {
 	err := rebindUniversal(universal)
 	if err != nil {
 		return err
@@ -233,6 +233,11 @@ func Rebind(universal, issueKeys, prKeys, branchKeys, notificationKeys []config.
 		return err
 	}
 
+	err = rebindCmpKeys(cmpKeys)
+	if err != nil {
+		return err
+	}
+
 	return rebindNotificationKeys(notificationKeys)
 }
 
@@ -243,6 +248,7 @@ var (
 	CustomIssueBindings        []key.Binding
 	CustomBranchBindings       []key.Binding
 	CustomNotificationBindings []key.Binding
+	CustomCmpBindings          []key.Binding
 )
 
 func rebindUniversal(universal []config.Keybinding) error {
