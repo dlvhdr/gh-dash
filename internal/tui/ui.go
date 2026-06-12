@@ -156,6 +156,7 @@ func (m *Model) initScreen() tea.Msg {
 		cfg.Keybindings.Prs,
 		cfg.Keybindings.Branches,
 		cfg.Keybindings.Notifications,
+		cfg.Keybindings.Cmp,
 	)
 	if err != nil {
 		showError(err)
