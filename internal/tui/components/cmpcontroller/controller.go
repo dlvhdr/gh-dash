@@ -220,7 +220,7 @@ func (c *Controller) Update(msg tea.Msg) (tea.Cmd, bool) {
 		switch {
 		case key.Matches(msg, keys.CmpKeys.RefreshSuggestionsKey):
 			c.clearRelevantCache()
-			cmds = append(cmds, c.loadSuggestions(true))
+			return c.loadSuggestions(true), true
 		}
 
 		switch msg.String() {
