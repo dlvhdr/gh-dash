@@ -12,7 +12,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
-	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/go-sprout/sprout"
 	timeregistry "github.com/go-sprout/sprout/registry/time"
 
@@ -71,7 +70,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
 	}
-	if ctx.Repo == (repository.Repository{}) {
+	if ctx.GHRepo == nil {
 		return searchValue
 	}
 	for token := range strings.FieldsSeq(searchValue) {
@@ -79,7 +78,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 			return searchValue
 		}
 	}
-	return fmt.Sprintf("repo:%s/%s %s", ctx.Repo.Owner, ctx.Repo.Name, searchValue)
+	return fmt.Sprintf("repo:%s/%s %s", ctx.GHRepo.Owner, ctx.GHRepo.Name, searchValue)
 }
 
 func NewModel(
@@ -88,8 +87,8 @@ func NewModel(
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
 	isFilteredByCurrentRemote := false
-	if ctx.Repo != (repository.Repository{}) {
-		currentCloneFilter := fmt.Sprintf("repo:%s/%s", ctx.Repo.Owner, ctx.Repo.Name)
+	if ctx.GHRepo != nil {
+		currentCloneFilter := fmt.Sprintf("repo:%s/%s", ctx.GHRepo.Owner, ctx.GHRepo.Name)
 		for token := range strings.FieldsSeq(filters) {
 			if token == currentCloneFilter {
 				isFilteredByCurrentRemote = true
@@ -221,10 +220,10 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 
 func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
 	filters := m.SearchValue
-	if m.Ctx.Repo == (repository.Repository{}) {
+	if m.Ctx.GHRepo == nil {
 		return false
 	}
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.GHRepo.Owner, m.Ctx.GHRepo.Name)
 	for token := range strings.FieldsSeq(filters) {
 		if token == currentCloneFilter {
 			return true
@@ -239,11 +238,11 @@ func (m *BaseModel) SyncSmartFilterWithSearchValue() {
 
 func (m *BaseModel) GetSearchValue() string {
 	searchValue := m.enrichSearchWithTemplateVars()
-	if m.Ctx.Repo == (repository.Repository{}) {
+	if m.Ctx.GHRepo == nil {
 		return searchValue
 	}
 
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.GHRepo.Owner, m.Ctx.GHRepo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if token != currentCloneFilter {

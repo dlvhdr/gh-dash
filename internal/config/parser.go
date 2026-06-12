@@ -750,7 +750,7 @@ func initParser() ConfigParser {
 	validate = validator.New()
 
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.Split(fld.Tag.Get("yaml"), ",")[0]
+		name, _, _ := strings.Cut(fld.Tag.Get("yaml"), ",")
 		if name == "-" {
 			return ""
 		}

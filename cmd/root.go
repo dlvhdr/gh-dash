@@ -11,15 +11,18 @@ import (
 	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
+	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/charmbracelet/fang"
+	"github.com/cli/go-gh/v2/pkg/repository"
 	zone "github.com/lrstanley/bubblezone/v2"
 	"github.com/spf13/cobra"
 
+	gitm "github.com/aymanbagabas/git-module"
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui"
@@ -111,7 +114,11 @@ func setDebugLogLevel() {
 	}
 }
 
-func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
+func createModel(
+	location config.Location,
+	repos tui.Repositories,
+	debug bool,
+) (tui.Model, *os.File) {
 	var loggerFile *os.File
 
 	if debug {
@@ -136,7 +143,7 @@ func createModel(location config.Location, debug bool) (tui.Model, *os.File) {
 		log.SetLevel(log.FatalLevel)
 	}
 
-	return tui.NewModel(location), loggerFile
+	return tui.NewModel(location, repos), loggerFile
 }
 
 func buildVersion(version, commit, date, builtBy string) string {
@@ -211,18 +218,33 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
-		var repo string
-		repos := config.IsFeatureEnabled(config.FF_REPO_VIEW)
-		if repos && len(args) > 0 {
-			repo = args[0]
+		var gitRepoPath string
+		gitRepo, ghRepo, err := getCurrentGitAndGitHubRepos()
+		if err != nil {
+			log.Error("error while determining git and github repos", "err", err)
 		}
 
-		if repo == "" {
-			r, err := git.GetRepoInPwd()
-			if err == nil && r != nil {
-				repo = r.Path()
-			}
+		if gitRepo != nil {
+			log.Info("found git repo at path", "path", gitRepo.Path())
+			gitRepoPath = gitRepo.Path()
+		} else {
+			log.Warn("did not find git repo at current path")
 		}
+
+		if ghRepo != (repository.Repository{}) {
+			log.Info(
+				"found github repo at current path",
+				"host",
+				ghRepo.Host,
+				"owner",
+				ghRepo.Owner,
+				"name",
+				ghRepo.Name,
+			)
+		} else {
+			log.Warn("did not find github repo at current path")
+		}
+
 		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
 			log.Fatal("Cannot parse debug flag", err)
@@ -230,7 +252,11 @@ func init() {
 
 		zone.NewGlobal()
 
-		model, logger := createModel(config.Location{RepoPath: repo, ConfigFlag: cfgFlag}, debug)
+		model, logger := createModel(
+			config.Location{RepoPath: gitRepoPath, ConfigFlag: cfgFlag},
+			tui.Repositories{GitRepo: gitRepo, GHRepo: &ghRepo},
+			debug,
+		)
 		if logger != nil {
 			defer logger.Close()
 		}
@@ -254,4 +280,35 @@ func init() {
 			log.Fatal("fatal error during run", "err", err)
 		}
 	}
+}
+
+func getCurrentGitAndGitHubRepos() (*gitm.Repository, repository.Repository, error) {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var gitRepo *gitm.Repository
+	var ghRepo repository.Repository
+	var gitErr, ghErr error
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		gitRepo, gitErr = git.GetRepoInPwd()
+		if gitErr != nil {
+			cancel() // Abort the context, so the other function can abort early
+		}
+	})
+
+	wg.Go(func() {
+		ghRepo, ghErr = repository.Current()
+		if ghErr != nil {
+			cancel() // Abort the context, so the other function can abort early
+		}
+	})
+
+	wg.Wait()
+
+	if gitErr == context.Canceled || gitErr == nil {
+		return gitRepo, ghRepo, ghErr
+	}
+	return gitRepo, ghRepo, gitErr
 }
