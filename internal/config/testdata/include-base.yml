@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://gh-dash.dev/schema.json
+include:
+  - include-grandbase.yml
+prSections:
+  - title: Base PRs
+    filters: is:open author:@me repo:dlvhdr/gh-dash
+defaults:
+  prsLimit: 42
+  view: prs
+keybindings:
+  universal:
+    - key: a
+      command: echo base
