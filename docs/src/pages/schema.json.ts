@@ -82,6 +82,34 @@ export function GET() {
             },
           },
         },
+        worktreePaths: {
+          title: "Worktree Path Map",
+          description:
+            "Key-value pairs that match repositories to parent directories for linked worktree checkouts. Requires repoPaths to also be configured.",
+          type: "object",
+          examples: [
+            {
+              "torvalds/*": "~/worktrees/torvalds/*",
+              ":owner/:repo": "~/worktrees/:owner/:repo",
+            },
+          ],
+          patternProperties: {
+            "\\*$": {
+              type: "string",
+              pattern: "\\*$",
+              title: "With a Wildcard",
+              description:
+                "If the repo name (key) includes an asterisk, the path (value) must too.",
+            },
+            "^[^\\*]+$": {
+              type: "string",
+              pattern: "^[^\\*]+$",
+              title: "Without a Wildcard",
+              description:
+                "If the repo name (key) doesn't include an asterisk, the path (value) can't either.",
+            },
+          },
+        },
         keybindings: {
           title: "Keybindings",
           description: "Define keybindings to run shell commands.",

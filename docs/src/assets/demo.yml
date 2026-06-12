@@ -25,6 +25,7 @@ defaults:
 keybindings:
   prs: []
 repoPaths: {}
+worktreePaths: {}
 pager:
   diff: diffnav
 theme:

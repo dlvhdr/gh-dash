@@ -30,6 +30,7 @@ keybindings:
         '
 repoPaths:
   dlvhdr/*: ~/code/personal/*
+worktreePaths: {}
 pager:
   diff: diffnav
 theme:
