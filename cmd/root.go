@@ -250,7 +250,8 @@ func init() {
 
 		p := tea.NewProgram(model)
 		if _, err := p.Run(); err != nil {
-			log.Fatal("Failed starting the TUI", err)
+			fmt.Printf("%+v\n", err)
+			log.Fatal("fatal error during run", "err", err)
 		}
 	}
 }

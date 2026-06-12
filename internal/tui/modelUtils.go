@@ -326,7 +326,7 @@ func (m *Model) executeCustomCommand(cmd string) tea.Cmd {
 	c := shell.Command(cmd)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		if err != nil {
-			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth)
+			mdRenderer := markdown.GetMarkdownRenderer(m.ctx.ScreenWidth, m.ctx)
 			md, mdErr := mdRenderer.Render(fmt.Sprintf("While running: `%s`", cmd))
 			if mdErr != nil {
 				return constants.ErrMsg{Err: mdErr}

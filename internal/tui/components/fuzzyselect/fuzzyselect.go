@@ -1,5 +1,6 @@
-// Package cmp houses the generic completion component
-package cmp
+// Package fuzzyselect houses the generic fuzzy-find select component
+// It receives a completion Source that loads the suggestions asyncly
+package fuzzyselect
 
 import (
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -35,33 +37,6 @@ func (s suggestionList) String(i int) string {
 
 type FetchState int
 
-func (s suggestionList) Len() int {
-	return len(s.items)
-}
-
-var (
-	NextKey = key.NewBinding(
-		key.WithKeys("down", "ctrl+n"),
-		key.WithHelp("↓/Ctrl+n", "next"),
-	)
-	PrevKey = key.NewBinding(
-		key.WithKeys("up", "ctrl+p"),
-		key.WithHelp("↑/Ctrl+p", "previous"),
-	)
-	SelectKey = key.NewBinding(
-		key.WithKeys("tab", "enter", "ctrl+y"),
-		key.WithHelp("tab/enter/Ctrl+y", "select"),
-	)
-	RefreshSuggestionsKey = key.NewBinding(
-		key.WithKeys("ctrl+f"),
-		key.WithHelp("Ctrl+f", "refresh suggestions"),
-	)
-	ToggleSuggestions = key.NewBinding(
-		key.WithKeys("ctrl+h"),
-		key.WithHelp("Ctrl+h", "toggle suggestions"),
-	)
-)
-
 const (
 	FetchStateIdle FetchState = iota
 	FetchStateLoading
@@ -69,91 +44,128 @@ const (
 	FetchStateError
 )
 
+func (s suggestionList) Len() int {
+	return len(s.items)
+}
+
+var (
+	NextKey = key.NewBinding(
+		key.WithKeys("down", "ctrl+n"),
+		key.WithHelp("↓/ctrl+n", "next"),
+	)
+	PrevKey = key.NewBinding(
+		key.WithKeys("up", "ctrl+p"),
+		key.WithHelp("↑/ctrl+p", "previous"),
+	)
+	SelectKey = key.NewBinding(
+		key.WithKeys("ctrl+y"),
+		key.WithHelp("ctrl+y", "select"),
+	)
+	RefreshSuggestionsKey = key.NewBinding(
+		key.WithKeys("ctrl+f"),
+		key.WithHelp("ctrl+f", "refresh"),
+	)
+	ToggleSuggestions = key.NewBinding(
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("ctrl+h", "toggle"),
+	)
+)
+
+type keyMap struct{}
+
+func (km keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		NextKey, PrevKey, SelectKey, RefreshSuggestionsKey, ToggleSuggestions,
+	}
+}
+
+func (km keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{NextKey, PrevKey, SelectKey},
+		{RefreshSuggestionsKey, ToggleSuggestions},
+	}
+}
+
 // ClearFetchStatusMsg is sent to clear the fetch status after a delay
 type ClearFetchStatusMsg struct{}
 
-// FetchSuggestionsRequestedMsg requests that the current view fetch suggestions from upstream.
-//
-// When Force is true the fetch should bypass any local cache and request fresh
-// data from the gh CLI.
-type FetchSuggestionsRequestedMsg struct {
-	Force bool
-}
-
-// NewFetchSuggestionsRequestedCmd returns a tea.Cmd that emits a
-// FetchSuggestionsRequestedMsg with the given force flag.
-func NewFetchSuggestionsRequestedCmd(force bool) tea.Cmd {
-	return func() tea.Msg { return FetchSuggestionsRequestedMsg{Force: force} }
-}
-
 type Model struct {
-	ctx            *context.ProgramContext
-	suggestionHelp help.Model
-	suggestions    []Suggestion
-	filtered       []Suggestion
-	selected       int
-	visible        bool
-	maxVisible     int
-	width          int
-	fetchState     FetchState
-	fetchError     error
-	spinner        spinner.Model
+	ctx        *context.ProgramContext
+	styles     context.SelectStyles
+	help       help.Model
+	filtered   []Suggestion
+	selected   int
+	visible    bool
+	maxVisible int
+	width      int
+	fetchState FetchState
+	fetchError error
+	spinner    spinner.Model
 	// whether the user explicitly hid the suggestions; when true
 	// Show() will not re-open the popup automatically until Unsuppress()
 	hiddenByUser bool
+	Source       Source
 }
 
-func NewModel(ctx *context.ProgramContext) Model {
+func NewModel(ctx *context.ProgramContext, src Source) Model {
 	sp := spinner.New()
 	sp.Spinner = spinner.Dot
 	sp.Style = lipgloss.NewStyle().Foreground(ctx.Theme.SecondaryText)
 
 	h := help.New()
+	h.ShowAll = false
 	h.Styles = ctx.Styles.Help.BubbleStyles
 	return Model{
-		ctx:            ctx,
-		suggestionHelp: h,
-		visible:        false,
-		selected:       0,
-		maxVisible:     4,
-		width:          30,
-		fetchState:     FetchStateIdle,
-		spinner:        sp,
+		ctx:        ctx,
+		help:       h,
+		styles:     ctx.Styles.Select,
+		visible:    false,
+		selected:   0,
+		maxVisible: 4,
+		width:      30,
+		fetchState: FetchStateIdle,
+		spinner:    sp,
+		Source:     src,
 	}
 }
 
-func (m *Model) SetSuggestions(suggestions []Suggestion) {
-	m.suggestions = suggestions
-}
+func (m *Model) Filter(input string, cmpCtx Context, excludeItems []string) {
+	if m.Source == nil {
+		return
+	}
 
-func (m *Model) Show(currentItem string, excludeItems []string) {
 	excludeMap := make(map[string]bool)
 	for _, item := range excludeItems {
 		excludeMap[strings.ToLower(strings.TrimSpace(item))] = true
 	}
 
+	suggestions := m.Source.Suggestions(input, cmpCtx.Start)
+	log.Debug("fuzzyselect.Filter suggestions", "ctx", cmpCtx, "len(suggestions)", len(suggestions))
+
 	// Filter excluded items first
-	filteredSuggestions := make([]Suggestion, 0, len(m.suggestions))
-	for _, suggestion := range m.suggestions {
-		if !excludeMap[strings.ToLower(strings.TrimSpace(suggestion.Value))] {
+	filteredSuggestions := make(
+		[]Suggestion,
+		0,
+	)
+
+	for _, suggestion := range suggestions {
+		if excluded, ok := excludeMap[strings.ToLower(strings.TrimSpace(suggestion.Value))]; !ok ||
+			!excluded {
 			filteredSuggestions = append(filteredSuggestions, suggestion)
 		}
 	}
-
-	if currentItem == "" || len(filteredSuggestions) == 0 {
+	if cmpCtx.Content == "" || len(filteredSuggestions) == 0 {
 		m.filtered = filteredSuggestions
 		if len(m.filtered) > m.maxVisible {
 			m.filtered = m.filtered[:m.maxVisible]
 		}
-		m.selected = 0
-		// respect suppression: don't auto-show if suppressed
-		m.UpdateVisible()
 		return
 	}
 
 	// Use fuzzy.FindFrom with suggestionList as Source
 	list := suggestionList{items: filteredSuggestions}
-	matches := fuzzy.FindFrom(currentItem, list)
+	matches := fuzzy.FindFrom(cmpCtx.Content, list)
+	log.Debug("fuzzyselect.Filter matches", "ctx", cmpCtx, "len(matches)", len(matches))
 
 	// Collect matched items up to maxResults
 	m.filtered = make([]Suggestion, 0, m.maxVisible)
@@ -163,10 +175,14 @@ func (m *Model) Show(currentItem string, excludeItems []string) {
 		}
 		m.filtered = append(m.filtered, filteredSuggestions[match.Index])
 	}
+}
 
+func (m *Model) Show() {
 	m.selected = 0
-	// respect suppression: don't auto-show if suppressed
-	m.UpdateVisible()
+	m.visible = true
+	if !m.hiddenByUser {
+		m.visible = true
+	}
 }
 
 func (m *Model) Selected() string {
@@ -239,10 +255,11 @@ func (m *Model) Width() int {
 
 func (m *Model) SetWidth(width int) {
 	m.width = max(0, width)
+	m.help.SetWidth(m.width)
 }
 
 func (m *Model) View() string {
-	if !m.visible || len(m.filtered) == 0 {
+	if !m.visible {
 		return ""
 	}
 
@@ -254,20 +271,21 @@ func (m *Model) View() string {
 
 	var b strings.Builder
 
-	popupStyle := m.ctx.Styles.Autocomplete.PopupStyle
-	selectedPrefix := constants.SelectionIcon + " "
+	helpStyle := m.styles.HelpStyle.Width(m.width)
+	selectedPrefix := m.styles.Pointer.Render(constants.SelectionIcon + " ")
 	normalPrefix := "  "
 	valueColStyle := lipgloss.NewStyle().Bold(true).Foreground(m.ctx.Theme.PrimaryText)
 	detailColStyle := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText)
 
 	var rows []string
 	selectedBgStyle := lipgloss.NewStyle().Background(m.ctx.Theme.SelectedBackground)
-	maxRowWidth := 0
+	maxRowWidth := m.width
 	for i := 0; i < numRows; i++ {
-		suggestion := Suggestion{}
-		if i < numVisible {
-			suggestion = m.filtered[i]
+		if i >= numVisible {
+			continue
 		}
+
+		suggestion := m.filtered[i]
 		value := suggestion.Value
 		detail := suggestion.Detail
 
@@ -288,10 +306,10 @@ func (m *Model) View() string {
 		if i < numVisible && i == m.selected {
 			char := selectedPrefix
 			row = utils.RemoveLastReset(
-				char + m.ctx.Styles.Autocomplete.SelectedStyle.Render(rowText),
+				char + m.styles.SelectedStyle.Render(rowText),
 			)
 		} else {
-			row = m.ctx.Styles.Autocomplete.ItemStyle.Render(normalPrefix + rowText)
+			row = m.styles.ItemStyle.Render(normalPrefix + rowText)
 		}
 
 		rows = append(rows, row)
@@ -301,23 +319,24 @@ func (m *Model) View() string {
 		)
 	}
 
-	rows[m.selected] = selectedBgStyle.Width(maxRowWidth).
-		Render(rows[m.selected])
-	b.WriteString(lipgloss.JoinVertical(lipgloss.Left, rows...))
+	if m.selected < len(rows) {
+		rows[m.selected] = selectedBgStyle.Width(maxRowWidth).
+			Render(rows[m.selected])
+	}
+	if len(rows) > 0 {
+		b.WriteString(lipgloss.JoinVertical(lipgloss.Left, rows...))
+	}
 
 	var statusView string
 	switch m.fetchState {
 	case FetchStateLoading:
 		statusView = m.spinner.View() + m.ctx.Styles.Common.FaintTextStyle.Render(
-			"Fetching suggestions"+constants.Ellipsis,
+			"fetching suggestions"+constants.Ellipsis,
 		)
 	case FetchStateSuccess:
-		statusView = m.ctx.Styles.Common.SuccessGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
-			" Suggestions loaded",
-		)
 	case FetchStateError:
 		errMsg := m.ctx.Styles.Common.FailureGlyph + m.ctx.Styles.Common.FaintTextStyle.Render(
-			" Failed to fetch suggestions",
+			" failed to fetch suggestions",
 		)
 		if m.fetchError != nil {
 			errMsg = m.fetchError.Error()
@@ -325,27 +344,40 @@ func (m *Model) View() string {
 		statusView = m.ctx.Styles.Common.FailureGlyph + " " + errMsg
 	}
 
-	return popupStyle.Render(
+	parts := make([]string, 0)
+	if filteredRows := b.String(); filteredRows != "" {
+		parts = append(parts, filteredRows)
+	} else if m.fetchState == FetchStateSuccess || m.fetchState == FetchStateIdle {
+		parts = append(parts, m.styles.NoResults.Render("no results"+constants.Ellipsis))
+	}
+	if statusView != "" {
+		parts = append(parts, m.styles.Status.Render(statusView))
+	}
+	parts = append(parts, helpStyle.Render(m.help.View(keyMap{})))
+
+	return m.styles.PopupStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			b.String(),
-			statusView,
+			parts...,
 		),
 	)
+}
+
+func (m *Model) Styles() context.SelectStyles {
+	return m.styles
+}
+
+func (m *Model) SetStyles(styles context.SelectStyles) {
+	m.styles = styles
 }
 
 func (m *Model) SetFetchLoading() tea.Cmd {
 	m.fetchState = FetchStateLoading
 	m.fetchError = nil
 
-	placeholders := make([]Suggestion, 0, m.maxVisible)
-	for i := 0; i < m.maxVisible; i++ {
-		placeholders = append(placeholders, Suggestion{})
-	}
-	m.filtered = placeholders
 	m.selected = 0
 
-	m.UpdateVisible()
+	m.ShowIfHasContent()
 
 	return m.spinner.Tick
 }
@@ -369,11 +401,11 @@ func (m *Model) clearFetchStatus() tea.Cmd {
 	})
 }
 
-func (m *Model) UpdateVisible() {
+func (m *Model) ShowIfHasContent() {
 	if m.hiddenByUser {
 		m.visible = false
-	} else {
-		m.visible = len(m.filtered) > 0
+	} else if len(m.filtered) > 0 {
+		m.visible = true
 	}
 }
 
@@ -397,5 +429,5 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 	m.ctx = ctx
-	m.suggestionHelp.Styles = ctx.Styles.Help.BubbleStyles
+	m.help.Styles = ctx.Styles.Help.BubbleStyles
 }

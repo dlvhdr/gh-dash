@@ -1,9 +1,11 @@
-package cmp
+package fuzzyselect
 
 import (
+	"fmt"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
 
 // LabelInfo contains information about a label at a specific cursor position
@@ -17,9 +19,11 @@ type LabelInfo struct {
 	IsLast   bool
 }
 
-type LabelSource struct{}
+type LabelSource struct {
+	Labels []data.Label
+}
 
-func (LabelSource) ExtractContext(input string, cursorPos tea.Position) Context {
+func (*LabelSource) ExtractContext(input string, cursorPos tea.Position) Context {
 	info := ExtractLabelAtCursor(input, cursorPos)
 	return Context{
 		Start:   info.StartIdx,
@@ -28,7 +32,18 @@ func (LabelSource) ExtractContext(input string, cursorPos tea.Position) Context 
 	}
 }
 
-func (LabelSource) InsertSuggestion(
+func (src *LabelSource) Suggestions(input string, cursorPos tea.Position) []Suggestion {
+	suggestions := make([]Suggestion, 0)
+	for _, label := range src.Labels {
+		suggestions = append(suggestions, Suggestion{
+			Value:  label.Name,
+			Detail: strings.TrimSpace(label.Description),
+		})
+	}
+	return suggestions
+}
+
+func (*LabelSource) InsertSuggestion(
 	input string,
 	suggestion string,
 	contextStart tea.Position,
@@ -56,7 +71,7 @@ func (LabelSource) InsertSuggestion(
 	return newValue, newCursorPos
 }
 
-func (LabelSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
+func (*LabelSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
 	if strings.TrimSpace(input) == "" {
 		return nil
 	}
@@ -156,4 +171,10 @@ func CurrentLabels(value string) []string {
 		}
 	}
 	return labels
+}
+
+func (src *LabelSource) LoadSuggestions(ctx LoaderContext) error {
+	labels, err := data.FetchRepoLabels(fmt.Sprintf("%s/%s", ctx.RepoOwner, ctx.RepoName))
+	src.Labels = labels
+	return err
 }

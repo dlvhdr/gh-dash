@@ -19,18 +19,15 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
-func currentRepoFilter(t *testing.T) string {
+func currentRepoFilter(t *testing.T, repo repository.Repository) string {
 	t.Helper()
-	t.Setenv("GH_REPO", "https://github.com/dlvhdr/gh-dash")
-	repo, err := repository.Current()
-	if err != nil {
-		t.Fatal("failed to resolve current repository:", err)
-	}
+	t.Setenv("GH_REPO", fmt.Sprintf("https://github.com/%s/%s", repo.Owner, repo.Name))
 	return fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
 }
 
 func TestHasRepoNameInConfiguredFilter(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name        string
@@ -73,7 +70,8 @@ func TestHasRepoNameInConfiguredFilter(t *testing.T) {
 }
 
 func TestHasCurrentRepoNameInConfiguredFilter(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name        string
@@ -120,13 +118,17 @@ func TestHasCurrentRepoNameInConfiguredFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := BaseModel{SearchValue: tt.searchValue}
+			m.Ctx = &context.ProgramContext{
+				Repo: repo,
+			}
 			require.Equal(t, tt.want, m.HasCurrentRepoNameInConfiguredFilter())
 		})
 	}
 }
 
 func TestSyncSmartFilterWithSearchValue(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name        string
@@ -161,6 +163,9 @@ func TestSyncSmartFilterWithSearchValue(t *testing.T) {
 				SearchValue:               tt.searchValue,
 				IsFilteredByCurrentRemote: !tt.wantFlag,
 			}
+			m.Ctx = &context.ProgramContext{
+				Repo: repo,
+			}
 			m.SyncSmartFilterWithSearchValue()
 			require.Equal(t, tt.wantFlag, m.IsFilteredByCurrentRemote)
 		})
@@ -168,7 +173,8 @@ func TestSyncSmartFilterWithSearchValue(t *testing.T) {
 }
 
 func TestGetSearchValue(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name                      string
@@ -230,6 +236,9 @@ func TestGetSearchValue(t *testing.T) {
 				SearchValue:               tt.searchValue,
 				IsFilteredByCurrentRemote: tt.isFilteredByCurrentRemote,
 			}
+			m.Ctx = &context.ProgramContext{
+				Repo: repo,
+			}
 
 			got := m.GetSearchValue()
 
@@ -257,12 +266,16 @@ func TestGetSearchValue(t *testing.T) {
 }
 
 func TestGetSearchValue_SimilarRepoNameNotStripped(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 	similarRepo := repoFilter + "-extra"
 
 	m := BaseModel{
 		SearchValue:               similarRepo + " is:open",
 		IsFilteredByCurrentRemote: false,
+	}
+	m.Ctx = &context.ProgramContext{
+		Repo: repo,
 	}
 
 	got := m.GetSearchValue()
@@ -272,7 +285,8 @@ func TestGetSearchValue_SimilarRepoNameNotStripped(t *testing.T) {
 }
 
 func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name                      string
@@ -325,6 +339,9 @@ func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 				SearchValue:               tt.searchValue,
 				IsFilteredByCurrentRemote: tt.isFilteredByCurrentRemote,
 			}
+			m.Ctx = &context.ProgramContext{
+				Repo: repo,
+			}
 
 			m.SyncSmartFilterWithSearchValue()
 			got := m.GetSearchValue()
@@ -345,7 +362,8 @@ func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 }
 
 func TestGetConfigFiltersWithCurrentRemoteAdded(t *testing.T) {
-	repoFilter := currentRepoFilter(t)
+	repo := repository.Repository{Owner: "dlvhdr", Name: "gh-dash"}
+	repoFilter := currentRepoFilter(t, repo)
 
 	tests := []struct {
 		name                   string
@@ -388,6 +406,7 @@ func TestGetConfigFiltersWithCurrentRemoteAdded(t *testing.T) {
 				Config: &config.Config{
 					SmartFilteringAtLaunch: tt.smartFilteringAtLaunch,
 				},
+				Repo: repo,
 			}
 
 			got := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)

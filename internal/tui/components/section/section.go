@@ -71,8 +71,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
 	}
-	repo, err := repository.Current()
-	if err != nil {
+	if ctx.Repo == (repository.Repository{}) {
 		return searchValue
 	}
 	for token := range strings.FieldsSeq(searchValue) {
@@ -80,7 +79,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 			return searchValue
 		}
 	}
-	return fmt.Sprintf("repo:%s/%s %s", repo.Owner, repo.Name, searchValue)
+	return fmt.Sprintf("repo:%s/%s %s", ctx.Repo.Owner, ctx.Repo.Name, searchValue)
 }
 
 func NewModel(
@@ -89,9 +88,8 @@ func NewModel(
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
 	isFilteredByCurrentRemote := false
-	repo, err := repository.Current()
-	if err == nil {
-		currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	if ctx.Repo != (repository.Repository{}) {
+		currentCloneFilter := fmt.Sprintf("repo:%s/%s", ctx.Repo.Owner, ctx.Repo.Name)
 		for token := range strings.FieldsSeq(filters) {
 			if token == currentCloneFilter {
 				isFilteredByCurrentRemote = true
@@ -183,6 +181,7 @@ type Table interface {
 type Search interface {
 	SetIsSearching(val bool) tea.Cmd
 	IsSearchFocused() bool
+	ViewCompletions() string
 	ResetFilters()
 	GetFilters() string
 	ResetPageInfo()
@@ -222,11 +221,10 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 
 func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
 	filters := m.SearchValue
-	repo, err := repository.Current()
-	if err != nil {
+	if m.Ctx.Repo == (repository.Repository{}) {
 		return false
 	}
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
 	for token := range strings.FieldsSeq(filters) {
 		if token == currentCloneFilter {
 			return true
@@ -241,12 +239,11 @@ func (m *BaseModel) SyncSmartFilterWithSearchValue() {
 
 func (m *BaseModel) GetSearchValue() string {
 	searchValue := m.enrichSearchWithTemplateVars()
-	repo, err := repository.Current()
-	if err != nil {
+	if m.Ctx.Repo == (repository.Repository{}) {
 		return searchValue
 	}
 
-	currentCloneFilter := fmt.Sprintf("repo:%s/%s", repo.Owner, repo.Name)
+	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.Repo.Owner, m.Ctx.Repo.Name)
 	var searchValueWithoutCurrentCloneFilter []string
 	for token := range strings.FieldsSeq(searchValue) {
 		if token != currentCloneFilter {
@@ -350,10 +347,13 @@ func (m *BaseModel) GetIsLoading() bool {
 func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 	m.IsSearching = val
 	if val {
+		cmds := make([]tea.Cmd, 0)
 		cmd := m.SearchBar.Focus()
+		cmds = append(cmds, cmd)
 		m.SearchBar.CursorEnd()
-		m.SearchBar, _ = m.SearchBar.Update(nil)
-		return cmd
+		m.SearchBar, cmd = m.SearchBar.Update(nil)
+		cmds = append(cmds, cmd)
+		return tea.Sequence(cmds...)
 	} else {
 		m.SearchBar.Blur()
 		return nil
@@ -362,6 +362,10 @@ func (m *BaseModel) SetIsSearching(val bool) tea.Cmd {
 
 func (m *BaseModel) ResetFilters() {
 	m.SearchBar.SetValue(m.GetSearchValue())
+}
+
+func (m *BaseModel) ViewCompletions() string {
+	return m.SearchBar.ViewCompletions()
 }
 
 func (m *BaseModel) ResetPageInfo() {
@@ -473,36 +477,36 @@ func (m *BaseModel) GetPromptConfirmation() string {
 		var prompt string
 		switch {
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to close this PR? (Y/n) "
+			prompt = "Are you sure you want to close this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to reopen this PR? (Y/n) "
+			prompt = "Are you sure you want to reopen this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "ready" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to mark this PR as ready? (Y/n) "
+			prompt = "Are you sure you want to mark this PR as ready? (y/N) "
 
 		case m.PromptConfirmationAction == "merge" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to merge this PR? (Y/n) "
+			prompt = "Are you sure you want to merge this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "update" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to update this PR? (Y/n) "
+			prompt = "Are you sure you want to update this PR? (y/N) "
 
 		case m.PromptConfirmationAction == "approveWorkflows" && m.Ctx.View == config.PRsView:
-			prompt = "Are you sure you want to approve all workflows? (Y/n) "
+			prompt = "Are you sure you want to approve all workflows? (y/N) "
 
 		case m.PromptConfirmationAction == "close" && m.Ctx.View == config.IssuesView:
-			prompt = "Are you sure you want to close this issue? (Y/n) "
+			prompt = "Are you sure you want to close this issue? (y/N) "
 
 		case m.PromptConfirmationAction == "reopen" && m.Ctx.View == config.IssuesView:
-			prompt = "Are you sure you want to reopen this issue? (Y/n) "
+			prompt = "Are you sure you want to reopen this issue? (y/N) "
 		case m.PromptConfirmationAction == "delete" && m.Ctx.View == config.RepoView:
-			prompt = "Are you sure you want to delete this branch? (Y/n) "
+			prompt = "Are you sure you want to delete this branch? (y/N) "
 		case m.PromptConfirmationAction == "new" && m.Ctx.View == config.RepoView:
 			prompt = "Enter branch name: "
 		case m.PromptConfirmationAction == "create_pr" && m.Ctx.View == config.RepoView:
 			prompt = "Enter PR title: "
 		case m.PromptConfirmationAction == "done_all" && m.Ctx.View == config.NotificationsView:
-			prompt = "Are you sure you want to mark all as done? (Y/n) "
+			prompt = "Are you sure you want to mark all as done? (y/N) "
 		}
 
 		m.PromptConfirmationBox.SetPrompt(prompt)

@@ -1,0 +1,135 @@
+# @auth file command argv=["gh","auth","token"] cache_key=github-cli
+
+### PR Checks    
+# @graphql
+# @operation PRChecks
+# @name PR Checks
+# @tag PR
+POST {{graphql.endpoint}}
+Accept: application/json
+
+query PRChecks($url: URI!){
+  resource(url: $url) {
+    ... on PullRequest {
+      lastCommit: commits(last: 1) {
+        nodes {
+          commit {
+            statusCheckRollup {
+              state
+            }
+          }
+        }
+      }
+      allCommits: commits(last: 100) {
+        nodes {
+          commit {
+            abbreviatedOid
+            committedDate
+            messageHeadline
+            author {
+              name
+              user {
+                login
+              }
+            }
+            statusCheckRollup {
+              state
+              contexts(last: 1) {
+                checkRunCount
+                checkRunCountsByState {
+                  count
+                  state
+                }
+              }
+            }
+            checkSuites {
+              totalCount
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# @variables
+{ "url": "https://github.com/dlvhdr/gh-dash/pull/729" }
+
+### Sponsor Tiers
+# @graphql
+# @operation SponsorTiers
+# @name Sponsor Tiers
+POST {{graphql.endpoint}}
+Accept: application/json
+
+query SponsorTiers(){
+  user(login: "dlvhdr") {
+    sponsorsListing {
+      tiers(first: 20) {
+        nodes {
+          adminInfo {
+            sponsorships(first: 100) {
+              nodes {
+                sponsorEntity {
+                  ... on User {
+                    login
+                    avatarUrl
+                    websiteUrl
+                    url
+                  }
+                }
+              }
+            }
+          }
+          id
+          monthlyPriceInDollars
+          name
+          isOneTime
+        }
+      }
+    }
+  }
+}
+
+### Sponsors
+# @graphql
+# @operation Sponsors
+# @name Sponsors
+POST {{graphql.endpoint}}
+Accept: application/json
+
+query Sponsors(){
+  user(login: "dlvhdr") {
+    sponsors(first: 100) {
+      nodes {
+        ... on User {
+          login
+          avatarUrl
+          websiteUrl
+          url
+        }
+      }
+    }
+  }
+}
+
+
+
+### PR Reviewers Count
+# @graphql
+# @operation PRReviewersCount
+POST {{graphql.endpoint}}
+Accept: application/json
+
+query PRReviewersCount($url: URI!){
+  resource(url: $url) {
+    ... on PullRequest {
+      reviews {
+        totalCount
+      }
+    }
+  }
+}
+
+# @variables
+{ "url": "https://github.com/port-labs/Port/pull/12942" }

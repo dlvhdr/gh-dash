@@ -1551,8 +1551,8 @@ func TestNotificationConfirmation_AcceptWithUpperY(t *testing.T) {
 	require.NotNil(t, cmd, "should return a command to execute the action")
 }
 
-func TestNotificationConfirmation_AcceptWithEnter(t *testing.T) {
-	// Test that pressing Enter also confirms
+func TestNotificationConfirmation_EnterDoesNotConfirm(t *testing.T) {
+	// Test that pressing Enter does NOT confirm (default is No)
 	cfg, err := config.ParseConfig(config.Location{
 		ConfigFlag: "../config/testdata/test-config.yml",
 	})
@@ -1585,15 +1585,14 @@ func TestNotificationConfirmation_AcceptWithEnter(t *testing.T) {
 	}, "test-notification-id")
 	m.notificationView.SetPendingIssueAction("reopen")
 
-	// Press Enter to confirm
+	// Press Enter -- should cancel since default is No
 	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newModel, cmd := m.Update(msg)
+	newModel, _ := m.Update(msg)
 	m = newModel.(Model)
 
-	// Verify pending action is cleared and command is returned
+	// Verify pending action is cleared (cancelled, not confirmed)
 	require.Empty(t, m.notificationView.GetPendingAction(),
-		"pendingNotificationAction should be cleared after confirmation")
-	require.NotNil(t, cmd, "should return a command to execute the action")
+		"pendingNotificationAction should be cleared after Enter cancels")
 }
 
 func TestPromptConfirmationForNotificationIssue_NilSubject(t *testing.T) {

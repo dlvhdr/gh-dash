@@ -240,9 +240,9 @@ func CreatePR(
 	}))
 }
 
-func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+func updatePRTask(section SectionIdentifier, pr data.RowData) GitHubTask {
 	prNumber := pr.GetNumber()
-	return fireTask(ctx, GitHubTask{
+	return GitHubTask{
 		Id: buildTaskId("pr_update", prNumber),
 		Args: []string{
 			"pr",
@@ -257,10 +257,13 @@ func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.Ro
 		Msg: func(c *exec.Cmd, err error) tea.Msg {
 			return UpdatePRMsg{
 				PrNumber: prNumber,
-				IsClosed: utils.BoolPtr(true),
 			}
 		},
-	})
+	}
+}
+
+func UpdatePR(ctx *context.ProgramContext, section SectionIdentifier, pr data.RowData) tea.Cmd {
+	return fireTask(ctx, updatePRTask(section, pr))
 }
 
 func AssignPR(

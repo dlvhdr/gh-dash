@@ -36,15 +36,14 @@ func newTestModel(action string) Model {
 	return m
 }
 
-func TestConfirmation_AcceptWithEmptyInput(t *testing.T) {
-	// Pressing Enter without typing anything should confirm, since the
-	// prompt says (Y/n) indicating Y is the default.
+func TestConfirmation_EmptyInputDoesNotConfirm(t *testing.T) {
+	// Pressing Enter without typing anything should NOT confirm, since the
+	// prompt says (y/N) indicating N is the default.
 	m := newTestModel("close")
 
 	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	_, cmd := m.Update(msg)
+	_, _ = m.Update(msg)
 
-	require.NotNil(t, cmd, "empty input (default Y) should execute the action")
 	require.False(t, m.IsPromptConfirmationShown,
 		"confirmation prompt should be dismissed")
 }
@@ -109,14 +108,14 @@ func TestConfirmation_AllActions(t *testing.T) {
 	actions := []string{"close", "reopen", "ready", "merge", "update", "approveWorkflows"}
 
 	for _, action := range actions {
-		t.Run(action+"_empty_input", func(t *testing.T) {
+		t.Run(action+"_empty_input_does_not_confirm", func(t *testing.T) {
 			m := newTestModel(action)
 
 			msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-			_, cmd := m.Update(msg)
+			_, _ = m.Update(msg)
 
-			require.NotNil(t, cmd,
-				"empty input should confirm for action %q", action)
+			require.False(t, m.IsPromptConfirmationShown,
+				"empty input should dismiss prompt for action %q", action)
 		})
 
 		t.Run(action+"_explicit_y", func(t *testing.T) {

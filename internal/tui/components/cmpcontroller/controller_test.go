@@ -8,7 +8,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
@@ -42,68 +42,66 @@ func testRepo() RepoRef {
 	}
 }
 
-func suggestions(values ...string) []cmp.Suggestion {
-	items := make([]cmp.Suggestion, 0, len(values))
+func suggestions(values ...string) []fuzzyselect.Suggestion {
+	items := make([]fuzzyselect.Suggestion, 0, len(values))
 	for _, value := range values {
-		items = append(items, cmp.Suggestion{Value: value})
+		items = append(items, fuzzyselect.Suggestion{Value: value})
 	}
 	return items
 }
 
+var emptyCtx = fuzzyselect.Context{}
+
 func TestEnterCommentModeResetsAutocompleteState(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c.cmp.SetSuggestions(suggestions("bug", "feature"))
-	c.cmp.Show("bug", nil)
-	require.True(t, c.cmp.HasSuggestions())
+	c.SetAutocompleteSource(&fuzzyselect.ListSource{Options: suggestions("bug", "feature")})
+	c.fzfSelect.Filter("bug", emptyCtx, nil)
+	require.True(t, c.fzfSelect.HasSuggestions())
 
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
 
-	require.False(t, c.cmp.HasSuggestions())
-	require.False(t, c.cmp.IsVisible())
+	require.False(t, c.fzfSelect.HasSuggestions())
+	require.False(t, c.fzfSelect.IsVisible())
 }
 
 func TestEnterAssignModeResetsAutocompleteState(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
-	c.cmp.SetSuggestions(suggestions("bug", "feature"))
-	c.cmp.Show("bug", nil)
-	require.True(t, c.cmp.HasSuggestions())
+	c.SetAutocompleteSource(&fuzzyselect.ListSource{Options: suggestions("bug", "feature")})
+	c.fzfSelect.Filter("bug", emptyCtx, nil)
+	c.fzfSelect.Show()
+	require.True(t, c.fzfSelect.HasSuggestions())
 
 	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
-	require.False(t, c.cmp.HasSuggestions())
-	require.False(t, c.cmp.IsVisible())
+	require.False(t, c.fzfSelect.HasSuggestions())
+	require.False(t, c.fzfSelect.IsVisible())
 }
 
 func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
 	data.ClearLabelCache()
 	c := newTestController(t)
 
+	c.SetAutocompleteSource(&fuzzyselect.ListSource{Options: suggestions("bug", "docs")})
 	c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
 		Prompt:                           "label",
 		InitialValue:                     "bug, docs, ",
-		Source:                           cmp.LabelSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionLabels,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
@@ -111,59 +109,59 @@ func TestEnterLabelModePrepopulatesCurrentLabels(t *testing.T) {
 	require.Equal(t, "bug, docs, ", c.inputBox.Value())
 }
 
-func TestRepoUsersFetchedUpdatesControllerState(t *testing.T) {
+func TestRepoUsersFetchedStartsFiltering(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: false})
 	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
+	c.fzfSelect.Source.(*fuzzyselect.UserMentionSource).Users = []data.User{{Login: "alice"}}
+
 	_, handled := c.Update(
-		RepoUsersFetchedMsg{Users: []data.User{{Login: "alice", Name: "Alice"}}},
+		SourceDataFetchedMsg{},
 	)
 	require.True(t, handled)
-	require.Len(t, c.repoUsers, 1)
-	require.Equal(t, "alice", c.repoUsers[0].Login)
-	require.True(t, c.cmp.IsVisible())
+	suggestions := c.fzfSelect.Source.Suggestions("", tea.Position{X: 0, Y: 0})
+	require.Len(t, suggestions, 1)
+	require.Equal(t, "alice", suggestions[0].Value)
 }
 
-func TestRepoLabelsFetchedUpdatesControllerState(t *testing.T) {
+func TestRepoLabelsFetchedStartsFiltering(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.LabelSource{})
 	c.Enter(EnterOptions{
 		Mode:                             ModeLabel,
-		Prompt:                           "label",
-		InitialValue:                     "bu",
-		Source:                           cmp.LabelSource{},
+		Prompt:                           "labels",
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionLabels,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
 
+	c.fzfSelect.Source.(*fuzzyselect.LabelSource).Labels = []data.Label{{Name: "low-pri"}}
+
 	_, handled := c.Update(
-		RepoLabelsFetchedMsg{Labels: []data.Label{{Name: "bug", Description: "Bug"}}},
+		SourceDataFetchedMsg{},
 	)
 	require.True(t, handled)
-	require.Len(t, c.repoLabels, 1)
-	require.Equal(t, "bug", c.repoLabels[0].Name)
-	require.True(t, c.cmp.IsVisible())
+	suggestions := c.fzfSelect.Source.Suggestions("", tea.Position{X: 0, Y: 0})
+	require.Len(t, suggestions, 1)
+	require.Equal(t, "low-pri", suggestions[0].Value)
 }
 
 func TestEnterSilentFetchReturnsCommand(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
 
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{})
 	cmd := c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
@@ -171,115 +169,80 @@ func TestEnterSilentFetchReturnsCommand(t *testing.T) {
 	require.NotNil(t, cmd)
 }
 
-func TestForceRefreshClearsRelevantCache(t *testing.T) {
-	data.ClearLabelCache()
-	c := newTestController(t)
-	c.Enter(EnterOptions{
-		Mode:                             ModeLabel,
-		Prompt:                           "label",
-		Source:                           cmp.LabelSource{},
-		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionLabels,
-		EnterFetch:                       FetchNone,
-		HideAutocompleteWhenContextEmpty: false,
-	})
-
-	cmd, handled := c.Update(cmp.FetchSuggestionsRequestedMsg{Force: true})
-	require.True(t, handled)
-	require.NotNil(t, cmd)
-}
-
 func TestCommentModeHidesPopupWhenMentionContextDisappears(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
 		InitialValue:                     "@ali",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	c.cmp.SetSuggestions(suggestions("alice"))
-	c.showSuggestionsFromCurrentContext()
-	require.True(t, c.cmp.IsVisible())
 
+	c.fzfSelect.Source.(*fuzzyselect.UserMentionSource).Users = []data.User{{Login: "alice"}}
+	c.Update(SourceDataFetchedMsg{})
+	c.ShowCompletions()
+	require.True(t, c.fzfSelect.IsVisible())
+
+	c.fzfSelect.Hide()
 	c.inputBox.SetValue("done")
-	c.showSuggestionsFromCurrentContext()
-	require.False(t, c.cmp.IsVisible())
+	c.Filter()
+
+	// should be a no op since we set `HideAutocompleteWhenContextEmpty` to true
+	c.ShowCompletions()
+	require.False(t, c.fzfSelect.IsVisible())
 }
 
-func TestCommentModeHidesPopupWhenMentionContextDisappearsWhitespace(t *testing.T) {
+func TestCommentModeShowsPopupAtMention(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		InitialValue:                     "@ali ",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
 	})
-	c.cmp.SetSuggestions(suggestions("alice"))
-	c.Update(c.inputBox.Focus())
-	c.inputBox.CursorEnd()
-	c.showSuggestionsFromCurrentContext()
-	require.False(t, c.cmp.IsVisible())
-}
-
-func TestCommentModeShowsPopupForBareAtMention(t *testing.T) {
-	data.ClearUserCache()
-	c := newTestController(t)
-	c.Enter(EnterOptions{
-		Mode:                             ModeComment,
-		Prompt:                           "comment",
-		Source:                           cmp.UserMentionSource{},
-		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
-		EnterFetch:                       FetchNone,
-		ConfirmDiscardOnCancel:           true,
-		HideAutocompleteWhenContextEmpty: true,
-	})
-	c.cmp.SetSuggestions(suggestions("alice"))
+	c.fzfSelect.Source.(*fuzzyselect.UserMentionSource).Users = []data.User{{Login: "alice"}}
+	c.Update(SourceDataFetchedMsg{})
 
 	_, handled := c.Update(tea.KeyPressMsg{Text: "@"})
 	require.True(t, handled)
-	require.True(t, c.cmp.IsVisible())
+	require.True(t, c.fzfSelect.IsVisible())
 }
 
 func TestAssignModeShowsPopupForEmptyContext(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: false})
 	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
-	c.cmp.SetSuggestions(suggestions("alice"))
-	c.showSuggestionsFromCurrentContext()
+	c.fzfSelect.Source.(*fuzzyselect.UserMentionSource).Users = []data.User{{Login: "alice"}}
+	c.Update(SourceDataFetchedMsg{})
+	c.ShowCompletions()
 
-	require.True(t, c.cmp.IsVisible())
+	require.True(t, c.fzfSelect.IsVisible())
 }
 
 func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
@@ -292,12 +255,11 @@ func TestEscapeInCommentModeShowsDiscardPrompt(t *testing.T) {
 
 func TestConfirmDiscardExitsMode(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeApprove,
 		Prompt:                           "approve",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: false,
@@ -310,12 +272,11 @@ func TestConfirmDiscardExitsMode(t *testing.T) {
 
 func TestRejectDiscardRestoresPrompt(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
@@ -329,13 +290,12 @@ func TestRejectDiscardRestoresPrompt(t *testing.T) {
 
 func TestCtrlDReturnsSubmit(t *testing.T) {
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
 		InitialValue:                     "alice bob",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})
@@ -346,27 +306,14 @@ func TestCtrlDReturnsSubmit(t *testing.T) {
 	require.Equal(t, "alice bob", c.Value())
 }
 
-func TestUnassignModeDoesNotUseAutocomplete(t *testing.T) {
-	c := newTestController(t)
-	c.Enter(EnterOptions{
-		Mode:         ModeUnassign,
-		Prompt:       "unassign",
-		InitialValue: "alice\nbob",
-		Repo:         testRepo(),
-	})
-
-	require.False(t, c.usesAutocomplete())
-}
-
 func TestPasteInCommentMode(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	c.Enter(EnterOptions{
 		Mode:                             ModeComment,
 		Prompt:                           "comment",
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
@@ -383,12 +330,11 @@ func TestPasteInCommentMode(t *testing.T) {
 func TestPasteInAssignMode(t *testing.T) {
 	data.ClearUserCache()
 	c := newTestController(t)
+	c.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: false})
 	c.Enter(EnterOptions{
 		Mode:                             ModeAssign,
 		Prompt:                           "assign",
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             testRepo(),
-		SuggestionKind:                   SuggestionUsers,
 		EnterFetch:                       FetchNone,
 		HideAutocompleteWhenContextEmpty: false,
 	})

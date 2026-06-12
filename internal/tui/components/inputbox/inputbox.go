@@ -2,6 +2,7 @@ package inputbox
 
 import (
 	"fmt"
+	"strings"
 
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
@@ -9,8 +10,9 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -22,14 +24,13 @@ type Model struct {
 	textInput *textinput.Model
 	inputHelp help.Model
 	prompt    string
-	cmp       *cmp.Model
-	cmpSource cmp.Source
+	fzfSelect *fuzzyselect.Model
 }
 
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Ctrl+c/esc", "cancel")),
-	cmp.ToggleSuggestions,
+	fuzzyselect.ToggleSuggestions,
 }
 
 const DefaultInputHeight = 5
@@ -75,6 +76,11 @@ type ModelOpts struct {
 	TextInput *textinput.Model
 }
 
+type Styles struct {
+	TextArea  textarea.Styles
+	TextInput textinput.Styles
+}
+
 func NewModel(ctx *context.ProgramContext, opts ModelOpts) Model {
 	if opts.TextArea != nil {
 		opts.TextArea.Focus()
@@ -94,62 +100,80 @@ func NewModel(ctx *context.ProgramContext, opts ModelOpts) Model {
 	}
 }
 
-func (m *Model) SetAutocomplete(cmp *cmp.Model) {
-	m.cmp = cmp
+func (m *Model) Styles() Styles {
+	s := Styles{}
+	if m.textArea != nil {
+		s.TextArea = m.textArea.Styles()
+	}
+	if m.textInput != nil {
+		s.TextInput = m.textInput.Styles()
+	}
+	return s
 }
 
-func (m *Model) SetAutocompleteSource(src cmp.Source) {
-	m.cmpSource = src
+func (m *Model) SetStyles(styles Styles) {
+	if m.textArea != nil {
+		m.textArea.SetStyles(styles.TextArea)
+	}
+	if m.textInput != nil {
+		m.textInput.SetStyles(styles.TextInput)
+	}
 }
 
-func (m Model) CurrentAutocompleteContext() cmp.Context {
-	if m.cmpSource == nil {
-		return cmp.Context{}
+func (m *Model) SetAutocomplete(fzfSelect *fuzzyselect.Model) {
+	m.fzfSelect = fzfSelect
+}
+
+func (m Model) CurrentAutocompleteContext() fuzzyselect.Context {
+	if m.fzfSelect.Source == nil {
+		return fuzzyselect.Context{}
 	}
 
-	return m.cmpSource.ExtractContext(m.Value(), m.GetAbsoluteCursorPosition())
+	return m.fzfSelect.Source.ExtractContext(m.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) AutocompleteItemsToExclude() []string {
-	if m.cmpSource == nil {
+	if m.fzfSelect.Source == nil {
 		return nil
 	}
 
-	return m.cmpSource.ItemsToExclude(m.Value(), m.GetAbsoluteCursorPosition())
+	return m.fzfSelect.Source.ItemsToExclude(m.Value(), m.GetAbsoluteCursorPosition())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Allow toggling suggestions at any time
-		if m.cmp != nil && key.Matches(msg, cmp.ToggleSuggestions) {
-			if m.cmp.IsVisible() {
-				m.cmp.Suppress()
+		if m.fzfSelect != nil && key.Matches(msg, fuzzyselect.ToggleSuggestions) {
+			if m.fzfSelect.IsVisible() {
+				m.fzfSelect.Suppress()
 				return m, nil
 			}
 
-			m.cmp.Unsuppress()
+			m.fzfSelect.Unsuppress()
 			currentContext := m.CurrentAutocompleteContext()
-			m.cmp.Show(currentContext.Content, m.AutocompleteItemsToExclude())
+			m.fzfSelect.Filter(m.Value(), currentContext, m.AutocompleteItemsToExclude())
+			m.fzfSelect.Show()
 			return m, nil
 		}
 
 		// Allow navigation/selection even if the popup is hidden (as long as there are filtered results)
-		if m.cmp != nil &&
-			(m.cmp.IsVisible() || m.cmp.HasSuggestions()) {
+		if m.fzfSelect != nil &&
+			(m.fzfSelect.IsVisible() || m.fzfSelect.HasSuggestions()) {
 			switch {
-			case key.Matches(msg, cmp.PrevKey):
-				m.cmp.Prev()
+			case key.Matches(msg, fuzzyselect.PrevKey):
+				m.fzfSelect.Prev()
 				return m, nil
-			case key.Matches(msg, cmp.NextKey):
-				m.cmp.Next()
+			case key.Matches(msg, fuzzyselect.NextKey):
+				m.fzfSelect.Next()
 				return m, nil
-			case m.cmp.Selected() != "" && key.Matches(msg, cmp.SelectKey):
-				selected := m.cmp.Selected()
-				if selected != "" && m.cmpSource != nil {
+			case m.fzfSelect.Selected() != "" && key.Matches(msg, fuzzyselect.SelectKey):
+				selected := m.fzfSelect.Selected()
+				if selected != "" && m.fzfSelect.Source != nil {
 					currentValue := m.Value()
+					log.Debug("before insert", "currentValue", currentValue)
 					currentContext := m.CurrentAutocompleteContext()
-					newValue, newCursorPos := m.cmpSource.InsertSuggestion(
+					newValue, newCursorPos := m.fzfSelect.Source.InsertSuggestion(
 						currentValue,
 						selected,
 						currentContext.Start,
@@ -160,14 +184,27 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					// Refresh cmp to exclude the newly-added item
 					if m.AutocompleteItemsToExclude() != nil {
 						newContext := m.CurrentAutocompleteContext()
-						m.cmp.Show(newContext.Content, m.AutocompleteItemsToExclude())
+						m.fzfSelect.Filter(m.Value(), newContext, m.AutocompleteItemsToExclude())
+						m.fzfSelect.Show()
 					}
 				}
 				return m, nil
+			default:
+				cmd := m.updateInput(msg)
+				m.fzfSelect.Filter(
+					m.Value(),
+					m.CurrentAutocompleteContext(),
+					m.AutocompleteItemsToExclude(),
+				)
+				return m, cmd
 			}
 		}
 	}
+	cmd := m.updateInput(msg)
+	return m, cmd
+}
 
+func (m *Model) updateInput(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	if m.textArea != nil {
 		ta, taCmd := m.textArea.Update(msg)
@@ -179,7 +216,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.textInput = &ti
 		cmd = tiCmd
 	}
-	return m, cmd
+	return cmd
 }
 
 func (m Model) View() string {
@@ -204,11 +241,11 @@ func (m Model) View() string {
 }
 
 func (m Model) ViewCompletions() string {
-	if m.cmp == nil || !m.cmp.IsVisible() {
+	if m.fzfSelect == nil || !m.fzfSelect.IsVisible() {
 		return ""
 	}
 
-	return m.cmp.View()
+	return m.fzfSelect.View()
 }
 
 func (m *Model) Value() string {
@@ -224,6 +261,14 @@ func (m *Model) SetValue(s string) {
 		return
 	}
 	m.textArea.SetValue(s)
+}
+
+func (m *Model) Lines() []string {
+	if m.textInput != nil {
+		return []string{m.textInput.Value()}
+	}
+	v := m.textArea.Value()
+	return strings.Split(v, "\n")
 }
 
 func (m *Model) SetCursorColumn(col int) {
@@ -306,8 +351,8 @@ func (m *Model) GetAbsoluteCursorPosition() tea.Position {
 	if m.textInput != nil {
 		return tea.Position{X: m.textInput.Position(), Y: 0}
 	}
-	line := m.textArea.Line()
 	col := m.textArea.Column()
+	line := m.textArea.Line()
 	return tea.Position{X: col, Y: line}
 }
 

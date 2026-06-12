@@ -11,6 +11,22 @@ To help you identify your custom commands, an additional `name` property can be 
 
 There are 3 types of keybindings: `universal`, `prs` and `issues`.
 
+## Key Values
+
+The `key` value must match one of the [Ultraviolet key strings][ultraviolet-key-strings].
+`dash` does not translate alternate key names or terminal labels before matching a keybinding.
+
+For example, Page Down is emitted as `pgdown`, not `pgdn`:
+
+```yaml
+keybindings:
+  universal:
+    - key: pgup
+      builtin: pageUp
+    - key: pgdown
+      builtin: pageDown
+```
+
 ## Universal Keybindings
 
 Define keybindings that will work in any view.
@@ -202,3 +218,5 @@ The following built-in notifications commands can be overridden with custom keyb
 | `toggleBookmark` | toggle bookmark                                    |
 
 See [notification keys](../../getting-started/keybindings/selected-notification/) for more details.
+
+[ultraviolet-key-strings]: https://github.com/charmbracelet/ultraviolet/blob/main/key.go#L612

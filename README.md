@@ -18,7 +18,7 @@
   <a href="https://github.com/dlvhdr/gh-dash/releases"><img src="https://img.shields.io/github/release/dlvhdr/gh-dash.svg" alt="Latest Release"></a>
   <a href="https://discord.gg/SXNXp9NctV"><img src="https://img.shields.io/discord/1413193703476035755?label=discord" alt="Discord"/></a>
   <a href="https://github.com/sponsors/dlvhdr"><img src=https://img.shields.io/github/sponsors/dlvhdr?logo=githubsponsors&color=EA4AAA /></a>
-  <a href="https://www.jetify.com/devbox/docs/contributor-quickstart/" alt="Built with Devbox"><img src="https://www.jetify.com/img/devbox/shield_galaxy.svg" /></a>
+  <a href="https://www.jetify.com/docs/devbox" alt="Built with Devbox"><img src="https://www.jetify.com/img/devbox/shield_moon.svg" /></a>
 </p>
 
 <br />
@@ -41,7 +41,6 @@ Thank you to all past and existing sponsors! 🙏🏽
 
 <p align="center">
 <a href="https://engineering.tryarchitect.com?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/179040529?s=128&v=4" alt="Architect" width="128"/></a>&nbsp;&nbsp;
-<a href="https://mariozechner.at?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/514052?s=128&u=86324f7b9775af9867e7135e19213716baaeba59&v=4" alt="Mario Zechner" width="128"/></a>&nbsp;&nbsp;
 <a href="http://steipete.me?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/58493?s=128&u=95a4fccef3d341039661c427695691a664e333ba&v=4" alt="Peter Steinberger" width="128"/></a>&nbsp;&nbsp;
 </p>
 
@@ -58,8 +57,6 @@ Thank you to all past and existing sponsors! 🙏🏽
 <a href="https://github.com/mchisolm0?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/39521893?s=50&u=2ab5b762d1573b0aecc776a30a93cc8ab04fdbad&v=4" alt="Matthew Chisolm" width="50"/></a>&nbsp;&nbsp;
 <a href="https://nikolay.com?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/2882?s=50&u=b5278753f2aeee2a074f17c163df9179d3640b03&v=4" alt="Nikolay Kolev" width="50"/></a>&nbsp;&nbsp;
 <a href="https://philippeserhal.com/?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/1377702?s=50&u=97edad0b41ef9cb95fd1825a62e244e6648c4681&v=4" alt="Philippe Serhal" width="50"/></a>&nbsp;&nbsp;
-<a href="https://github.com/ryneflood?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/1847226?s=50&u=ff62cad70c6b582ff729cf6a4cb92999aae1121b&v=4" alt="Ryne Flood" width="50"/></a>&nbsp;&nbsp;
-<a href="https://github.com/SacredTexts?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/65536039?s=50&v=4" alt="SacredTexts" width="50"/></a>&nbsp;&nbsp;
 <a href="https://ames.sh?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/8071752?s=50&u=d66ecf5d4a8d8cdd3cc6bab4c5524a0bdd0d9b21&v=4" alt="Scott Ames" width="50"/></a>&nbsp;&nbsp;
 <a href="https://sideshowbarker.net/?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/194984?s=50&v=4" alt="sideshowbarker" width="50"/></a>&nbsp;&nbsp;
 <a href="https://github.com/scjudd?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/167754?s=50&u=b094905c1930afc3b307f39776d5fc4250d02298&v=4" alt="Spencer Judd" width="50"/></a>&nbsp;&nbsp;
@@ -74,7 +71,6 @@ Thank you to all past and existing sponsors! 🙏🏽
 
 <p align="center">
 <a href="https://jeffry.in?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/1074042?s=40&u=81cb6e662a6d3254850200c4498ed07e7d59061e&v=4" alt="Jeff Wainwright" width="40"/></a>&nbsp;&nbsp;
-<a href="https://www.deel.com?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/321520?s=40&v=4" alt="Pavel Savchenko" width="40"/></a>&nbsp;&nbsp;
 <a href="https://purajit.com?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/7026198?s=40&u=5b76b661dba1677a00ae40a83f19c42250b81f5a&v=4" alt="purajit" width="40"/></a>&nbsp;&nbsp;
 </p>
 

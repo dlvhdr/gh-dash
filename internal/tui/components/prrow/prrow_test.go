@@ -37,16 +37,9 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						Commits: data.Commits{
+						Commits: data.LastCommitStatus{
 							Nodes: []struct {
 								Commit struct {
-									Deployments struct {
-										Nodes []struct {
-											Task        graphql.String
-											Description graphql.String
-										}
-									} `graphql:"deployments(last: 10)"`
-									CommitUrl         graphql.String
 									StatusCheckRollup struct {
 										State graphql.String
 									}
@@ -63,16 +56,9 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						Commits: data.Commits{
+						Commits: data.LastCommitStatus{
 							Nodes: []struct {
 								Commit struct {
-									Deployments struct {
-										Nodes []struct {
-											Task        graphql.String
-											Description graphql.String
-										}
-									} `graphql:"deployments(last: 10)"`
-									CommitUrl         graphql.String
 									StatusCheckRollup struct {
 										State graphql.String
 									}
@@ -80,13 +66,6 @@ func TestGetStatusChecksRollup(t *testing.T) {
 							}{
 								{
 									Commit: struct {
-										Deployments struct {
-											Nodes []struct {
-												Task        graphql.String
-												Description graphql.String
-											}
-										} `graphql:"deployments(last: 10)"`
-										CommitUrl         graphql.String
 										StatusCheckRollup struct {
 											State graphql.String
 										}
@@ -110,16 +89,9 @@ func TestGetStatusChecksRollup(t *testing.T) {
 			pr: &PullRequest{
 				Data: &Data{
 					Primary: &data.PullRequestData{
-						Commits: data.Commits{
+						Commits: data.LastCommitStatus{
 							Nodes: []struct {
 								Commit struct {
-									Deployments struct {
-										Nodes []struct {
-											Task        graphql.String
-											Description graphql.String
-										}
-									} `graphql:"deployments(last: 10)"`
-									CommitUrl         graphql.String
 									StatusCheckRollup struct {
 										State graphql.String
 									}
@@ -127,13 +99,6 @@ func TestGetStatusChecksRollup(t *testing.T) {
 							}{
 								{
 									Commit: struct {
-										Deployments struct {
-											Nodes []struct {
-												Task        graphql.String
-												Description graphql.String
-											}
-										} `graphql:"deployments(last: 10)"`
-										CommitUrl         graphql.String
 										StatusCheckRollup struct {
 											State graphql.String
 										}

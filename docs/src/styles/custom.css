@@ -30,6 +30,7 @@ h1 {
 }
 h2 {
   font-size: var(--text-2xl);
+  color: var(--sl-color-white);
 }
 h3 {
   font-size: var(--text-xl);

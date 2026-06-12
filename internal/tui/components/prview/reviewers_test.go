@@ -15,11 +15,22 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
-func newTestModel(t *testing.T, prData *data.PullRequestData) Model {
-	return newTestModelWithWidth(t, prData, 0)
+func newTestModel(
+	t *testing.T,
+	prData *data.PullRequestData,
+	reviews []data.Review,
+	reviewers []data.ReviewRequestNode,
+) Model {
+	return newTestModelWithWidth(t, prData, reviews, reviewers, 0)
 }
 
-func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int) Model {
+func newTestModelWithWidth(
+	t *testing.T,
+	prData *data.PullRequestData,
+	reviews []data.Review,
+	reviewers []data.ReviewRequestNode,
+	width int,
+) Model {
 	t.Helper()
 	cfg, err := config.ParseConfig(config.Location{
 		ConfigFlag:       "../../../config/testdata/test-config.yml",
@@ -43,8 +54,14 @@ func newTestModelWithWidth(t *testing.T, prData *data.PullRequestData, width int
 			Primary:    prData,
 			IsEnriched: true,
 			Enriched: data.EnrichedPullRequestData{
-				ReviewRequests: prData.ReviewRequests,
-				Reviews:        prData.Reviews,
+				ReviewRequests: data.ReviewRequests{
+					TotalCount: prData.ReviewRequests.TotalCount,
+					Nodes:      reviewers,
+				},
+				Reviews: data.Reviews{
+					TotalCount: prData.Reviews.TotalCount,
+					Nodes:      reviews,
+				},
 			},
 		},
 	}
@@ -250,17 +267,15 @@ func TestRenderRequestedReviewers(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			prData := &data.PullRequestData{
-				ReviewRequests: data.ReviewRequests{
+				ReviewRequests: data.ReviewRequestsNumber{
 					TotalCount: len(tc.reviewRequests),
-					Nodes:      tc.reviewRequests,
 				},
-				Reviews: data.Reviews{
+				Reviews: data.ReviewsNumber{
 					TotalCount: len(tc.reviews),
-					Nodes:      tc.reviews,
 				},
 			}
 
-			m := newTestModel(t, prData)
+			m := newTestModel(t, prData, tc.reviews, tc.reviewRequests)
 			got := ansi.Strip(m.renderRequestedReviewers())
 
 			if len(tc.wantContains) == 0 {
@@ -299,18 +314,16 @@ func TestRenderRequestedReviewersWrapping(t *testing.T) {
 	}
 
 	prData := &data.PullRequestData{
-		ReviewRequests: data.ReviewRequests{
+		ReviewRequests: data.ReviewRequestsNumber{
 			TotalCount: len(reviewRequests),
-			Nodes:      reviewRequests,
 		},
-		Reviews: data.Reviews{
+		Reviews: data.ReviewsNumber{
 			TotalCount: 0,
-			Nodes:      []data.Review{},
 		},
 	}
 
 	// Use a narrow width to force wrapping
-	m := newTestModelWithWidth(t, prData, 40)
+	m := newTestModelWithWidth(t, prData, []data.Review{}, reviewRequests, 40)
 	got := ansi.Strip(m.renderRequestedReviewers())
 
 	// Should contain all reviewers

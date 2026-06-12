@@ -12,6 +12,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/notificationrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 // noopStartTask is a stub that returns nil for testing
@@ -203,4 +204,52 @@ func TestMarkAsDoneStoresCorrectTimestamp(t *testing.T) {
 	// That is the critical assertion: if the pointer-aliasing bug were present,
 	// t2 would be stored, and activity at justAfterT1 would _not_ resurface
 	// (because justAfterT1 < t2). The test would fail here.
+}
+
+func TestUpdateNotificationKeepsCursorOnNewLastItem(t *testing.T) {
+	cfg, err := config.ParseConfig(config.Location{
+		ConfigFlag:       "../../../config/testdata/test-config.yml",
+		SkipGlobalConfig: true,
+	})
+	if err != nil {
+		t.Fatalf("Failed to parse config: %v", err)
+	}
+
+	ctx := &context.ProgramContext{
+		Config: &cfg,
+	}
+	ctx.Theme = theme.ParseTheme(ctx.Config)
+	ctx.Styles = context.InitStyles(ctx.Theme)
+
+	m := NewModel(0, ctx, config.NotificationsSectionConfig{}, time.Now())
+	m.Notifications = []notificationrow.Data{
+		{Notification: data.NotificationData{Id: "notif-A"}},
+		{Notification: data.NotificationData{Id: "notif-B"}},
+		{Notification: data.NotificationData{Id: "notif-C"}},
+	}
+	m.TotalCount = len(m.Notifications)
+	m.Table.SetRows(m.BuildRows())
+
+	m.LastItem()
+	if got := m.CurrRow(); got != 2 {
+		t.Fatalf("CurrRow() = %d, want 2 before removal", got)
+	}
+
+	m.Update(UpdateNotificationMsg{
+		Id:        "notif-C",
+		IsRemoved: true,
+	})
+
+	if got := m.CurrRow(); got != 1 {
+		t.Fatalf("CurrRow() = %d, want 1 after removing the last notification", got)
+	}
+
+	current := m.GetCurrNotification()
+	if current == nil {
+		t.Fatal("GetCurrNotification() returned nil")
+	}
+
+	if got := current.GetId(); got != "notif-B" {
+		t.Fatalf("GetCurrNotification().GetId() = %q, want %q", got, "notif-B")
+	}
 }

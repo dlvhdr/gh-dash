@@ -1,4 +1,4 @@
-package cmp
+package fuzzyselect
 
 import (
 	"strings"
@@ -6,59 +6,20 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+func lines(input string) []string {
+	return strings.Split(input, string('\n'))
+}
+
+func joinLines(lines []string) string {
+	return strings.Join(lines, string('\n'))
+}
+
 type WordInfo struct {
 	Word     string
 	StartIdx tea.Position
 	EndIdx   tea.Position
 	IsFirst  bool
 	IsLast   bool
-}
-
-type WhitespaceSource struct{}
-
-func (WhitespaceSource) ExtractContext(input string, cursorPos tea.Position) Context {
-	info := ExtractWordAtCursor(input, cursorPos)
-	return Context{
-		Start:   info.StartIdx,
-		End:     info.EndIdx,
-		Content: info.Word,
-	}
-}
-
-func (WhitespaceSource) InsertSuggestion(
-	input string,
-	suggestion string,
-	contextStart tea.Position,
-	contextEnd tea.Position,
-) (newInput string, newCursorPos tea.Position) {
-	lines := lines(input)
-	runes := []rune(lines[contextStart.Y])
-	replacement := suggestion + " "
-	newLine := string(runes[:contextStart.X]) + replacement + string(runes[contextEnd.X:])
-	newValue := joinLines(lines[:contextStart.Y]) + newLine + joinLines(lines[contextEnd.Y+1:])
-	newCursorPos.X = contextStart.X + len([]rune(replacement))
-	return newValue, newCursorPos
-}
-
-func (WhitespaceSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
-	if strings.TrimSpace(input) == "" {
-		return nil
-	}
-
-	wordInfo := ExtractWordAtCursor(input, cursorPos)
-	allWords := AllWords(input)
-	if allWords == nil {
-		return nil
-	}
-
-	excluded := make([]string, 0, len(allWords))
-	for _, word := range allWords {
-		if word != wordInfo.Word {
-			excluded = append(excluded, word)
-		}
-	}
-
-	return excluded
 }
 
 func ExtractWordAtCursor(input string, cursorPos tea.Position) WordInfo {

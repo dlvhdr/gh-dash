@@ -21,7 +21,7 @@ type RenderedActivity struct {
 
 func (m *Model) renderActivity() string {
 	width := m.getIndentedContentWidth()
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	markdownRenderer := markdown.GetMarkdownRenderer(width, m.ctx)
 	bodyStyle := lipgloss.NewStyle()
 
 	var activities []RenderedActivity
@@ -64,7 +64,7 @@ func (m *Model) renderActivity() string {
 		})
 	}
 
-	for _, review := range m.pr.Data.Primary.Reviews.Nodes {
+	for _, review := range m.pr.Data.Enriched.Reviews.Nodes {
 		renderedReview, err := m.renderReview(review, markdownRenderer)
 		if err != nil {
 			continue

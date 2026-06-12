@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"runtime/debug"
@@ -13,9 +14,11 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 	log "charm.land/log/v2"
 	"github.com/atotto/clipboard"
 	"github.com/cli/go-gh/v2/pkg/browser"
+	"github.com/cli/go-gh/v2/pkg/repository"
 	zone "github.com/lrstanley/bubblezone/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
@@ -89,7 +92,9 @@ func NewModel(location config.Location) Model {
 			m.tasks[task.Id] = task
 			return m.taskSpinner.Tick
 		},
-		Theme: *theme.DefaultTheme,
+		HasDarkBackground: true,
+		BackgroundSource:  "default",
+		Theme:             *theme.DefaultTheme,
 	}
 
 	m.footer = footer.NewModel(m.ctx)
@@ -159,8 +164,18 @@ func (m *Model) initScreen() tea.Msg {
 	return initMsg{Config: cfg, RepoUrl: url}
 }
 
+type repoDeterminedMsg struct {
+	repo repository.Repository
+	err  error
+}
+
+func (m *Model) determineRepo() tea.Msg {
+	repo, err := repository.Current()
+	return repoDeterminedMsg{repo: repo, err: err}
+}
+
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, m.initScreen)
+	return tea.Batch(tea.RequestBackgroundColor, m.initScreen, m.determineRepo)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -303,10 +318,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.Redraw):
-		// TODO: this doesn't exist in bubbletea v2
-		// can't find a way to just ask to send bubbletea's internal repaintMsg{},
-		// so this seems like the lightest-weight alternative
-		// return m, tea.Batch(tea.ExitAltScreen, tea.EnterAltScreen)
+			// with bubbletea v2's declarative approach, if we just clear the screen then tea will redraw for us
+			return m, tea.ClearScreen
 
 		case key.Matches(msg, m.keys.Search):
 			if currSection != nil {
@@ -675,8 +688,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
 		m.setCurrentViewSections(newSections)
 		m.tabs.SetCurrSectionId(1)
+
+		if m.ctx.BackgroundSource != "bubbletea" {
+			log.Debugf("Setting markdownStyle in initMsg")
+			m.ctx.HasDarkBackground = compat.HasDarkBackground
+			m.ctx.BackgroundSource = "compat"
+			log.Debugf(
+				"HasDarkBackground: %t, BackgroundSource: %s",
+				m.ctx.HasDarkBackground,
+				m.ctx.BackgroundSource,
+			)
+			markdown.InitializeMarkdownStyle(m.ctx)
+		}
+
 		cmds = append(cmds, fetchSectionsCmds, m.tabs.Init(), fetchUser,
 			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
+
+	case repoDeterminedMsg:
+		m.ctx.Repo = msg.repo
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()
@@ -812,7 +841,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if zone.Get("donate").InBounds(msg) {
 			log.Info("Donate clicked", "msg", msg)
 			openCmd := func() tea.Msg {
-				b := browser.New("", os.Stdout, os.Stdin)
+				// Discard the launcher's stdout/stderr so any noise (e.g.
+				// GTK / GVFS warnings from xdg-open / gnome-open) does not
+				// leak into the TUI's terminal and corrupt the display.
+				// See #829, #584, #679.
+				b := browser.New("", io.Discard, io.Discard)
 				err := b.Browse("https://github.com/sponsors/dlvhdr")
 				if err != nil {
 					return constants.ErrMsg{Err: err}
@@ -826,7 +859,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.onWindowSizeChanged(msg)
 
 	case tea.BackgroundColorMsg:
-		markdown.InitializeMarkdownStyle(msg.IsDark())
+		log.Debugf("Setting markdownStyle in BackgroundColorMsg")
+		m.ctx.HasDarkBackground = msg.IsDark()
+		m.ctx.BackgroundSource = "bubbletea"
+		log.Debugf(
+			"HasDarkBackground: %t, BackgroundSource: %s",
+			m.ctx.HasDarkBackground,
+			m.ctx.BackgroundSource,
+		)
+		markdown.InitializeMarkdownStyle(m.ctx)
 
 	case updateFooterMsg:
 		cmds = append(cmds, cmd, m.doUpdateFooterAtInterval())
@@ -941,16 +982,25 @@ func (m Model) View() tea.View {
 		lipgloss.NewLayer(zone.Scan(s.String())),
 	}
 
+	if currSection != nil {
+		searchCmp := currSection.ViewCompletions()
+		if searchCmp != "" {
+			y := common.HeaderHeight + common.SearchHeight + 1
+			layers = append(layers, lipgloss.NewLayer(searchCmp).X(1).Y(y))
+		}
+	}
+
 	prCmp := m.prView.ViewCompletions()
+	previewPos := m.ctx.PreviewCursorPosition()
 	if prCmp != "" {
-		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromBottom() - common.InputBoxHeight - 4
-		layers = append(layers, lipgloss.NewLayer(prCmp).X(m.ctx.MainContentWidth+4).Y(y))
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.prView.InputBoxLineFromBottom() - common.InputBoxHeight - 6
+		layers = append(layers, lipgloss.NewLayer(prCmp).X(previewPos.X+3).Y(y))
 	}
 
 	issueCmp := m.issueSidebar.ViewCompletions()
 	if issueCmp != "" {
-		y := m.ctx.ScreenHeight - common.FooterHeight - m.issueSidebar.InputBoxLineFromButton() - common.InputBoxHeight - 4
-		layers = append(layers, lipgloss.NewLayer(issueCmp).X(m.ctx.MainContentWidth+4).Y(y))
+		y := m.ctx.ScreenHeight - common.FooterHeight - m.issueSidebar.InputBoxLineFromButton() - common.InputBoxHeight - 6
+		layers = append(layers, lipgloss.NewLayer(issueCmp).X(previewPos.X+3).Y(y))
 	}
 
 	comp := lipgloss.NewCompositor(layers...)

@@ -102,8 +102,7 @@ func (m *Model) NextItem() int {
 }
 
 func (m *Model) PrevItem() int {
-	atTopOfViewport := m.currId < m.topBoundId
-	if atTopOfViewport {
+	if m.currId > 0 && m.currId <= m.topBoundId {
 		m.topBoundId -= 1
 		m.bottomBoundId -= 1
 		m.viewport.ScrollUp(m.ListItemHeight)

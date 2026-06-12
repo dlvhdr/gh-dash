@@ -13,8 +13,8 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/carousel"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmp"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/cmpcontroller"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/inputbox"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prrow"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/prssection"
@@ -51,10 +51,12 @@ func NewModel(ctx *context.ProgramContext) Model {
 	)
 
 	ta := inputbox.DefaultTextArea(ctx)
+	cmp := cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta})
+
 	return Model{
 		pr:       nil,
 		carousel: c,
-		editor:   cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta}),
+		editor:   cmp,
 	}
 }
 
@@ -86,21 +88,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tasks.ApprovePR(m.ctx, sid, m.pr.Data.Primary, comment)
 
 		case cmpcontroller.ModeAssign:
-			usernames := cmp.AllWords(value)
+			usernames := fuzzyselect.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.AssignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
 			return m, nil
 
 		case cmpcontroller.ModeUnassign:
-			usernames := cmp.AllWords(value)
+			usernames := fuzzyselect.AllWords(value)
 			if len(usernames) > 0 {
 				return m, tasks.UnassignPR(m.ctx, sid, m.pr.Data.Primary, usernames)
 			}
 			return m, nil
 
 		case cmpcontroller.ModeLabel:
-			labels := cmp.CurrentLabels(value)
+			labels := fuzzyselect.CurrentLabels(value)
 			if len(labels) > 0 || len(m.pr.Data.Primary.Labels.Nodes) > 0 {
 				return m, m.label(labels)
 			}
@@ -212,7 +214,6 @@ func (m *Model) ViewCompletions() string {
 	if !m.hasData() {
 		return ""
 	}
-
 	return m.editor.ViewCompletions()
 }
 
@@ -494,7 +495,7 @@ func (m *Model) renderAuthor() string {
 func (m *Model) renderSummary() string {
 	width := m.getIndentedContentWidth()
 	// Strip HTML comments from body and cleanup body.
-	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Primary.Body, "")
+	body := htmlCommentRegex.ReplaceAllString(m.pr.Data.Enriched.Body, "")
 	body = lineCleanupRegex.ReplaceAllString(body, "")
 
 	desc := m.ctx.Styles.Common.MainTextStyle.Bold(true).Underline(true).Render(" Summary")
@@ -513,7 +514,7 @@ func (m *Model) renderSummary() string {
 		)
 	}
 
-	markdownRenderer := markdown.GetMarkdownRenderer(width)
+	markdownRenderer := markdown.GetMarkdownRenderer(width, m.ctx)
 	rendered, err := markdownRenderer.Render(body)
 	if err != nil {
 		return ""
@@ -586,15 +587,13 @@ func (m *Model) EnrichCurrRow() tea.Cmd {
 func (m *Model) SetWidth(width int) {
 	m.width = width
 	m.carousel.SetWidth(width)
-	m.editor.SetWidth(width)
+	m.editor.SetWidth(
+		m.getIndentedContentWidth() - m.ctx.Styles.Sidebar.InputBox.GetHorizontalFrameSize(),
+	)
 }
 
 func (m *Model) IsTextInputBoxFocused() bool {
 	return m.editor.Active()
-}
-
-func (m *Model) GetIsCommenting() bool {
-	return m.editor.Mode() == cmpcontroller.ModeComment
 }
 
 func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
@@ -606,6 +605,14 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 			Selected: lipgloss.NewStyle().Padding(0, 1).Bold(true),
 		},
 	)
+
+	// TODO: move this to the NewModel func
+	// currently it's not possible since the styles aren't yet instantiated when NewModel is called
+	m.editor.SetSelectStyles(ctx.Styles.Select)
+}
+
+func (m *Model) GetIsCommenting() bool {
+	return m.editor.Mode() == cmpcontroller.ModeComment
 }
 
 func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
@@ -620,12 +627,11 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 		return nil
 	}
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeComment,
 		Prompt:                           constants.CommentPrompt,
-		Source:                           cmp.UserMentionSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionUsers,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		ConfirmDiscardOnCancel:           true,
 		HideAutocompleteWhenContextEmpty: true,
@@ -634,7 +640,7 @@ func (m *Model) SetIsCommenting(isCommenting bool) tea.Cmd {
 }
 
 func (m *Model) getIndentedContentWidth() int {
-	return m.width - 4*m.ctx.Styles.Sidebar.ContentPadding
+	return m.width - 2*m.ctx.Styles.Sidebar.ContentPadding
 }
 
 func (m *Model) GetIsApproving() bool {
@@ -653,16 +659,15 @@ func (m *Model) SetIsApproving(isApproving bool) tea.Cmd {
 		return nil
 	}
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: true})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeApprove,
 		Prompt:                           constants.ApprovalPrompt,
 		InitialValue:                     m.ctx.Config.Defaults.PrApproveComment,
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionUsers,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		ConfirmDiscardOnCancel:           true,
-		HideAutocompleteWhenContextEmpty: false,
+		HideAutocompleteWhenContextEmpty: true,
 	})
 	return cmd
 }
@@ -688,16 +693,16 @@ func (m *Model) SetIsAssigning(isAssigning bool) tea.Cmd {
 		initialValue = m.ctx.User
 	}
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.UserMentionSource{WithAtSymbol: false})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeAssign,
 		Prompt:                           constants.AssignPrompt,
 		InitialValue:                     initialValue,
-		Source:                           cmp.WhitespaceSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionUsers,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 	})
+	m.editor.ShowCompletions()
 	return cmd
 }
 
@@ -793,17 +798,17 @@ func (m *Model) SetIsLabeling(isLabeling bool) tea.Cmd {
 	}
 	labels = append(labels, "")
 
+	m.editor.SetAutocompleteSource(&fuzzyselect.LabelSource{})
 	cmd := m.editor.Enter(cmpcontroller.EnterOptions{
 		Mode:                             cmpcontroller.ModeLabel,
 		Prompt:                           constants.LabelPrompt,
 		InitialValue:                     strings.Join(labels, ", "),
-		Source:                           cmp.LabelSource{},
 		Repo:                             m.repoRef(),
-		SuggestionKind:                   cmpcontroller.SuggestionLabels,
 		EnterFetch:                       cmpcontroller.FetchSilent,
 		HideAutocompleteWhenContextEmpty: false,
 		ConfirmDiscardOnCancel:           false,
 	})
+	m.editor.ShowCompletions()
 	return cmd
 }
 

@@ -1,14 +1,20 @@
-package cmp
+package fuzzyselect
 
 import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/dlvhdr/gh-dash/v4/internal/data"
 )
 
-type UserMentionSource struct{}
+// UserMentionSource implements the Source interface.
+type UserMentionSource struct {
+	WithAtSymbol bool
+	Users        []data.User
+	Err          error
+}
 
-func (UserMentionSource) ExtractContext(input string, cursorPos tea.Position) Context {
+func (src *UserMentionSource) ExtractContext(input string, cursorPos tea.Position) Context {
 	if input == "" {
 		return Context{}
 	}
@@ -38,8 +44,12 @@ func (UserMentionSource) ExtractContext(input string, cursorPos tea.Position) Co
 		}
 		userStart = i
 	}
+	if src.WithAtSymbol {
+		userStart = userStart + 1
+	}
 
-	if userStart >= len(runes) || runes[userStart] != '@' {
+	if userStart >= len(runes)+1 ||
+		(userStart > 0 && userStart < len(runes) && src.WithAtSymbol && runes[userStart-1] != '@') {
 		return Context{}
 	}
 
@@ -54,11 +64,20 @@ func (UserMentionSource) ExtractContext(input string, cursorPos tea.Position) Co
 	return Context{
 		Start:   tea.Position{X: userStart, Y: cursorPos.Y},
 		End:     tea.Position{X: userEnd, Y: cursorPos.Y},
-		Content: string(runes[userStart+1 : userEnd]),
+		Content: string(runes[userStart:userEnd]),
 	}
 }
 
-func (UserMentionSource) InsertSuggestion(
+func (src *UserMentionSource) Suggestions(input string, cursorPos tea.Position) []Suggestion {
+	suggestions := make([]Suggestion, 0)
+	for _, user := range src.Users {
+		suggestions = append(suggestions, Suggestion{Value: user.Login, Detail: user.Name})
+	}
+
+	return suggestions
+}
+
+func (src *UserMentionSource) InsertSuggestion(
 	input string,
 	suggestion string,
 	contextStart tea.Position,
@@ -66,7 +85,7 @@ func (UserMentionSource) InsertSuggestion(
 ) (newInput string, newCursorPos tea.Position) {
 	lines := lines(input)
 	runes := []rune(lines[contextStart.Y])
-	replacement := "@" + suggestion + " "
+	replacement := suggestion + " "
 	newLine := string(runes[:contextStart.X]) + replacement + string(runes[contextEnd.X:])
 
 	before := joinLines(lines[:contextStart.Y])
@@ -78,8 +97,25 @@ func (UserMentionSource) InsertSuggestion(
 	return newValue, newCursorPos
 }
 
-func (UserMentionSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
-	return nil
+func (*UserMentionSource) ItemsToExclude(input string, cursorPos tea.Position) []string {
+	if strings.TrimSpace(input) == "" {
+		return nil
+	}
+
+	currentUser := ExtractWordAtCursor(input, cursorPos)
+	currentUsers := AllWords(input)
+	if currentUsers == nil {
+		return nil
+	}
+
+	excluded := make([]string, 0, len(currentUsers))
+	for _, user := range currentUsers {
+		if user != currentUser.Word {
+			excluded = append(excluded, user)
+		}
+	}
+
+	return excluded
 }
 
 func isWhitespace(r rune) bool {
@@ -100,4 +136,12 @@ func isWordBoundary(r rune) bool {
 		r == '"' ||
 		r == '\'' ||
 		r == '`'
+}
+
+func (src *UserMentionSource) LoadSuggestions(ctx LoaderContext) error {
+	users, err := data.FetchRepoUsers(ctx.RepoOwner, ctx.RepoName)
+	src.Users = users
+	src.Err = err
+
+	return err
 }

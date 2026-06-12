@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
@@ -29,6 +30,7 @@ type Task struct {
 }
 
 type ProgramContext struct {
+	Repo                 repository.Repository
 	RepoPath             string
 	RepoUrl              string
 	User                 string
@@ -40,6 +42,8 @@ type ProgramContext struct {
 	DynamicPreviewHeight int    // calculated preview height for bottom mode
 	PreviewPosition      string // resolved "right" or "bottom"
 	SidebarOpen          bool
+	HasDarkBackground    bool
+	BackgroundSource     string
 	Config               *config.Config
 	ConfigFlag           string
 	Version              string
@@ -76,4 +80,18 @@ func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 	}
 
 	return append([]config.SectionConfig{{Title: ""}}, configs...)
+}
+
+func (ctx *ProgramContext) PreviewCursorPosition() tea.Position {
+	if ctx.PreviewPosition == "right" {
+		return tea.Position{
+			X: ctx.MainContentWidth,
+			Y: ctx.Styles.Pager.Height,
+		}
+	}
+
+	return tea.Position{
+		X: 0,
+		Y: ctx.MainContentHeight,
+	}
 }

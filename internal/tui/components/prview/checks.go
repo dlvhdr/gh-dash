@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	ghchecks "github.com/dlvhdr/x/gh-checks"
 )
 
@@ -101,7 +102,13 @@ func (m *Model) viewChecksStatus() (string, checkSectionStatus) {
 		statStrs = append(statStrs, fmt.Sprintf("%d failing", stats.failed))
 	}
 	if stats.awaitingApproval > 0 {
-		statStrs = append(statStrs, fmt.Sprintf("%d awaiting approval", stats.awaitingApproval))
+		statStrs = append(
+			statStrs,
+			fmt.Sprintf(
+				"%d awaiting approval. Press %s to run.",
+				stats.awaitingApproval,
+				m.ctx.Styles.KeyHint.Render(keys.PRKeys.ApproveWorkflows.Keys()[0])),
+		)
 	}
 	if stats.inProgress > 0 {
 		statStrs = append(statStrs, fmt.Sprintf("%d in progress", stats.inProgress))
@@ -200,7 +207,7 @@ func (m *Model) viewReviewStatus() (string, checkSectionStatus) {
 
 	numApproving, numChangesRequested, numPending, numCommented := 0, 0, 0, 0
 
-	for _, node := range pr.Data.Primary.Reviews.Nodes {
+	for _, node := range pr.Data.Enriched.Reviews.Nodes {
 		switch node.State {
 		case "APPROVED":
 			numApproving++
@@ -651,7 +658,7 @@ func (m *Model) getChecksStats() checksStats {
 func (m *Model) numRequestedReviewOwners() int {
 	numOwners := 0
 
-	for _, node := range m.pr.Data.Primary.ReviewRequests.Nodes {
+	for _, node := range m.pr.Data.Enriched.ReviewRequests.Nodes {
 		if node.AsCodeOwner {
 			numOwners++
 		}
