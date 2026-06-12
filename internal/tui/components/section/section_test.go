@@ -119,7 +119,7 @@ func TestHasCurrentRepoNameInConfiguredFilter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := BaseModel{SearchValue: tt.searchValue}
 			m.Ctx = &context.ProgramContext{
-				Repo: repo,
+				GHRepo: &repo,
 			}
 			require.Equal(t, tt.want, m.HasCurrentRepoNameInConfiguredFilter())
 		})
@@ -164,7 +164,7 @@ func TestSyncSmartFilterWithSearchValue(t *testing.T) {
 				IsFilteredByCurrentRemote: !tt.wantFlag,
 			}
 			m.Ctx = &context.ProgramContext{
-				Repo: repo,
+				GHRepo: &repo,
 			}
 			m.SyncSmartFilterWithSearchValue()
 			require.Equal(t, tt.wantFlag, m.IsFilteredByCurrentRemote)
@@ -237,7 +237,7 @@ func TestGetSearchValue(t *testing.T) {
 				IsFilteredByCurrentRemote: tt.isFilteredByCurrentRemote,
 			}
 			m.Ctx = &context.ProgramContext{
-				Repo: repo,
+				GHRepo: &repo,
 			}
 
 			got := m.GetSearchValue()
@@ -275,7 +275,7 @@ func TestGetSearchValue_SimilarRepoNameNotStripped(t *testing.T) {
 		IsFilteredByCurrentRemote: false,
 	}
 	m.Ctx = &context.ProgramContext{
-		Repo: repo,
+		GHRepo: &repo,
 	}
 
 	got := m.GetSearchValue()
@@ -340,7 +340,7 @@ func TestGetSearchValue_ManualRepoFilterRemoval(t *testing.T) {
 				IsFilteredByCurrentRemote: tt.isFilteredByCurrentRemote,
 			}
 			m.Ctx = &context.ProgramContext{
-				Repo: repo,
+				GHRepo: &repo,
 			}
 
 			m.SyncSmartFilterWithSearchValue()
@@ -406,7 +406,7 @@ func TestGetConfigFiltersWithCurrentRemoteAdded(t *testing.T) {
 				Config: &config.Config{
 					SmartFilteringAtLaunch: tt.smartFilteringAtLaunch,
 				},
-				Repo: repo,
+				GHRepo: &repo,
 			}
 
 			got := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
