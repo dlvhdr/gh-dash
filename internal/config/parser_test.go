@@ -160,6 +160,32 @@ func TestParser(t *testing.T) {
 		assert.Empty(t, cmp.Diff(expected, actual, keybindSorter))
 	})
 
+	t.Run("Should merge configs referenced by the include directive", func(t *testing.T) {
+		cwd := Testwd(t)
+		parsed, err := ParseConfig(Location{
+			ConfigFlag:       path.Join(cwd, "testdata/include-main.yml"),
+			SkipGlobalConfig: true,
+		})
+		testutils.AssertNoError(t, err)
+
+		// prSections survive from the included base even though the main file
+		// declares none of its own.
+		require.Len(t, parsed.PRSections, 1)
+		require.Equal(t, "Base PRs", parsed.PRSections[0].Title)
+
+		require.Equal(t, 42, parsed.Defaults.PrsLimit)   // from the included base
+		require.Equal(t, 7, parsed.Defaults.IssuesLimit) // from the main file
+
+		// Keybindings are unioned across all layers. "c" comes from a file that
+		// include-base itself includes, so three layers are merged — which used
+		// to panic when a later merge re-read already-merged keybindings.
+		keys := make([]string, 0, len(parsed.Keybindings.Universal))
+		for _, kb := range parsed.Keybindings.Universal {
+			keys = append(keys, kb.Key)
+		}
+		require.ElementsMatch(t, []string{"a", "b", "c"}, keys)
+	})
+
 	t.Run("Should accept ANSI color indices in theme", func(t *testing.T) {
 		cwd := Testwd(t)
 		parsed, err := ParseConfig(Location{

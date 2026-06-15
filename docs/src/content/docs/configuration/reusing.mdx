@@ -56,3 +56,29 @@ prSections:
 
 Starting `DASH` from the git repo, the final config used will have the `pager`, `theme` and `keybindings`
 from your global config and the `prSections` from your repo's config.
+
+## Including Other Config Files
+
+Any config file can pull in other config files with the `include` directive, which
+takes a list of paths to other config files:
+
+```yaml
+include:
+  - /var/lib/gh-dash/system-shared.yml
+  - ~/.config/gh-dash/themes/tokyonight.yml
+  - ./shared-keybindings.yml
+
+prSections:
+  - title: Bugs
+    filters: is:open author:@me [BUG]
+```
+
+Included files are merged in using the same rules as the global/override merge:
+the file doing the including takes precedence over the files it includes, and
+included files are merged in the order they're listed (later ones overriding
+earlier ones). `keybindings` are unioned across all files, and `sections` are
+taken from the file that defines them.
+
+Paths are resolved relative to the file declaring the `include`, and a leading
+`~` is expanded to your home directory. Included files may declare their own
+`include` directives, which are resolved recursively.
