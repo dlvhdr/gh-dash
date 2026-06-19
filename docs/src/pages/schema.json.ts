@@ -125,7 +125,7 @@ export function GET() {
               completions: [
                 {
                   key: "tab",
-                  builtin: "acceptSuggestion",
+                  builtin: "selectSuggestion",
                 },
               ],
             },
