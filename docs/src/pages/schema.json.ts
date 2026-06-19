@@ -94,8 +94,8 @@ export function GET() {
               $ref: "./schema/keybindings/issues.json",
             },
             completions: {
-              $ref: "./schema/keybindings.completions.json"
-            }
+              $ref: "./schema/keybindings/completions.json",
+            },
           },
           examples: [
             {
@@ -126,9 +126,9 @@ export function GET() {
                 {
                   key: "tab",
                   builtin: "acceptSuggestion",
-                }
-              ]
-            }
+                },
+              ],
+            },
           ],
         },
         theme: {
