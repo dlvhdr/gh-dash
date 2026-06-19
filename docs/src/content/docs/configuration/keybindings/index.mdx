@@ -220,3 +220,38 @@ The following built-in notifications commands can be overridden with custom keyb
 See [notification keys](../../getting-started/keybindings/selected-notification/) for more details.
 
 [ultraviolet-key-strings]: https://github.com/charmbracelet/ultraviolet/blob/main/key.go#L612
+
+## Completions Keybindings
+
+Define any number of keybindings for the Completions popup or override existing ones.
+
+For example:
+
+```yaml
+keybindings:
+  completions:
+    - key: tab
+      builtin: selectSuggestion
+    - key: ctrl+j
+      builtin: nextSuggestion
+    - key: ctrl+k
+      builtin: previousSuggestion
+    - key: ctrl+t
+      builtin: toggleSuggestions
+    - key: ctrl+r
+      builtin: refreshSuggestions
+```
+
+### Built-in Commands
+
+The following built-in completion commands can be overridden with custom keybinds:
+
+| Command              | Description                               |
+| -------------------- | ----------------------------------------- |
+| `nextSuggestion`     | next suggestion in the list               |
+| `previousSuggestion` | previous suggestion in the list           |
+| `selectSuggestion`   | accept the currently selected suggestion  |
+| `toggleSuggestions`  | toggle if suggestions are shown or hidden |
+| `refreshSuggestions` | fetch and refresh suggestion              |
+
+See [Completions keys](../../getting-started/keybindings/completions/) for more details.

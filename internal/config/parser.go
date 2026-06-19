@@ -231,6 +231,7 @@ type Keybindings struct {
 	Prs           []Keybinding `yaml:"prs,omitempty"`
 	Branches      []Keybinding `yaml:"branches,omitempty"`
 	Notifications []Keybinding `yaml:"notifications,omitempty"`
+	Cmp           []Keybinding `yaml:"completions,omitempty"`
 }
 
 type Pager struct {
@@ -633,7 +634,7 @@ func (parser ConfigParser) getProvidedConfigPath(location Location) string {
 
 // keybindingTypes are the keybinding groups that are unioned across config
 // layers rather than being replaced wholesale.
-var keybindingTypes = []string{"universal", "prs", "issues"}
+var keybindingTypes = []string{"universal", "prs", "issues", "completions"}
 
 // sectionTypes are replaced wholesale by any layer that defines them.
 var sectionTypes = []string{"prSections", "issuesSections", "notificationsSections"}

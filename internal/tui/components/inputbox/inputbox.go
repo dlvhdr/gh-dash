@@ -14,6 +14,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/fuzzyselect"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 )
 
 type Model struct {
@@ -30,7 +31,7 @@ type Model struct {
 var inputKeys = []key.Binding{
 	key.NewBinding(key.WithKeys("ctrl+d"), key.WithHelp("Ctrl+d", "submit")),
 	key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Ctrl+c/esc", "cancel")),
-	fuzzyselect.ToggleSuggestions,
+	keys.CmpKeys.ToggleSuggestions,
 }
 
 const DefaultInputHeight = 5
@@ -144,7 +145,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Allow toggling suggestions at any time
-		if m.fzfSelect != nil && key.Matches(msg, fuzzyselect.ToggleSuggestions) {
+		if m.fzfSelect != nil && key.Matches(msg, keys.CmpKeys.ToggleSuggestions) {
 			if m.fzfSelect.IsVisible() {
 				m.fzfSelect.Suppress()
 				return m, nil
@@ -161,13 +162,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if m.fzfSelect != nil &&
 			(m.fzfSelect.IsVisible() || m.fzfSelect.HasSuggestions()) {
 			switch {
-			case key.Matches(msg, fuzzyselect.PrevKey):
+			case key.Matches(msg, keys.CmpKeys.PrevKey):
 				m.fzfSelect.Prev()
 				return m, nil
-			case key.Matches(msg, fuzzyselect.NextKey):
+			case key.Matches(msg, keys.CmpKeys.NextKey):
 				m.fzfSelect.Next()
 				return m, nil
-			case m.fzfSelect.Selected() != "" && key.Matches(msg, fuzzyselect.SelectKey):
+			case m.fzfSelect.Selected() != "" && key.Matches(msg, keys.CmpKeys.SelectKey):
 				selected := m.fzfSelect.Selected()
 				if selected != "" && m.fzfSelect.Source != nil {
 					currentValue := m.Value()

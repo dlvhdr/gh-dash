@@ -15,6 +15,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/keys"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 	"github.com/sahilm/fuzzy"
 )
@@ -48,41 +49,22 @@ func (s suggestionList) Len() int {
 	return len(s.items)
 }
 
-var (
-	NextKey = key.NewBinding(
-		key.WithKeys("down", "ctrl+n"),
-		key.WithHelp("↓/ctrl+n", "next"),
-	)
-	PrevKey = key.NewBinding(
-		key.WithKeys("up", "ctrl+p"),
-		key.WithHelp("↑/ctrl+p", "previous"),
-	)
-	SelectKey = key.NewBinding(
-		key.WithKeys("ctrl+y"),
-		key.WithHelp("ctrl+y", "select"),
-	)
-	RefreshSuggestionsKey = key.NewBinding(
-		key.WithKeys("ctrl+f"),
-		key.WithHelp("ctrl+f", "refresh"),
-	)
-	ToggleSuggestions = key.NewBinding(
-		key.WithKeys("ctrl+h"),
-		key.WithHelp("ctrl+h", "toggle"),
-	)
-)
-
 type keyMap struct{}
 
 func (km keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
-		NextKey, PrevKey, SelectKey, RefreshSuggestionsKey, ToggleSuggestions,
+		keys.CmpKeys.NextKey,
+		keys.CmpKeys.PrevKey,
+		keys.CmpKeys.SelectKey,
+		keys.CmpKeys.RefreshSuggestionsKey,
+		keys.CmpKeys.ToggleSuggestions,
 	}
 }
 
 func (km keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{NextKey, PrevKey, SelectKey},
-		{RefreshSuggestionsKey, ToggleSuggestions},
+		{keys.CmpKeys.NextKey, keys.CmpKeys.PrevKey, keys.CmpKeys.SelectKey},
+		{keys.CmpKeys.RefreshSuggestionsKey, keys.CmpKeys.ToggleSuggestions},
 	}
 }
 

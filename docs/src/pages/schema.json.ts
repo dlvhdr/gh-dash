@@ -102,6 +102,9 @@ export function GET() {
             issues: {
               $ref: "./schema/keybindings/issues.json",
             },
+            completions: {
+              $ref: "./schema/keybindings/completions.json",
+            },
           },
           examples: [
             {
@@ -124,6 +127,14 @@ export function GET() {
                   key: "v",
                   command:
                     "cd {{.RepoPath}} && code . && gh pr checkout {{.PrNumber}}\n",
+                },
+              ],
+            },
+            {
+              completions: [
+                {
+                  key: "tab",
+                  builtin: "selectSuggestion",
                 },
               ],
             },
