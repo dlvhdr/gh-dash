@@ -21,6 +21,7 @@ import (
 	"github.com/cli/go-gh/v2/pkg/repository"
 	zone "github.com/lrstanley/bubblezone/v2"
 
+	gitm "github.com/aymanbagabas/git-module"
 	"github.com/dlvhdr/gh-dash/v4/internal/config"
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -68,7 +69,12 @@ type Model struct {
 	positionOverride string // "" means no override, "right" or "bottom"
 }
 
-func NewModel(location config.Location) Model {
+type Repositories struct {
+	GHRepo  *repository.Repository
+	GitRepo *gitm.Repository
+}
+
+func NewModel(location config.Location, repos Repositories) Model {
 	taskSpinner := spinner.Model{Spinner: spinner.Dot}
 	m := Model{
 		keys:        keys.Keys,
@@ -83,7 +89,8 @@ func NewModel(location config.Location) Model {
 	}
 
 	m.ctx = &context.ProgramContext{
-		RepoPath:   location.RepoPath,
+		GHRepo:     repos.GHRepo,
+		GitRepo:    repos.GitRepo,
 		ConfigFlag: location.ConfigFlag,
 		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
@@ -165,18 +172,8 @@ func (m *Model) initScreen() tea.Msg {
 	return initMsg{Config: cfg, RepoUrl: url}
 }
 
-type repoDeterminedMsg struct {
-	repo repository.Repository
-	err  error
-}
-
-func (m *Model) determineRepo() tea.Msg {
-	repo, err := repository.Current()
-	return repoDeterminedMsg{repo: repo, err: err}
-}
-
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, m.initScreen, m.determineRepo)
+	return tea.Batch(tea.RequestBackgroundColor, m.initScreen)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -704,9 +701,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmds = append(cmds, fetchSectionsCmds, m.tabs.Init(), fetchUser,
 			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
-
-	case repoDeterminedMsg:
-		m.ctx.Repo = msg.repo
 
 	case intervalRefresh:
 		newSections, fetchSectionsCmds := m.fetchAllViewSections()

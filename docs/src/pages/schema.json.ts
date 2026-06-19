@@ -7,6 +7,15 @@ export function GET() {
       description: "Settings for the GitHub Dashboard.",
       type: "object",
       properties: {
+        include: {
+          title: "Included Config Files",
+          description:
+            "A list of other config files to merge into this one. Paths are resolved relative to this file (a leading `~` is expanded to the home directory) and may themselves declare an `include` directive. This file takes precedence over the files it includes. See [Reusing Settings](configuration/reusing#including-other-config-files).",
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
         prSections: {
           title: "Pull Request Sections",
           description: "Define sections for the dashboard's PR view.",

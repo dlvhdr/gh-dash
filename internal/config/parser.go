@@ -319,6 +319,7 @@ type ThemeConfig struct {
 }
 
 type Config struct {
+	Include                  []string                     `yaml:"include,omitempty"`
 	PRSections               []PrsSectionConfig           `yaml:"prSections"`
 	IssuesSections           []IssuesSectionConfig        `yaml:"issuesSections"`
 	NotificationsSections    []NotificationsSectionConfig `yaml:"notificationsSections"`
@@ -631,104 +632,157 @@ func (parser ConfigParser) getProvidedConfigPath(location Location) string {
 	return userProvidedCfgPath
 }
 
-func (parser ConfigParser) loadGlobalConfig(globalCfgPath string) error {
-	return parser.k.Load(file.Provider(globalCfgPath), yaml.Parser())
+// keybindingTypes are the keybinding groups that are unioned across config
+// layers rather than being replaced wholesale.
+var keybindingTypes = []string{"universal", "prs", "issues", "completions"}
+
+// sectionTypes are replaced wholesale by any layer that defines them.
+var sectionTypes = []string{"prSections", "issuesSections", "notificationsSections"}
+
+func mergeOption() koanf.Option {
+	return koanf.WithMergeFunc(func(overrides, dest map[string]any) error {
+		// Snapshot the layer's sections before maps.Merge so the section guard
+		// below can tell which sections this layer actually declared.
+		overridesCopy := maps.Copy(overrides)
+
+		unioned := make(map[string][]map[string]string, len(keybindingTypes))
+		for _, typ := range keybindingTypes {
+			unioned[typ] = mergeKeybindings(overrides, dest, typ)
+		}
+
+		maps.Merge(overrides, dest)
+
+		keybindings, ok := dest["keybindings"].(map[string]any)
+		if !ok {
+			keybindings = map[string]any{}
+			dest["keybindings"] = keybindings
+		}
+		for typ, binds := range unioned {
+			keybindings[typ] = binds
+		}
+		for _, key := range sectionTypes {
+			if v, ok := overridesCopy[key]; ok {
+				dest[key] = v
+			}
+		}
+
+		return nil
+	})
+}
+
+func (parser ConfigParser) getIncludes(cfgPath string) ([]string, error) {
+	k := koanf.NewWithConf(conf)
+	if err := k.Load(file.Provider(cfgPath), yaml.Parser()); err != nil {
+		return nil, err
+	}
+	return k.Strings("include"), nil
+}
+
+func resolveIncludePath(includingCfgPath, includePath string) string {
+	if strings.HasPrefix(includePath, "~") {
+		if homeDir, err := os.UserHomeDir(); err == nil {
+			return strings.Replace(includePath, "~", homeDir, 1)
+		}
+	}
+	if filepath.IsAbs(includePath) {
+		return includePath
+	}
+	return filepath.Join(filepath.Dir(includingCfgPath), includePath)
+}
+
+func (parser ConfigParser) loadConfig(cfgPath string) error {
+	return parser.loadConfigWithIncludes(cfgPath, map[string]bool{})
+}
+
+// seen holds absolute paths already loaded, so an include cycle can't loop forever.
+func (parser ConfigParser) loadConfigWithIncludes(cfgPath string, seen map[string]bool) error {
+	abs, err := filepath.Abs(cfgPath)
+	if err != nil {
+		abs = cfgPath
+	}
+	if seen[abs] {
+		log.Warn("Skipping already-included config to avoid a cycle", "path", cfgPath)
+		return nil
+	}
+	seen[abs] = true
+
+	includes, err := parser.getIncludes(cfgPath)
+	if err != nil {
+		return parsingError{err: err, path: cfgPath}
+	}
+	// Load includes first so cfgPath's own values take precedence over them.
+	for _, include := range includes {
+		includePath := resolveIncludePath(cfgPath, include)
+		if err := parser.loadConfigWithIncludes(includePath, seen); err != nil {
+			return err
+		}
+	}
+
+	if err := parser.k.Load(file.Provider(cfgPath), yaml.Parser(), mergeOption()); err != nil {
+		return parsingError{err: err, path: cfgPath}
+	}
+	log.Info("Loaded config", "path", cfgPath)
+	return nil
 }
 
 func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath string) (Config, error) {
-	if err := parser.loadGlobalConfig(globalCfgPath); err != nil {
-		return Config{}, parsingError{err: err, path: globalCfgPath}
+	if err := parser.loadConfig(globalCfgPath); err != nil {
+		return Config{}, err
 	}
-	log.Info("Loaded global config", "path", globalCfgPath)
-	if err := parser.k.Load(
-		file.Provider(userProvidedCfgPath),
-		yaml.Parser(),
-		koanf.WithMergeFunc(func(
-			overrides, dest map[string]any,
-		) error {
-			overridesCopy := maps.Copy(overrides)
-
-			universalKeybinds := mergeKeybindings(overrides, dest, "universal")
-			prsKeybinds := mergeKeybindings(overrides, dest, "prs")
-			issuesKeybinds := mergeKeybindings(overrides, dest, "issues")
-			completionsKeybinds := mergeKeybindings(overrides, dest, "completions")
-
-			maps.Merge(overrides, dest)
-			dest["keybindings"].(map[string]any)["universal"] = universalKeybinds
-			dest["keybindings"].(map[string]any)["prs"] = prsKeybinds
-			dest["keybindings"].(map[string]any)["issues"] = issuesKeybinds
-			dest["keybindings"].(map[string]any)["completions"] = completionsKeybinds
-			dest["prSections"] = overridesCopy["prSections"]
-			dest["issuesSections"] = overridesCopy["issuesSections"]
-			dest["notificationsSections"] = overridesCopy["notificationsSections"]
-
-			return nil
-		}),
-	); err != nil {
-		return Config{}, parsingError{err: err, path: userProvidedCfgPath}
+	if err := parser.loadConfig(userProvidedCfgPath); err != nil {
+		return Config{}, err
 	}
-	log.Info("Loaded user provided config", "path", userProvidedCfgPath)
-
 	return parser.unmarshalConfigWithDefaults()
 }
 
-// Make a union of keybinds, merging src into dest
-// Keybinds from src will override ones in dest.
-func mergeKeybindings(src, dest map[string]any, typ string) []map[string]string {
-	if _, ok := src["keybindings"].(map[string]any); !ok {
-		src["keybindings"] = make(map[string]any)
-	}
-	if _, ok := src["keybindings"].(map[string]any)[typ]; !ok {
-		src["keybindings"].(map[string]any)[typ] = make([]any, 0)
-	}
-
-	if _, ok := dest["keybindings"].(map[string]any); !ok {
-		dest["keybindings"] = make(map[string]any)
-	}
-	if _, ok := dest["keybindings"].(map[string]any)[typ]; !ok {
-		dest["keybindings"].(map[string]any)[typ] = make([]any, 0)
-	}
-
-	keybindsMap := make(map[string]map[string]string, 0)
-	for _, keybind := range src["keybindings"].(map[string]any)[typ].([]any) {
-		keybind, ok := keybind.(map[string]any)
-		if !ok {
-			continue
-		}
-
-		casted := make(map[string]string, 0)
-		for key, val := range keybind {
-			if val, ok := val.(string); ok {
-				casted[key] = val
+func mergeKeybindings(overrides, dest map[string]any, typ string) []map[string]string {
+	byKey := make(map[string]map[string]string)
+	// dest first, then overrides, so a key bound in both resolves to overrides.
+	for _, layer := range []map[string]any{dest, overrides} {
+		for _, keybind := range keybindingsByType(layer, typ) {
+			if key, ok := keybind["key"]; ok {
+				byKey[key] = keybind
 			}
 		}
-		keybindsMap[keybind["key"].(string)] = casted
 	}
-	for _, keybind := range dest["keybindings"].(map[string]any)[typ].([]any) {
-		keybind, ok := keybind.(map[string]any)
-		if !ok {
-			continue
-		}
 
-		key, ok := keybind["key"].(string)
-		if !ok {
-			continue
-		}
-		if _, ok := keybindsMap[key]; !ok {
-			casted := make(map[string]string, 0)
-			for key, val := range keybind {
-				if val, ok := val.(string); ok {
-					casted[key] = val
-				}
-			}
-			keybindsMap[key] = casted
-		}
-	}
-	merged := make([]map[string]string, 0)
-	for _, keybind := range keybindsMap {
+	merged := make([]map[string]string, 0, len(byKey))
+	for _, keybind := range byKey {
 		merged = append(merged, keybind)
 	}
 	return merged
+}
+
+func keybindingsByType(layer map[string]any, typ string) []map[string]string {
+	keybindings, ok := layer["keybindings"].(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	// Raw YAML parses to []any, but a previous merge pass writes the type back as
+	// []map[string]string, so both shapes can show up once 3+ layers are merged.
+	switch list := keybindings[typ].(type) {
+	case []map[string]string:
+		return list
+	case []any:
+		out := make([]map[string]string, 0, len(list))
+		for _, item := range list {
+			m, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			casted := make(map[string]string)
+			for key, val := range m {
+				if s, ok := val.(string); ok {
+					casted[key] = s
+				}
+			}
+			out = append(out, casted)
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 type parsingError struct {
@@ -753,7 +807,7 @@ func initParser() ConfigParser {
 	validate = validator.New()
 
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.Split(fld.Tag.Get("yaml"), ",")[0]
+		name, _, _ := strings.Cut(fld.Tag.Get("yaml"), ",")
 		if name == "-" {
 			return ""
 		}
@@ -783,10 +837,9 @@ func ParseConfig(location Location) (Config, error) {
 
 	// For testing: skip global config and load only the provided config
 	if location.SkipGlobalConfig && userProvidedCfgPath != "" {
-		if err := parser.k.Load(file.Provider(userProvidedCfgPath), yaml.Parser()); err != nil {
-			return Config{}, parsingError{path: userProvidedCfgPath, err: err}
+		if err := parser.loadConfig(userProvidedCfgPath); err != nil {
+			return Config{}, err
 		}
-		log.Info("Loaded user provided config (skipping global)", "path", userProvidedCfgPath)
 		return parser.unmarshalConfigWithDefaults()
 	}
 
@@ -803,9 +856,9 @@ func ParseConfig(location Location) (Config, error) {
 		return mergedCfg, nil
 	}
 
-	if err = parser.loadGlobalConfig(globalCfgPath); err != nil {
+	if err = parser.loadConfig(globalCfgPath); err != nil {
 		log.Error("failed loading global config", "err", err)
-		return Config{}, parsingError{path: globalCfgPath, err: err}
+		return Config{}, err
 	}
 
 	return parser.unmarshalConfigWithDefaults()

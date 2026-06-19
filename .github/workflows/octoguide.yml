@@ -25,7 +25,7 @@ jobs:
           config: none
           rules: |
             {
-              "pr-title-conventional": true,
+              "pr-title-conventional": true
             }
 
 name: OctoGuide
