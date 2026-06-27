@@ -268,8 +268,8 @@ func rebindUniversal(universal []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(kb.Key),
-					key.WithHelp(kb.Key, name),
+					key.WithKeys(kb.Key...),
+					key.WithHelp(kb.Key.String(), name),
 				)
 
 				CustomUniversalBindings = append(CustomUniversalBindings, customBinding)
@@ -324,7 +324,7 @@ func rebindUniversal(universal []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in universal key: '%s'", kb.Builtin)
 		}
 
-		key.SetKeys(kb.Key)
+		key.SetKeys(kb.Key...)
 
 		helpDesc := key.Help().Desc
 		if kb.Name != "" {
@@ -332,7 +332,7 @@ func rebindUniversal(universal []config.Keybinding) error {
 		} else if kb.Command != "" {
 			helpDesc = kb.Command
 		}
-		key.SetHelp(kb.Key, helpDesc)
+		key.SetHelp(kb.Key.String(), helpDesc)
 	}
 
 	return nil

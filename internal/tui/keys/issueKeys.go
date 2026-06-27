@@ -87,8 +87,8 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(issueKey.Key),
-					key.WithHelp(issueKey.Key, name),
+					key.WithKeys(issueKey.Key...),
+					key.WithHelp(issueKey.Key.String(), name),
 				)
 
 				CustomIssueBindings = append(CustomIssueBindings, customBinding)
@@ -121,13 +121,13 @@ func rebindIssueKeys(keys []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in issue key: '%s'", issueKey.Builtin)
 		}
 
-		key.SetKeys(issueKey.Key)
+		key.SetKeys(issueKey.Key...)
 
 		helpDesc := key.Help().Desc
 		if issueKey.Name != "" {
 			helpDesc = issueKey.Name
 		}
-		key.SetHelp(issueKey.Key, helpDesc)
+		key.SetHelp(issueKey.Key.String(), helpDesc)
 	}
 
 	return nil
