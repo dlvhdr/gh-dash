@@ -70,7 +70,7 @@ func (options NewSectionOptions) GetConfigFiltersWithCurrentRemoteAdded(
 	if !ctx.Config.SmartFilteringAtLaunch {
 		return searchValue
 	}
-	if ctx.GHRepo == nil {
+	if !ctx.HasGHRepo() {
 		return searchValue
 	}
 	for token := range strings.FieldsSeq(searchValue) {
@@ -87,7 +87,7 @@ func NewModel(
 ) BaseModel {
 	filters := options.GetConfigFiltersWithCurrentRemoteAdded(ctx)
 	isFilteredByCurrentRemote := false
-	if ctx.GHRepo != nil {
+	if ctx.HasGHRepo() {
 		currentCloneFilter := fmt.Sprintf("repo:%s/%s", ctx.GHRepo.Owner, ctx.GHRepo.Name)
 		for token := range strings.FieldsSeq(filters) {
 			if token == currentCloneFilter {
@@ -220,7 +220,7 @@ func (m *BaseModel) HasRepoNameInConfiguredFilter() bool {
 
 func (m *BaseModel) HasCurrentRepoNameInConfiguredFilter() bool {
 	filters := m.SearchValue
-	if m.Ctx.GHRepo == nil {
+	if !m.Ctx.HasGHRepo() {
 		return false
 	}
 	currentCloneFilter := fmt.Sprintf("repo:%s/%s", m.Ctx.GHRepo.Owner, m.Ctx.GHRepo.Name)
@@ -238,7 +238,7 @@ func (m *BaseModel) SyncSmartFilterWithSearchValue() {
 
 func (m *BaseModel) GetSearchValue() string {
 	searchValue := m.enrichSearchWithTemplateVars()
-	if m.Ctx.GHRepo == nil {
+	if !m.Ctx.HasGHRepo() {
 		return searchValue
 	}
 
