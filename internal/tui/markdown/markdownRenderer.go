@@ -35,6 +35,20 @@ func InitializeMarkdownStyle(ctx *context.ProgramContext) {
 }
 
 func GetMarkdownRenderer(width int, ctx *context.ProgramContext) glamour.TermRenderer {
+	if ctx == nil {
+		// If context is nil, use a default renderer without custom styling
+		markdownRenderer, err := glamour.NewTermRenderer(
+			glamour.WithWordWrap(width),
+		)
+		if err != nil || markdownRenderer == nil {
+			fallback, _ := glamour.NewTermRenderer()
+			if fallback != nil {
+				return *fallback
+			}
+			panic("failed to create markdown renderer: " + err.Error())
+		}
+		return *markdownRenderer
+	}
 	if markdownStyle == nil {
 		InitializeMarkdownStyle(ctx)
 	}
