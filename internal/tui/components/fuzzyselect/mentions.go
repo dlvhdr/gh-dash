@@ -61,6 +61,10 @@ func (src *UserMentionSource) ExtractContext(input string, cursorPos tea.Positio
 		}
 	}
 
+	if userStart >= userEnd {
+		return Context{}
+	}
+
 	return Context{
 		Start:   tea.Position{X: userStart, Y: cursorPos.Y},
 		End:     tea.Position{X: userEnd, Y: cursorPos.Y},
