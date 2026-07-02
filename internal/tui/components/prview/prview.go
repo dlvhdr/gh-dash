@@ -54,6 +54,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	cmp := cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta})
 
 	return Model{
+		ctx:      ctx,
 		pr:       nil,
 		carousel: c,
 		editor:   cmp,

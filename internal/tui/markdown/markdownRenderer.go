@@ -20,16 +20,23 @@ func InitializeMarkdownStyle(ctx *context.ProgramContext) {
 		return
 	}
 
-	if ctx.HasDarkBackground {
+	hasDarkBackground := true
+	backgroundSource := "default"
+	if ctx != nil {
+		hasDarkBackground = ctx.HasDarkBackground
+		backgroundSource = ctx.BackgroundSource
+	}
+
+	if hasDarkBackground {
 		markdownStyle = &CustomDarkStyleConfig
 	} else {
 		markdownStyle = &styles.LightStyleConfig
 	}
-	markdownStyleSource = ctx.BackgroundSource
+	markdownStyleSource = backgroundSource
 
 	log.Debugf(
 		"InitializeMarkdownStyle: assigned ctx.hasDarkBackground=%t, markdownStyleSource=%q",
-		ctx.HasDarkBackground,
+		hasDarkBackground,
 		markdownStyleSource,
 	)
 }
@@ -50,7 +57,11 @@ func GetMarkdownRenderer(width int, ctx *context.ProgramContext) glamour.TermRen
 			return *fallback
 		}
 		// If even fallback fails, panic with helpful message
-		panic("failed to create markdown renderer: " + err.Error())
+		msg := "unknown error"
+		if err != nil {
+			msg = err.Error()
+		}
+		panic("failed to create markdown renderer: " + msg)
 	}
 
 	return *markdownRenderer
