@@ -31,7 +31,6 @@ func newTestModelForAction(t *testing.T) Model {
 	}
 
 	m := NewModel(ctx)
-	m.ctx = ctx
 	m.issue = &issuerow.Issue{
 		Ctx:  ctx,
 		Data: data.IssueData{},
