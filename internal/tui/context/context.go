@@ -56,6 +56,10 @@ type ProgramContext struct {
 	Styles               Styles
 }
 
+func (ctx *ProgramContext) HasGHRepo() bool {
+	return ctx.GHRepo != nil && *ctx.GHRepo != (repository.Repository{})
+}
+
 func (ctx *ProgramContext) GetViewSectionsConfig() []config.SectionConfig {
 	var configs []config.SectionConfig
 	switch ctx.View {
