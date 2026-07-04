@@ -43,6 +43,7 @@ func NewModel(ctx *context.ProgramContext) Model {
 	cmp := cmpcontroller.New(ctx, inputbox.ModelOpts{TextArea: &ta})
 
 	return Model{
+		ctx:    ctx,
 		issue:  nil,
 		editor: cmp,
 	}
