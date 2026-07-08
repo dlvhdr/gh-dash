@@ -186,7 +186,7 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
-		debug, err := rootCmd.Flags().GetBool("debug")
+		debug, _ := rootCmd.Flags().GetBool("debug")
 		var loggerFile *os.File
 		if debug {
 			var fileErr error
