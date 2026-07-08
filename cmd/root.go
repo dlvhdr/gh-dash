@@ -114,38 +114,6 @@ func setDebugLogLevel() {
 	}
 }
 
-func createModel(
-	location config.Location,
-	repos tui.Repositories,
-	debug bool,
-) (tui.Model, *os.File) {
-	var loggerFile *os.File
-
-	if debug {
-		var fileErr error
-		loggerFile, fileErr = os.OpenFile("debug.log",
-			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
-		if fileErr == nil {
-			log.SetOutput(loggerFile)
-			log.SetTimeFormat(time.Kitchen)
-			log.SetReportCaller(true)
-			setDebugLogLevel()
-			log.Info("Logging to debug.log")
-			if location.RepoPath != "" {
-				log.Info("Running in repo", "repo", location.RepoPath)
-			}
-		} else {
-			loggerFile, _ = tea.LogToFile("debug.log", "debug")
-			slog.Print("Failed setting up logging", fileErr)
-		}
-	} else {
-		log.SetOutput(os.Stderr)
-		log.SetLevel(log.FatalLevel)
-	}
-
-	return tui.NewModel(location, repos), loggerFile
-}
-
 func buildVersion(version, commit, date, builtBy string) string {
 	result := version
 	if commit != "" {
@@ -218,6 +186,30 @@ func init() {
 	)
 
 	rootCmd.Run = func(_ *cobra.Command, args []string) {
+		debug, err := rootCmd.Flags().GetBool("debug")
+		var loggerFile *os.File
+		if debug {
+			var fileErr error
+			loggerFile, fileErr = os.OpenFile("debug.log",
+				os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
+			if fileErr == nil {
+				log.SetOutput(loggerFile)
+				log.SetTimeFormat(time.Kitchen)
+				log.SetReportCaller(true)
+				setDebugLogLevel()
+				log.Info("Logging to debug.log")
+			} else {
+				loggerFile, _ = tea.LogToFile("debug.log", "debug")
+				slog.Print("Failed setting up logging", fileErr)
+			}
+		} else {
+			log.SetOutput(os.Stderr)
+			log.SetLevel(log.FatalLevel)
+		}
+		if loggerFile != nil {
+			defer loggerFile.Close()
+		}
+
 		var gitRepoPath string
 		gitRepo, ghRepo, err := getCurrentGitAndGitHubRepos()
 		if err != nil {
@@ -245,21 +237,16 @@ func init() {
 			log.Warn("did not find github repo at current path")
 		}
 
-		debug, err := rootCmd.Flags().GetBool("debug")
 		if err != nil {
 			log.Fatal("Cannot parse debug flag", err)
 		}
 
 		zone.NewGlobal()
 
-		model, logger := createModel(
+		model := tui.NewModel(
 			config.Location{RepoPath: gitRepoPath, ConfigFlag: cfgFlag},
 			tui.Repositories{GitRepo: gitRepo, GHRepo: &ghRepo},
-			debug,
 		)
-		if logger != nil {
-			defer logger.Close()
-		}
 
 		cpuprofile, err := rootCmd.Flags().GetString("cpuprofile")
 		if err != nil {
