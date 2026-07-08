@@ -92,6 +92,7 @@ func NewModel(location config.Location, repos Repositories) Model {
 		GHRepo:     repos.GHRepo,
 		GitRepo:    repos.GitRepo,
 		ConfigFlag: location.ConfigFlag,
+		RepoPath:   location.RepoPath,
 		Version:    version,
 		StartTask: func(task context.Task) tea.Cmd {
 			log.Info("Starting task", "id", task.Id)

@@ -33,8 +33,6 @@ var conf = koanf.Conf{
 
 const DashDir = "gh-dash"
 
-const RepoConfigFileName = ".gh-dash.yml"
-
 const ConfigYmlFileName = "config.yml"
 
 // TODO: use this
@@ -624,8 +622,10 @@ func (parser ConfigParser) getProvidedConfigPath(location Location) string {
 		repoConfigYaml := basename + ".yaml"
 		if _, err := os.Stat(repoConfigYml); err == nil {
 			userProvidedCfgPath = repoConfigYml
+			log.Info("Using config at repo root", "path", repoConfigYml)
 		} else if _, err := os.Stat(repoConfigYaml); err == nil {
 			userProvidedCfgPath = repoConfigYaml
+			log.Info("Using config at repo root", "path", repoConfigYaml)
 		}
 	}
 
