@@ -23,7 +23,7 @@ import (
 //  1. get default config file or create it if it's missing
 //     1.1. try GH_DASH_CONFIG
 //     1.2. then check if we're in a git repo
-//     1.2.1. try both `.yml` and `.yaml`
+//     1.2.1. try both `.gh-dash.yml` and `.gh-dash.yaml`
 //     1.3. try to look under `XDG_CONFIG_HOME`
 //     1.4. if not, try with `os.UserHomeDir()`
 //     1.5. if still doesn't exist, create with defaults
