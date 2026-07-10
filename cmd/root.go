@@ -237,10 +237,6 @@ func init() {
 			log.Warn("did not find github repo at current path")
 		}
 
-		if err != nil {
-			log.Fatal("Cannot parse debug flag", err)
-		}
-
 		zone.NewGlobal()
 
 		model := tui.NewModel(
