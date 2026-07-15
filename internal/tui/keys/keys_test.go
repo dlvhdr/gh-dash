@@ -187,7 +187,7 @@ func TestRebindNotificationKeys_Builtin(t *testing.T) {
 	}()
 
 	err := rebindNotificationKeys([]config.Keybinding{
-		{Builtin: "markAsDone", Key: "X"},
+		{Builtin: "markAsDone", Key: config.KeyList{"X"}},
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -199,9 +199,35 @@ func TestRebindNotificationKeys_Builtin(t *testing.T) {
 	}
 }
 
+func TestRebindNotificationKeys_BuiltinMultipleKeys(t *testing.T) {
+	// A single binding may list multiple keys; all of them should be bound to
+	// the action (e.g. so both ctrl+d and pgdown page down).
+	origKey := NotificationKeys.MarkAsDone.Keys()
+	origHelp := NotificationKeys.MarkAsDone.Help().Desc
+	defer func() {
+		NotificationKeys.MarkAsDone.SetKeys(origKey...)
+		NotificationKeys.MarkAsDone.SetHelp(origKey[0], origHelp)
+	}()
+
+	err := rebindNotificationKeys([]config.Keybinding{
+		{Builtin: "markAsDone", Key: config.KeyList{"X", "D"}},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := NotificationKeys.MarkAsDone.Keys()
+	if len(keys) != 2 || keys[0] != "X" || keys[1] != "D" {
+		t.Errorf("expected key to be rebound to [X D], got %v", keys)
+	}
+	if got := NotificationKeys.MarkAsDone.Help().Key; got != "X/D" {
+		t.Errorf("expected help key to be %q, got %q", "X/D", got)
+	}
+}
+
 func TestRebindNotificationKeys_UnknownBuiltin(t *testing.T) {
 	err := rebindNotificationKeys([]config.Keybinding{
-		{Builtin: "nonExistent", Key: "Z"},
+		{Builtin: "nonExistent", Key: config.KeyList{"Z"}},
 	})
 	if err == nil {
 		t.Error("expected error for unknown builtin, got nil")
@@ -213,7 +239,7 @@ func TestRebindNotificationKeys_CustomCommand(t *testing.T) {
 	CustomNotificationBindings = nil
 
 	err := rebindNotificationKeys([]config.Keybinding{
-		{Key: "N", Command: "echo hello"},
+		{Key: config.KeyList{"N"}, Command: "echo hello"},
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

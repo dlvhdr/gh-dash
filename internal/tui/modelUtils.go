@@ -68,7 +68,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	currRowData := m.getCurrRowData()
 
 	for _, keybinding := range m.ctx.Config.Keybindings.Universal {
-		if keybinding.Key != key {
+		if !keybinding.Key.Contains(key) {
 			continue
 		}
 
@@ -79,7 +79,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 	switch m.ctx.View {
 	case config.IssuesView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
-			if keybinding.Key != key {
+			if !keybinding.Key.Contains(key) {
 				continue
 			}
 
@@ -90,7 +90,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 		}
 	case config.PRsView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-			if keybinding.Key != key || keybinding.Command == "" {
+			if !keybinding.Key.Contains(key) || keybinding.Command == "" {
 				continue
 			}
 
@@ -103,7 +103,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 		}
 	case config.RepoView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Branches {
-			if keybinding.Key != key || keybinding.Command == "" {
+			if !keybinding.Key.Contains(key) || keybinding.Command == "" {
 				continue
 			}
 
@@ -116,7 +116,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 		}
 	case config.NotificationsView:
 		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
-			if keybinding.Key != key || keybinding.Command == "" {
+			if !keybinding.Key.Contains(key) || keybinding.Command == "" {
 				continue
 			}
 			log.Debug(
@@ -135,7 +135,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 			switch nData.Notification.Subject.Type {
 			case "PullRequest":
 				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-					if keybinding.Key != key || keybinding.Command == "" {
+					if !keybinding.Key.Contains(key) || keybinding.Command == "" {
 						continue
 					}
 					log.Debug(
@@ -149,7 +149,7 @@ func (m *Model) executeKeybinding(key string) tea.Cmd {
 				}
 			case "Issue":
 				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
-					if keybinding.Key != key || keybinding.Command == "" {
+					if !keybinding.Key.Contains(key) || keybinding.Command == "" {
 						continue
 					}
 					log.Debug(
