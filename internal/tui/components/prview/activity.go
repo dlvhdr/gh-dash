@@ -3,6 +3,7 @@ package prview
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"charm.land/glamour/v2"
@@ -32,17 +33,18 @@ func (m *Model) renderActivity() string {
 	}
 
 	for _, review := range m.pr.Data.Enriched.ReviewThreads.Nodes {
-		path := review.Path
-		line := review.Line
-		for _, c := range review.Comments.Nodes {
-			comments = append(comments, comment{
-				Author:    c.Author.Login,
-				Body:      c.Body,
-				UpdatedAt: c.UpdatedAt,
-				Path:      &path,
-				Line:      &line,
-			})
+		if len(review.Comments.Nodes) == 0 {
+			continue
 		}
+
+		renderedThread, err := m.renderReviewThread(review, markdownRenderer)
+		if err != nil {
+			continue
+		}
+		activities = append(activities, RenderedActivity{
+			UpdatedAt:      review.Comments.Nodes[0].UpdatedAt,
+			RenderedString: renderedThread,
+		})
 	}
 
 	for _, c := range m.pr.Data.Enriched.Comments.Nodes {
@@ -106,6 +108,68 @@ type comment struct {
 	Body      string
 	Path      *string
 	Line      *int
+}
+
+func (m *Model) renderReviewThread(
+	thread data.ReviewThread,
+	markdownRenderer glamour.TermRenderer,
+) (string, error) {
+	width := m.getIndentedContentWidth()
+	line := thread.Line
+	if line == 0 {
+		line = thread.StartLine
+	}
+	if line == 0 {
+		line = thread.OriginalLine
+	}
+
+	location := thread.Path
+	if line > 0 {
+		location = fmt.Sprintf("%s#l%d", location, line)
+	}
+	if thread.IsOutdated {
+		location = fmt.Sprintf("%s  %s", location, m.ctx.Styles.Common.FaintTextStyle.Render("outdated"))
+	}
+
+	header := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintText).Width(width).Render(location)
+
+	diffHunk := ""
+	if firstComment := thread.Comments.Nodes[0]; strings.TrimSpace(firstComment.DiffHunk) != "" {
+		renderedHunk, err := markdownRenderer.Render(fmt.Sprintf(
+			"```diff\n%s\n```",
+			strings.TrimSpace(firstComment.DiffHunk),
+		))
+		if err != nil {
+			return "", err
+		}
+		diffHunk = renderedHunk
+	}
+
+	renderedComments := make([]string, 0, len(thread.Comments.Nodes))
+	for _, c := range thread.Comments.Nodes {
+		renderedComment, err := m.renderComment(comment{
+			Author:    c.Author.Login,
+			Body:      c.Body,
+			UpdatedAt: c.UpdatedAt,
+		}, markdownRenderer)
+		if err != nil {
+			return "", err
+		}
+		renderedComments = append(renderedComments, renderedComment)
+	}
+
+	parts := []string{header}
+	if diffHunk != "" {
+		parts = append(parts, diffHunk)
+	}
+	parts = append(parts, renderedComments...)
+
+	return lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderLeft(true).
+		BorderForeground(m.ctx.Theme.FaintBorder).
+		PaddingLeft(1).
+		Render(lipgloss.JoinVertical(lipgloss.Left, parts...)), nil
 }
 
 func (m *Model) renderComment(
