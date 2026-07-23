@@ -81,9 +81,8 @@ export function GET() {
         dateFormat: {
           title: "Date format",
           description: "Specifies how dates are formatted.",
-          type: "integer",
-          minimum: 1,
-          default: 30,
+          type: "string",
+          default: "relative",
         },
         view: {
           title: "Default View",
