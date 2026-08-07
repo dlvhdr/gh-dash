@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 func FormatNumber(num int) string {
@@ -51,7 +52,7 @@ func RenderIssueTitle(
 		prNumber = strings.ReplaceAll(prNumber, "\x1b[m", "")
 	}
 
-	rTitle := GetIssueTextStyle(ctx).Bold(true).Render(title)
+	rTitle := GetIssueTextStyle(ctx).Bold(true).Render(utils.SanitizeForDisplay(title))
 
 	res := fmt.Sprintf("%s%s", prNumber, rTitle)
 	return res

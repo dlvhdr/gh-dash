@@ -6,6 +6,7 @@ import (
 
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
+	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
 var (
@@ -105,7 +106,7 @@ func RenderPreviewTitle(theme theme.Theme, styles CommonStyles, width int, title
 		theme.SelectedBackground).PaddingLeft(1).Render(
 		lipgloss.PlaceVertical(3, lipgloss.Center, styles.MainTextStyle.
 			Background(theme.SelectedBackground).
-			Render(title),
+			Render(utils.SanitizeForDisplay(title)),
 		),
 	)
 }

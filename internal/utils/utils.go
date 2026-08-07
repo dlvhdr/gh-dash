@@ -15,6 +15,22 @@ const (
 	DaysInWeek        = 7
 )
 
+// SanitizeForDisplay strips control characters (e.g. terminal escape
+// sequences) from text that originates from GitHub content such as PR
+// and issue titles, which have no character restrictions, before it is
+// rendered to the terminal.
+func SanitizeForDisplay(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
 func Max(a, b int) int {
 	if a > b {
 		return a
