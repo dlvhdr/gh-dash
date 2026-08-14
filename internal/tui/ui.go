@@ -407,6 +407,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.syncSidebar()
 				return m, tea.Batch(scmds...)
 
+			case key.Matches(msg, keys.PRKeys.CopyBranch):
+				branchName := m.prView.GetBranchName()
+				log.Debug(branchName)
+				err := clipboard.WriteAll(branchName)
+				if err != nil {
+					cmd = m.notifyErr(fmt.Sprintf("Failed copying to clipboard %v", err))
+				} else {
+					cmd = m.notify(fmt.Sprintf("Copied %s to clipboard", branchName))
+				}
+
 			case key.Matches(msg, m.keys.OpenGithub):
 				cmds = append(cmds, m.openBrowser())
 
