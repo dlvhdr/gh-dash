@@ -116,7 +116,7 @@ func FetchIssues(query string, limit int, pageInfo *PageInfo) (IssuesResponse, e
 			}
 			IssueCount int
 			PageInfo   PageInfo
-		} `graphql:"search(type: ISSUE, first: $limit, after: $endCursor, query: $query)"`
+		} `graphql:"search(type: ISSUE_ADVANCED, first: $limit, after: $endCursor, query: $query)"`
 	}
 	var endCursor *string
 	if pageInfo != nil {
