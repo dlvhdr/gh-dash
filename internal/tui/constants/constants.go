@@ -95,6 +95,5 @@ const (
 	ApprovalPrompt = "Approve with comment" + Ellipsis
 	LabelPrompt    = "Add/remove labels (comma-separated)" + Ellipsis
 
-	Logo = `▜▔▚▐▔▌▚▔▐ ▌
-▟▁▞▐▔▌▁▚▐▔▌`
+	Logo = `DASH`
 )
