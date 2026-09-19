@@ -388,7 +388,11 @@ func (m *Model) CreatedAt() time.Time {
 	return m.rowsViewport.CreatedAt
 }
 
-func (m *Model) UpdateLastUpdated(t time.Time) {
+func (m *Model) SetCreatedAt(t time.Time) {
+	m.rowsViewport.CreatedAt = t
+}
+
+func (m *Model) SetLastUpdated(t time.Time) {
 	m.rowsViewport.LastUpdated = t
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -67,7 +68,15 @@ type Model struct {
 	taskSpinner      spinner.Model
 	tasks            map[string]context.Task
 	positionOverride string // "" means no override, "right" or "bottom"
+	mode             Mode
 }
+
+type Mode int
+
+const (
+	ModeNone Mode = iota
+	ModeSection
+)
 
 type Repositories struct {
 	GHRepo  *repository.Repository
@@ -103,6 +112,7 @@ func NewModel(location config.Location, repos Repositories) Model {
 		HasDarkBackground: true,
 		BackgroundSource:  "default",
 		Theme:             *theme.DefaultTheme,
+		Styles:            context.DefaultStyles,
 	}
 
 	m.footer = footer.NewModel(m.ctx)
@@ -173,11 +183,11 @@ func (m *Model) initScreen() tea.Msg {
 	return initMsg{Config: cfg, RepoUrl: url}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return tea.Batch(tea.RequestBackgroundColor, m.initScreen)
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd             tea.Cmd
 		tabsCmd         tea.Cmd
@@ -235,6 +245,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case m.isUserDefinedKeybinding(msg):
 			cmd = m.executeKeybinding(msg.String())
 			return m, cmd
+
+		case m.mode == ModeSection:
+			if key.Matches(msg, m.keys.NewSection) {
+				m.addNewSection()
+			}
+
+			if key.Matches(msg, m.keys.RemoveSection) {
+				m.removeSection()
+			}
+
+			// always exit section mode if any key is pressed after
+			m.mode = ModeNone
+
+		case key.Matches(msg, m.keys.SectionMode):
+			m.mode = ModeSection
 
 		case key.Matches(msg, m.keys.PrevSection):
 			prevSection := m.getSectionAt(m.getPrevSectionId())
@@ -306,14 +331,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				currSection.ResetFilters()
 				currSection.ResetRows()
 				m.syncSidebar()
-				currSection.SetIsLoading(true)
+				cmds = append(cmds, currSection.SetIsLoading(true))
 				cmds = append(cmds, currSection.FetchNextPageSectionRows()...)
 			}
 
 		case key.Matches(msg, m.keys.RefreshAll):
 			data.ClearEnrichmentCache()
-			newSections, fetchSectionsCmds := m.fetchAllViewSections()
-			m.setCurrentViewSections(newSections)
+			fetchSectionsCmds := m.fetchAllViewSections()
+			m.updateTabs()
 			cmds = append(cmds, fetchSectionsCmds)
 
 		case key.Matches(msg, m.keys.Redraw):
@@ -680,13 +705,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Background(m.ctx.Theme.SelectedBackground)
 
 		m.ctx.View = m.ctx.Config.Defaults.View
-		m.currSectionId = m.getCurrentViewDefaultSection()
+		m.currSectionId = 0
 		m.sidebar.IsOpen = msg.Config.Defaults.Preview.Open
 		m.syncMainContentDimensions()
 
-		newSections, fetchSectionsCmds := m.fetchAllViewSections()
-		m.setCurrentViewSections(newSections)
-		m.tabs.SetCurrSectionId(1)
+		m.initSections()
+		fetchSectionsCmds := m.fetchAllViewSections()
+		m.updateTabs()
+		m.tabs.SetCurrSectionId(0)
 
 		if m.ctx.BackgroundSource != "bubbletea" {
 			log.Debugf("Setting markdownStyle in initMsg")
@@ -704,8 +730,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.doRefreshAtInterval(), m.doUpdateFooterAtInterval())
 
 	case intervalRefresh:
-		newSections, fetchSectionsCmds := m.fetchAllViewSections()
-		m.setCurrentViewSections(newSections)
+		fetchSectionsCmds := m.fetchAllViewSections()
+		m.updateTabs()
 		cmds = append(cmds, fetchSectionsCmds, m.doRefreshAtInterval())
 
 	case userFetchedMsg:
@@ -918,7 +944,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() tea.View {
+func (m *Model) View() tea.View {
 	var v tea.View
 	v.AltScreen = true
 	v.ReportFocus = true
@@ -940,7 +966,7 @@ func (m Model) View() tea.View {
 		s.WriteString(m.tabs.View())
 	}
 	s.WriteString("\n")
-	content := "No sections defined"
+	var content string
 	currSection := m.getCurrSection()
 	if currSection != nil {
 		if m.ctx.PreviewPosition == "bottom" && m.sidebar.IsOpen {
@@ -956,6 +982,14 @@ func (m Model) View() tea.View {
 				m.sidebar.View(),
 			)
 		}
+	} else {
+		content = lipgloss.Place(
+			m.ctx.MainContentWidth,
+			m.ctx.MainContentHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			"No sections defined",
+		)
 	}
 	s.WriteString(content)
 	s.WriteString("\n")
@@ -1492,7 +1526,7 @@ func (m *Model) loadNotificationContent() tea.Cmd {
 	}
 }
 
-func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
+func (m *Model) fetchAllViewSections() tea.Cmd {
 	cmds := make([]tea.Cmd, 0)
 	cmds = append(cmds, m.tabs.SetAllLoading()...)
 
@@ -1502,20 +1536,19 @@ func (m *Model) fetchAllViewSections() ([]section.Section, tea.Cmd) {
 		s, cmd := reposection.FetchAllBranches(m.ctx)
 		cmds = append(cmds, cmd)
 		m.repo = &s
-		return nil, tea.Batch(cmds...)
+		return tea.Batch(cmds...)
 	case config.NotificationsView:
-		s, notifCmd := notificationssection.FetchAllSections(m.ctx, m.notifications)
+		notifCmd := notificationssection.FetchAllSections(m.ctx, m.notifications)
 		cmds = append(cmds, notifCmd)
-		m.notifications = s
-		return s, tea.Batch(cmds...)
+		return tea.Batch(cmds...)
 	case config.PRsView:
-		s, prcmds := prssection.FetchAllSections(m.ctx, m.prs)
+		prcmds := prssection.FetchAllSections(m.ctx, m.prs)
 		cmds = append(cmds, prcmds)
-		return s, tea.Batch(cmds...)
+		return tea.Batch(cmds...)
 	default:
-		s, issuecmds := issuessection.FetchAllSections(m.ctx)
+		issuecmds := issuessection.FetchAllSections(m.ctx, m.issues)
 		cmds = append(cmds, issuecmds)
-		return s, tea.Batch(cmds...)
+		return tea.Batch(cmds...)
 	}
 }
 
@@ -1538,92 +1571,9 @@ func (m *Model) getCurrentViewSections() []section.Section {
 	}
 }
 
-func (m *Model) getCurrentViewDefaultSection() int {
-	switch m.ctx.View {
-	case config.RepoView:
-		return 0
-	case config.NotificationsView:
-		return 1 // First notification section after search section
-	case config.PRsView:
-		return 1
-	default:
-		return 1
-	}
-}
-
-func (m *Model) setCurrentViewSections(newSections []section.Section) {
-	if newSections == nil {
-		return
-	}
-
-	// Handle notifications view with search section like PRs/Issues
-	if m.ctx.View == config.NotificationsView {
-		missingSearchSection := len(newSections) == 0 ||
-			(len(newSections) > 0 && newSections[0].GetId() != 0)
-		s := make([]section.Section, 0)
-		if missingSearchSection {
-			// Check if we have an existing search section to preserve
-			if len(m.notifications) > 0 && m.notifications[0] != nil &&
-				m.notifications[0].GetId() == 0 {
-				// Preserve existing search section with its filter state
-				s = append(s, m.notifications[0])
-			} else {
-				// Create new search section only if none exists
-				search := notificationssection.NewModel(
-					0,
-					m.ctx,
-					config.NotificationsSectionConfig{
-						Title:   "",
-						Filters: "archived:false",
-					},
-					time.Now(),
-				)
-				s = append(s, &search)
-			}
-		}
-		m.notifications = append(s, newSections...)
-		m.tabs.SetSections(m.notifications)
-		return
-	}
-
-	missingSearchSection := len(newSections) == 0 ||
-		(len(newSections) > 0 && newSections[0].GetId() != 0)
-	s := make([]section.Section, 0)
-	if m.ctx.View == config.PRsView {
-		if missingSearchSection {
-			search := prssection.NewModel(
-				0,
-				m.ctx,
-				config.PrsSectionConfig{
-					Title:   "",
-					Filters: "archived:false",
-				},
-				time.Now(),
-				time.Now(),
-			)
-			s = append(s, &search)
-		}
-		m.prs = append(s, newSections...)
-		newSections = m.prs
-	} else {
-		if missingSearchSection {
-			search := issuessection.NewModel(
-				0,
-				m.ctx,
-				config.IssuesSectionConfig{
-					Title:   "",
-					Filters: "",
-				},
-				time.Now(),
-				time.Now(),
-			)
-			s = append(s, &search)
-		}
-		m.issues = append(s, newSections...)
-		newSections = m.issues
-	}
-
-	m.tabs.SetSections(newSections)
+func (m *Model) updateTabs() {
+	sections := m.getCurrentViewSections()
+	m.tabs.SetSections(sections)
 }
 
 func (m *Model) switchSelectedView() tea.Cmd {
@@ -1659,17 +1609,13 @@ func (m *Model) switchSelectedView() tea.Cmd {
 	}
 
 	m.syncMainContentDimensions()
-	m.setCurrSectionId(m.getCurrentViewDefaultSection())
+	m.setCurrSectionId(0)
 
 	var cmds []tea.Cmd
-	currSections := m.getCurrentViewSections()
-	if len(currSections) == 0 {
-		newSections, fetchSectionsCmds := m.fetchAllViewSections()
-		currSections = newSections
-		cmds = append(cmds, m.tabs.SetAllLoading()...)
-		cmds = append(cmds, fetchSectionsCmds)
+	if m.isViewSectionsStale() {
+		cmds = append(cmds, m.fetchAllViewSections())
 	}
-	m.setCurrentViewSections(currSections)
+	m.updateTabs()
 	cmds = append(cmds, m.onViewedRowChanged())
 
 	return tea.Batch(cmds...)
@@ -1913,4 +1859,88 @@ func (m *Model) executeNotificationAction(action string) tea.Cmd {
 	}
 
 	return nil
+}
+
+func (m *Model) addNewSection() {
+	var sid int
+	switch m.ctx.View {
+	case config.IssuesView:
+		sid = len(m.issues)
+		m.issues = append(m.issues, new(issuessection.NewModel(
+			sid,
+			m.ctx,
+			config.IssuesSectionConfig{
+				Title:   "Scratch",
+				Filters: "archived:false",
+			},
+			time.Now(),
+			time.Now(),
+		)))
+	case config.NotificationsView:
+		sid = len(m.notifications)
+		m.notifications = append(m.notifications, new(notificationssection.NewModel(
+			sid,
+			m.ctx,
+			config.NotificationsSectionConfig{
+				Title:   "Scratch",
+				Filters: "archived:false",
+			},
+			time.Now(),
+		)))
+	case config.PRsView:
+		sid = len(m.prs)
+		m.prs = append(m.prs, new(prssection.NewModel(
+			sid,
+			m.ctx,
+			config.PrsSectionConfig{
+				Title:   "Scratch",
+				Filters: "archived:false",
+			},
+			time.Now(),
+			time.Now(),
+		)))
+	}
+	m.updateTabs()
+	m.setCurrSectionId(sid)
+}
+
+func (m *Model) removeSection() {
+	cnt := len(m.getCurrentViewSections())
+	// don't allow removing the last section
+	if cnt <= 1 {
+		return
+	}
+
+	del := m.currSectionId
+	switch m.ctx.View {
+	case config.IssuesView:
+		m.issues = slices.Delete(m.issues, del, del+1)
+	case config.NotificationsView:
+		m.notifications = slices.Delete(m.notifications, del, del+1)
+	case config.PRsView:
+		m.prs = slices.Delete(m.prs, del, del+1)
+	}
+
+	for i, s := range m.getCurrentViewSections() {
+		s.SetId(i)
+	}
+
+	nCnt := len(m.getCurrentViewSections())
+	m.updateTabs()
+	m.setCurrSectionId(min(nCnt-1, del))
+}
+
+func (m *Model) initSections() {
+	m.prs = prssection.InitSections(m.ctx)
+	m.issues = issuessection.InitSections(m.ctx)
+	m.notifications = notificationssection.InitSections(m.ctx)
+}
+
+func (m *Model) isViewSectionsStale() bool {
+	for _, section := range m.getCurrentViewSections() {
+		if section.IsDataStale() {
+			return true
+		}
+	}
+	return false
 }

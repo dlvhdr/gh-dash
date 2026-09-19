@@ -55,6 +55,11 @@ func (t *TestSection) GetId() int {
 	panic("unimplemented")
 }
 
+// SetId implements section.Section.
+func (t *TestSection) SetId(id int) {
+	panic("unimplemented")
+}
+
 // GetIsLoading implements section.Section.
 func (t *TestSection) GetIsLoading() bool {
 	return t.loading
@@ -146,8 +151,14 @@ func (t *TestSection) ResetRows() {
 }
 
 // SetIsLoading implements section.Section.
-func (t *TestSection) SetIsLoading(val bool) {
+func (t *TestSection) SetIsLoading(val bool) tea.Cmd {
 	t.loading = val
+	return nil
+}
+
+// SetIsLoading implements section.Section.
+func (t *TestSection) IsDataStale() bool {
+	return false
 }
 
 // SetIsPromptConfirmationShown implements section.Section.

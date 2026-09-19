@@ -257,7 +257,7 @@ func init() {
 			defer pprof.StopCPUProfile()
 		}
 
-		p := tea.NewProgram(model)
+		p := tea.NewProgram(&model)
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("%+v\n", err)
 			log.Fatal("fatal error during run", "err", err)

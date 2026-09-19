@@ -171,7 +171,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 
 	case repoMsg:
 		m.repo = msg.repo
-		m.SetIsLoading(false)
+		cmds = append(cmds, m.SetIsLoading(false))
 		m.Table.SetRows(m.BuildRows())
 		if msg.resetSelection {
 			m.Table.ResetCurrItem()
@@ -545,11 +545,6 @@ func (m *Model) GetItemPluralForm() string {
 
 func (m *Model) GetTotalCount() int {
 	return len(m.Branches)
-}
-
-func (m *Model) SetIsLoading(val bool) {
-	m.IsLoading = val
-	m.Table.SetIsLoading(val)
 }
 
 func (m *Model) GetPagerContent() string {

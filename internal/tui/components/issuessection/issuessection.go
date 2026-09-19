@@ -153,7 +153,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionIssuesFetchedMsg:
-		if m.LastFetchTaskId == msg.TaskId {
+		if m.LastFetch.TaskId == msg.TaskId {
 			if m.PageInfo != nil {
 				m.Issues = append(m.Issues, msg.Issues...)
 			} else {
@@ -304,7 +304,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_issues_%d_%s", m.Id, startCursor)
-	m.LastFetchTaskId = taskId
+	m.LastFetch.TaskId = taskId
+	m.LastFetch.At = time.Now()
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching issues for "%s"`, m.Config.Title),
@@ -346,12 +347,13 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		}
 	}
 	cmds = append(cmds, fetchCmd)
+	cmds = append(cmds, m.SetIsLoading(true))
 
 	return cmds
 }
 
 func (m *Model) UpdateLastUpdated(t time.Time) {
-	m.Table.UpdateLastUpdated(t)
+	m.Table.SetLastUpdated(t)
 }
 
 func (m *Model) ResetRows() {
@@ -359,29 +361,37 @@ func (m *Model) ResetRows() {
 	m.BaseModel.ResetRows()
 }
 
-func FetchAllSections(
-	ctx *context.ProgramContext,
-) (sections []section.Section, fetchAllCmd tea.Cmd) {
-	sectionConfigs := ctx.Config.IssuesSections
-	fetchIssuesCmds := make([]tea.Cmd, 0, len(sectionConfigs))
-	sections = make([]section.Section, 0, len(sectionConfigs))
-	for i, sectionConfig := range sectionConfigs {
-		sectionModel := NewModel(
-			i+1,
+func InitSections(ctx *context.ProgramContext) []section.Section {
+	sections := make([]section.Section, len(ctx.Config.IssuesSections))
+	for i, sectionConfig := range ctx.Config.IssuesSections {
+		sections[i] = new(NewModel(
+			i,
 			ctx,
 			sectionConfig,
 			time.Now(),
 			time.Now(),
-		) // 0 is the search section
-		if sectionConfig.Layout.CreatorIcon.Hidden != nil {
-			sectionModel.ShowAuthorIcon = !*sectionConfig.Layout.CreatorIcon.Hidden
-		}
-		sections = append(sections, &sectionModel)
-		fetchIssuesCmds = append(
-			fetchIssuesCmds,
-			sectionModel.FetchNextPageSectionRows()...)
+		))
 	}
-	return sections, tea.Batch(fetchIssuesCmds...)
+
+	return sections
+}
+
+// Returns a batch command to fetch all data.
+func FetchAllSections(
+	ctx *context.ProgramContext,
+	existing []section.Section,
+) tea.Cmd {
+	fetchCmds := make([]tea.Cmd, 0)
+	sections := section.ToImplSections[*Model](existing)
+
+	for _, issueSection := range sections {
+		issueSection.SetLastUpdated(time.Now())
+		issueSection.SetCreatedAt(time.Now())
+		issueSection.PageInfo = nil
+		fetchCmds = append(fetchCmds, issueSection.FetchNextPageSectionRows()...)
+	}
+
+	return tea.Batch(fetchCmds...)
 }
 
 type SectionIssuesFetchedMsg struct {
@@ -429,15 +439,6 @@ func (m Model) GetItemPluralForm() string {
 
 func (m Model) GetTotalCount() int {
 	return m.TotalCount
-}
-
-func (m *Model) GetIsLoading() bool {
-	return m.IsLoading
-}
-
-func (m *Model) SetIsLoading(val bool) {
-	m.IsLoading = val
-	m.Table.SetIsLoading(val)
 }
 
 func (m Model) GetPagerContent() string {
