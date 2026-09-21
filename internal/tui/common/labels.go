@@ -136,7 +136,7 @@ func RenderLabels(labels []data.Label, opts LabelOpts) string {
 		overflowPillStyle := opts.PillStyle.
 			BorderForeground(lipgloss.ANSIColor(244)).
 			Background(lipgloss.ANSIColor(244))
-		if rowBackground := opts.RowStyle.GetBackground(); rowBackground != nil {
+		if rowBackground := opts.RowStyle.GetBackground(); rowBackground != (lipgloss.NoColor{}) {
 			overflowPillStyle = overflowPillStyle.
 				BorderLeftBackground(rowBackground).
 				BorderRightBackground(rowBackground)

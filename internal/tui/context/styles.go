@@ -101,6 +101,42 @@ type Styles struct {
 	KeyHint lipgloss.Style
 }
 
+var DefaultStyles = Styles{
+	Colors: struct {
+		OpenIssue   compat.AdaptiveColor
+		ClosedIssue compat.AdaptiveColor
+		SuccessText compat.AdaptiveColor
+		OpenPR      compat.AdaptiveColor
+		ClosedPR    compat.AdaptiveColor
+		MergedPR    compat.AdaptiveColor
+	}{
+		OpenIssue: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+		ClosedIssue: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+		SuccessText: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+		OpenPR: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+		ClosedPR: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+		MergedPR: compat.AdaptiveColor{
+			Light: lipgloss.NoColor{},
+			Dark:  lipgloss.NoColor{},
+		},
+	},
+}
+
 var LogoColor = lipgloss.Color("#00F9FB")
 
 func InitStyles(theme theme.Theme) Styles {

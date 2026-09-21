@@ -385,7 +385,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionNotificationsFetchedMsg:
-		if m.LastFetchTaskId == msg.TaskId {
+		if m.LastFetch.TaskId == msg.TaskId {
 			if m.PageInfo != nil {
 				// Append to existing notifications (pagination)
 				m.Notifications = append(m.Notifications, msg.Notifications...)
@@ -411,10 +411,12 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		m.TotalCount = 0
 		m.PageInfo = nil
 		m.sessionMarkedDone = make(map[string]bool)
-		m.SetIsLoading(true)
+		cmds := make([]tea.Cmd, 0)
+		cmds = append(cmds, m.SetIsLoading(true))
 		m.Table.SetRows(m.BuildRows())
 		m.UpdateTotalItemsCount(0)
-		cmd = tea.Batch(m.FetchNextPageSectionRows()...)
+		cmds = append(cmds, m.FetchNextPageSectionRows()...)
+		cmd = tea.Batch(cmds...)
 
 	case MarkAllAsReadMsg:
 		// Mark all notifications as read (update their state)
@@ -574,7 +576,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 
 	taskId := fmt.Sprintf("fetching_notifications_%d_%s", m.Id, time.Now().String())
-	m.LastFetchTaskId = taskId
+	m.LastFetch.TaskId = taskId
+	m.LastFetch.At = time.Now()
 	task := context.Task{
 		Id:           taskId,
 		StartText:    "Fetching notifications",
@@ -796,12 +799,13 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		}
 	}
 	cmds = append(cmds, fetchCmd)
+	cmds = append(cmds, m.SetIsLoading(true))
 
 	return cmds
 }
 
 func (m *Model) UpdateLastUpdated(t time.Time) {
-	m.Table.UpdateLastUpdated(t)
+	m.Table.SetLastUpdated(t)
 }
 
 func (m *Model) ResetRows() {
@@ -812,43 +816,36 @@ func (m *Model) ResetRows() {
 	m.BaseModel.ResetRows()
 }
 
-// FetchAllSections creates and fetches all notification sections based on config.
-// Returns sections and a batch command to fetch all data.
-func FetchAllSections(
-	ctx *context.ProgramContext,
-	existing []section.Section,
-) (sections []section.Section, fetchAllCmd tea.Cmd) {
-	sectionConfigs := ctx.Config.NotificationsSections
-	fetchCmds := make([]tea.Cmd, 0, len(sectionConfigs))
-	sections = make([]section.Section, 0, len(sectionConfigs))
-
-	for i, sectionConfig := range sectionConfigs {
-		sectionModel := NewModel(
-			i+1, // ID 0 is reserved for search section
+func InitSections(ctx *context.ProgramContext) []section.Section {
+	sections := make([]section.Section, len(ctx.Config.NotificationsSections))
+	for i, sectionConfig := range ctx.Config.NotificationsSections {
+		sections[i] = new(NewModel(
+			i,
 			ctx,
 			sectionConfig,
 			time.Now(),
-		)
-
-		// Preserve existing data and filter state if refreshing
-		if len(existing) > i+1 && existing[i+1] != nil {
-			if oldSection, ok := existing[i+1].(*Model); ok {
-				sectionModel.Notifications = oldSection.Notifications
-				sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
-				sectionModel.sessionMarkedRead = oldSection.sessionMarkedRead
-				sectionModel.sessionMarkedDone = oldSection.sessionMarkedDone
-				// Preserve user's filter state - don't reset on refresh
-				sectionModel.IsFilteredByCurrentRemote = oldSection.IsFilteredByCurrentRemote
-				sectionModel.SearchValue = oldSection.SearchValue
-				sectionModel.SearchBar.SetValue(oldSection.SearchValue)
-			}
-		}
-
-		sections = append(sections, &sectionModel)
-		fetchCmds = append(fetchCmds, sectionModel.FetchNextPageSectionRows()...)
+		))
 	}
 
-	return sections, tea.Batch(fetchCmds...)
+	return sections
+}
+
+// Returns a batch command to fetch all data.
+func FetchAllSections(
+	ctx *context.ProgramContext,
+	sections []section.Section,
+) tea.Cmd {
+	fetchCmds := make([]tea.Cmd, 0)
+	notifSections := section.ToImplSections[*Model](sections)
+
+	for _, notifSection := range notifSections {
+		notifSection.SetLastUpdated(time.Now())
+		notifSection.SetCreatedAt(time.Now())
+		notifSection.PageInfo = nil
+		fetchCmds = append(fetchCmds, notifSection.FetchNextPageSectionRows()...)
+	}
+
+	return tea.Batch(fetchCmds...)
 }
 
 // SectionNotificationsFetchedMsg contains the result of fetching notifications from the GitHub API.
@@ -894,15 +891,6 @@ func (m Model) GetItemPluralForm() string {
 
 func (m Model) GetTotalCount() int {
 	return m.TotalCount
-}
-
-func (m *Model) GetIsLoading() bool {
-	return m.IsLoading
-}
-
-func (m *Model) SetIsLoading(val bool) {
-	m.IsLoading = val
-	m.Table.SetIsLoading(val)
 }
 
 func (m Model) GetPagerContent() string {

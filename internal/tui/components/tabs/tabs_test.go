@@ -183,7 +183,7 @@ func (m testModel) Update(msg tea.Msg) (testModel, tea.Cmd) {
 		sections = append(sections, &search)
 		for _, cfg := range m.ctx.Config.PRSections {
 			s := testdata.TestSection{Config: config.SectionConfig{Title: cfg.Title}}
-			s.SetIsLoading(true)
+			cmds = append(cmds, s.SetIsLoading(true))
 			sections = append(sections, &s)
 		}
 		m.tabs.SetSections(sections)
@@ -200,7 +200,7 @@ func (m testModel) Update(msg tea.Msg) (testModel, tea.Cmd) {
 		sections = append(sections, &search)
 		for _, cfg := range m.ctx.Config.PRSections {
 			s := testdata.TestSection{Config: config.SectionConfig{Title: cfg.Title + " New"}}
-			s.SetIsLoading(true)
+			cmds = append(cmds, s.SetIsLoading(true))
 			sections = append(sections, &s)
 		}
 		m.tabs.SetSections(sections)

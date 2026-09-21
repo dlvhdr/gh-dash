@@ -188,6 +188,7 @@ func TestNotificationView_SwitchViewWithSKey(t *testing.T) {
 	}
 	ctx.Theme = theme.ParseTheme(ctx.Config)
 	ctx.Styles = context.InitStyles(ctx.Theme)
+	ctx.StartTask = func(task context.Task) tea.Cmd { return nil }
 
 	sidebarModel := sidebar.NewModel()
 	sidebarModel.UpdateProgramContext(ctx)
@@ -224,6 +225,7 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingPR(t *testing.T) {
 	}
 	ctx.Theme = theme.ParseTheme(ctx.Config)
 	ctx.Styles = context.InitStyles(ctx.Theme)
+	ctx.StartTask = func(task context.Task) tea.Cmd { return nil }
 
 	sidebarModel := sidebar.NewModel()
 	sidebarModel.UpdateProgramContext(ctx)
@@ -270,6 +272,7 @@ func TestNotificationView_SwitchViewWithSKey_WhileViewingIssue(t *testing.T) {
 	}
 	ctx.Theme = theme.ParseTheme(ctx.Config)
 	ctx.Styles = context.InitStyles(ctx.Theme)
+	ctx.StartTask = func(task context.Task) tea.Cmd { return nil }
 
 	sidebarModel := sidebar.NewModel()
 	sidebarModel.UpdateProgramContext(ctx)
@@ -341,8 +344,7 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 
 	// Send "next tab" key message
 	msg := tea.KeyPressMsg{Text: "]"}
-	newModel, _ := m.Update(msg)
-	m = newModel.(Model)
+	m.Update(msg)
 
 	// Verify tab changed
 	require.NotEqual(t, initialTab, m.prView.SelectedTab(),
@@ -351,8 +353,7 @@ func TestNotificationView_PRViewTabNavigation(t *testing.T) {
 	// Now test going back
 	currentTab := m.prView.SelectedTab()
 	msg = tea.KeyPressMsg{Text: "["}
-	newModel, _ = m.Update(msg)
-	m = newModel.(Model)
+	m.Update(msg)
 
 	require.NotEqual(t, currentTab, m.prView.SelectedTab(),
 		"prView tab should have changed after pressing prev tab key")
@@ -558,8 +559,7 @@ func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t
 	m.notificationView.SetSubjectPR(&prrow.Data{}, "test-notification-pr")
 	keys.SetNotificationSubject(keys.NotificationSubjectPR)
 
-	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
-	m = newModel.(Model)
+	m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	require.Nil(
 		t,
 		m.notificationView.GetSubjectPR(),
@@ -571,8 +571,7 @@ func TestNotificationView_BackKeyClearsPRSubjectAndRestoresNotificationActions(t
 		"subject ID should be cleared after pressing esc",
 	)
 
-	newModel, _ = m.Update(tea.KeyPressMsg{Text: "m"})
-	m = newModel.(Model)
+	m.Update(tea.KeyPressMsg{Text: "m"})
 	require.False(t, m.notificationView.HasPendingAction(),
 		"notification mark-read key should not be routed to PR merge action after backing out")
 }
@@ -635,8 +634,7 @@ func TestNotificationView_BackKeyClearsIssueSubject(t *testing.T) {
 	m.notificationView.SetSubjectIssue(&data.IssueData{}, "test-notification-issue")
 	keys.SetNotificationSubject(keys.NotificationSubjectIssue)
 
-	newModel, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
-	m = newModel.(Model)
+	m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
 	require.Nil(
 		t,
 		m.notificationView.GetSubjectIssue(),
@@ -1175,7 +1173,7 @@ func TestTogglePreviewPosition_NoOpWhenSidebarClosed(t *testing.T) {
 
 	// Pressing P when sidebar is closed should be a no-op
 	msg := tea.KeyPressMsg{Text: "P"}
-	_, _ = m.Update(msg)
+	m.Update(msg)
 
 	require.Equal(t, initialMainWidth, m.ctx.MainContentWidth,
 		"MainContentWidth should not change when sidebar is closed")
@@ -1242,8 +1240,7 @@ func TestTogglePreviewPosition_TogglesWhenSidebarOpen(t *testing.T) {
 
 	// Press P to toggle to bottom
 	msg := tea.KeyPressMsg{Text: "P"}
-	updated, _ := m.Update(msg)
-	m = updated.(Model)
+	m.Update(msg)
 
 	require.Equal(t, "bottom", m.positionOverride,
 		"positionOverride should be bottom after toggling from right")
@@ -1255,8 +1252,7 @@ func TestTogglePreviewPosition_TogglesWhenSidebarOpen(t *testing.T) {
 		"DynamicPreviewHeight should be set in bottom mode")
 
 	// Press P again to toggle back to right
-	updated, _ = m.Update(msg)
-	m = updated.(Model)
+	m.Update(msg)
 
 	require.Equal(t, "right", m.positionOverride,
 		"positionOverride should be right after toggling back")
@@ -1456,8 +1452,7 @@ func TestNotificationConfirmation_CancelOnOtherKey(t *testing.T) {
 
 	// Press 'n' to cancel
 	msg := tea.KeyPressMsg{Text: "n"}
-	newModel, cmd := m.Update(msg)
-	m = newModel.(Model)
+	_, cmd := m.Update(msg)
 
 	// Verify pending action is cleared
 	require.Empty(t, m.notificationView.GetPendingAction(),
@@ -1499,8 +1494,7 @@ func TestNotificationConfirmation_AcceptWithY(t *testing.T) {
 
 	// Press 'y' to confirm
 	msg := tea.KeyPressMsg{Text: "y"}
-	newModel, cmd := m.Update(msg)
-	m = newModel.(Model)
+	_, cmd := m.Update(msg)
 
 	// Verify pending action is cleared and command is returned
 	require.Empty(t, m.notificationView.GetPendingAction(),
@@ -1542,8 +1536,7 @@ func TestNotificationConfirmation_AcceptWithUpperY(t *testing.T) {
 
 	// Press 'Y' to confirm
 	msg := tea.KeyPressMsg{Text: "Y"}
-	newModel, cmd := m.Update(msg)
-	m = newModel.(Model)
+	_, cmd := m.Update(msg)
 
 	// Verify pending action is cleared and command is returned
 	require.Empty(t, m.notificationView.GetPendingAction(),
@@ -1587,8 +1580,7 @@ func TestNotificationConfirmation_EnterDoesNotConfirm(t *testing.T) {
 
 	// Press Enter -- should cancel since default is No
 	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newModel, _ := m.Update(msg)
-	m = newModel.(Model)
+	m.Update(msg)
 
 	// Verify pending action is cleared (cancelled, not confirmed)
 	require.Empty(t, m.notificationView.GetPendingAction(),
@@ -1664,7 +1656,7 @@ func TestRefresh_ClearsEnrichmentCache(t *testing.T) {
 
 	// Send refresh key - this should call data.ClearEnrichmentCache()
 	msg := tea.KeyPressMsg{Text: "r"}
-	_, _ = m.Update(msg)
+	m.Update(msg)
 
 	// Verify cache is still cleared (ClearEnrichmentCache was called)
 	require.True(t, data.IsEnrichmentCacheCleared(),
@@ -1730,7 +1722,7 @@ func TestRefreshAll_ClearsEnrichmentCache(t *testing.T) {
 				t.Logf("Recovered from expected panic in fetchAllViewSections: %v", r)
 			}
 		}()
-		_, _ = m.Update(msg)
+		m.Update(msg)
 	}()
 
 	// Verify cache is cleared - this is the key assertion
@@ -1811,8 +1803,7 @@ func TestNotificationConfirmation_ApproveWorkflows_AcceptWithY(t *testing.T) {
 
 	// Press 'y' to confirm
 	msg := tea.KeyPressMsg{Text: "y"}
-	newModel, cmd := m.Update(msg)
-	m = newModel.(Model)
+	_, cmd := m.Update(msg)
 
 	// Verify pending action is cleared and command is returned
 	require.Empty(t, m.notificationView.GetPendingAction(),

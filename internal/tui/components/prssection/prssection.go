@@ -26,6 +26,7 @@ const SectionType = "pr"
 type Model struct {
 	section.BaseModel
 	Prs []prrow.Data
+	cfg config.PrsSectionConfig
 }
 
 func NewModel(
@@ -36,6 +37,8 @@ func NewModel(
 	createdAt time.Time,
 ) Model {
 	m := Model{}
+	m.cfg = cfg
+	m.Prs = []prrow.Data{}
 	m.BaseModel = section.NewModel(
 		ctx,
 		section.NewSectionOptions{
@@ -49,7 +52,6 @@ func NewModel(
 			CreatedAt:   createdAt,
 		},
 	)
-	m.Prs = []prrow.Data{}
 
 	return m
 }
@@ -197,7 +199,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 		}
 
 	case SectionPullRequestsFetchedMsg:
-		if m.LastFetchTaskId == msg.TaskId {
+		if m.LastFetch.TaskId == msg.TaskId {
 			if m.PageInfo != nil {
 				m.Prs = append(m.Prs, msg.Prs...)
 			} else {
@@ -207,7 +209,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			m.PageInfo = &msg.PageInfo
 			m.SetIsLoading(false)
 			m.Table.SetRows(m.BuildRows())
-			m.Table.UpdateLastUpdated(time.Now())
+			m.Table.SetLastUpdated(time.Now())
 			m.UpdateTotalItemsCount(m.TotalCount)
 		}
 	}
@@ -450,6 +452,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		return nil
 	}
 
+	// this isn't the first page and there isn't a next page
 	if m.PageInfo != nil && !m.PageInfo.HasNextPage {
 		return nil
 	}
@@ -461,8 +464,8 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 		startCursor = m.PageInfo.StartCursor
 	}
 	taskId := fmt.Sprintf("fetching_prs_%d_%s", m.Id, startCursor)
-	isFirstFetch := m.LastFetchTaskId == ""
-	m.LastFetchTaskId = taskId
+	m.LastFetch.TaskId = taskId
+	m.LastFetch.At = time.Now()
 	task := context.Task{
 		Id:        taskId,
 		StartText: fmt.Sprintf(`Fetching PRs for "%s"`, m.Config.Title),
@@ -510,11 +513,7 @@ func (m *Model) FetchNextPageSectionRows() []tea.Cmd {
 	}
 	cmds = append(cmds, fetchCmd)
 
-	m.IsLoading = true
-	if isFirstFetch {
-		m.SetIsLoading(true)
-		cmds = append(cmds, m.Table.StartLoadingSpinner())
-	}
+	cmds = append(cmds, m.SetIsLoading(true))
 
 	return cmds
 }
@@ -524,34 +523,35 @@ func (m *Model) ResetRows() {
 	m.BaseModel.ResetRows()
 }
 
-func FetchAllSections(
-	ctx *context.ProgramContext,
-	prs []section.Section,
-) (sections []section.Section, fetchAllCmd tea.Cmd) {
-	fetchPRsCmds := make([]tea.Cmd, 0, len(ctx.Config.PRSections))
-	sections = make([]section.Section, 0, len(ctx.Config.PRSections))
+func InitSections(ctx *context.ProgramContext) []section.Section {
+	sections := make([]section.Section, len(ctx.Config.PRSections))
 	for i, sectionConfig := range ctx.Config.PRSections {
-		sectionModel := NewModel(
-			i+1, // 0 is the search section
+		sections[i] = new(NewModel(
+			i,
 			ctx,
 			sectionConfig,
 			time.Now(),
 			time.Now(),
-		)
-		if len(prs) > 0 && len(prs) >= i+1 && prs[i+1] != nil {
-			oldSection := prs[i+1].(*Model)
-			sectionModel.Prs = oldSection.Prs
-			sectionModel.LastFetchTaskId = oldSection.LastFetchTaskId
-		}
-		if sectionConfig.Layout.AuthorIcon.Hidden != nil {
-			sectionModel.ShowAuthorIcon = !*sectionConfig.Layout.AuthorIcon.Hidden
-		}
-		sections = append(sections, &sectionModel)
-		fetchPRsCmds = append(
-			fetchPRsCmds,
-			sectionModel.FetchNextPageSectionRows()...)
+		))
 	}
-	return sections, tea.Batch(fetchPRsCmds...)
+
+	return sections
+}
+
+func FetchAllSections(
+	ctx *context.ProgramContext,
+	sections []section.Section,
+) tea.Cmd {
+	fetchPRsCmds := make([]tea.Cmd, 0)
+	prSections := section.ToImplSections[*Model](sections)
+	for _, prSection := range prSections {
+		prSection.SetLastUpdated(time.Now())
+		prSection.SetCreatedAt(time.Now())
+		prSection.PageInfo = nil
+		fetchPRsCmds = append(fetchPRsCmds, prSection.FetchNextPageSectionRows()...)
+	}
+
+	return tea.Batch(fetchPRsCmds...)
 }
 
 func addAssignees(assignees, addedAssignees []data.Assignee) []data.Assignee {
@@ -594,11 +594,6 @@ func (m Model) GetTotalCount() int {
 	return m.TotalCount
 }
 
-func (m *Model) SetIsLoading(val bool) {
-	m.IsLoading = val
-	m.Table.SetIsLoading(val)
-}
-
 func (m Model) GetPagerContent() string {
 	pagerContent := ""
 	timeElapsed := utils.TimeElapsed(m.LastUpdated())
@@ -620,4 +615,8 @@ func (m Model) GetPagerContent() string {
 	}
 	pager := m.Ctx.Styles.ListViewPort.PagerStyle.Render(pagerContent)
 	return pager
+}
+
+func (m *Model) ConfigGetter() config.SectionConfig {
+	return m.cfg.ToSectionConfig()
 }

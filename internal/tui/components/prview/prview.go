@@ -45,7 +45,7 @@ type Model struct {
 var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
 func NewModel(ctx *context.ProgramContext) Model {
-	c := carousel.New(
+	c := carousel.NewModel(
 		carousel.WithItems(tabs),
 		carousel.WithWidth(ctx.MainContentWidth),
 	)

@@ -1,6 +1,8 @@
 package carousel
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -73,7 +75,7 @@ func DefaultStyles() Styles {
 // SetStyles sets the table styles.
 func (m *Model) SetStyles(s Styles) {
 	m.styles = s
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // Option is used to set options in New. For example:
@@ -81,8 +83,8 @@ func (m *Model) SetStyles(s Styles) {
 //	carousel := New(WithItems([]string{"Item 1", "Item 2", "Item 3"}))
 type Option func(*Model)
 
-// New creates a new model for the carousel widget.
-func New(opts ...Option) Model {
+// NewModel creates a new model for the carousel widget.
+func NewModel(opts ...Option) Model {
 	m := Model{
 		cursor: 0,
 
@@ -97,7 +99,7 @@ func New(opts ...Option) Model {
 		opt(&m)
 	}
 
-	m.UpdateSize()
+	m.UpdateContent()
 
 	return m
 }
@@ -196,25 +198,30 @@ func (m Model) Focused() bool {
 // interact.
 func (m *Model) Focus() {
 	m.focus = true
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // Blur blurs the carousel, preventing selection or movement.
 func (m *Model) Blur() {
 	m.focus = false
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // View renders the component.
 func (m Model) View() string {
-	// d := lipgloss.JoinHorizontal(lipgloss.Center, m.content, fmt.Sprintf("cursor=%d", m.cursor))
-	// return d
+	if m.width != 0 {
+		return m.content + strings.Repeat(" ", max(0, m.width-lipgloss.Width(m.content)))
+	}
 	return m.content
 }
 
-// UpdateSize updates the carousel size based on the previously defined
+// UpdateContent updates the carousel size based on the previously defined
 // items and width.
-func (m *Model) UpdateSize() {
+func (m *Model) UpdateContent() {
+	if len(m.items) == 0 {
+		m.content = lipgloss.NewStyle().Height(m.height).Render("")
+		return
+	}
 	leftover := m.width
 	itemsContent := ""
 
@@ -251,32 +258,30 @@ func (m *Model) UpdateSize() {
 	m.start = lastLeft
 	m.end = lastRight
 
-	l := m.width
+	// reset leftover
+	leftover = m.width
 	loIndicator, roIndicator := "", ""
 
 	if m.showOverflowIndicators && lastLeft != 0 {
 		loIndicator = m.styles.OverflowIndicator.Render(m.leftOverflowIndicator)
-		l -= lipgloss.Width(loIndicator)
+		leftover -= lipgloss.Width(loIndicator)
 	}
 	if m.showOverflowIndicators && lastRight != len(m.items)-1 {
 		roIndicator = m.styles.OverflowIndicator.Render(m.rightOverflowIndicator)
-		l -= lipgloss.Width(roIndicator)
+		leftover -= lipgloss.Width(roIndicator)
 	}
 
 	if loIndicator != "" {
-		truncate := lipgloss.Width(itemsContent) - l + 1
+		truncate := lipgloss.Width(itemsContent) - leftover + 1
 		itemsContent = ansi.TruncateLeft(itemsContent, truncate, "")
 		if truncate > 0 {
 			itemsContent = lipgloss.JoinHorizontal(lipgloss.Center,
 				m.styles.Item.Inline(true).Render(constants.Ellipsis), itemsContent)
 		}
-	} else {
-		w := lipgloss.Width(itemsContent)
-		if w > l {
-			itemsContent = ansi.Truncate(itemsContent, l, "")
-			itemsContent = lipgloss.JoinHorizontal(lipgloss.Center, itemsContent,
-				m.styles.Item.Inline(true).Render(constants.Ellipsis))
-		}
+	} else if w := lipgloss.Width(itemsContent); w > leftover {
+		itemsContent = ansi.Truncate(itemsContent, leftover, "")
+		itemsContent = lipgloss.JoinHorizontal(lipgloss.Center, itemsContent,
+			m.styles.Item.Inline(true).Render(constants.Ellipsis))
 	}
 
 	m.content = lipgloss.NewStyle().Height(m.height).Render(
@@ -298,19 +303,19 @@ func (m *Model) SetItems(items []string) {
 	m.items = items
 	m.cursor = clamp(m.cursor, 0, len(m.items)-1)
 	m.start = 0
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // SetWidth sets the width of the carousel.
 func (m *Model) SetWidth(w int) {
 	m.width = w
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // SetHeight sets the height of the carousel.
 func (m *Model) SetHeight(h int) {
 	m.height = h
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // Height returns the height of the carousel.
@@ -341,49 +346,62 @@ func (m Model) HasLeftItems() bool {
 // SetCursor sets the cursor position in the carousel.
 func (m *Model) SetCursor(n int) {
 	m.cursor = clamp(n, 0, len(m.items)-1)
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // MoveLeft moves the selection left by one item..
 // It can not go before the first item.
 func (m *Model) MoveLeft() {
 	m.cursor = clamp(m.cursor-1, 0, len(m.items)-1)
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 // MoveDown moves the selection right by one item.
 // It can not go after the last row.
 func (m *Model) MoveRight() {
 	m.cursor = clamp(m.cursor+1, 0, len(m.items)-1)
-	m.UpdateSize()
+	m.UpdateContent()
 }
 
 func (m *Model) renderItem(itemID int, maxWidth int) string {
-	var item string
-	if itemID == m.cursor {
-		item = m.styles.Selected.Render(m.items[itemID])
-	} else if itemID < m.cursor {
-		r := m.styles.Item.Render(m.items[itemID])
-		truncate := lipgloss.Width(r) - maxWidth - 1
-		item = ansi.TruncateLeft(r, truncate, "")
-		if truncate > 0 {
-			item = lipgloss.JoinHorizontal(lipgloss.Center,
-				m.styles.Item.Inline(true).Render(constants.Ellipsis), item)
-		}
-	} else {
-		r := m.styles.Item.Render(m.items[itemID])
-		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render(constants.Ellipsis))
-	}
+	item := m.items[itemID]
+	sep := ""
 
 	if m.showSeparators && itemID != len(m.items)-1 {
+		sep = m.styles.Separator.Render(m.separator)
+	}
+
+	if itemID == m.cursor {
 		return lipgloss.JoinHorizontal(
 			lipgloss.Center,
-			item,
-			m.styles.Separator.Render(m.separator),
+			m.styles.Selected.Render(item),
+			sep,
 		)
 	}
 
-	return item
+	r := m.styles.Item.Render(m.items[itemID])
+	wants := lipgloss.Width(r) + lipgloss.Width(sep)
+
+	// TruncateLeft and Truncate work a bit different.
+	// TruncateLeft removes N characters from the left
+	// Truncate makes sure a string is not longer than N
+	if itemID < m.cursor {
+		// 1 for the ellipsis
+		remove := 1 + wants - maxWidth
+		item = ansi.TruncateLeft(
+			r,
+			remove,
+			m.styles.Item.Inline(true).Render(constants.Ellipsis),
+		)
+	} else {
+		item = ansi.Truncate(r, maxWidth, m.styles.Item.Inline(true).Render(constants.Ellipsis))
+	}
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		item,
+		sep,
+	)
 }
 
 func max(a, b int) int {

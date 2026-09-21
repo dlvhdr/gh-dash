@@ -44,11 +44,16 @@ type BaseModel struct {
 	PromptConfirmationBox     prompt.Model
 	IsPromptConfirmationShown bool
 	PromptConfirmationAction  string
-	LastFetchTaskId           string
+	LastFetch                 FetchEvent
 	IsSearchSupported         bool
 	ShowAuthorIcon            bool
 	IsFilteredByCurrentRemote bool
 	IsLoading                 bool
+}
+
+type FetchEvent struct {
+	TaskId string
+	At     time.Time
 }
 
 type NewSectionOptions struct {
@@ -150,10 +155,12 @@ type Section interface {
 	GetItemSingularForm() string
 	GetItemPluralForm() string
 	GetTotalCount() int
+	IsDataStale() bool
 }
 
 type Identifier interface {
 	GetId() int
+	SetId(id int)
 	GetType() string
 }
 
@@ -174,7 +181,7 @@ type Table interface {
 	BuildRows() []table.Row
 	ResetRows()
 	GetIsLoading() bool
-	SetIsLoading(val bool)
+	SetIsLoading(val bool) tea.Cmd
 }
 
 type Search interface {
@@ -309,6 +316,10 @@ func (msg SectionRowsFetchedMsg) GetSectionId() int {
 
 func (m *BaseModel) GetId() int {
 	return m.Id
+}
+
+func (m *BaseModel) SetId(id int) {
+	m.Id = id
 }
 
 func (m *BaseModel) GetType() string {
@@ -463,8 +474,16 @@ func (m *BaseModel) LastUpdated() time.Time {
 	return m.Table.LastUpdated()
 }
 
+func (m *BaseModel) SetLastUpdated(t time.Time) {
+	m.Table.SetLastUpdated(t)
+}
+
 func (m *BaseModel) CreatedAt() time.Time {
 	return m.Table.CreatedAt()
+}
+
+func (m *BaseModel) SetCreatedAt(t time.Time) {
+	m.Table.SetCreatedAt(t)
 }
 
 func (m *BaseModel) UpdateTotalItemsCount(count int) {
@@ -514,4 +533,35 @@ func (m *BaseModel) GetPromptConfirmation() string {
 	}
 
 	return ""
+}
+
+func (m *BaseModel) IsDataStale() bool {
+	return m.LastFetch.At.IsZero() || time.Since(m.LastFetch.At) > time.Minute*5
+}
+
+func (m *BaseModel) SetIsLoading(val bool) tea.Cmd {
+	m.IsLoading = val
+	if !val {
+		m.Table.SetIsLoading(false)
+		return nil
+	}
+
+	// only show table spinner if it's the first page
+	if m.PageInfo == nil {
+		m.Table.SetIsLoading(true)
+		return m.Table.StartLoadingSpinner()
+	}
+
+	return nil
+}
+
+func ToImplSections[T Section](sections []Section) []T {
+	res := make([]T, 0)
+	for _, s := range sections {
+		if s, ok := s.(T); ok {
+			res = append(res, s)
+		}
+	}
+
+	return res
 }

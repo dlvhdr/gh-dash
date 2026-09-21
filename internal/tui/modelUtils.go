@@ -54,7 +54,7 @@ func (m *Model) getPrevSectionId() int {
 }
 
 func (m *Model) getNextSectionId() int {
-	return min((m.currSectionId + 1), len(m.ctx.GetViewSectionsConfig())-1)
+	return min((m.currSectionId + 1), len(m.getCurrentViewSections())-1)
 }
 
 type IssueCommandTemplateInput struct {
