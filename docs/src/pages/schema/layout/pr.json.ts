@@ -28,6 +28,10 @@ export function GET() {
           width: 15,
           hidden: true,
         },
+        stack: {
+          width: 7,
+          hidden: true,
+        },
         lines: {
           width: 16,
         },
@@ -148,6 +152,21 @@ export function GET() {
           ],
           default: {
             width: 15,
+            hidden: true,
+          },
+        },
+        stack: {
+          title: "PR Stack Column",
+          description:
+            "Defines options for the stack column in a PR section. Shows the PR's position in its stack, e.g. 2/3, and is blank for PRs that aren't stacked.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 7,
             hidden: true,
           },
         },

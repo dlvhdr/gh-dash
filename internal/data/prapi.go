@@ -62,6 +62,7 @@ type EnrichedPullRequestData struct {
 	Reviews            Reviews                    `graphql:"reviews(last: 100)"`
 	SuggestedReviewers []SuggestedReviewer
 	Files              ChangedFiles `graphql:"files(first: 20)"`
+	StackEntry         EnrichedStackEntry
 }
 
 type PullRequestData struct {
@@ -98,6 +99,7 @@ type PullRequestData struct {
 	Commits          LastCommitStatus `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
+	StackEntry       PrStackEntry
 }
 
 type LastCommitStatus struct {
@@ -467,6 +469,7 @@ func (e EnrichedPullRequestData) ToPullRequestData() PullRequestData {
 		Assignees:         e.Assignees,
 		IsDraft:           e.IsDraft,
 		Labels:            e.Labels,
+		StackEntry:        e.StackEntry.Summary(),
 		// Note: Comments, ReviewThreads, Reviews, ReviewRequests, Commits
 		// have different types in EnrichedPullRequestData vs PullRequestData
 		// We leave them as zero values since the enriched data will be used instead

@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -55,4 +56,29 @@ func RenderIssueTitle(
 
 	res := fmt.Sprintf("%s%s", prNumber, rTitle)
 	return res
+}
+
+func RenderPRStateGlyph(
+	ctx *context.ProgramContext,
+	state string,
+	isDraft, isInMergeQueue bool,
+) string {
+	style := lipgloss.NewStyle()
+
+	switch state {
+	case "OPEN":
+		if isInMergeQueue {
+			return style.Foreground(ctx.Theme.WarningText).Render(constants.MergeQueueIcon)
+		}
+		if isDraft {
+			return style.Foreground(ctx.Theme.FaintText).Render(constants.DraftIcon)
+		}
+		return style.Foreground(ctx.Styles.Colors.OpenPR).Render(constants.OpenIcon)
+	case "CLOSED":
+		return style.Foreground(ctx.Styles.Colors.ClosedPR).Render(constants.ClosedIcon)
+	case "MERGED":
+		return style.Foreground(ctx.Styles.Colors.MergedPR).Render(constants.MergedIcon)
+	default:
+		return style.Foreground(ctx.Theme.FaintText).Render("-")
+	}
 }
