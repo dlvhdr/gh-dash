@@ -31,6 +31,7 @@ By default, PR views display the following columns in the order they're listed:
 1. [`numComments`] with a width of 3 columns.
 1. [`reviewStatus`] with a width of 3 columns.
 1. [`ci`] with a width of 3 columns.
+1. [`stack`] with a width of 7 columns, hidden by default.
 1. [`lines`] with a width of 16 columns.
 
 <Aside type="caution" title="Watch out!">
@@ -51,6 +52,7 @@ By default, PR views display the following columns in the order they're listed:
 [`numComments`]: #pr-number-of-comments-column
 [`reviewStatus`]: #pr-review-status-column
 [`ci`]:           #pr-continuous-integration-column
+[`stack`]:        #pr-stack-column
 [`lines`]:        #pr-lines-column
 
 ```yaml
@@ -70,6 +72,9 @@ assignees:
   hidden: true
 base:
   width: 15
+  hidden: true
+stack:
+  width: 7
   hidden: true
 lines:
   width: 16
@@ -174,6 +179,20 @@ The heading for this column is `Assignees`.
 This column displays the base branch the PR is targeting, like `main`.
 
 The heading for this column is `Base`.
+
+## PR Stack Column
+
+| Property | Type | Default                                                          |
+| :------- | :--- | :--------------------------------------------------------------- |
+| `stack`  | yaml | <Code code={`width: 7\nhidden: true`} lang="yaml" frame="none"/> |
+
+This column displays the PR's position in its stack, counting from the branch
+the stack is based on, like `2/3`. PRs that aren't part of a stack leave the
+column blank.
+
+Stacks are read from GitHub, so they show up whether they were created with
+`gh stack` or in the web UI. The selected PR's full stack is shown in the
+sidebar's `Stack` tab.
 
 ## PR Number of Comments Column
 
