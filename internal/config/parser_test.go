@@ -40,7 +40,7 @@ func init() {
 var keybindSorter = cmp.Transformer("Sort", func(in []Keybinding) []Keybinding {
 	out := append([]Keybinding(nil), in...) // Copy input to avoid mutating it
 	sort.Slice(out, func(i, j int) bool {
-		return strings.Compare(out[i].Key, out[j].Key) == -1
+		return strings.Compare(out[i].Key.String(), out[j].Key.String()) == -1
 	})
 	return out
 })
@@ -181,7 +181,7 @@ func TestParser(t *testing.T) {
 		// to panic when a later merge re-read already-merged keybindings.
 		keys := make([]string, 0, len(parsed.Keybindings.Universal))
 		for _, kb := range parsed.Keybindings.Universal {
-			keys = append(keys, kb.Key)
+			keys = append(keys, kb.Key.String())
 		}
 		require.ElementsMatch(t, []string{"a", "b", "c"}, keys)
 	})
@@ -198,6 +198,30 @@ func TestParser(t *testing.T) {
 		require.Equal(t, Color("013"), parsed.Theme.Colors.Inline.Border.Primary)
 		require.Equal(t, Color("008"), parsed.Theme.Colors.Inline.Background.Selected)
 	})
+}
+
+func TestParseConfig_KeyListScalarAndList(t *testing.T) {
+	// A keybinding's `key` may be a single key (scalar) or a list of keys.
+	// koanf/mapstructure (WeaklyTypedInput) lifts a scalar into a one-element
+	// slice, so both forms decode into KeyList without a custom unmarshaler.
+	dir := t.TempDir()
+	configPath := path.Join(dir, "config.yml")
+	cfg := "" +
+		"keybindings:\n" +
+		"  universal:\n" +
+		"    - key: x\n" +
+		"      builtin: refresh\n" +
+		"    - key: [ctrl+d, pgdown]\n" +
+		"      builtin: pageDown\n"
+	err := os.WriteFile(configPath, []byte(cfg), 0o600)
+	testutils.AssertNoError(t, err)
+
+	parsed, err := ParseConfig(Location{ConfigFlag: configPath, SkipGlobalConfig: true})
+	testutils.AssertNoError(t, err)
+
+	require.Len(t, parsed.Keybindings.Universal, 2)
+	require.Equal(t, KeyList{"x"}, parsed.Keybindings.Universal[0].Key)
+	require.Equal(t, KeyList{"ctrl+d", "pgdown"}, parsed.Keybindings.Universal[1].Key)
 }
 
 func loadExpected(t *testing.T, fpath string) Config {

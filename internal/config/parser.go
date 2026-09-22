@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -200,11 +201,26 @@ type RepoConfig struct {
 	PrsRefetchIntervalSeconds      int `yaml:"prsRefetchIntervalSeconds,omitempty"`
 }
 
+// KeyList holds the key(s) bound to a single action. In config it accepts
+// either a single key (`key: ctrl+d`) or a list (`key: [ctrl+d, pgdown]`):
+// koanf decodes config through mapstructure with WeaklyTypedInput, which lifts
+// a scalar into a one-element slice, so both forms decode without a custom
+// unmarshaler.
+type KeyList []string
+
+// String renders the bound keys for help text, e.g. "ctrl+d/pgdown" — matching
+// the "/" separator gh-dash already uses for multi-key help descriptions.
+func (kl KeyList) String() string { return strings.Join(kl, "/") }
+
+// Contains reports whether s is one of the bound keys (used to match a pressed
+// key against a custom-command binding).
+func (kl KeyList) Contains(s string) bool { return slices.Contains(kl, s) }
+
 type Keybinding struct {
-	Key     string `yaml:"key"`
-	Command string `yaml:"command,omitempty"`
-	Builtin string `yaml:"builtin,omitempty"`
-	Name    string `yaml:"name,omitempty"`
+	Key     KeyList `yaml:"key"`
+	Command string  `yaml:"command,omitempty"`
+	Builtin string  `yaml:"builtin,omitempty"`
+	Name    string  `yaml:"name,omitempty"`
 }
 
 func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
@@ -218,8 +234,8 @@ func (kb Keybinding) NewBinding(previous *key.Binding) key.Binding {
 	}
 
 	return key.NewBinding(
-		key.WithKeys(kb.Key),
-		key.WithHelp(kb.Key, helpDesc),
+		key.WithKeys(kb.Key...),
+		key.WithHelp(kb.Key.String(), helpDesc),
 	)
 }
 
@@ -645,7 +661,7 @@ func mergeOption() koanf.Option {
 		// below can tell which sections this layer actually declared.
 		overridesCopy := maps.Copy(overrides)
 
-		unioned := make(map[string][]map[string]string, len(keybindingTypes))
+		unioned := make(map[string][]map[string]any, len(keybindingTypes))
 		for _, typ := range keybindingTypes {
 			unioned[typ] = mergeKeybindings(overrides, dest, typ)
 		}
@@ -735,49 +751,72 @@ func (parser ConfigParser) mergeConfigs(globalCfgPath, userProvidedCfgPath strin
 	return parser.unmarshalConfigWithDefaults()
 }
 
-func mergeKeybindings(overrides, dest map[string]any, typ string) []map[string]string {
-	byKey := make(map[string]map[string]string)
+func mergeKeybindings(overrides, dest map[string]any, typ string) []map[string]any {
+	byKey := make(map[string]map[string]any)
+	order := make([]string, 0)
 	// dest first, then overrides, so a key bound in both resolves to overrides.
 	for _, layer := range []map[string]any{dest, overrides} {
 		for _, keybind := range keybindingsByType(layer, typ) {
-			if key, ok := keybind["key"]; ok {
-				byKey[key] = keybind
+			val, ok := keybind["key"]
+			if !ok {
+				continue
 			}
+			dk := keybindDedupKey(val)
+			if _, exists := byKey[dk]; !exists {
+				order = append(order, dk)
+			}
+			byKey[dk] = keybind
 		}
 	}
 
-	merged := make([]map[string]string, 0, len(byKey))
-	for _, keybind := range byKey {
-		merged = append(merged, keybind)
+	merged := make([]map[string]any, 0, len(byKey))
+	for _, dk := range order {
+		merged = append(merged, byKey[dk])
 	}
 	return merged
 }
 
-func keybindingsByType(layer map[string]any, typ string) []map[string]string {
+// keybindDedupKey canonicalizes a binding's `key` field (which may be a single
+// key string or a list of keys) into a stable string, so two layers binding the
+// same key(s) dedup against each other.
+func keybindDedupKey(val any) string {
+	switch v := val.(type) {
+	case string:
+		return v
+	case []any:
+		parts := make([]string, 0, len(v))
+		for _, e := range v {
+			parts = append(parts, fmt.Sprint(e))
+		}
+		return strings.Join(parts, "\x00")
+	case []string:
+		return strings.Join(v, "\x00")
+	default:
+		return fmt.Sprint(val)
+	}
+}
+
+func keybindingsByType(layer map[string]any, typ string) []map[string]any {
 	keybindings, ok := layer["keybindings"].(map[string]any)
 	if !ok {
 		return nil
 	}
 
 	// Raw YAML parses to []any, but a previous merge pass writes the type back as
-	// []map[string]string, so both shapes can show up once 3+ layers are merged.
+	// []map[string]any, so both shapes can show up once 3+ layers are merged. The
+	// per-binding maps are preserved as-is so a list-valued `key` (multiple keys
+	// bound to one action) survives the merge instead of being dropped.
 	switch list := keybindings[typ].(type) {
-	case []map[string]string:
+	case []map[string]any:
 		return list
 	case []any:
-		out := make([]map[string]string, 0, len(list))
+		out := make([]map[string]any, 0, len(list))
 		for _, item := range list {
 			m, ok := item.(map[string]any)
 			if !ok {
 				continue
 			}
-			casted := make(map[string]string)
-			for key, val := range m {
-				if s, ok := val.(string); ok {
-					casted[key] = s
-				}
-			}
-			out = append(out, casted)
+			out = append(out, m)
 		}
 		return out
 	default:
