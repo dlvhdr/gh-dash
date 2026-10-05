@@ -30,6 +30,42 @@ type IssueData struct {
 	Comments          IssueComments  `graphql:"comments(last: 15)"`
 	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
 	Labels            IssueLabels    `graphql:"labels(first: 20)"`
+	Parent            *ParentIssue
+	SubIssues         SubIssues `graphql:"subIssues(first: 20)"`
+	SubIssuesSummary  SubIssuesSummary
+}
+
+type ParentIssue struct {
+	Number     int
+	Title      string
+	State      string
+	Url        string
+	Repository struct {
+		Name          string
+		NameWithOwner string
+	}
+}
+
+type SubIssue struct {
+	Number     int
+	Title      string
+	State      string
+	Url        string
+	Repository struct {
+		Name          string
+		NameWithOwner string
+	}
+}
+
+type SubIssues struct {
+	Nodes      []SubIssue
+	TotalCount int
+}
+
+type SubIssuesSummary struct {
+	Total            int
+	Completed        int
+	PercentCompleted int
 }
 
 type IssueComments struct {
@@ -93,6 +129,34 @@ func (data IssueData) GetUpdatedAt() time.Time {
 
 func (data IssueData) GetCreatedAt() time.Time {
 	return data.CreatedAt
+}
+
+func (data IssueData) HasParent() bool {
+	return data.Parent != nil
+}
+
+func (data IssueData) HasSubIssues() bool {
+	return data.SubIssues.TotalCount > 0 || len(data.SubIssues.Nodes) > 0 ||
+		data.SubIssuesSummary.Total > 0
+}
+
+func (data IssueData) GetSubIssuesProgress() (completed, total, percent int) {
+	if data.SubIssuesSummary.Total > 0 {
+		return data.SubIssuesSummary.Completed, data.SubIssuesSummary.Total, data.SubIssuesSummary.PercentCompleted
+	}
+	total = data.SubIssues.TotalCount
+	if total == 0 {
+		total = len(data.SubIssues.Nodes)
+	}
+	for _, sub := range data.SubIssues.Nodes {
+		if sub.State == "CLOSED" {
+			completed++
+		}
+	}
+	if total > 0 {
+		percent = (completed * 100) / total
+	}
+	return completed, total, percent
 }
 
 func makeIssuesQuery(query string) string {

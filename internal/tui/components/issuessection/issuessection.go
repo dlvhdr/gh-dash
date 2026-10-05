@@ -159,6 +159,7 @@ func (m *Model) Update(msg tea.Msg) (section.Section, tea.Cmd) {
 			} else {
 				m.Issues = msg.Issues
 			}
+			m.Issues = NestSubIssues(m.Issues)
 			m.TotalCount = msg.TotalCount
 			m.SetIsLoading(false)
 			m.PageInfo = &msg.PageInfo

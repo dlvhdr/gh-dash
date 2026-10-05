@@ -69,10 +69,20 @@ func (issue *Issue) renderRepoName() string {
 }
 
 func (issue *Issue) renderTitle() string {
+	title := issue.Data.Title
+	if issue.Data.HasParent() {
+		title = "↳ " + title
+	}
+	if issue.Data.HasSubIssues() {
+		completed, total, _ := issue.Data.GetSubIssuesProgress()
+		if total > 0 {
+			title = fmt.Sprintf("%s (%d/%d)", title, completed, total)
+		}
+	}
 	return components.RenderIssueTitle(
 		issue.Ctx,
 		issue.Data.State,
-		issue.Data.Title,
+		title,
 		issue.Data.Number,
 	)
 }

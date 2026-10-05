@@ -131,6 +131,13 @@ func (m Model) View() string {
 
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n\n")
+
+	parent := m.renderParent()
+	if parent != "" {
+		s.WriteString(parent)
+		s.WriteString("\n\n")
+	}
+
 	s.WriteString(m.renderStatusPill())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderAuthor())
@@ -139,6 +146,12 @@ func (m Model) View() string {
 	labels := m.renderLabels()
 	if labels != "" {
 		s.WriteString(labels)
+		s.WriteString("\n\n")
+	}
+
+	subIssues := m.renderSubIssues()
+	if subIssues != "" {
+		s.WriteString(subIssues)
 		s.WriteString("\n\n")
 	}
 
