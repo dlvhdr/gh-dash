@@ -49,7 +49,7 @@ func (src *UserMentionSource) ExtractContext(input string, cursorPos tea.Positio
 	}
 
 	if userStart >= len(runes)+1 ||
-		(userStart > 0 && userStart < len(runes) && src.WithAtSymbol && runes[userStart-1] != '@') {
+		(userStart > 0 && userStart <= len(runes) && src.WithAtSymbol && runes[userStart-1] != '@') {
 		return Context{}
 	}
 
