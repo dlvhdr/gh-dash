@@ -87,8 +87,8 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(branchKey.Key),
-					key.WithHelp(branchKey.Key, name),
+					key.WithKeys(branchKey.Key...),
+					key.WithHelp(branchKey.Key.String(), name),
 				)
 
 				CustomBranchBindings = append(CustomBranchBindings, customBinding)
@@ -123,13 +123,13 @@ func rebindBranchKeys(keys []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in branch key: '%s'", branchKey.Builtin)
 		}
 
-		key.SetKeys(branchKey.Key)
+		key.SetKeys(branchKey.Key...)
 
 		helpDesc := key.Help().Desc
 		if branchKey.Name != "" {
 			helpDesc = branchKey.Name
 		}
-		key.SetHelp(branchKey.Key, helpDesc)
+		key.SetHelp(branchKey.Key.String(), helpDesc)
 	}
 
 	return nil

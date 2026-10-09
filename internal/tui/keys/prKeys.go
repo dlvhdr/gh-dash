@@ -146,8 +146,8 @@ func rebindPRKeys(keys []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(prKey.Key),
-					key.WithHelp(prKey.Key, name),
+					key.WithKeys(prKey.Key...),
+					key.WithHelp(prKey.Key.String(), name),
 				)
 
 				CustomPRBindings = append(CustomPRBindings, customBinding)
@@ -200,13 +200,13 @@ func rebindPRKeys(keys []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in pr key: '%s'", prKey.Builtin)
 		}
 
-		key.SetKeys(prKey.Key)
+		key.SetKeys(prKey.Key...)
 
 		helpDesc := key.Help().Desc
 		if prKey.Name != "" {
 			helpDesc = prKey.Name
 		}
-		key.SetHelp(prKey.Key, helpDesc)
+		key.SetHelp(prKey.Key.String(), helpDesc)
 	}
 
 	return nil
