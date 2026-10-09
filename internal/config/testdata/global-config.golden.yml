@@ -73,6 +73,9 @@ defaults:
         hidden: true
       lines:
         width: 15
+      stack:
+        width: 7
+        hidden: true
     issues:
       updatedAt:
         width: 5

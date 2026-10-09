@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"image/color"
 	"regexp"
+	"slices"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
@@ -44,10 +46,13 @@ type Model struct {
 
 var tabs = []string{" Overview", " Activity", " Commits", " Checks", " Files Changed"}
 
+var stackTab = constants.StackIcon + " Stack"
+
 func NewModel(ctx *context.ProgramContext) Model {
 	c := carousel.NewModel(
 		carousel.WithItems(tabs),
 		carousel.WithWidth(ctx.MainContentWidth),
+		carousel.WithOverflowIndicators("←", "→"),
 	)
 
 	ta := inputbox.DefaultTextArea(ctx)
@@ -146,6 +151,8 @@ func (m Model) View() string {
 		body.WriteString(m.renderChecks())
 	case tabs[4]:
 		body.WriteString(m.renderChangedFiles())
+	case stackTab:
+		body.WriteString(m.renderStack())
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left,
@@ -174,6 +181,16 @@ func (m *Model) viewHeader() string {
 
 	header.WriteString("\n")
 	return header.String()
+}
+
+func (m *Model) renderDottedRow(left, right string) string {
+	fainter := lipgloss.NewStyle().Foreground(m.ctx.Theme.FaintBorder)
+	wright := lipgloss.Width(right)
+	left = ansi.Truncate(left, max(0, m.getIndentedContentWidth()-wright-1), constants.Ellipsis)
+	pad := fainter.Render(" " + strings.Repeat(constants.HorizontalLineIcon,
+		max(1, m.getIndentedContentWidth()-lipgloss.Width(left)-wright)-1) + " ")
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, left, pad, right)
 }
 
 func (m *Model) viewOverviewTab() string {
@@ -560,6 +577,29 @@ func (m *Model) SetRow(d *prrow.Data) {
 	} else {
 		m.pr = &prrow.PullRequest{Ctx: m.ctx, Data: d}
 	}
+	m.syncTabs()
+}
+
+func (m *Model) syncTabs() {
+	items := tabs
+	if m.isStacked() {
+		items = append(append([]string{}, tabs...), stackTab)
+	}
+
+	if slices.Equal(m.carousel.Items(), items) {
+		return
+	}
+	m.carousel.SetItems(items)
+}
+
+func (m *Model) isStacked() bool {
+	if m == nil || m.pr == nil || m.pr.Data == nil {
+		return false
+	}
+	if m.pr.Data.IsEnriched && m.pr.Data.Enriched.StackEntry.IsStacked() {
+		return true
+	}
+	return m.pr.Data.Primary != nil && m.pr.Data.Primary.StackEntry.IsStacked()
 }
 
 type EnrichedPrMsg struct {
@@ -604,6 +644,10 @@ func (m *Model) UpdateProgramContext(ctx *context.ProgramContext) {
 		carousel.Styles{
 			Item:     lipgloss.NewStyle().Padding(0, 1).Foreground(m.ctx.Theme.FaintText),
 			Selected: lipgloss.NewStyle().Padding(0, 1).Bold(true),
+			OverflowIndicator: lipgloss.NewStyle().
+				Padding(0, 1).
+				Foreground(m.ctx.Theme.FaintText).
+				Bold(true),
 		},
 	)
 

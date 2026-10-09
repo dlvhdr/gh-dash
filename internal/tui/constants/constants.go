@@ -56,6 +56,7 @@ const (
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""
 	SelectionIcon      = "→"
+	StackIcon          = "" // \uf40d nf-oct-stack
 
 	AutocompleteColumnGap              = 2
 	AutocompleteMinValueWidth          = 8
