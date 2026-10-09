@@ -1015,7 +1015,7 @@ func (m *Model) View() tea.View {
 	if currSection != nil {
 		searchCmp := currSection.ViewCompletions()
 		if searchCmp != "" {
-			y := common.HeaderHeight + common.SearchHeight + 1
+			y := common.HeaderHeight + common.SearchHeight
 			layers = append(layers, lipgloss.NewLayer(searchCmp).X(1).Y(y))
 		}
 	}

@@ -17,7 +17,7 @@ var (
 	SingleRuneWidth    = 4
 	MainContentPadding = 1
 	TabsBorderHeight   = 1
-	TabsContentHeight  = 2
+	TabsContentHeight  = 1
 	TabsHeight         = TabsBorderHeight + TabsContentHeight
 	ViewSwitcherMargin = 1
 	TableHeaderHeight  = 2
