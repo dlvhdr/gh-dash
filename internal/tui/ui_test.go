@@ -1040,7 +1040,7 @@ func TestSyncMainContentDimensions_BottomMode(t *testing.T) {
 			previewHeight:         0.4,
 			sidebarOpen:           true,
 			expectedPreviewHeight: 14,
-			expectedMainHeight:    21,
+			expectedMainHeight:    22,
 			expectedMainWidth:     100,
 		},
 		{
@@ -1050,7 +1050,7 @@ func TestSyncMainContentDimensions_BottomMode(t *testing.T) {
 			previewHeight:         0.4,
 			sidebarOpen:           false,
 			expectedPreviewHeight: 0,
-			expectedMainHeight:    36,
+			expectedMainHeight:    37,
 			expectedMainWidth:     100,
 		},
 		{
@@ -1060,7 +1060,7 @@ func TestSyncMainContentDimensions_BottomMode(t *testing.T) {
 			previewHeight:         10,
 			sidebarOpen:           true,
 			expectedPreviewHeight: 10,
-			expectedMainHeight:    25,
+			expectedMainHeight:    26,
 			expectedMainWidth:     100,
 		},
 	}
@@ -1101,7 +1101,7 @@ func TestSyncMainContentDimensions_BottomMode(t *testing.T) {
 					"DynamicPreviewHeight mismatch")
 				// Verify total doesn't exceed available space:
 				// main content + preview + border must equal base content height
-				baseHeight := tc.screenHeight - 4 // TabsHeight=3 + FooterHeight=1
+				baseHeight := tc.screenHeight - 3 // TabsHeight=2 + FooterHeight=1
 				borderHeight := styles.Sidebar.BorderWidth
 				require.Equal(
 					t,
