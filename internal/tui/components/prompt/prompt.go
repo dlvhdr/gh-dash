@@ -3,6 +3,8 @@ package prompt
 import (
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -13,6 +15,17 @@ type Model struct {
 
 func NewModel(ctx *context.ProgramContext) Model {
 	ti := textinput.New()
+	base := lipgloss.NewStyle()
+	state := textinput.StyleState{
+		Prompt:      base.Foreground(ctx.Theme.PrimaryText),
+		Text:        base.Foreground(ctx.Theme.PrimaryText),
+		Placeholder: base.Foreground(ctx.Theme.FaintText),
+	}
+	styles := ti.Styles()
+	styles.Focused = state
+	styles.Blurred = state
+	styles.Cursor.Color = ctx.Theme.PrimaryText
+	ti.SetStyles(styles)
 	ti.Focus()
 	ti.Blur()
 	ti.CursorStart()

@@ -459,7 +459,8 @@ func TestGetPromptConfirmation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := &context.ProgramContext{
-				View: tt.view,
+				View:  tt.view,
+				Theme: *theme.DefaultTheme,
 			}
 			m := BaseModel{
 				IsPromptConfirmationShown: true,
