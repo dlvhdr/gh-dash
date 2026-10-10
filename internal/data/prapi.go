@@ -138,6 +138,10 @@ type CheckSuiteNode struct {
 	Status     graphql.String
 	Conclusion graphql.String
 
+	CheckRuns struct {
+		TotalCount graphql.Int
+	} `graphql:"checkRuns(first: 0)"`
+
 	App struct {
 		Name graphql.String
 	}
