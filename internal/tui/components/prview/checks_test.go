@@ -183,6 +183,24 @@ func makeCheckSuite(workflowName string, status string, conclusion string) data.
 	}
 }
 
+func makeEmptyCheckSuite(status string, conclusion string) data.CheckSuiteNode {
+	return data.CheckSuiteNode{
+		Status:     graphql.String(status),
+		Conclusion: graphql.String(conclusion),
+	}
+}
+
+func makeCheckSuiteWithRuns(workflowName string, appName string, status string, conclusion string, totalCount int) data.CheckSuiteNode {
+	node := data.CheckSuiteNode{
+		Status:     graphql.String(status),
+		Conclusion: graphql.String(conclusion),
+	}
+	node.CheckRuns.TotalCount = graphql.Int(totalCount)
+	node.App.Name = graphql.String(appName)
+	node.WorkflowRun.Workflow.Name = graphql.String(workflowName)
+	return node
+}
+
 func TestRenderChecks_AwaitingApproval(t *testing.T) {
 	// Test that CheckSuites with conclusion: ACTION_REQUIRED are shown
 	// under "Awaiting Approval" section
@@ -537,3 +555,122 @@ func TestViewChecksBar_NarrowWidth_NoPanic(t *testing.T) {
 		}, "viewChecksBar panicked with width=%d", width)
 	}
 }
+
+func TestIsNeverDispatchedCheckSuite(t *testing.T) {
+	// Suite with zero check runs and empty workflow name is never dispatched
+	emptySuite := makeEmptyCheckSuite("QUEUED", "")
+	require.True(t, isNeverDispatchedCheckSuite(emptySuite))
+
+	// Suite with whitespace workflow name is also treated as empty
+	whitespaceSuite := makeCheckSuite("   ", "QUEUED", "")
+	require.True(t, isNeverDispatchedCheckSuite(whitespaceSuite))
+
+	// Suite with a workflow name was dispatched (or is queued to run)
+	workflowSuite := makeCheckSuite("Build", "QUEUED", "")
+	require.False(t, isNeverDispatchedCheckSuite(workflowSuite))
+
+	// Suite with check runs > 0 was dispatched even if workflow name is empty
+	appSuiteWithRuns := makeCheckSuiteWithRuns("", "Codecov", "QUEUED", "", 1)
+	require.False(t, isNeverDispatchedCheckSuite(appSuiteWithRuns))
+
+	// Suite with both workflow name and check runs
+	fullSuite := makeCheckSuiteWithRuns("Deploy", "GitHub Actions", "IN_PROGRESS", "", 2)
+	require.False(t, isNeverDispatchedCheckSuite(fullSuite))
+}
+
+func TestGetChecksStats_NeverDispatchedCheckSuites(t *testing.T) {
+	// Regression test for https://github.com/dlvhdr/gh-dash/issues/959
+	// Check suites with zero check runs and no workflow run should not be counted
+	// as in-progress.
+	opts := checksTestOptions{
+		checkSuites: data.CheckSuites{
+			TotalCount: 4,
+			Nodes: []data.CheckSuiteNode{
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+			},
+		},
+		checkRuns: []data.CheckRun{
+			makeCheckRun("lint", "COMPLETED", "SKIPPED"),
+			makeCheckRun("test", "COMPLETED", "SKIPPED"),
+			makeCheckRun("docs", "COMPLETED", "SKIPPED"),
+			makeCheckRun("release", "COMPLETED", "SKIPPED"),
+			makeCheckRun("build", "COMPLETED", "SUCCESS"),
+			makeCheckRun("deploy", "COMPLETED", "SUCCESS"),
+		},
+		rollupState: "SUCCESS",
+	}
+
+	m := newTestModelForChecks(t, opts)
+	stats := m.getChecksStats()
+
+	require.Equal(t, 0, stats.inProgress, "empty check suites must not be counted in progress")
+	require.Equal(t, 0, stats.awaitingApproval)
+	require.Equal(t, 4, stats.skipped)
+	require.Equal(t, 2, stats.succeeded)
+	require.Equal(t, 0, stats.failed)
+}
+
+func TestRenderChecks_NeverDispatchedCheckSuites(t *testing.T) {
+	// Regression test for https://github.com/dlvhdr/gh-dash/issues/959
+	// Never-dispatched check suites should not be rendered under "Pending" or with "Workflow" placeholder
+	opts := checksTestOptions{
+		checkSuites: data.CheckSuites{
+			TotalCount: 4,
+			Nodes: []data.CheckSuiteNode{
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+			},
+		},
+		checkRuns: []data.CheckRun{
+			makeCheckRun("build", "COMPLETED", "SUCCESS"),
+			makeCheckRun("test", "COMPLETED", "SUCCESS"),
+		},
+		rollupState: "SUCCESS",
+	}
+
+	m := newTestModelForChecks(t, opts)
+	got := m.renderChecks()
+
+	require.False(t, strings.Contains(got, "Pending"),
+		"Pending section should not be displayed for never-dispatched check suites, got: %q", got)
+	require.False(t, strings.Contains(got, "Workflow"),
+		"Workflow placeholder should not be displayed, got: %q", got)
+	require.True(t, strings.Contains(got, "build"))
+	require.True(t, strings.Contains(got, "test"))
+}
+
+func TestRenderChecks_NeverDispatchedMixedWithQueued(t *testing.T) {
+	// Only genuinely queued check suites should be shown in Pending, ignoring empty ones
+	opts := checksTestOptions{
+		checkSuites: data.CheckSuites{
+			TotalCount: 3,
+			Nodes: []data.CheckSuiteNode{
+				makeEmptyCheckSuite("QUEUED", ""),
+				makeCheckSuite("Deploy", "QUEUED", ""),
+				makeEmptyCheckSuite("QUEUED", ""),
+			},
+		},
+		checkRuns: []data.CheckRun{
+			makeCheckRun("build", "COMPLETED", "SUCCESS"),
+		},
+		rollupState: "PENDING",
+	}
+
+	m := newTestModelForChecks(t, opts)
+	stats := m.getChecksStats()
+	require.Equal(t, 1, stats.inProgress, "only the genuine queued suite should be in progress")
+
+	got := m.renderChecks()
+	require.True(t, strings.Contains(got, "Pending (1)"),
+		"expected 'Pending (1)', got: %q", got)
+	require.True(t, strings.Contains(got, "Deploy"),
+		"expected 'Deploy' in pending checks, got: %q", got)
+	require.False(t, strings.Contains(got, "Workflow"),
+		"expected no 'Workflow' placeholder, got: %q", got)
+}
+
