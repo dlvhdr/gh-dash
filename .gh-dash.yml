@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://gh-dash.dev/schema.json
 prSections:
   - title: Mine
-    filters: is:open author:@me repo:dlvhdr/gh-dash updated:>={{ nowModify "-3w" }} sort:updated-desc
+    # filters: is:open author:@me repo:dlvhdr/gh-dash updated:>={{ nowModify "-3w" }} sort:updated-desc
+    filters: repo:KM-rira/gh-dash-plus
     layout:
       author:
         hidden: true
