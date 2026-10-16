@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
+	"github.com/charmbracelet/x/ansi"
 	checks "github.com/dlvhdr/x/gh-checks"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/git"
@@ -208,15 +209,19 @@ func (pr *PullRequest) renderExtendedTitle(isSelected bool) string {
 			titleColumn = column
 		}
 	}
-	width := titleColumn.ComputedWidth - 2
+	width := titleColumn.ComputedWidth - 1
 	top = baseStyle.Foreground(pr.Ctx.Theme.SecondaryText).
 		Width(width).
-		MaxWidth(width).
 		Height(1).
 		MaxHeight(1).
 		Render(top)
-	title = baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).Bold(true).Width(width).MaxWidth(
-		width).Height(1).MaxHeight(1).Render(title)
+
+	// Need to remove the last reset to prevent the selected row background from stopping.
+	title = utils.RemoveLastReset(ansi.Truncate(baseStyle.Foreground(pr.Ctx.Theme.PrimaryText).
+		Bold(true).
+		Height(1).
+		MaxHeight(1).
+		Render(title), width-1, constants.Ellipsis))
 
 	return baseStyle.Render(lipgloss.JoinVertical(lipgloss.Left, top, title))
 }

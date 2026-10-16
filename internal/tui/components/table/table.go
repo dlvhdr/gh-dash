@@ -344,7 +344,7 @@ func (m *Model) renderRow(rowId int, headerColumns []string) string {
 			for j, line := range lines {
 				lineWidth := lipgloss.Width(line)
 				if lineWidth > contentWidth {
-					line = ansi.Truncate(line, contentWidth, constants.Ellipsis)
+					line = ansi.Truncate(line, contentWidth, "")
 				}
 				lineStyle := style.Width(colWidth).MaxWidth(colWidth).Height(1)
 				if column.Align != nil {
