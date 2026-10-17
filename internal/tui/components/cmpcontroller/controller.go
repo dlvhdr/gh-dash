@@ -44,6 +44,10 @@ type RepoRef struct {
 	Name          string
 }
 
+func (r RepoRef) isSet() bool {
+	return r.Owner != "" && r.Name != ""
+}
+
 type EnterOptions struct {
 	Mode                             Mode
 	Prompt                           string
@@ -379,6 +383,10 @@ func (c Controller) loadSuggestions(showLoading bool) tea.Cmd {
 	var spinnerTickCmd tea.Cmd
 	if c.fzfSelect.Source == nil {
 		log.Error("cannot load completion suggestion without a source")
+		return nil
+	}
+
+	if !c.repo.isSet() {
 		return nil
 	}
 
