@@ -1626,14 +1626,14 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 		return false
 	}
 	for _, keybinding := range m.ctx.Config.Keybindings.Universal {
-		if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+		if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 			return true
 		}
 	}
 
 	if m.ctx.View == config.IssuesView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Issues {
-			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 				return true
 			}
 		}
@@ -1641,7 +1641,7 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 
 	if m.ctx.View == config.PRsView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 				return true
 			}
 		}
@@ -1649,7 +1649,7 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 
 	if m.ctx.View == config.RepoView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Branches {
-			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 				return true
 			}
 		}
@@ -1657,7 +1657,7 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 
 	if m.ctx.View == config.NotificationsView {
 		for _, keybinding := range m.ctx.Config.Keybindings.Notifications {
-			if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+			if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 				return true
 			}
 		}
@@ -1667,13 +1667,13 @@ func (m *Model) isUserDefinedKeybinding(msg tea.KeyMsg) bool {
 			switch nData.Notification.Subject.Type {
 			case "PullRequest":
 				for _, keybinding := range m.ctx.Config.Keybindings.Prs {
-					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+					if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 						return true
 					}
 				}
 			case "Issue":
 				for _, keybinding := range m.ctx.Config.Keybindings.Issues {
-					if keybinding.Builtin == "" && keybinding.Key == msg.String() {
+					if keybinding.Builtin == "" && keybinding.Key.Contains(msg.String()) {
 						return true
 					}
 				}
