@@ -70,32 +70,16 @@ func (pr *PullRequest) renderReviewStatus() string {
 }
 
 func (pr *PullRequest) renderState() string {
-	mergeCellStyle := lipgloss.NewStyle()
-
 	if pr.Data.Primary == nil {
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
+		return lipgloss.NewStyle().Foreground(pr.Ctx.Theme.SuccessText).Render("󰜛")
 	}
 
-	switch pr.Data.Primary.State {
-	case "OPEN":
-		if pr.Data.Primary.IsInMergeQueue {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.WarningText).
-				Render(constants.MergeQueueIcon)
-		}
-		if pr.Data.Primary.IsDraft {
-			return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render(constants.DraftIcon)
-		} else {
-			return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.OpenPR).Render(constants.OpenIcon)
-		}
-	case "CLOSED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.ClosedPR).
-			Render(constants.ClosedIcon)
-	case "MERGED":
-		return mergeCellStyle.Foreground(pr.Ctx.Styles.Colors.MergedPR).
-			Render(constants.MergedIcon)
-	default:
-		return mergeCellStyle.Foreground(pr.Ctx.Theme.FaintText).Render("-")
-	}
+	return components.RenderPRStateGlyph(
+		pr.Ctx,
+		pr.Data.Primary.State,
+		pr.Data.Primary.IsDraft,
+		pr.Data.Primary.IsInMergeQueue,
+	)
 }
 
 func (pr *PullRequest) GetStatusChecksRollup() checks.CommitState {
@@ -349,6 +333,21 @@ func (pr *PullRequest) renderCreatedAt() string {
 	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(createdAtOutput)
 }
 
+func (pr *PullRequest) renderStack() string {
+	if pr.Data.Primary == nil {
+		return ""
+	}
+
+	entry := pr.Data.Primary.StackEntry
+	if !entry.IsStacked() {
+		return ""
+	}
+
+	return pr.getTextStyle().Foreground(pr.Ctx.Theme.FaintText).Render(
+		fmt.Sprintf("%s %d/%d", constants.StackIcon, entry.Position, entry.Stack.Size),
+	)
+}
+
 func (pr *PullRequest) renderBaseName() string {
 	if pr.Data.Primary == nil {
 		return ""
@@ -397,6 +396,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderLabels(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
+			pr.renderStack(),
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
@@ -414,6 +414,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderLabels(isSelected),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
+		pr.renderStack(),
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),

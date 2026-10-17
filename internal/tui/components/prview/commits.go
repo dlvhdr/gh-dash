@@ -2,10 +2,8 @@ package prview
 
 import (
 	"fmt"
-	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 	checks "github.com/dlvhdr/x/gh-checks"
@@ -41,13 +39,7 @@ func (m *Model) renderCommits() string {
 			faint.Render(constants.VerticalCommitIcon),
 			main.Render(commit.MessageHeadline),
 		)
-		right := faint.Render(commit.AbbreviatedOid)
-		wright := lipgloss.Width(right)
-		left = ansi.Truncate(left, max(0, m.getIndentedContentWidth()-wright-1), constants.Ellipsis)
-		pad := fainter.Render(" " + strings.Repeat(constants.HorizontalLineIcon,
-			max(1, m.getIndentedContentWidth()-lipgloss.Width(left)-wright)-1) + " ")
-
-		title := lipgloss.JoinHorizontal(lipgloss.Top, left, pad, right)
+		title := m.renderDottedRow(left, faint.Render(commit.AbbreviatedOid))
 
 		statsStr := ""
 		if commit.StatusCheckRollup.Contexts.TotalCount > 0 {
