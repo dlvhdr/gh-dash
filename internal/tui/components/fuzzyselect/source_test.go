@@ -238,6 +238,41 @@ func TestUserMentionSource(t *testing.T) {
 	require.Equal(t, tea.Position{X: 12}, newCursor)
 }
 
+func TestUserMentionSourceCursorBetweenBoundaries(t *testing.T) {
+	testCases := []struct {
+		name      string
+		input     string
+		cursorPos tea.Position
+	}{
+		{
+			name:      "cursor between two trailing spaces",
+			input:     "hello  ",
+			cursorPos: tea.Position{X: 6},
+		},
+		{
+			name:      "cursor before the only char, which is a boundary",
+			input:     " ",
+			cursorPos: tea.Position{X: 0},
+		},
+		{
+			name:      "cursor between a space and a trailing punctuation mark",
+			input:     "hello @octo .",
+			cursorPos: tea.Position{X: 12},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, withAt := range []bool{true, false} {
+				source := UserMentionSource{WithAtSymbol: withAt}
+				require.NotPanics(t, func() {
+					source.ExtractContext(tc.input, tc.cursorPos)
+				})
+			}
+		})
+	}
+}
+
 func TestUserMentionSourceWithoutAtSymbol(t *testing.T) {
 	source := UserMentionSource{WithAtSymbol: false}
 	require.Equal(
