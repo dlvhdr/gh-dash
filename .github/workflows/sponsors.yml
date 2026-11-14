@@ -13,8 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GH_PAT }}
-          persist-credentials: true
+          token: ${{ secrets.SPONSORS_TOKEN }}
       - name: Install Go
         uses: actions/setup-go@v6
         with:
