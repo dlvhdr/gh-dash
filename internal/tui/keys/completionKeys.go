@@ -52,8 +52,8 @@ func rebindCmpKeys(keys []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(cmpKey.Key),
-					key.WithHelp(cmpKey.Key, name),
+					key.WithKeys(cmpKey.Key...),
+					key.WithHelp(cmpKey.Key.String(), name),
 				)
 
 				CustomCmpBindings = append(CustomCmpBindings, customBinding)
@@ -79,13 +79,13 @@ func rebindCmpKeys(keys []config.Keybinding) error {
 			return fmt.Errorf("unknown builtin: '%s'", cmpKey.Builtin)
 		}
 
-		key.SetKeys(cmpKey.Key)
+		key.SetKeys(cmpKey.Key...)
 
 		helpDesc := key.Help().Desc
 		if cmpKey.Name != "" {
 			helpDesc = cmpKey.Name
 		}
-		key.SetHelp(cmpKey.Key, helpDesc)
+		key.SetHelp(cmpKey.Key.String(), helpDesc)
 	}
 
 	return nil

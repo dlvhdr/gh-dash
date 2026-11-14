@@ -1821,7 +1821,7 @@ func TestIsUserDefinedKeybinding_NotificationsView_PRNotification(t *testing.T) 
 
 	// Add a custom PR keybinding
 	cfg.Keybindings.Prs = []config.Keybinding{
-		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+		{Key: config.KeyList{"B"}, Command: "gh pr view -w {{.PrNumber}}"},
 	}
 
 	ctx := &context.ProgramContext{
@@ -1882,7 +1882,7 @@ func TestIsUserDefinedKeybinding_NotificationsView_IssueNotification(t *testing.
 
 	// Add a custom Issue keybinding
 	cfg.Keybindings.Issues = []config.Keybinding{
-		{Key: "B", Command: "gh issue view -w {{.IssueNumber}}"},
+		{Key: config.KeyList{"B"}, Command: "gh issue view -w {{.IssueNumber}}"},
 	}
 
 	ctx := &context.ProgramContext{
@@ -1937,7 +1937,7 @@ func TestIsUserDefinedKeybinding_NotificationsView_NonPRIssueNotification(t *tes
 	require.NoError(t, err)
 
 	cfg.Keybindings.Prs = []config.Keybinding{
-		{Key: "B", Command: "gh pr view -w {{.PrNumber}}"},
+		{Key: config.KeyList{"B"}, Command: "gh pr view -w {{.PrNumber}}"},
 	}
 
 	ctx := &context.ProgramContext{
@@ -2168,7 +2168,7 @@ func TestIsUserDefinedKeybinding_NotificationsView_NotificationKeybinding(t *tes
 
 	// Add a custom notification keybinding
 	cfg.Keybindings.Notifications = []config.Keybinding{
-		{Key: "N", Command: "echo {{.RepoName}} {{.Number}}"},
+		{Key: config.KeyList{"N"}, Command: "echo {{.RepoName}} {{.Number}}"},
 	}
 
 	ctx := &context.ProgramContext{
