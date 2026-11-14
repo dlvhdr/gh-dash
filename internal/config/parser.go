@@ -163,6 +163,7 @@ type PrsLayoutConfig struct {
 	Ci           ColumnConfig `yaml:"ci,omitempty"`
 	Lines        ColumnConfig `yaml:"lines,omitempty"`
 	NumComments  ColumnConfig `yaml:"numComments,omitempty"`
+	Stack        ColumnConfig `yaml:"stack,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
@@ -385,6 +386,10 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Base: ColumnConfig{
 						Width:  utils.IntPtr(15),
+						Hidden: utils.BoolPtr(true),
+					},
+					Stack: ColumnConfig{
+						Width:  utils.IntPtr(lipgloss.Width(" 10/12 ")),
 						Hidden: utils.BoolPtr(true),
 					},
 					Lines: ColumnConfig{
