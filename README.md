@@ -64,7 +64,6 @@ Thank you to all past and existing sponsors! 🙏🏽
 <a href="https://github.com/scjudd?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/167754?s=50&u=b094905c1930afc3b307f39776d5fc4250d02298&v=4" alt="Spencer Judd" width="50"/></a>&nbsp;&nbsp;
 <a href="https://stevie.sh?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/6165538?s=50&u=2d9fc263793ca4050bc0a76c3e6c297fd72ce71c&v=4" alt="Stevie Huh" width="50"/></a>&nbsp;&nbsp;
 <a href="http://dangel.im?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/350922?s=50&v=4" alt="Ulrich Dangel" width="50"/></a>&nbsp;&nbsp;
-<a href="https://github.com/vosahloj?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/566194?s=50&u=0bca2b2bfa091749aa09df75d2d588de1fdb42b8&v=4" alt="vosahloj" width="50"/></a>&nbsp;&nbsp;
 <a href="https://github.com/roninjin10?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/35039927?s=50&u=94370136033f1a4d900b4857c2ae13964bf51f96&v=4" alt="Will Cory" width="50"/></a>&nbsp;&nbsp;
 </p>
 
