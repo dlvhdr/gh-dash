@@ -165,7 +165,12 @@ func makeCheckRun(name string, status string, conclusion checks.CheckRunState) d
 	}
 }
 
-func makeCheckSuite(workflowName string, status string, conclusion string) data.CheckSuiteNode {
+func makeCheckSuite(
+	workflowName string,
+	status string,
+	conclusion string,
+	totalCount int,
+) data.CheckSuiteNode {
 	return data.CheckSuiteNode{
 		Status:     graphql.String(status),
 		Conclusion: graphql.String(conclusion),
@@ -180,6 +185,11 @@ func makeCheckSuite(workflowName string, status string, conclusion string) data.
 				Name: graphql.String(workflowName),
 			},
 		},
+		CheckRuns: struct {
+			TotalCount graphql.Int
+		}{
+			TotalCount: graphql.Int(totalCount),
+		},
 	}
 }
 
@@ -190,9 +200,9 @@ func TestRenderChecks_AwaitingApproval(t *testing.T) {
 		checkSuites: data.CheckSuites{
 			TotalCount: 3,
 			Nodes: []data.CheckSuiteNode{
-				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("Check URL issues", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED"),
+				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("Check URL issues", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED", 1),
 			},
 		},
 		checkRuns:   []data.CheckRun{},
@@ -226,8 +236,8 @@ func TestRenderChecks_PendingCheckSuites(t *testing.T) {
 		checkSuites: data.CheckSuites{
 			TotalCount: 2,
 			Nodes: []data.CheckSuiteNode{
-				makeCheckSuite("Build", "QUEUED", ""),
-				makeCheckSuite("Deploy", "PENDING", ""),
+				makeCheckSuite("Build", "QUEUED", "", 1),
+				makeCheckSuite("Deploy", "PENDING", "", 1),
 			},
 		},
 		checkRuns:   []data.CheckRun{},
@@ -250,6 +260,26 @@ func TestRenderChecks_PendingCheckSuites(t *testing.T) {
 	// Should show waiting icon
 	require.True(t, strings.Contains(got, constants.WaitingIcon),
 		"expected WaitingIcon, got: %q", got)
+}
+
+func TestRenderChecks_PendingCheckZeroCount(t *testing.T) {
+	// Test that CheckSuites with status: QUEUED and zero totalCount are not
+	// shown under "Pending" section
+	opts := checksTestOptions{
+		checkSuites: data.CheckSuites{
+			TotalCount: 1,
+			Nodes: []data.CheckSuiteNode{
+				makeCheckSuite("Not used", "QUEUED", "", 0),
+			},
+		},
+	}
+
+	m := newTestModelForChecks(t, opts)
+	got := m.renderChecks()
+
+	// Should show "Pending" section header
+	require.False(t, strings.Contains(got, "Pending"),
+		"expected 'Pending' section, got: %q", got)
 }
 
 func TestRenderChecks_RequiredButNotReported(t *testing.T) {
@@ -308,10 +338,10 @@ func TestRenderChecks_MixedStates(t *testing.T) {
 			TotalCount: 3,
 			Nodes: []data.CheckSuiteNode{
 				// Awaiting approval
-				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED"),
+				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED", 1),
 				// Completed successfully (not ACTION_REQUIRED)
-				makeCheckSuite("PR labeler", "COMPLETED", "SUCCESS"),
+				makeCheckSuite("PR labeler", "COMPLETED", "SUCCESS", 1),
 			},
 		},
 		checkRuns: []data.CheckRun{
@@ -440,9 +470,9 @@ func TestGetChecksStats_AwaitingApproval(t *testing.T) {
 		checkSuites: data.CheckSuites{
 			TotalCount: 3,
 			Nodes: []data.CheckSuiteNode{
-				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("Check URL issues", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED"),
+				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("Check URL issues", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("PR Test", "COMPLETED", "ACTION_REQUIRED", 1),
 			},
 		},
 		checkRuns:   []data.CheckRun{},
@@ -462,8 +492,8 @@ func TestGetChecksStats_PendingCheckSuites(t *testing.T) {
 		checkSuites: data.CheckSuites{
 			TotalCount: 2,
 			Nodes: []data.CheckSuiteNode{
-				makeCheckSuite("Build", "QUEUED", ""),
-				makeCheckSuite("Deploy", "WAITING", ""),
+				makeCheckSuite("Build", "QUEUED", "", 1),
+				makeCheckSuite("Deploy", "WAITING", "", 1),
 			},
 		},
 		checkRuns:   []data.CheckRun{},
@@ -483,8 +513,8 @@ func TestGetChecksStats_Mixed(t *testing.T) {
 		checkSuites: data.CheckSuites{
 			TotalCount: 2,
 			Nodes: []data.CheckSuiteNode{
-				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED"),
-				makeCheckSuite("Build", "QUEUED", ""),
+				makeCheckSuite("Check Redirects", "COMPLETED", "ACTION_REQUIRED", 1),
+				makeCheckSuite("Build", "QUEUED", "", 1),
 			},
 		},
 		checkRuns: []data.CheckRun{

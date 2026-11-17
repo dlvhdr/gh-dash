@@ -461,7 +461,7 @@ func (sidebar *Model) renderChecks() string {
 				workflowName,
 			)
 			awaitingApproval = append(awaitingApproval, check)
-		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
+		} else if (suite.Status == "QUEUED" && suite.CheckRuns.TotalCount > 0) || suite.Status == "PENDING" || suite.Status == "WAITING" {
 			// Workflow is queued/pending (will run automatically)
 			check := lipgloss.JoinHorizontal(
 				lipgloss.Top,
@@ -647,7 +647,7 @@ func (m *Model) getChecksStats() checksStats {
 	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
 		if suite.Conclusion == "ACTION_REQUIRED" {
 			res.awaitingApproval++
-		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
+		} else if (suite.Status == "QUEUED" && suite.CheckRuns.TotalCount > 0) || suite.Status == "PENDING" || suite.Status == "WAITING" {
 			res.inProgress++
 		}
 	}
