@@ -256,6 +256,7 @@ func (m *Model) renderBranches() string {
 		" ",
 		m.renderStatusPill(),
 		m.renderLinkedIssuesPill(),
+		m.renderConflictsPill(),
 		" ",
 		lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SecondaryText).
@@ -298,6 +299,19 @@ func (m *Model) renderLinkedIssuesPill() string {
 		BorderForeground(bgColor).
 		Background(bgColor).
 		Render(fmt.Sprintf("%s %d %s", constants.IssueIcon, count, noun))
+}
+
+// renderConflictsPill renders a warning pill, after a space, if the PR has conflicts with its base branch -- or
+// nothing, if it doesn't.
+func (m *Model) renderConflictsPill() string {
+	if !m.pr.HasConflicts() {
+		return ""
+	}
+	bgColor := m.ctx.Theme.WarningText.Dark
+	return " " + m.ctx.Styles.PrView.PillStyle.
+		BorderForeground(bgColor).
+		Background(bgColor).
+		Render(constants.ConflictIcon+" Conflicts")
 }
 
 func (m *Model) renderLabels() string {

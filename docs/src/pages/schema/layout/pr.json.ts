@@ -197,6 +197,20 @@ export function GET() {
             },
           ],
         },
+        conflicts: {
+          title: "PR Conflicts Column",
+          description:
+            "Defines options for the conflicts column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 4,
+          },
+        },
         lines: {
           title: "PR Lines Column",
           description: "Defines options for the lines column in a PR section.",

@@ -15,6 +15,7 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/theme"
 )
 
 func TestGetStatusChecksRollup(t *testing.T) {
@@ -344,5 +345,42 @@ func TestRenderLinkedIssues(t *testing.T) {
 				t.Errorf("renderLinkedIssues() = %q, want %q", got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestRenderConflicts(t *testing.T) {
+	tests := []struct {
+		name      string
+		state     string
+		mergeable string
+		expected  string
+	}{
+		{
+			name:      "open and conflicting",
+			state:     "OPEN",
+			mergeable: "CONFLICTING",
+			expected:  constants.ConflictIcon,
+		},
+		{name: "open and mergeable", state: "OPEN", mergeable: "MERGEABLE", expected: ""},
+		{name: "open and not yet computed", state: "OPEN", mergeable: "UNKNOWN", expected: ""},
+		{name: "closed and conflicting", state: "CLOSED", mergeable: "CONFLICTING", expected: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pr := &PullRequest{
+				Ctx: &context.ProgramContext{Theme: *theme.DefaultTheme},
+				Data: &Data{
+					Primary: &data.PullRequestData{State: tt.state, Mergeable: tt.mergeable},
+				},
+			}
+			if got := ansi.Strip(pr.renderConflicts()); got != tt.expected {
+				t.Errorf("renderConflicts() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+
+	if (&PullRequest{Ctx: &context.ProgramContext{}}).renderConflicts() != "" {
+		t.Errorf("renderConflicts() with nil Data should render nothing")
 	}
 }

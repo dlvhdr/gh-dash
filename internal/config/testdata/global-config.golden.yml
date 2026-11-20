@@ -75,6 +75,8 @@ defaults:
         width: 15
       linkedIssues:
         width: 6
+      conflicts:
+        width: 4
     issues:
       updatedAt:
         width: 5

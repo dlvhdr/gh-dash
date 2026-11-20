@@ -164,6 +164,7 @@ type PrsLayoutConfig struct {
 	Lines        ColumnConfig `yaml:"lines,omitempty"`
 	NumComments  ColumnConfig `yaml:"numComments,omitempty"`
 	LinkedIssues ColumnConfig `yaml:"linkedIssues,omitempty"`
+	Conflicts    ColumnConfig `yaml:"conflicts,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
@@ -395,6 +396,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					LinkedIssues: ColumnConfig{
 						Width: utils.IntPtr(6),
+					},
+					Conflicts: ColumnConfig{
+						Width: utils.IntPtr(4),
 					},
 				},
 				Issues: IssuesLayoutConfig{

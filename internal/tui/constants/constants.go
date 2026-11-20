@@ -53,6 +53,7 @@ const (
 	VerticalCommitIcon = "󰜘"
 	LabelsIcon         = "󰌖"
 	IssueIcon          = ""
+	ConflictIcon       = "" // nf-oct-alert
 	MergedIcon         = ""
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""

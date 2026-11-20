@@ -44,6 +44,23 @@ func (pr *PullRequest) renderLinkedIssues() string {
 	)
 }
 
+// HasConflicts reports whether the PR is open and GitHub found conflicts with its base branch. GitHub computes that
+// lazily, so a PR whose mergeability it hasn't computed yet reports no conflicts.
+func (pr *PullRequest) HasConflicts() bool {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return false
+	}
+	return pr.Data.Primary.State == "OPEN" && pr.Data.Primary.Mergeable == "CONFLICTING"
+}
+
+// renderConflicts renders a warning icon if the PR has conflicts with its base branch -- or nothing, if it doesn't.
+func (pr *PullRequest) renderConflicts() string {
+	if !pr.HasConflicts() {
+		return ""
+	}
+	return lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.ConflictIcon)
+}
+
 func (pr *PullRequest) renderNumComments() string {
 	if pr.Data.Primary == nil {
 		return "-"
@@ -415,6 +432,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
+			pr.renderConflicts(),
 			pr.RenderLines(isSelected),
 			pr.renderUpdateAt(),
 			pr.renderCreatedAt(),
@@ -433,6 +451,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
+		pr.renderConflicts(),
 		pr.RenderLines(isSelected),
 		pr.renderUpdateAt(),
 		pr.renderCreatedAt(),
