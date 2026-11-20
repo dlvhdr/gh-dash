@@ -28,6 +28,7 @@ By default, PR views display the following columns in the order they're listed:
 1. [`title`], set to grow to fill available space.
 1. [`author`] with a width of 10 columns.
 1. [`labels`] with a width of 22 columns, hidden by default.
+1. [`linkedIssues`] with a width of 6 columns.
 1. [`numComments`] with a width of 3 columns.
 1. [`reviewStatus`] with a width of 3 columns.
 1. [`ci`] with a width of 3 columns.
@@ -48,6 +49,7 @@ By default, PR views display the following columns in the order they're listed:
 [`title`]:        #pr-title-column
 [`author`]:       #pr-author-column
 [`labels`]:       #pr-labels-column
+[`linkedIssues`]: #pr-linked-issues-column
 [`numComments`]: #pr-number-of-comments-column
 [`reviewStatus`]: #pr-review-status-column
 [`ci`]:           #pr-continuous-integration-column
@@ -174,6 +176,18 @@ The heading for this column is `Assignees`.
 This column displays the base branch the PR is targeting, like `main`.
 
 The heading for this column is `Base`.
+
+## PR Linked Issues Column
+
+| Property       | Type | Default                                            |
+| :------------- | :--- | :------------------------------------------------- |
+| `linkedIssues` | yaml | <Code code={`width: 6`} lang="yaml" frame="none"/> |
+
+This column displays the number of issues the PR will close when it's merged, or that it
+closed, after an <NerdFontIcon icon="nf-oct-issue_opened"/> icon. It's empty for a PR that
+isn't linked to any issue.
+
+The heading for this column is <NerdFontIcon icon="nf-oct-issue_opened"/>.
 
 ## PR Number of Comments Column
 

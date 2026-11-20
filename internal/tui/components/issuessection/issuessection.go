@@ -208,6 +208,7 @@ func GetSectionColumns(
 		dLayout.Comments,
 		sLayout.Comments,
 	)
+	linkedPrsLayout := config.MergeColumnConfigs(dLayout.LinkedPrs, sLayout.LinkedPrs)
 	reactionsLayout := config.MergeColumnConfigs(
 		dLayout.Reactions,
 		sLayout.Reactions,
@@ -243,6 +244,11 @@ func GetSectionColumns(
 			Title:  "Assignees",
 			Width:  assigneesLayout.Width,
 			Hidden: assigneesLayout.Hidden,
+		},
+		{
+			Title:  constants.OpenIcon,
+			Width:  linkedPrsLayout.Width,
+			Hidden: linkedPrsLayout.Hidden,
 		},
 		{
 			Title:  constants.CommentsIcon,

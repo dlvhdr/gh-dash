@@ -28,6 +28,7 @@ By default, Issue views display the following columns in the order they're liste
 1. [`type`] with a width of 9 columns.
 1. [`title`], set to grow to fill available space.
 1. [`creator`] with a width of 10 columns.
+1. [`linkedPrs`] with a width of 6 columns.
 1. [`comments`] with a width of 3 columns.
 1. [`reactions`] with a width of 3 columns.
 
@@ -46,6 +47,7 @@ By default, Issue views display the following columns in the order they're liste
 [`type`]:         #issue-type-column
 [`title`]:        #issues-title-column
 [`creator`]:       #issues-creator-column
+[`linkedPrs`]:          #issue-linked-prs-column
 [`comments`]:           #issues-comments-column
 [`reactions`]:        #issues-reactions-column
 
@@ -163,6 +165,20 @@ This setting affects display of the role icon for the person who created the Iss
 This column displays the usernames for the people assigned to the Issue.
 
 The heading for this column is `Assignees`.
+
+## Issue Linked PRs Column
+
+| Property    | Type | Default                                            |
+| :---------- | :--- | :------------------------------------------------- |
+| `linkedPrs` | yaml | <Code code={`width: 6`} lang="yaml" frame="none"/> |
+
+This column displays the number of open and merged PRs that will close the Issue when merged,
+or that closed it, after a <NerdFontIcon icon="nf-oct-git_pull_request"/> icon. The icon is in
+the open-PR color if any of those PRs is open and not a draft, in the faint text color if the
+only open ones are drafts, and otherwise in the merged-PR color. The column is empty for an
+Issue with no linked PRs.
+
+The heading for this column is <NerdFontIcon icon="nf-oct-git_pull_request"/>.
 
 ## Issue Comments Column
 

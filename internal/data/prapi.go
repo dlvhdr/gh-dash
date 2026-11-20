@@ -98,6 +98,12 @@ type PullRequestData struct {
 	Commits          LastCommitStatus `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
+	// LinkedIssues is the issues the PR will close when merged, or that it closed.
+	LinkedIssues LinkedIssues `graphql:"closingIssuesReferences"`
+}
+
+type LinkedIssues struct {
+	TotalCount int
 }
 
 type LastCommitStatus struct {

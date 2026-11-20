@@ -31,6 +31,34 @@ type IssueData struct {
 	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
 	Labels            IssueLabels    `graphql:"labels(first: 20)"`
 	IssueType         *IssueType
+	// LinkedPrs is the open and merged PRs that will close the issue when merged, or that closed it.
+	LinkedPrs LinkedPullRequests `graphql:"closedByPullRequestsReferences(first: 10)"`
+}
+
+type LinkedPullRequests struct {
+	TotalCount int
+	Nodes      []LinkedPullRequest
+}
+
+type LinkedPullRequest struct {
+	State   string
+	IsDraft bool
+}
+
+// State sums up the state of the linked PRs: OPEN if any of them is open and not a draft, then DRAFT if any is an
+// open draft, and otherwise MERGED.
+func (l LinkedPullRequests) State() string {
+	state := "MERGED"
+	for _, pr := range l.Nodes {
+		if pr.State != "OPEN" {
+			continue
+		}
+		if !pr.IsDraft {
+			return "OPEN"
+		}
+		state = "DRAFT"
+	}
+	return state
 }
 
 // IssueType is the type assigned to an issue (Bug, Feature, Task, or an org's own types). It's nil for an issue

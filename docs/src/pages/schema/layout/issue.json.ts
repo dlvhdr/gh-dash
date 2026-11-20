@@ -133,6 +133,20 @@ export function GET() {
             hidden: true,
           },
         },
+        linkedPrs: {
+          title: "Issue Linked PRs Column",
+          description:
+            "Defines options for the linked PRs column in an issue section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 6,
+          },
+        },
         comments: {
           title: "Issue Comments Column",
           description:

@@ -30,6 +30,20 @@ func (pr *PullRequest) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(pr.Ctx)
 }
 
+// renderLinkedIssues renders the number of issues the PR fixes, after an issue icon -- or nothing, if it fixes none.
+func (pr *PullRequest) renderLinkedIssues() string {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return ""
+	}
+	count := pr.Data.Primary.LinkedIssues.TotalCount
+	if count == 0 {
+		return ""
+	}
+	return pr.Ctx.Styles.Common.FaintTextStyle.Render(
+		fmt.Sprintf("%s %d", constants.IssueIcon, count),
+	)
+}
+
 func (pr *PullRequest) renderNumComments() string {
 	if pr.Data.Primary == nil {
 		return "-"
@@ -397,6 +411,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderLabels(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
+			pr.renderLinkedIssues(),
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
@@ -414,6 +429,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderLabels(isSelected),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
+		pr.renderLinkedIssues(),
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),

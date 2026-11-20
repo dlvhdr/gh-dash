@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
+	"github.com/charmbracelet/x/ansi"
 	graphql "github.com/cli/shurcooL-graphql"
 	checks "github.com/dlvhdr/x/gh-checks"
 
@@ -309,6 +310,38 @@ func TestRenderLabels(t *testing.T) {
 				if !strings.Contains(result, want) {
 					t.Errorf("renderLabels() = %q, want substring %q", result, want)
 				}
+			}
+		})
+	}
+}
+
+func TestRenderLinkedIssues(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     *Data
+		expected string
+	}{
+		{name: "nil Data renders nothing", data: nil, expected: ""},
+		{name: "nil Primary renders nothing", data: &Data{}, expected: ""},
+		{
+			name:     "no linked issues renders nothing",
+			data:     &Data{Primary: &data.PullRequestData{}},
+			expected: "",
+		},
+		{
+			name: "linked issues render icon and count",
+			data: &Data{Primary: &data.PullRequestData{
+				LinkedIssues: data.LinkedIssues{TotalCount: 7},
+			}},
+			expected: constants.IssueIcon + " 7",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pr := &PullRequest{Ctx: &context.ProgramContext{}, Data: tt.data}
+			if got := ansi.Strip(pr.renderLinkedIssues()); got != tt.expected {
+				t.Errorf("renderLinkedIssues() = %q, want %q", got, tt.expected)
 			}
 		})
 	}

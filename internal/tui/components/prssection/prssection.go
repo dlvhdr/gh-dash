@@ -273,6 +273,7 @@ func GetSectionColumns(
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
 	labelsLayout := config.MergeColumnConfigs(dLayout.Labels, sLayout.Labels)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
+	linkedIssuesLayout := config.MergeColumnConfigs(dLayout.LinkedIssues, sLayout.LinkedIssues)
 
 	if !ctx.Config.Theme.Ui.Table.Compact {
 		return []table.Column{
@@ -300,6 +301,11 @@ func GetSectionColumns(
 				Title:  "Base",
 				Width:  baseLayout.Width,
 				Hidden: baseLayout.Hidden,
+			},
+			{
+				Title:  constants.IssueIcon,
+				Width:  linkedIssuesLayout.Width,
+				Hidden: linkedIssuesLayout.Hidden,
 			},
 			{
 				Title:  constants.CommentsIcon,
@@ -370,6 +376,11 @@ func GetSectionColumns(
 			Title:  "Base",
 			Width:  baseLayout.Width,
 			Hidden: baseLayout.Hidden,
+		},
+		{
+			Title:  constants.IssueIcon,
+			Width:  linkedIssuesLayout.Width,
+			Hidden: linkedIssuesLayout.Hidden,
 		},
 		{
 			Title:  constants.CommentsIcon,

@@ -163,6 +163,7 @@ type PrsLayoutConfig struct {
 	Ci           ColumnConfig `yaml:"ci,omitempty"`
 	Lines        ColumnConfig `yaml:"lines,omitempty"`
 	NumComments  ColumnConfig `yaml:"numComments,omitempty"`
+	LinkedIssues ColumnConfig `yaml:"linkedIssues,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
@@ -177,6 +178,7 @@ type IssuesLayoutConfig struct {
 	Assignees   ColumnConfig `yaml:"assignees,omitempty"`
 	Comments    ColumnConfig `yaml:"comments,omitempty"`
 	Reactions   ColumnConfig `yaml:"reactions,omitempty"`
+	LinkedPrs   ColumnConfig `yaml:"linkedPrs,omitempty"`
 }
 
 type LayoutConfig struct {
@@ -391,6 +393,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					Lines: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width(" +31.4k -31.6k ")),
 					},
+					LinkedIssues: ColumnConfig{
+						Width: utils.IntPtr(6),
+					},
 				},
 				Issues: IssuesLayoutConfig{
 					UpdatedAt: ColumnConfig{
@@ -404,6 +409,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Type: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width("Feature  ")),
+					},
+					LinkedPrs: ColumnConfig{
+						Width: utils.IntPtr(6),
 					},
 					Creator: ColumnConfig{
 						Width: utils.IntPtr(10),

@@ -255,6 +255,7 @@ func (m *Model) renderBranches() string {
 	return lipgloss.JoinHorizontal(lipgloss.Left,
 		" ",
 		m.renderStatusPill(),
+		m.renderLinkedIssuesPill(),
 		" ",
 		lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SecondaryText).
@@ -280,6 +281,23 @@ func (m *Model) renderStatusPill() string {
 		BorderForeground(bgColor).
 		Background(bgColor).
 		Render(m.pr.RenderState())
+}
+
+// renderLinkedIssuesPill renders the number of issues the PR fixes, after a space -- or nothing, if it fixes none.
+func (m *Model) renderLinkedIssuesPill() string {
+	count := m.pr.Data.Primary.LinkedIssues.TotalCount
+	if count == 0 {
+		return ""
+	}
+	noun := "issues"
+	if count == 1 {
+		noun = "issue"
+	}
+	bgColor := m.ctx.Theme.FaintText.Dark
+	return " " + m.ctx.Styles.PrView.PillStyle.
+		BorderForeground(bgColor).
+		Background(bgColor).
+		Render(fmt.Sprintf("%s %d %s", constants.IssueIcon, count, noun))
 }
 
 func (m *Model) renderLabels() string {

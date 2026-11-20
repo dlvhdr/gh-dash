@@ -73,6 +73,8 @@ defaults:
         hidden: true
       lines:
         width: 15
+      linkedIssues:
+        width: 6
     issues:
       updatedAt:
         width: 5
@@ -82,6 +84,8 @@ defaults:
         width: 15
       type:
         width: 9
+      linkedPrs:
+        width: 6
       creator:
         width: 10
       creatorIcon:

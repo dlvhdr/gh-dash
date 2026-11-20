@@ -151,6 +151,20 @@ export function GET() {
             hidden: true,
           },
         },
+        linkedIssues: {
+          title: "PR Linked Issues Column",
+          description:
+            "Defines options for the linked issues column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 6,
+          },
+        },
         numComments: {
           title: "Number of Comments Column",
           description:
