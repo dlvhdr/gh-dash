@@ -30,6 +30,15 @@ type IssueData struct {
 	Comments          IssueComments  `graphql:"comments(last: 15)"`
 	Reactions         IssueReactions `graphql:"reactions(first: 1)"`
 	Labels            IssueLabels    `graphql:"labels(first: 20)"`
+	IssueType         *IssueType
+}
+
+// IssueType is the type assigned to an issue (Bug, Feature, Task, or an org's own types). It's nil for an issue
+// with no type, and for repos where issue types aren't enabled.
+type IssueType struct {
+	Name string
+	// Color is one of GitHub's IssueTypeColor values: GRAY, BLUE, GREEN, YELLOW, ORANGE, RED, PINK, or PURPLE.
+	Color string
 }
 
 type IssueComments struct {

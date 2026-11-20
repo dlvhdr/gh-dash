@@ -170,6 +170,7 @@ type IssuesLayoutConfig struct {
 	CreatedAt   ColumnConfig `yaml:"createdAt,omitempty"`
 	State       ColumnConfig `yaml:"state,omitempty"`
 	Repo        ColumnConfig `yaml:"repo,omitempty"`
+	Type        ColumnConfig `yaml:"type,omitempty"`
 	Title       ColumnConfig `yaml:"title,omitempty"`
 	Creator     ColumnConfig `yaml:"creator,omitempty"`
 	CreatorIcon ColumnConfig `yaml:"creatorIcon,omitempty"`
@@ -400,6 +401,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Repo: ColumnConfig{
 						Width: utils.IntPtr(15),
+					},
+					Type: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("Feature  ")),
 					},
 					Creator: ColumnConfig{
 						Width: utils.IntPtr(10),

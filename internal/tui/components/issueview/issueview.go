@@ -132,6 +132,10 @@ func (m Model) View() string {
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderStatusPill())
+	if typePill := m.renderTypePill(); typePill != "" {
+		s.WriteString(" ")
+		s.WriteString(typePill)
+	}
 	s.WriteString("\n\n")
 	s.WriteString(m.renderAuthor())
 	s.WriteString("\n\n")
@@ -190,6 +194,14 @@ func (m *Model) renderStatusPill() string {
 		BorderForeground(bgColor).
 		Background(bgColor).
 		Render(content)
+}
+
+func (m *Model) renderTypePill() string {
+	issueType := m.issue.Data.IssueType
+	if issueType == nil {
+		return ""
+	}
+	return common.RenderIssueTypePill(*issueType, m.ctx.Styles.PrView.PillStyle)
 }
 
 func (m *Model) renderAuthor() string {

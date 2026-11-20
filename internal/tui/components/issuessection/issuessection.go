@@ -197,6 +197,7 @@ func GetSectionColumns(
 	)
 	stateLayout := config.MergeColumnConfigs(dLayout.State, sLayout.State)
 	repoLayout := config.MergeColumnConfigs(dLayout.Repo, sLayout.Repo)
+	typeLayout := config.MergeColumnConfigs(dLayout.Type, sLayout.Type)
 	titleLayout := config.MergeColumnConfigs(dLayout.Title, sLayout.Title)
 	creatorLayout := config.MergeColumnConfigs(dLayout.Creator, sLayout.Creator)
 	assigneesLayout := config.MergeColumnConfigs(
@@ -222,6 +223,11 @@ func GetSectionColumns(
 			Title:  "",
 			Width:  repoLayout.Width,
 			Hidden: repoLayout.Hidden,
+		},
+		{
+			Title:  "Type",
+			Width:  typeLayout.Width,
+			Hidden: typeLayout.Hidden,
 		},
 		{
 			Title:  "Title",

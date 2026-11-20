@@ -7,6 +7,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -23,6 +24,7 @@ func (issue *Issue) ToTableRow() table.Row {
 	return table.Row{
 		issue.renderStatus(),
 		issue.renderRepoName(),
+		issue.renderType(),
 		issue.renderTitle(),
 		issue.renderOpenedBy(),
 		issue.renderAssignees(),
@@ -66,6 +68,16 @@ func (issue *Issue) renderCreatedAt() string {
 func (issue *Issue) renderRepoName() string {
 	repoName := issue.Data.Repository.Name
 	return issue.getTextStyle().Render(repoName)
+}
+
+func (issue *Issue) renderType() string {
+	issueType := issue.Data.IssueType
+	if issueType == nil {
+		return ""
+	}
+	return lipgloss.NewStyle().
+		Foreground(common.IssueTypeColor(issueType.Color)).
+		Render(issueType.Name)
 }
 
 func (issue *Issue) renderTitle() string {

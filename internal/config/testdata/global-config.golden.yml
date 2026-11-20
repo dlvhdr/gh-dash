@@ -80,6 +80,8 @@ defaults:
         width: 5
       repo:
         width: 15
+      type:
+        width: 9
       creator:
         width: 10
       creatorIcon:
