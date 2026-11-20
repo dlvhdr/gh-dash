@@ -149,22 +149,23 @@ type ColumnConfig struct {
 }
 
 type PrsLayoutConfig struct {
-	UpdatedAt    ColumnConfig `yaml:"updatedAt,omitempty"`
-	CreatedAt    ColumnConfig `yaml:"createdAt,omitempty"`
-	Repo         ColumnConfig `yaml:"repo,omitempty"`
-	Author       ColumnConfig `yaml:"author,omitempty"`
-	AuthorIcon   ColumnConfig `yaml:"authorIcon,omitempty"`
-	Labels       ColumnConfig `yaml:"labels,omitempty"`
-	Assignees    ColumnConfig `yaml:"assignees,omitempty"`
-	Title        ColumnConfig `yaml:"title,omitempty"`
-	Base         ColumnConfig `yaml:"base,omitempty"`
-	ReviewStatus ColumnConfig `yaml:"reviewStatus,omitempty"`
-	State        ColumnConfig `yaml:"state,omitempty"`
-	Ci           ColumnConfig `yaml:"ci,omitempty"`
-	Lines        ColumnConfig `yaml:"lines,omitempty"`
-	NumComments  ColumnConfig `yaml:"numComments,omitempty"`
-	LinkedIssues ColumnConfig `yaml:"linkedIssues,omitempty"`
-	Conflicts    ColumnConfig `yaml:"conflicts,omitempty"`
+	UpdatedAt         ColumnConfig `yaml:"updatedAt,omitempty"`
+	CreatedAt         ColumnConfig `yaml:"createdAt,omitempty"`
+	Repo              ColumnConfig `yaml:"repo,omitempty"`
+	Author            ColumnConfig `yaml:"author,omitempty"`
+	AuthorIcon        ColumnConfig `yaml:"authorIcon,omitempty"`
+	Labels            ColumnConfig `yaml:"labels,omitempty"`
+	Assignees         ColumnConfig `yaml:"assignees,omitempty"`
+	Title             ColumnConfig `yaml:"title,omitempty"`
+	Base              ColumnConfig `yaml:"base,omitempty"`
+	ReviewStatus      ColumnConfig `yaml:"reviewStatus,omitempty"`
+	State             ColumnConfig `yaml:"state,omitempty"`
+	Ci                ColumnConfig `yaml:"ci,omitempty"`
+	Lines             ColumnConfig `yaml:"lines,omitempty"`
+	NumComments       ColumnConfig `yaml:"numComments,omitempty"`
+	LinkedIssues      ColumnConfig `yaml:"linkedIssues,omitempty"`
+	Conflicts         ColumnConfig `yaml:"conflicts,omitempty"`
+	UnresolvedThreads ColumnConfig `yaml:"unresolvedThreads,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
@@ -399,6 +400,9 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Conflicts: ColumnConfig{
 						Width: utils.IntPtr(4),
+					},
+					UnresolvedThreads: ColumnConfig{
+						Width: utils.IntPtr(6),
 					},
 				},
 				Issues: IssuesLayoutConfig{

@@ -61,6 +61,25 @@ func (pr *PullRequest) renderConflicts() string {
 	return lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.ConflictIcon)
 }
 
+// renderUnresolvedThreads renders the number of the PR's unresolved review threads, after an icon -- or nothing, if
+// they're all resolved.
+func (pr *PullRequest) renderUnresolvedThreads() string {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return ""
+	}
+	count := pr.Data.Primary.ReviewThreads.UnresolvedCount()
+	if count == 0 {
+		return ""
+	}
+
+	// The table paints a selected row's background around each cell's content, so a reset between the icon and the
+	// count would clear that background behind the count.
+	icon := utils.RemoveLastReset(
+		lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.UnresolvedIcon),
+	)
+	return icon + pr.Ctx.Styles.Common.FaintTextStyle.Render(fmt.Sprintf(" %d", count))
+}
+
 func (pr *PullRequest) renderNumComments() string {
 	if pr.Data.Primary == nil {
 		return "-"
@@ -431,6 +450,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderLinkedIssues(),
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
+			pr.renderUnresolvedThreads(),
 			pr.renderCiStatus(),
 			pr.renderConflicts(),
 			pr.RenderLines(isSelected),
@@ -450,6 +470,7 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderLinkedIssues(),
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
+		pr.renderUnresolvedThreads(),
 		pr.renderCiStatus(),
 		pr.renderConflicts(),
 		pr.RenderLines(isSelected),

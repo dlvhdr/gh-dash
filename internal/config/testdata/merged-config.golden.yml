@@ -68,6 +68,8 @@ defaults:
         width: 6
       conflicts:
         width: 4
+      unresolvedThreads:
+        width: 6
     issues:
       updatedAt:
         width: 5

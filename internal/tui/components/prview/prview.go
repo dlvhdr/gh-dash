@@ -257,6 +257,7 @@ func (m *Model) renderBranches() string {
 		m.renderStatusPill(),
 		m.renderLinkedIssuesPill(),
 		m.renderConflictsPill(),
+		m.renderUnresolvedThreadsPill(),
 		" ",
 		lipgloss.NewStyle().
 			Foreground(m.ctx.Theme.SecondaryText).
@@ -312,6 +313,20 @@ func (m *Model) renderConflictsPill() string {
 		BorderForeground(bgColor).
 		Background(bgColor).
 		Render(constants.ConflictIcon+" Conflicts")
+}
+
+// renderUnresolvedThreadsPill renders the number of the PR's unresolved review threads, after a space -- or nothing,
+// if they're all resolved.
+func (m *Model) renderUnresolvedThreadsPill() string {
+	count := m.pr.Data.Primary.ReviewThreads.UnresolvedCount()
+	if count == 0 {
+		return ""
+	}
+	bgColor := m.ctx.Theme.WarningText.Dark
+	return " " + m.ctx.Styles.PrView.PillStyle.
+		BorderForeground(bgColor).
+		Background(bgColor).
+		Render(fmt.Sprintf("%s %d unresolved", constants.UnresolvedIcon, count))
 }
 
 func (m *Model) renderLabels() string {

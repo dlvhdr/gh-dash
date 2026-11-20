@@ -31,6 +31,7 @@ By default, PR views display the following columns in the order they're listed:
 1. [`linkedIssues`] with a width of 6 columns.
 1. [`numComments`] with a width of 3 columns.
 1. [`reviewStatus`] with a width of 3 columns.
+1. [`unresolvedThreads`] with a width of 6 columns.
 1. [`ci`] with a width of 3 columns.
 1. [`conflicts`] with a width of 4 columns.
 1. [`lines`] with a width of 16 columns.
@@ -53,6 +54,7 @@ By default, PR views display the following columns in the order they're listed:
 [`linkedIssues`]: #pr-linked-issues-column
 [`numComments`]: #pr-number-of-comments-column
 [`reviewStatus`]: #pr-review-status-column
+[`unresolvedThreads`]: #pr-unresolved-threads-column
 [`ci`]:           #pr-continuous-integration-column
 [`conflicts`]:    #pr-conflicts-column
 [`lines`]:        #pr-lines-column
@@ -226,6 +228,18 @@ The heading for this column is <NerdFontIcon icon="nf-md-account_check_outline"/
 [`theme.colors.text.faint`]: /configuration/theme#faint-text-color
 [`theme.colors.text.primary`]: /configuration/theme#primary-text-color
 [`theme.colors.text.warning`]: /configuration/theme#warning-text-color
+
+## PR Unresolved Threads Column
+
+| Property            | Type | Default                                            |
+| :------------------ | :--- | :------------------------------------------------- |
+| `unresolvedThreads` | yaml | <Code code={`width: 6`} lang="yaml" frame="none"/> |
+
+This column displays the number of the PR's review threads that aren't resolved, outdated ones
+included, after a <NerdFontIcon icon="nf-cod-comment_unresolved"/> icon with the color set to
+[`theme.colors.text.warning`]. It's empty when every thread is resolved. Only the first 100 threads of a PR are checked.
+
+The heading for this column is <NerdFontIcon icon="nf-cod-comment_unresolved"/>.
 
 ## PR Continuous Integration Column
 

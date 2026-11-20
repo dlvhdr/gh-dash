@@ -176,6 +176,20 @@ export function GET() {
             },
           ],
         },
+        unresolvedThreads: {
+          title: "PR Unresolved Threads Column",
+          description:
+            "Defines options for the unresolved review threads column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 6,
+          },
+        },
         reviewStatus: {
           title: "PR Review Status Column",
           description:

@@ -384,3 +384,48 @@ func TestRenderConflicts(t *testing.T) {
 		t.Errorf("renderConflicts() with nil Data should render nothing")
 	}
 }
+
+func TestRenderUnresolvedThreads(t *testing.T) {
+	threads := func(resolved ...bool) data.ReviewThreads {
+		rt := data.ReviewThreads{TotalCount: len(resolved)}
+		for _, r := range resolved {
+			rt.Nodes = append(rt.Nodes, struct{ IsResolved bool }{IsResolved: r})
+		}
+		return rt
+	}
+
+	tests := []struct {
+		name     string
+		threads  data.ReviewThreads
+		expected string
+	}{
+		{name: "no threads", threads: threads(), expected: ""},
+		{name: "all resolved", threads: threads(true, true), expected: ""},
+		{
+			name:     "some unresolved",
+			threads:  threads(true, false, false),
+			expected: constants.UnresolvedIcon + " 2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pr := &PullRequest{
+				Ctx:  &context.ProgramContext{Theme: *theme.DefaultTheme},
+				Data: &Data{Primary: &data.PullRequestData{ReviewThreads: tt.threads}},
+			}
+			out := pr.renderUnresolvedThreads()
+			if got := ansi.Strip(out); got != tt.expected {
+				t.Errorf("renderUnresolvedThreads() = %q, want %q", got, tt.expected)
+			}
+			// Only a reset at the very end, so a selected row's background reaches the count.
+			if body := strings.TrimSuffix(out, "\x1b[m"); strings.Contains(body, "\x1b[m") {
+				t.Errorf("renderUnresolvedThreads() = %q has a reset before its end", out)
+			}
+		})
+	}
+
+	if (&PullRequest{Ctx: &context.ProgramContext{}}).renderUnresolvedThreads() != "" {
+		t.Errorf("renderUnresolvedThreads() with nil Data should render nothing")
+	}
+}

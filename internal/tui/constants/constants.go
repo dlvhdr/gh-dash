@@ -54,6 +54,7 @@ const (
 	LabelsIcon         = "󰌖"
 	IssueIcon          = ""
 	ConflictIcon       = "" // nf-oct-alert
+	UnresolvedIcon     = "" // nf-cod-comment_unresolved
 	MergedIcon         = ""
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""
