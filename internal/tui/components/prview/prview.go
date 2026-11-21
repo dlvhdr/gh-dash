@@ -825,3 +825,7 @@ func (m *Model) repoRef() cmpcontroller.RepoRef {
 func (m *Model) hasData() bool {
 	return m.pr != nil && m.pr.Data != nil
 }
+
+func (m *Model) GetBranchName() string {
+	return m.pr.Data.Primary.HeadRefName
+}
