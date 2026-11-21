@@ -147,6 +147,10 @@ type CheckSuiteNode struct {
 			Name graphql.String
 		}
 	}
+
+	CheckRuns struct {
+		TotalCount graphql.Int
+	}
 }
 
 type CheckSuites struct {
