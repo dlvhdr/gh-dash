@@ -30,17 +30,13 @@ func (pr *PullRequest) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(pr.Ctx)
 }
 
-// renderLinkedIssues renders the number of issues the PR fixes, after an issue icon -- or nothing, if it fixes none.
+// renderLinkedIssues renders the number of issues the PR fixes -- or the empty-cell placeholder, if it fixes none.
 func (pr *PullRequest) renderLinkedIssues() string {
-	if pr.Data == nil || pr.Data.Primary == nil {
-		return ""
-	}
-	count := pr.Data.Primary.LinkedIssues.TotalCount
-	if count == 0 {
-		return ""
+	if pr.Data == nil || pr.Data.Primary == nil || pr.Data.Primary.LinkedIssues.TotalCount == 0 {
+		return components.RenderEmptyCell(pr.Ctx)
 	}
 	return pr.Ctx.Styles.Common.FaintTextStyle.Render(
-		fmt.Sprintf("%s %d", constants.IssueIcon, count),
+		fmt.Sprintf("%d", pr.Data.Primary.LinkedIssues.TotalCount),
 	)
 }
 
@@ -53,44 +49,38 @@ func (pr *PullRequest) HasConflicts() bool {
 	return pr.Data.Primary.State == "OPEN" && pr.Data.Primary.Mergeable == "CONFLICTING"
 }
 
-// renderConflicts renders a warning icon if the PR has conflicts with its base branch -- or nothing, if it doesn't.
+// renderConflicts renders a warning icon if the PR has conflicts with its base branch -- or the empty-cell
+// placeholder, if it doesn't.
 func (pr *PullRequest) renderConflicts() string {
 	if !pr.HasConflicts() {
-		return ""
+		return components.RenderEmptyCell(pr.Ctx)
 	}
 	return lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.ConflictIcon)
 }
 
-// renderUnresolvedThreads renders the number of the PR's unresolved review threads, after an icon -- or nothing, if
-// they're all resolved.
-func (pr *PullRequest) renderUnresolvedThreads() string {
-	if pr.Data == nil || pr.Data.Primary == nil {
-		return ""
-	}
-	count := pr.Data.Primary.ReviewThreads.UnresolvedCount()
-	if count == 0 {
-		return ""
-	}
-
-	// The table paints a selected row's background around each cell's content, so a reset between the icon and the
-	// count would clear that background behind the count.
-	icon := utils.RemoveLastReset(
-		lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.UnresolvedIcon),
-	)
-	return icon + pr.Ctx.Styles.Common.FaintTextStyle.Render(fmt.Sprintf(" %d", count))
-}
-
+// renderNumComments renders the number of the PR's comments and review threads. If any of those threads are
+// unresolved, their number comes first, in the warning color: "1/5" is 1 unresolved thread out of 5 comments and
+// threads.
 func (pr *PullRequest) renderNumComments() string {
-	if pr.Data.Primary == nil {
+	if pr.Data == nil || pr.Data.Primary == nil {
 		return "-"
 	}
 
 	numCommentsStyle := pr.Ctx.Styles.Common.FaintTextStyle
-	return numCommentsStyle.Render(
-		fmt.Sprintf(
-			"%d",
-			pr.Data.Primary.Comments.TotalCount+pr.Data.Primary.ReviewThreads.TotalCount,
-		))
+	total := pr.Data.Primary.Comments.TotalCount + pr.Data.Primary.ReviewThreads.TotalCount
+	unresolved := pr.Data.Primary.ReviewThreads.UnresolvedCount()
+	if unresolved == 0 {
+		return numCommentsStyle.Render(fmt.Sprintf("%d", total))
+	}
+
+	// The table paints a selected row's background around each cell's content, so a reset between the unresolved
+	// count and the total would clear that background behind the total.
+	unresolvedCount := utils.RemoveLastReset(
+		lipgloss.NewStyle().
+			Foreground(pr.Ctx.Theme.WarningText).
+			Render(fmt.Sprintf("%d", unresolved)),
+	)
+	return unresolvedCount + numCommentsStyle.Render(fmt.Sprintf("/%d", total))
 }
 
 func (pr *PullRequest) renderReviewStatus() string {
@@ -450,7 +440,6 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderLinkedIssues(),
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
-			pr.renderUnresolvedThreads(),
 			pr.renderCiStatus(),
 			pr.renderConflicts(),
 			pr.RenderLines(isSelected),
@@ -470,7 +459,6 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderLinkedIssues(),
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
-		pr.renderUnresolvedThreads(),
 		pr.renderCiStatus(),
 		pr.renderConflicts(),
 		pr.RenderLines(isSelected),

@@ -1,7 +1,6 @@
 package issuerow
 
 import (
-	"strings"
 	"testing"
 
 	"charm.land/lipgloss/v2"
@@ -21,7 +20,7 @@ func TestRenderType(t *testing.T) {
 		issueType *data.IssueType
 		expected  string
 	}{
-		{name: "no type renders nothing", issueType: nil, expected: ""},
+		{name: "no type renders the placeholder", issueType: nil, expected: constants.EmptyCell},
 		{name: "Bug", issueType: &data.IssueType{Name: "Bug", Color: "RED"}, expected: "Bug"},
 		{
 			name:      "Feature",
@@ -66,29 +65,29 @@ func TestRenderLinkedPrs(t *testing.T) {
 		text     string
 		colorSeq string
 	}{
-		{name: "no PRs renders nothing", prs: nil, text: ""},
+		{name: "no PRs renders the placeholder", prs: nil, text: constants.EmptyCell},
 		{
 			name:     "one open PR",
 			prs:      []data.LinkedPullRequest{open},
-			text:     constants.OpenIcon + " 1",
+			text:     "1",
 			colorSeq: openSeq,
 		},
 		{
 			name:     "open wins over merged and draft",
 			prs:      []data.LinkedPullRequest{merged, draft, open},
-			text:     constants.OpenIcon + " 3",
+			text:     "3",
 			colorSeq: openSeq,
 		},
 		{
 			name:     "draft wins over merged",
 			prs:      []data.LinkedPullRequest{merged, draft},
-			text:     constants.OpenIcon + " 2",
+			text:     "2",
 			colorSeq: draftSeq,
 		},
 		{
 			name:     "all merged",
 			prs:      []data.LinkedPullRequest{merged, merged},
-			text:     constants.OpenIcon + " 2",
+			text:     "2",
 			colorSeq: mergedSeq,
 		},
 	}
@@ -112,24 +111,4 @@ func TestRenderLinkedPrs(t *testing.T) {
 			}
 		})
 	}
-}
-
-// A selected row's background is painted around the cell's content, so the content may only reset its style at its
-// very end -- a reset between the icon and the count would clear the background behind the count.
-func TestRenderLinkedPrsKeepsSelectedBackground(t *testing.T) {
-	ctx := &context.ProgramContext{Theme: theme.Theme{FaintText: solid("#808080")}}
-	ctx.Styles.Colors.OpenPR = solid("#00FF00")
-	ctx.Styles.Common.FaintTextStyle = lipgloss.NewStyle().Foreground(solid("#808080"))
-	issue := &Issue{
-		Ctx: ctx,
-		Data: data.IssueData{LinkedPrs: data.LinkedPullRequests{
-			TotalCount: 1,
-			Nodes:      []data.LinkedPullRequest{{State: "OPEN"}},
-		}},
-	}
-
-	out := issue.renderLinkedPrs()
-	body := strings.TrimSuffix(out, "\x1b[m")
-	require.NotContains(t, body, "\x1b[m")
-	require.NotContains(t, body, "\x1b[0m")
 }

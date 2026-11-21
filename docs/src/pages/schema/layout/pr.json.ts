@@ -162,7 +162,7 @@ export function GET() {
             },
           ],
           default: {
-            width: 6,
+            width: 5,
           },
         },
         numComments: {
@@ -175,20 +175,6 @@ export function GET() {
               $ref: "./options.json",
             },
           ],
-        },
-        unresolvedThreads: {
-          title: "PR Unresolved Threads Column",
-          description:
-            "Defines options for the unresolved review threads column in a PR section.",
-          type: "object",
-          oneOf: [
-            {
-              $ref: "./options.json",
-            },
-          ],
-          default: {
-            width: 6,
-          },
         },
         reviewStatus: {
           title: "PR Review Status Column",
@@ -222,7 +208,7 @@ export function GET() {
             },
           ],
           default: {
-            width: 4,
+            width: 3,
           },
         },
         lines: {

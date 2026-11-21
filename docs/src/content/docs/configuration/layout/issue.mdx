@@ -114,8 +114,8 @@ The heading for this column is <NerdFontIcon icon="nf-oct-repo"/>
 | `type`   | yaml | <Code code={`width: 9`} lang="yaml" frame="none"/> |
 
 This column displays the Issue's [type], like `Bug`, `Feature`, or `Task`, in the color the
-type has on GitHub. The column is empty for an Issue that has no type, and for repositories
-that don't use issue types.
+type has on GitHub. It shows `—` for an Issue that has no type, and in repositories that
+don't use issue types.
 
 The heading for this column is `Type`.
 
@@ -173,10 +173,9 @@ The heading for this column is `Assignees`.
 | `linkedPrs` | yaml | <Code code={`width: 6`} lang="yaml" frame="none"/> |
 
 This column displays the number of open and merged PRs that will close the Issue when merged,
-or that closed it, after a <NerdFontIcon icon="nf-oct-git_pull_request"/> icon. The icon is in
-the open-PR color if any of those PRs is open and not a draft, in the faint text color if the
-only open ones are drafts, and otherwise in the merged-PR color. The column is empty for an
-Issue with no linked PRs.
+or that closed it. The number is in the open-PR color if any of those PRs is open and not a
+draft, in the faint text color if the only open ones are drafts, and otherwise in the merged-PR
+color. It shows `—` for an Issue with no linked PRs.
 
 The heading for this column is <NerdFontIcon icon="nf-oct-git_pull_request"/>.
 

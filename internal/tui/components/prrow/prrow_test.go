@@ -322,19 +322,19 @@ func TestRenderLinkedIssues(t *testing.T) {
 		data     *Data
 		expected string
 	}{
-		{name: "nil Data renders nothing", data: nil, expected: ""},
-		{name: "nil Primary renders nothing", data: &Data{}, expected: ""},
+		{name: "nil Data renders the placeholder", data: nil, expected: constants.EmptyCell},
+		{name: "nil Primary renders the placeholder", data: &Data{}, expected: constants.EmptyCell},
 		{
-			name:     "no linked issues renders nothing",
+			name:     "no linked issues renders the placeholder",
 			data:     &Data{Primary: &data.PullRequestData{}},
-			expected: "",
+			expected: constants.EmptyCell,
 		},
 		{
-			name: "linked issues render icon and count",
+			name: "linked issues render their count",
 			data: &Data{Primary: &data.PullRequestData{
 				LinkedIssues: data.LinkedIssues{TotalCount: 7},
 			}},
-			expected: constants.IssueIcon + " 7",
+			expected: "7",
 		},
 	}
 
@@ -361,9 +361,24 @@ func TestRenderConflicts(t *testing.T) {
 			mergeable: "CONFLICTING",
 			expected:  constants.ConflictIcon,
 		},
-		{name: "open and mergeable", state: "OPEN", mergeable: "MERGEABLE", expected: ""},
-		{name: "open and not yet computed", state: "OPEN", mergeable: "UNKNOWN", expected: ""},
-		{name: "closed and conflicting", state: "CLOSED", mergeable: "CONFLICTING", expected: ""},
+		{
+			name:      "open and mergeable",
+			state:     "OPEN",
+			mergeable: "MERGEABLE",
+			expected:  constants.EmptyCell,
+		},
+		{
+			name:      "open and not yet computed",
+			state:     "OPEN",
+			mergeable: "UNKNOWN",
+			expected:  constants.EmptyCell,
+		},
+		{
+			name:      "closed and conflicting",
+			state:     "CLOSED",
+			mergeable: "CONFLICTING",
+			expected:  constants.EmptyCell,
+		},
 	}
 
 	for _, tt := range tests {
@@ -380,12 +395,14 @@ func TestRenderConflicts(t *testing.T) {
 		})
 	}
 
-	if (&PullRequest{Ctx: &context.ProgramContext{}}).renderConflicts() != "" {
-		t.Errorf("renderConflicts() with nil Data should render nothing")
+	if got := ansi.Strip(
+		(&PullRequest{Ctx: &context.ProgramContext{}}).renderConflicts(),
+	); got != constants.EmptyCell {
+		t.Errorf("renderConflicts() with nil Data = %q, want the placeholder", got)
 	}
 }
 
-func TestRenderUnresolvedThreads(t *testing.T) {
+func TestRenderNumComments(t *testing.T) {
 	threads := func(resolved ...bool) data.ReviewThreads {
 		rt := data.ReviewThreads{TotalCount: len(resolved)}
 		for _, r := range resolved {
@@ -396,36 +413,50 @@ func TestRenderUnresolvedThreads(t *testing.T) {
 
 	tests := []struct {
 		name     string
+		comments int
 		threads  data.ReviewThreads
 		expected string
 	}{
-		{name: "no threads", threads: threads(), expected: ""},
-		{name: "all resolved", threads: threads(true, true), expected: ""},
+		{name: "no comments", threads: threads(), expected: "0"},
 		{
-			name:     "some unresolved",
+			name:     "comments and resolved threads",
+			comments: 3,
+			threads:  threads(true, true),
+			expected: "5",
+		},
+		{
+			name:     "some unresolved threads",
+			comments: 2,
 			threads:  threads(true, false, false),
-			expected: constants.UnresolvedIcon + " 2",
+			expected: "2/5",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := &context.ProgramContext{Theme: *theme.DefaultTheme}
+			ctx.Styles.Common.FaintTextStyle = lipgloss.NewStyle().
+				Foreground(theme.DefaultTheme.FaintText)
 			pr := &PullRequest{
-				Ctx:  &context.ProgramContext{Theme: *theme.DefaultTheme},
-				Data: &Data{Primary: &data.PullRequestData{ReviewThreads: tt.threads}},
+				Ctx: ctx,
+				Data: &Data{Primary: &data.PullRequestData{
+					Comments:      data.Comments{TotalCount: tt.comments},
+					ReviewThreads: tt.threads,
+				}},
 			}
-			out := pr.renderUnresolvedThreads()
+			out := pr.renderNumComments()
 			if got := ansi.Strip(out); got != tt.expected {
-				t.Errorf("renderUnresolvedThreads() = %q, want %q", got, tt.expected)
+				t.Errorf("renderNumComments() = %q, want %q", got, tt.expected)
 			}
-			// Only a reset at the very end, so a selected row's background reaches the count.
-			if body := strings.TrimSuffix(out, "\x1b[m"); strings.Contains(body, "\x1b[m") {
-				t.Errorf("renderUnresolvedThreads() = %q has a reset before its end", out)
+			// A reset after the unresolved count would clear a selected row's background behind the total.
+			if body := strings.TrimSuffix(out, "\x1b[m"); tt.threads.UnresolvedCount() > 0 &&
+				strings.Contains(body, "\x1b[m") {
+				t.Errorf("renderNumComments() = %q has a reset before the total", out)
 			}
 		})
 	}
 
-	if (&PullRequest{Ctx: &context.ProgramContext{}}).renderUnresolvedThreads() != "" {
-		t.Errorf("renderUnresolvedThreads() with nil Data should render nothing")
+	if got := (&PullRequest{Ctx: &context.ProgramContext{}}).renderNumComments(); got != "-" {
+		t.Errorf("renderNumComments() with nil Data = %q, want %q", got, "-")
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
-	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
@@ -76,7 +75,7 @@ func (issue *Issue) renderRepoName() string {
 func (issue *Issue) renderType() string {
 	issueType := issue.Data.IssueType
 	if issueType == nil {
-		return ""
+		return components.RenderEmptyCell(issue.Ctx)
 	}
 	return lipgloss.NewStyle().
 		Foreground(common.IssueTypeColor(issueType.Color)).
@@ -124,21 +123,14 @@ func (issue *Issue) LinkedPrsColor() compat.AdaptiveColor {
 	}
 }
 
-// renderLinkedPrs renders the number of PRs linked to the issue, after a PR icon in LinkedPrsColor() -- or nothing, if
-// it has none.
+// renderLinkedPrs renders the number of PRs linked to the issue, in LinkedPrsColor() -- or the empty-cell placeholder,
+// if it has none.
 func (issue *Issue) renderLinkedPrs() string {
 	count := issue.Data.LinkedPrs.TotalCount
 	if count == 0 {
-		return ""
+		return components.RenderEmptyCell(issue.Ctx)
 	}
-
-	// The table paints a selected row's background around each cell's content, so a reset between the icon and the
-	// count would clear that background behind the count.
-	icon := lipgloss.NewStyle().Foreground(issue.LinkedPrsColor()).Render(constants.OpenIcon)
-	icon = strings.ReplaceAll(icon, "\x1b[0m", "")
-	icon = strings.ReplaceAll(icon, "\x1b[m", "")
-
-	return icon + issue.Ctx.Styles.Common.FaintTextStyle.Render(fmt.Sprintf(" %d", count))
+	return lipgloss.NewStyle().Foreground(issue.LinkedPrsColor()).Render(fmt.Sprintf("%d", count))
 }
 
 func (issue *Issue) renderNumComments() string {

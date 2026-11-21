@@ -65,11 +65,9 @@ defaults:
       lines:
         width: 15
       linkedIssues:
-        width: 6
+        width: 5
       conflicts:
-        width: 4
-      unresolvedThreads:
-        width: 6
+        width: 3
     issues:
       updatedAt:
         width: 5

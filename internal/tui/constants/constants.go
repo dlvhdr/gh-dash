@@ -27,6 +27,8 @@ type Dimensions struct {
 
 const (
 	Ellipsis = "…"
+	// EmptyCell is the placeholder for a table cell that has no value.
+	EmptyCell = "—"
 
 	ApprovedIcon         = "󰄬"
 	ChangesRequestedIcon = ""
