@@ -21,7 +21,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
-const SectionType = "pr"
+const (
+	SectionType      = "pr"
+	glyphColumnWidth = 3
+)
 
 type Model struct {
 	section.BaseModel
@@ -284,7 +287,7 @@ func GetSectionColumns(
 		return []table.Column{
 			{
 				Title:  "",
-				Width:  utils.IntPtr(3),
+				Width:  new(glyphColumnWidth),
 				Hidden: stateLayout.Hidden,
 			},
 			{
@@ -314,12 +317,12 @@ func GetSectionColumns(
 			},
 			{
 				Title:  constants.CommentsIcon,
-				Width:  utils.IntPtr(4),
+				Width:  new(glyphColumnWidth),
 				Hidden: numCommentsLayout.Hidden,
 			},
 			{
 				Title:  "󰯢",
-				Width:  utils.IntPtr(4),
+				Width:  new(glyphColumnWidth),
 				Hidden: reviewStatusLayout.Hidden,
 			},
 			{
@@ -359,7 +362,7 @@ func GetSectionColumns(
 	return []table.Column{
 		{
 			Title:  "",
-			Width:  utils.IntPtr(3),
+			Width:  new(glyphColumnWidth),
 			Hidden: stateLayout.Hidden,
 		},
 		{
@@ -399,12 +402,12 @@ func GetSectionColumns(
 		},
 		{
 			Title:  constants.CommentsIcon,
-			Width:  utils.IntPtr(4),
+			Width:  new(glyphColumnWidth),
 			Hidden: numCommentsLayout.Hidden,
 		},
 		{
 			Title:  "󰯢",
-			Width:  utils.IntPtr(4),
+			Width:  new(glyphColumnWidth),
 			Hidden: reviewStatusLayout.Hidden,
 		},
 		{
