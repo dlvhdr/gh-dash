@@ -14,6 +14,9 @@ export function GET() {
         repo: {
           width: 15,
         },
+        type: {
+          width: 9,
+        },
         creator: {
           width: 10,
         },
@@ -60,6 +63,20 @@ export function GET() {
           ],
           default: {
             width: 15,
+          },
+        },
+        type: {
+          title: "Issue Type Column",
+          description:
+            "Defines options for the type column in an issue section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 9,
           },
         },
         title: {
@@ -114,6 +131,20 @@ export function GET() {
           default: {
             width: 20,
             hidden: true,
+          },
+        },
+        linkedPrs: {
+          title: "Issue Linked PRs Column",
+          description:
+            "Defines options for the linked PRs column in an issue section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 6,
           },
         },
         comments: {

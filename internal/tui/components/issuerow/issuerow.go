@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/compat"
 
 	"github.com/dlvhdr/gh-dash/v4/internal/data"
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/common"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/components/table"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
@@ -23,9 +25,11 @@ func (issue *Issue) ToTableRow() table.Row {
 	return table.Row{
 		issue.renderStatus(),
 		issue.renderRepoName(),
+		issue.renderType(),
 		issue.renderTitle(),
 		issue.renderOpenedBy(),
 		issue.renderAssignees(),
+		issue.renderLinkedPrs(),
 		issue.renderNumComments(),
 		issue.renderNumReactions(),
 		issue.renderUpdateAt(),
@@ -68,6 +72,16 @@ func (issue *Issue) renderRepoName() string {
 	return issue.getTextStyle().Render(repoName)
 }
 
+func (issue *Issue) renderType() string {
+	issueType := issue.Data.IssueType
+	if issueType == nil {
+		return components.RenderEmptyCell(issue.Ctx)
+	}
+	return lipgloss.NewStyle().
+		Foreground(common.IssueTypeColor(issueType.Color)).
+		Render(issueType.Name)
+}
+
 func (issue *Issue) renderTitle() string {
 	return components.RenderIssueTitle(
 		issue.Ctx,
@@ -95,6 +109,28 @@ func (issue *Issue) renderStatus() string {
 	} else {
 		return issue.getTextStyle().Render("")
 	}
+}
+
+// LinkedPrsColor is the color for the issue's linked PRs: the color of the state their State() sums up to.
+func (issue *Issue) LinkedPrsColor() compat.AdaptiveColor {
+	switch issue.Data.LinkedPrs.State() {
+	case "OPEN":
+		return issue.Ctx.Styles.Colors.OpenPR
+	case "DRAFT":
+		return issue.Ctx.Theme.FaintText
+	default:
+		return issue.Ctx.Styles.Colors.MergedPR
+	}
+}
+
+// renderLinkedPrs renders the number of PRs linked to the issue, in LinkedPrsColor() -- or the empty-cell placeholder,
+// if it has none.
+func (issue *Issue) renderLinkedPrs() string {
+	count := issue.Data.LinkedPrs.TotalCount
+	if count == 0 {
+		return components.RenderEmptyCell(issue.Ctx)
+	}
+	return lipgloss.NewStyle().Foreground(issue.LinkedPrsColor()).Render(fmt.Sprintf("%d", count))
 }
 
 func (issue *Issue) renderNumComments() string {

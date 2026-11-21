@@ -90,7 +90,7 @@ type PullRequestData struct {
 	Repository       Repository
 	Assignees        Assignees            `graphql:"assignees(first: 3)"`
 	Comments         Comments             `graphql:"comments"`
-	ReviewThreads    ReviewThreads        `graphql:"reviewThreads"`
+	ReviewThreads    ReviewThreads        `graphql:"reviewThreads(first: 100)"`
 	Reviews          ReviewsNumber        `graphql:"reviews"`
 	ReviewRequests   ReviewRequestsNumber `graphql:"reviewRequests"`
 	IsDraft          bool
@@ -98,6 +98,12 @@ type PullRequestData struct {
 	Commits          LastCommitStatus `graphql:"commits(last: 1)"`
 	Labels           PRLabels         `graphql:"labels(first: 6)"`
 	MergeStateStatus MergeStateStatus `graphql:"mergeStateStatus"`
+	// LinkedIssues is the issues the PR will close when merged, or that it closed.
+	LinkedIssues LinkedIssues `graphql:"closingIssuesReferences"`
+}
+
+type LinkedIssues struct {
+	TotalCount int
 }
 
 type LastCommitStatus struct {
@@ -274,6 +280,21 @@ type Comments struct {
 
 type ReviewThreads struct {
 	TotalCount int
+	Nodes      []struct {
+		IsResolved bool
+	}
+}
+
+// UnresolvedCount is the number of the PR's review threads that aren't resolved, outdated ones included -- out of the
+// first 100 threads, which is all the query fetches.
+func (t ReviewThreads) UnresolvedCount() int {
+	count := 0
+	for _, thread := range t.Nodes {
+		if !thread.IsResolved {
+			count++
+		}
+	}
+	return count
 }
 
 type Review struct {

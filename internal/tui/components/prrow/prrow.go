@@ -30,17 +30,57 @@ func (pr *PullRequest) getTextStyle() lipgloss.Style {
 	return components.GetIssueTextStyle(pr.Ctx)
 }
 
+// renderLinkedIssues renders the number of issues the PR fixes -- or the empty-cell placeholder, if it fixes none.
+func (pr *PullRequest) renderLinkedIssues() string {
+	if pr.Data == nil || pr.Data.Primary == nil || pr.Data.Primary.LinkedIssues.TotalCount == 0 {
+		return components.RenderEmptyCell(pr.Ctx)
+	}
+	return pr.Ctx.Styles.Common.FaintTextStyle.Render(
+		fmt.Sprintf("%d", pr.Data.Primary.LinkedIssues.TotalCount),
+	)
+}
+
+// HasConflicts reports whether the PR is open and GitHub found conflicts with its base branch. GitHub computes that
+// lazily, so a PR whose mergeability it hasn't computed yet reports no conflicts.
+func (pr *PullRequest) HasConflicts() bool {
+	if pr.Data == nil || pr.Data.Primary == nil {
+		return false
+	}
+	return pr.Data.Primary.State == "OPEN" && pr.Data.Primary.Mergeable == "CONFLICTING"
+}
+
+// renderConflicts renders a warning icon if the PR has conflicts with its base branch -- or the empty-cell
+// placeholder, if it doesn't.
+func (pr *PullRequest) renderConflicts() string {
+	if !pr.HasConflicts() {
+		return components.RenderEmptyCell(pr.Ctx)
+	}
+	return lipgloss.NewStyle().Foreground(pr.Ctx.Theme.WarningText).Render(constants.ConflictIcon)
+}
+
+// renderNumComments renders the number of the PR's comments and review threads. If any of those threads are
+// unresolved, their number comes first, in the warning color: "1/5" is 1 unresolved thread out of 5 comments and
+// threads.
 func (pr *PullRequest) renderNumComments() string {
-	if pr.Data.Primary == nil {
+	if pr.Data == nil || pr.Data.Primary == nil {
 		return "-"
 	}
 
 	numCommentsStyle := pr.Ctx.Styles.Common.FaintTextStyle
-	return numCommentsStyle.Render(
-		fmt.Sprintf(
-			"%d",
-			pr.Data.Primary.Comments.TotalCount+pr.Data.Primary.ReviewThreads.TotalCount,
-		))
+	total := pr.Data.Primary.Comments.TotalCount + pr.Data.Primary.ReviewThreads.TotalCount
+	unresolved := pr.Data.Primary.ReviewThreads.UnresolvedCount()
+	if unresolved == 0 {
+		return numCommentsStyle.Render(fmt.Sprintf("%d", total))
+	}
+
+	// The table paints a selected row's background around each cell's content, so a reset between the unresolved
+	// count and the total would clear that background behind the total.
+	unresolvedCount := utils.RemoveLastReset(
+		lipgloss.NewStyle().
+			Foreground(pr.Ctx.Theme.WarningText).
+			Render(fmt.Sprintf("%d", unresolved)),
+	)
+	return unresolvedCount + numCommentsStyle.Render(fmt.Sprintf("/%d", total))
 }
 
 func (pr *PullRequest) renderReviewStatus() string {
@@ -397,9 +437,11 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 			pr.renderLabels(isSelected),
 			pr.renderAssignees(),
 			pr.renderBaseName(),
+			pr.renderLinkedIssues(),
 			pr.renderNumComments(),
 			pr.renderReviewStatus(),
 			pr.renderCiStatus(),
+			pr.renderConflicts(),
 			pr.RenderLines(isSelected),
 			pr.renderUpdateAt(),
 			pr.renderCreatedAt(),
@@ -414,9 +456,11 @@ func (pr *PullRequest) ToTableRow(isSelected bool) table.Row {
 		pr.renderLabels(isSelected),
 		pr.renderAssignees(),
 		pr.renderBaseName(),
+		pr.renderLinkedIssues(),
 		pr.renderNumComments(),
 		pr.renderReviewStatus(),
 		pr.renderCiStatus(),
+		pr.renderConflicts(),
 		pr.RenderLines(isSelected),
 		pr.renderUpdateAt(),
 		pr.renderCreatedAt(),

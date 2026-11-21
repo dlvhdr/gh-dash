@@ -151,6 +151,20 @@ export function GET() {
             hidden: true,
           },
         },
+        linkedIssues: {
+          title: "PR Linked Issues Column",
+          description:
+            "Defines options for the linked issues column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 5,
+          },
+        },
         numComments: {
           title: "Number of Comments Column",
           description:
@@ -182,6 +196,20 @@ export function GET() {
               $ref: "./options.json",
             },
           ],
+        },
+        conflicts: {
+          title: "PR Conflicts Column",
+          description:
+            "Defines options for the conflicts column in a PR section.",
+          type: "object",
+          oneOf: [
+            {
+              $ref: "./options.json",
+            },
+          ],
+          default: {
+            width: 3,
+          },
         },
         lines: {
           title: "PR Lines Column",

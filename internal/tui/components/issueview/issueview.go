@@ -132,6 +132,12 @@ func (m Model) View() string {
 	s.WriteString(m.renderTitle())
 	s.WriteString("\n\n")
 	s.WriteString(m.renderStatusPill())
+	for _, pill := range []string{m.renderTypePill(), m.renderLinkedPrsPill()} {
+		if pill != "" {
+			s.WriteString(" ")
+			s.WriteString(pill)
+		}
+	}
 	s.WriteString("\n\n")
 	s.WriteString(m.renderAuthor())
 	s.WriteString("\n\n")
@@ -190,6 +196,30 @@ func (m *Model) renderStatusPill() string {
 		BorderForeground(bgColor).
 		Background(bgColor).
 		Render(content)
+}
+
+func (m *Model) renderTypePill() string {
+	issueType := m.issue.Data.IssueType
+	if issueType == nil {
+		return ""
+	}
+	return common.RenderIssueTypePill(*issueType, m.ctx.Styles.PrView.PillStyle)
+}
+
+func (m *Model) renderLinkedPrsPill() string {
+	count := m.issue.Data.LinkedPrs.TotalCount
+	if count == 0 {
+		return ""
+	}
+	noun := "PRs"
+	if count == 1 {
+		noun = "PR"
+	}
+	bgColor := m.issue.LinkedPrsColor().Dark
+	return m.ctx.Styles.PrView.PillStyle.
+		BorderForeground(bgColor).
+		Background(bgColor).
+		Render(fmt.Sprintf("%s %d %s", constants.OpenIcon, count, noun))
 }
 
 func (m *Model) renderAuthor() string {

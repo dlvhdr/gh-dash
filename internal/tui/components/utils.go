@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/compat"
 
+	"github.com/dlvhdr/gh-dash/v4/internal/tui/constants"
 	"github.com/dlvhdr/gh-dash/v4/internal/tui/context"
 )
 
@@ -21,6 +22,11 @@ func FormatNumber(num int) string {
 	}
 
 	return strconv.Itoa(num)
+}
+
+// RenderEmptyCell renders the placeholder for a table cell that has no value.
+func RenderEmptyCell(ctx *context.ProgramContext) string {
+	return ctx.Styles.Common.FaintTextStyle.Render(constants.EmptyCell)
 }
 
 func GetIssueTextStyle(

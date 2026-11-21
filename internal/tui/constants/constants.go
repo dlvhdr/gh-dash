@@ -27,6 +27,8 @@ type Dimensions struct {
 
 const (
 	Ellipsis = "…"
+	// EmptyCell is the placeholder for a table cell that has no value.
+	EmptyCell = "—"
 
 	ApprovedIcon         = "󰄬"
 	ChangesRequestedIcon = ""
@@ -52,6 +54,9 @@ const (
 	CommitIcon         = ""
 	VerticalCommitIcon = "󰜘"
 	LabelsIcon         = "󰌖"
+	IssueIcon          = ""
+	ConflictIcon       = "" // nf-oct-alert
+	UnresolvedIcon     = "" // nf-cod-comment_unresolved
 	MergedIcon         = ""
 	MergeQueueIcon     = "" // \uf4db nf-oct-git_merge_queue
 	OpenIcon           = ""

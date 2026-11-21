@@ -163,6 +163,8 @@ type PrsLayoutConfig struct {
 	Ci           ColumnConfig `yaml:"ci,omitempty"`
 	Lines        ColumnConfig `yaml:"lines,omitempty"`
 	NumComments  ColumnConfig `yaml:"numComments,omitempty"`
+	LinkedIssues ColumnConfig `yaml:"linkedIssues,omitempty"`
+	Conflicts    ColumnConfig `yaml:"conflicts,omitempty"`
 }
 
 type IssuesLayoutConfig struct {
@@ -170,12 +172,14 @@ type IssuesLayoutConfig struct {
 	CreatedAt   ColumnConfig `yaml:"createdAt,omitempty"`
 	State       ColumnConfig `yaml:"state,omitempty"`
 	Repo        ColumnConfig `yaml:"repo,omitempty"`
+	Type        ColumnConfig `yaml:"type,omitempty"`
 	Title       ColumnConfig `yaml:"title,omitempty"`
 	Creator     ColumnConfig `yaml:"creator,omitempty"`
 	CreatorIcon ColumnConfig `yaml:"creatorIcon,omitempty"`
 	Assignees   ColumnConfig `yaml:"assignees,omitempty"`
 	Comments    ColumnConfig `yaml:"comments,omitempty"`
 	Reactions   ColumnConfig `yaml:"reactions,omitempty"`
+	LinkedPrs   ColumnConfig `yaml:"linkedPrs,omitempty"`
 }
 
 type LayoutConfig struct {
@@ -390,6 +394,12 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					Lines: ColumnConfig{
 						Width: utils.IntPtr(lipgloss.Width(" +31.4k -31.6k ")),
 					},
+					LinkedIssues: ColumnConfig{
+						Width: utils.IntPtr(5),
+					},
+					Conflicts: ColumnConfig{
+						Width: utils.IntPtr(3),
+					},
 				},
 				Issues: IssuesLayoutConfig{
 					UpdatedAt: ColumnConfig{
@@ -400,6 +410,12 @@ func (parser ConfigParser) getDefaultConfig() Config {
 					},
 					Repo: ColumnConfig{
 						Width: utils.IntPtr(15),
+					},
+					Type: ColumnConfig{
+						Width: utils.IntPtr(lipgloss.Width("Feature  ")),
+					},
+					LinkedPrs: ColumnConfig{
+						Width: utils.IntPtr(6),
 					},
 					Creator: ColumnConfig{
 						Width: utils.IntPtr(10),

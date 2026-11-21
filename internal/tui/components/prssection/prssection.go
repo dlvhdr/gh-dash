@@ -21,7 +21,10 @@ import (
 	"github.com/dlvhdr/gh-dash/v4/internal/utils"
 )
 
-const SectionType = "pr"
+const (
+	SectionType      = "pr"
+	glyphColumnWidth = 3
+)
 
 type Model struct {
 	section.BaseModel
@@ -273,12 +276,14 @@ func GetSectionColumns(
 	ciLayout := config.MergeColumnConfigs(dLayout.Ci, sLayout.Ci)
 	labelsLayout := config.MergeColumnConfigs(dLayout.Labels, sLayout.Labels)
 	linesLayout := config.MergeColumnConfigs(dLayout.Lines, sLayout.Lines)
+	linkedIssuesLayout := config.MergeColumnConfigs(dLayout.LinkedIssues, sLayout.LinkedIssues)
+	conflictsLayout := config.MergeColumnConfigs(dLayout.Conflicts, sLayout.Conflicts)
 
 	if !ctx.Config.Theme.Ui.Table.Compact {
 		return []table.Column{
 			{
 				Title:  "",
-				Width:  utils.IntPtr(3),
+				Width:  new(glyphColumnWidth),
 				Hidden: stateLayout.Hidden,
 			},
 			{
@@ -302,13 +307,18 @@ func GetSectionColumns(
 				Hidden: baseLayout.Hidden,
 			},
 			{
+				Title:  constants.IssueIcon,
+				Width:  linkedIssuesLayout.Width,
+				Hidden: linkedIssuesLayout.Hidden,
+			},
+			{
 				Title:  constants.CommentsIcon,
-				Width:  utils.IntPtr(4),
+				Width:  utils.IntPtr(6),
 				Hidden: numCommentsLayout.Hidden,
 			},
 			{
 				Title:  "󰯢",
-				Width:  utils.IntPtr(4),
+				Width:  new(glyphColumnWidth),
 				Hidden: reviewStatusLayout.Hidden,
 			},
 			{
@@ -316,6 +326,11 @@ func GetSectionColumns(
 				Width:  &ctx.Styles.PrSection.CiCellWidth,
 				Grow:   new(bool),
 				Hidden: ciLayout.Hidden,
+			},
+			{
+				Title:  constants.ConflictIcon,
+				Width:  conflictsLayout.Width,
+				Hidden: conflictsLayout.Hidden,
 			},
 			{
 				Title:  "",
@@ -338,7 +353,7 @@ func GetSectionColumns(
 	return []table.Column{
 		{
 			Title:  "",
-			Width:  utils.IntPtr(3),
+			Width:  new(glyphColumnWidth),
 			Hidden: stateLayout.Hidden,
 		},
 		{
@@ -372,13 +387,18 @@ func GetSectionColumns(
 			Hidden: baseLayout.Hidden,
 		},
 		{
+			Title:  constants.IssueIcon,
+			Width:  linkedIssuesLayout.Width,
+			Hidden: linkedIssuesLayout.Hidden,
+		},
+		{
 			Title:  constants.CommentsIcon,
-			Width:  utils.IntPtr(4),
+			Width:  utils.IntPtr(6),
 			Hidden: numCommentsLayout.Hidden,
 		},
 		{
 			Title:  "󰯢",
-			Width:  utils.IntPtr(4),
+			Width:  new(glyphColumnWidth),
 			Hidden: reviewStatusLayout.Hidden,
 		},
 		{
@@ -386,6 +406,11 @@ func GetSectionColumns(
 			Width:  &ctx.Styles.PrSection.CiCellWidth,
 			Grow:   new(bool),
 			Hidden: ciLayout.Hidden,
+		},
+		{
+			Title:  constants.ConflictIcon,
+			Width:  conflictsLayout.Width,
+			Hidden: conflictsLayout.Hidden,
 		},
 		{
 			Title:  "",

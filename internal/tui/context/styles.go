@@ -209,7 +209,7 @@ func InitStyles(theme theme.Theme) Styles {
 		Background(theme.SelectedBackground).
 		Padding(0, 1)
 
-	s.PrSection.CiCellWidth = lipgloss.Width(" CI ")
+	s.PrSection.CiCellWidth = lipgloss.Width("  ")
 	s.PrSection.LinesCellWidth = lipgloss.Width(" 123450 / -123450 ")
 	s.PrSection.UpdatedAtCellWidth = lipgloss.Width("2mo  ")
 	s.PrSection.PrRepoCellWidth = 15
