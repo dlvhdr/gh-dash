@@ -46,7 +46,6 @@ Thank you to all past and existing sponsors! 🙏🏽
 <h3 align="center">TUI Visionary</h3>
 
 <p align="center">
-<a href="https://www.oleaasen.com?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/484133?s=128&u=f44b9b9d9309b6a80fa52458fef32c5a1d4dee17&v=4" alt="Ole Aasen" width="128"/></a>&nbsp;&nbsp;
 <a href="http://steipete.me?utm_source=dlvhdr&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/58493?s=128&u=95a4fccef3d341039661c427695691a664e333ba&v=4" alt="Peter Steinberger" width="128"/></a>&nbsp;&nbsp;
 </p>
 
