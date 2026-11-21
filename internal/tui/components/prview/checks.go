@@ -444,6 +444,10 @@ func (sidebar *Model) renderChecks() string {
 
 	// Collect check suites that don't appear in statusCheckRollup
 	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
+		if isNeverDispatchedCheckSuite(suite) {
+			continue
+		}
+
 		workflowName := strings.TrimSpace(string(suite.WorkflowRun.Workflow.Name))
 		if workflowName == "" {
 			workflowName = strings.TrimSpace(string(suite.App.Name))
@@ -645,6 +649,10 @@ func (m *Model) getChecksStats() checksStats {
 
 	// Count check suites that don't appear in statusCheckRollup
 	for _, suite := range lastCommit.Commit.CheckSuites.Nodes {
+		if isNeverDispatchedCheckSuite(suite) {
+			continue
+		}
+
 		if suite.Conclusion == "ACTION_REQUIRED" {
 			res.awaitingApproval++
 		} else if suite.Status == "QUEUED" || suite.Status == "PENDING" || suite.Status == "WAITING" {
@@ -653,6 +661,10 @@ func (m *Model) getChecksStats() checksStats {
 	}
 
 	return res
+}
+
+func isNeverDispatchedCheckSuite(suite data.CheckSuiteNode) bool {
+	return suite.CheckRuns.TotalCount == 0 && strings.TrimSpace(string(suite.WorkflowRun.Workflow.Name)) == ""
 }
 
 func (m *Model) numRequestedReviewOwners() int {
