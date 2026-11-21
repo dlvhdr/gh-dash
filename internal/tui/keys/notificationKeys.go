@@ -105,8 +105,8 @@ func rebindNotificationKeys(keys []config.Keybinding) error {
 				}
 
 				customBinding := key.NewBinding(
-					key.WithKeys(notifKey.Key),
-					key.WithHelp(notifKey.Key, name),
+					key.WithKeys(notifKey.Key...),
+					key.WithHelp(notifKey.Key.String(), name),
 				)
 
 				CustomNotificationBindings = append(CustomNotificationBindings, customBinding)
@@ -145,13 +145,13 @@ func rebindNotificationKeys(keys []config.Keybinding) error {
 			return fmt.Errorf("unknown built-in notification key: '%s'", notifKey.Builtin)
 		}
 
-		key.SetKeys(notifKey.Key)
+		key.SetKeys(notifKey.Key...)
 
 		helpDesc := key.Help().Desc
 		if notifKey.Name != "" {
 			helpDesc = notifKey.Name
 		}
-		key.SetHelp(notifKey.Key, helpDesc)
+		key.SetHelp(notifKey.Key.String(), helpDesc)
 	}
 
 	return nil
